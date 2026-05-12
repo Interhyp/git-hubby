@@ -1,0 +1,414 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: codesecurityconfigurations.github.interhyp.de
+spec:
+  group: github.interhyp.de
+  names:
+    kind: CodeSecurityConfiguration
+    listKind: CodeSecurityConfigurationList
+    plural: codesecurityconfigurations
+    singular: codesecurityconfiguration
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: CodeSecurityConfiguration is the Schema for the codesecurityconfigurations
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of CodeSecurityConfiguration
+            properties:
+              advancedSecurity:
+                description: |-
+                  AdvancedSecurity enables or disables GitHub Advanced Security features.
+                  - "enabled": Enable Advanced Security (required for code scanning, secret scanning, and dependency review)
+                  - "disabled": Disable Advanced Security
+                  - "code_security": Enable code security features only
+                  - "secret_protection": Enable secret protection features only
+                  Warning: code_security and secret_protection are deprecated values for this field.
+                  Prefer the individual code_security and secret_protection fields to set the status of these features.
+                  See: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security
+                enum:
+                - enabled
+                - disabled
+                - code_security
+                - secret_protection
+                type: string
+              code_scanning_delegated_alert_dismissal:
+                description: |-
+                  CodeScanningDelegatedAlertDismissal enables users to dismiss code scanning alerts.
+                  When enabled, users with appropriate permissions can dismiss alerts that don't require action.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              code_scanning_options:
+                description: CodeScanningOptions configures advanced code scanning
+                  options.
+                properties:
+                  allowAdvanced:
+                    description: |-
+                      AllowAdvanced determines whether users can enable advanced code scanning features.
+                      When true, repository administrators can configure advanced code scanning settings beyond the default setup.
+                    type: boolean
+                type: object
+              codeScanningDefaultSetup:
+                description: |-
+                  CodeScanningDefaultSetup enables or disables default code scanning setup.
+                  Default setup automatically configures code scanning with recommended settings.
+                  See: https://docs.github.com/en/code-security/code-scanning/enabling-code-scanning/configuring-default-setup-for-code-scanning
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              codeScanningDefaultSetupOptions:
+                description: CodeScanningDefaultSetupOptions configures runner options
+                  for default code scanning setup.
+                properties:
+                  runnerLabel:
+                    description: |-
+                      RunnerLabel specifies the label of self-hosted runners to use.
+                      This field is required when RunnerType is "labeled" and ignored otherwise.
+                    type: string
+                  runnerType:
+                    description: |-
+                      RunnerType specifies which type of runners to use for code scanning.
+                      - "standard": Use GitHub-hosted standard runners
+                      - "labeled": Use self-hosted runners with specific labels (requires RunnerLabel)
+                      - "not_set": No runner type is configured
+                    enum:
+                    - standard
+                    - labeled
+                    - not_set
+                    type: string
+                required:
+                - runnerType
+                type: object
+              codeSecurity:
+                description: CodeSecurity is a meta-setting that enables multiple
+                  code security features.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              defaultForNewRepos:
+                description: |-
+                  DefaultForNewRepos determines whether this configuration is automatically applied to new repositories.
+                  - "all": Apply to all new repositories
+                  - "private_and_internal": Apply only to new private and internal repositories
+                  - "public": Apply only to new public repositories
+                enum:
+                - all
+                - private_and_internal
+                - public
+                type: string
+              dependabotAlerts:
+                description: |-
+                  DependabotAlerts enables or disables Dependabot alerts for vulnerable dependencies.
+                  Requires DependencyGraph to be enabled.
+                  See: https://docs.github.com/en/code-security/dependabot/dependabot-alerts/about-dependabot-alerts
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              dependabotSecurityUpdates:
+                description: |-
+                  DependabotSecurityUpdates enables or disables Dependabot security updates.
+                  When enabled, Dependabot automatically creates pull requests to update vulnerable dependencies.
+                  Requires DependabotAlerts to be enabled.
+                  See: https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/about-dependabot-security-updates
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              dependencyGraph:
+                description: |-
+                  DependencyGraph enables or disables the dependency graph.
+                  The dependency graph identifies all dependencies in your repository.
+                  - "enabled": Enable dependency graph
+                  - "disabled": Disable dependency graph
+                  - "not_set": Use default organization or repository setting
+                  See: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-the-dependency-graph
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              dependencyGraphAutosubmitAction:
+                description: |-
+                  DependencyGraphAutosubmitAction enables automatic submission of dependency information.
+                  When enabled, dependency information is automatically submitted from Actions workflows.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              dependencyGraphAutosubmitActionOptions:
+                description: DependencyGraphAutosubmitActionOptions configures options
+                  for automatic dependency submission.
+                properties:
+                  labeledRunners:
+                    description: |-
+                      LabeledRunners indicates whether to use labeled runners for dependency submission actions.
+                      If true, actions will run on runners with specific labels instead of GitHub-hosted runners.
+                    type: boolean
+                type: object
+              description:
+                description: Description provides additional information about the
+                  configuration's purpose and settings.
+                type: string
+              enforcement:
+                description: |-
+                  Enforcement determines how strictly this configuration is applied.
+                  - "enforced": Configuration settings are strictly enforced and cannot be overridden
+                  - "unenforced": Configuration settings are recommended but can be overridden at the repository level
+                enum:
+                - enforced
+                - unenforced
+                type: string
+              name:
+                description: Name is the display name of the code security configuration.
+                type: string
+              privateVulnerabilityReporting:
+                description: |-
+                  PrivateVulnerabilityReporting enables or disables private vulnerability reporting.
+                  When enabled, security researchers can privately report vulnerabilities.
+                  See: https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              secretProtection:
+                description: SecretProtection is a meta-setting that enables multiple
+                  secret protection features.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              secretScanning:
+                description: |-
+                  SecretScanning enables or disables secret scanning.
+                  Secret scanning detects secrets (like API keys and tokens) in your code.
+                  Requires AdvancedSecurity to be enabled.
+                  See: https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              secretScanningDelegatedAlertDismissal:
+                description: |-
+                  SecretScanningDelegatedAlertDismissal enables users to dismiss secret scanning alerts.
+                  When enabled, users with appropriate permissions can dismiss false-positive alerts.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              secretScanningDelegatedBypass:
+                description: |-
+                  SecretScanningDelegatedBypass enables delegated bypass for secret scanning push protection.
+                  When enabled, contributors can request bypass approval from designated reviewers.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              secretScanningDelegatedBypassOptions:
+                description: SecretScanningDelegatedBypassOptions configures reviewers
+                  who can approve bypass requests.
+                properties:
+                  reviewers:
+                    description: Reviewers is a list of teams or organization roles
+                      that can review bypass requests.
+                    items:
+                      description: |-
+                        BypassReviewer represents a team or role that can review secret scanning bypass requests.
+                        Either ReviewerId (for direct ID specification) or ReviewerName (for name-based resolution) must be set.
+                        See: https://docs.github.com/en/rest/code-security/configurations
+                      properties:
+                        reviewerId:
+                          description: |-
+                            ReviewerId is the numeric ID of the reviewer (team ID or role ID).
+                            This field is mutually exclusive with ReviewerName.
+                          format: int64
+                          type: integer
+                        reviewerName:
+                          description: |-
+                            ReviewerName is the name of the reviewer (team slug or role name) which will be resolved to an ID based on the ReviewerType.
+                            This field is mutually exclusive with ReviewerId.
+                            For TEAM type, this should be the team slug.
+                            For ROLE type, this should be the role name.
+                          type: string
+                        reviewerType:
+                          description: |-
+                            ReviewerType specifies the type of reviewer.
+                            - "TEAM": A team within the organization (use team slug for ReviewerName)
+                            - "ROLE": An organization role (use role name for ReviewerName)
+                          enum:
+                          - TEAM
+                          - ROLE
+                          type: string
+                      required:
+                      - reviewerType
+                      type: object
+                      x-kubernetes-validations:
+                      - message: exactly one of the fields in [reviewerId reviewerName]
+                          must be set
+                        rule: '[has(self.reviewerId),has(self.reviewerName)].filter(x,x==true).size()
+                          == 1'
+                    type: array
+                required:
+                - reviewers
+                type: object
+              secretScanningGenericSecrets:
+                description: |-
+                  SecretScanningGenericSecrets enables detection of generic secrets.
+                  This uses AI to detect potential secrets that don't match specific patterns.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              secretScanningNonProviderPatterns:
+                description: |-
+                  SecretScanningNonProviderPatterns enables detection of non-provider secret patterns.
+                  This expands secret scanning beyond known service provider patterns.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              secretScanningPushProtection:
+                description: |-
+                  SecretScanningPushProtection enables or disables push protection for secret scanning.
+                  When enabled, pushes containing detected secrets are blocked.
+                  Requires SecretScanning to be enabled.
+                  See: https://docs.github.com/en/code-security/secret-scanning/push-protection-for-repositories-and-organizations
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              secretScanningValidityChecks:
+                description: |-
+                  SecretScanningValidityChecks enables validation of detected secrets.
+                  When enabled, GitHub validates whether detected secrets are still active.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+            required:
+            - description
+            - name
+            type: object
+          status:
+            description: status defines the observed state of CodeSecurityConfiguration
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the CodeSecurityConfiguration resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "matchPackageNames": ["k8s.io/**", "sigs.k8s.io/**", "github.com/onsi/**"],
+      "enabled": false
+    }
+  ]
+}

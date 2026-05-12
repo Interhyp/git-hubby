@@ -1,0 +1,70 @@
+apiVersion: github.interhyp.de/v1alpha1
+kind: RulesetPreset
+metadata:
+  labels:
+    app.kubernetes.io/name: git-hubby
+    app.kubernetes.io/managed-by: kustomize
+  name: minimal-protection
+spec:
+  # Simple ruleset for basic branch protection
+  name: basic-main-protection
+  
+  # Enforcement level
+  enforcement: active
+  
+  # Apply to main branch only
+  conditions:
+    refName:
+      include:
+        - refs/heads/main
+  
+  # Basic protection rules
+  rules:
+    # Prevent deletion of main branch
+    deletion: true
+    
+    # Require linear history
+    requiredLinearHistory: true
+    
+    # Basic pull request requirements
+    pullRequest:
+      requiredApprovingReviewCount: 1
+      requireCodeOwnerReviews: false
+    
+    # Simple status check requirement
+    requiredStatusChecks:
+      requiredStatusChecks:
+        - context: ci/build
+      strictRequiredStatusChecksPolicy: false
+---
+apiVersion: github.interhyp.de/v1alpha1
+kind: RulesetPreset
+metadata:
+  labels:
+    app.kubernetes.io/name: git-hubby
+    app.kubernetes.io/managed-by: kustomize
+  name: development-protection
+spec:
+  # Ruleset for development branches
+  name: dev-branch-protection
+  
+  # Use evaluate mode for development branches (warn but don't block)
+  enforcement: evaluate
+  
+  # Apply to develop and release branches
+  target:
+    include:
+      - develop
+      - release/*
+  
+  # Less strict rules for development
+  rules:
+    # Basic pull request requirements
+    pullRequest:
+      requiredApprovingReviewCount: 1
+    
+    # Commit message pattern enforcement
+    commitMessagePattern:
+      pattern: "^(feat|fix|docs|style|refactor|test|chore|build):"
+      operator: regex
+      negate: false

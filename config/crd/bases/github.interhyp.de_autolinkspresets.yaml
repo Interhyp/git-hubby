@@ -1,0 +1,161 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: autolinkspresets.github.interhyp.de
+spec:
+  group: github.interhyp.de
+  names:
+    kind: AutolinksPreset
+    listKind: AutolinksPresetList
+    plural: autolinkspresets
+    singular: autolinkspreset
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: AutolinksPreset is the Schema for the autolinkspresets API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of AutolinksPreset
+            properties:
+              autolinks:
+                description: |-
+                  AutolinkList is a list of autolink configurations to create in repositories.
+                  Each autolink defines a prefix that triggers link generation and a URL template.
+                items:
+                  description: |-
+                    Autolink defines an automatic link reference for external resources.
+                    When a reference matching KeyPrefix is found in issues, pull requests, or commit messages,
+                    GitHub automatically converts it to a clickable link using the URLTemplate.
+                    See: https://docs.github.com/en/rest/repos/autolinks
+                  properties:
+                    isAlphanumeric:
+                      default: false
+                      description: |-
+                        IsAlphanumeric determines whether the reference must be alphanumeric.
+                        - true: the <num> parameter of the url_template matches alphanumeric characters `A-Z` (case insensitive), `0-9`, and `-`
+                        - false: reference only matches numeric characters.
+                      type: boolean
+                    keyPrefix:
+                      description: |-
+                        KeyPrefix is the text prefix that triggers autolink creation.
+                        When text starts with this prefix followed by a reference, it becomes a link.
+                        Examples: "JIRA-", "TICKET-", "BUG-"
+                      maxLength: 20
+                      pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]{0,19}$
+                      type: string
+                    urlTemplate:
+                      description: |-
+                        URLTemplate is the URL pattern used to generate links.
+                        Use <num> as a placeholder for the reference number/ID.
+                        Example: "https://jira.example.com/browse/<num>" converts "JIRA-123" to "https://jira.example.com/browse/123"
+                      maxLength: 200
+                      type: string
+                  required:
+                  - isAlphanumeric
+                  - keyPrefix
+                  - urlTemplate
+                  type: object
+                type: array
+            type: object
+          status:
+            description: status defines the observed state of AutolinksPreset
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the AutolinksPreset resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

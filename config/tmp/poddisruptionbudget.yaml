@@ -1,0 +1,23 @@
+{{- with .Values.controllerManager.podDisruptionBudget }}
+{{- if .enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "chart.fullname" $ }}-controller-manager
+  labels:
+    control-plane: controller-manager
+  {{- include "chart.labels" $ | nindent 4 }}
+spec:
+  {{- with .minAvailable }}
+  minAvailable: {{ . }}
+  {{- end }}
+  {{- with .maxUnavailable }}
+  maxUnavailable: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+    {{- include "chart.selectorLabels" $ | nindent 6 }}
+{{- end }}
+{{- end }}
+

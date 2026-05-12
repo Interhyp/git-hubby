@@ -1,0 +1,9 @@
+apiVersion: github.interhyp.de/v1alpha1
+kind: AutolinksPreset
+metadata:
+  labels:
+    app.kubernetes.io/name: git-hubby
+    app.kubernetes.io/managed-by: kustomize
+  name: autolinkspreset-sample
+spec:
+  # TODO(user): Add fields here

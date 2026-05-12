@@ -1,0 +1,525 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: repositories.github.interhyp.de
+spec:
+  group: github.interhyp.de
+  names:
+    kind: Repository
+    listKind: RepositoryList
+    plural: repositories
+    singular: repository
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Repository is the Schema for the repositories API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of Repository
+            properties:
+              about:
+                description: About contains descriptive information about the repository.
+                properties:
+                  description:
+                    description: Description is a short description of the repository
+                      displayed on the repository page.
+                    maxLength: 1000
+                    type: string
+                  topics:
+                    description: |-
+                      Topics is a list of topics (tags) that categorize and help discover the repository.
+                      Topics appear on the repository page and in GitHub's topic explorer.
+                      See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics
+                    items:
+                      description: |-
+                        Topic represents a repository topic (tag) for categorization.
+                        See: https://docs.github.com/en/rest/repos/repos#replace-all-repository-topics
+                      properties:
+                        name:
+                          description: |-
+                            Name is the topic name.
+                            Topics must be lowercase and can contain letters, numbers, and hyphens.
+                            They must start with a letter or number.
+                          maxLength: 50
+                          pattern: ^[a-z0-9][a-z0-9-]{0,49}$
+                          type: string
+                      type: object
+                    type: array
+                  website:
+                    description: |-
+                      Website is the URL of the repository's homepage or documentation.
+                      Must be a valid HTTP or HTTPS URL.
+                    maxLength: 200
+                    pattern: ^https?://[^\s]+$
+                    type: string
+                type: object
+              accessLevelForExternalWorkflows:
+                default: none
+                description: |-
+                  AccessLevelForExternalWorkflows controls access to workflows outside the repository.
+                  - "none": Only workflows in this repository can access actions and reusable workflows
+                  - "user": Workflows in user-owned private repositories can access them
+                  - "organization": Workflows across the organization can access them
+                  - "enterprise": Workflows across the enterprise can access them
+                  See: https://docs.github.com/en/rest/actions/permissions
+                enum:
+                - none
+                - user
+                - organization
+                - enterprise
+                type: string
+              actionsEnabled:
+                default: true
+                description: |-
+                  ActionsEnabled determines whether this repository can use GitHub Actions.
+                  This must be enabled at the organization level for this setting to take effect.
+                  See: https://docs.github.com/en/rest/actions/permissions
+                type: boolean
+              allowedMergeStrategies:
+                default:
+                - type: merge
+                - type: rebase
+                description: |-
+                  AllowedMergeStrategies lists the merge strategies allowed for pull requests.
+                  See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges
+                items:
+                  description: |-
+                    MergeStrategy defines an allowed merge strategy for pull requests.
+                    See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github
+                  properties:
+                    type:
+                      description: |-
+                        Type specifies the merge strategy type.
+                        - "merge": Create a merge commit (preserves all commits from the feature branch)
+                        - "rebase": Rebase and merge (rebases commits onto base branch)
+                        - "squash": Squash and merge (combines all commits into a single commit)
+                      enum:
+                      - merge
+                      - rebase
+                      - squash
+                      type: string
+                  type: object
+                type: array
+              archived:
+                default: false
+                description: |-
+                  Archived marks the repository as archived (read-only).
+                  Archived repositories cannot receive new issues, pull requests, or commits.
+                  See: https://docs.github.com/en/repositories/archiving-a-github-repository/archiving-repositories
+                type: boolean
+              attachedCodeSecurityConfiguration:
+                description: |-
+                  AttachedCodeSecurityConfiguration references a CodeSecurityConfiguration to attach to this repository.
+                  This is only used when the organization's configuration has "selected" attachment scope.
+                  See: https://docs.github.com/en/rest/code-security/configurations
+                properties:
+                  name:
+                    description: Name is the name of the referenced CodeSecurityConfiguration
+                      CRD.
+                    type: string
+                required:
+                - name
+                type: object
+              autolinksPresets:
+                description: |-
+                  AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.
+                  Autolinks automatically convert references (like "JIRA-123") into clickable links.
+                  See: https://docs.github.com/en/rest/repos/autolinks
+                items:
+                  description: |-
+                    LocalObjectReference contains enough information to let you locate the
+                    referenced object inside the same namespace.
+                  properties:
+                    name:
+                      default: ""
+                      description: |-
+                        Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                type: array
+              availableActionsRunnerGroups:
+                description: |-
+                  AvailableActionsRunnerGroups lists runner group names that this repository can use.
+                  This is only relevant when the organization's runner groups have "selected" visibility.
+                  See: https://docs.github.com/en/rest/actions/self-hosted-runner-groups
+                items:
+                  type: string
+                type: array
+              customProperties:
+                description: |-
+                  CustomProperties is a list of custom property values to apply to this repository.
+                  These properties must be defined in the parent organization's custom properties.
+                  If a property is not present in this list, it will be unset (removed) from the repository.
+                  See: https://docs.github.com/en/rest/repos/custom-properties
+                items:
+                  description: |-
+                    CustomPropertyValue defines a custom property value for a repository.
+                    Custom properties are defined at the organization level and applied to repositories.
+                    If both Value and Values are empty, the value for the property is considered nil (removes the property).
+                    For custom properties of value type "multi_select", use Values to specify multiple selections.
+                    For all other value types ("string", "single_select", "true_false"), use Value.
+                    See: https://docs.github.com/en/rest/repos/custom-properties
+                  properties:
+                    propertyName:
+                      description: PropertyName is the name of the custom property
+                        as defined in the organization.
+                      type: string
+                    value:
+                      description: |-
+                        Value is the property value for types "string", "single_select", and "true_false".
+                        For "true_false", must be "true" or "false".
+                        For "single_select", must be one of the allowed values defined in the organization's custom property.
+                      type: string
+                    values:
+                      description: |-
+                        Values is the list of selected values for "multi_select" type properties.
+                        Each value must be one of the allowed values defined in the organization's custom property.
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - propertyName
+                  type: object
+                  x-kubernetes-validations:
+                  - message: exactly one of the fields in [value values] must be set
+                    rule: '[has(self.value),has(self.values)].filter(x,x==true).size()
+                      == 1'
+                type: array
+              defaultBranch:
+                default: main
+                description: |-
+                  DefaultBranch is the name of the default branch for the repository.
+                  This is the base branch for pull requests and where the repository opens by default.
+                maxLength: 100
+                minLength: 1
+                pattern: ^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$
+                type: string
+              deleteBranchOnMerge:
+                default: true
+                description: |-
+                  DeleteBranchOnMerge automatically deletes head branches after pull requests are merged.
+                  This helps keep the repository clean by removing merged feature branches.
+                  See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-the-automatic-deletion-of-branches
+                type: boolean
+              deployKeys:
+                description: |-
+                  DeployKeyList defines deploy keys to create for this repository.
+                  Deploy keys are SSH keys that grant access to a single repository.
+                  See: https://docs.github.com/en/rest/deploy-keys/deploy-keys
+                items:
+                  description: |-
+                    DeployKey defines an SSH key for read-only or read-write access to a single repository.
+                    Deploy keys are commonly used for CI/CD systems and automated deployments.
+                    See: https://docs.github.com/en/rest/deploy-keys/deploy-keys
+                  properties:
+                    key:
+                      description: |-
+                        Key is the public SSH key in OpenSSH format.
+                        Supported key types are RSA and Ed25519.
+                        Example: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC..." or "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+                      pattern: ^ssh-(rsa|ed25519) [A-Za-z0-9+/]+={0,3}( [^\s]+)?$
+                      type: string
+                    readOnly:
+                      default: true
+                      description: |-
+                        ReadOnly determines the access level for this deploy key.
+                        - true: Key can only read from the repository (cannot push)
+                        - false: Key can read and write to the repository (can push commits)
+                      type: boolean
+                    title:
+                      description: |-
+                        Title is a descriptive name for the deploy key shown in the repository settings.
+                        Examples: "CI/CD Key", "Read-Only Deploy Key", "Production Server"
+                      type: string
+                  required:
+                  - key
+                  - title
+                  type: object
+                type: array
+              hasDownloads:
+                default: false
+                description: |-
+                  HasDownloads enables or disables the Downloads feature for the repository.
+                  This feature is deprecated and has been replaced by Releases.
+                type: boolean
+              hasIssues:
+                default: true
+                description: |-
+                  HasIssues enables or disables the GitHub Issues feature for the repository.
+                  When enabled, users can create and track issues.
+                type: boolean
+              hasProjects:
+                default: false
+                description: |-
+                  HasProjects enables or disables the GitHub Projects (classic) feature for the repository.
+                  Note: This refers to classic projects, not the newer Projects feature.
+                type: boolean
+              hasWiki:
+                default: false
+                description: |-
+                  HasWiki enables or disables the GitHub Wiki feature for the repository.
+                  When enabled, users can create wiki pages for documentation.
+                type: boolean
+              isTemplate:
+                default: false
+                description: |-
+                  IsTemplate marks the repository as a template repository.
+                  Template repositories can be used as a starting point for new repositories.
+                  See: https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository
+                type: boolean
+              mergeCommitMessage:
+                default: PR_TITLE
+                description: |-
+                  MergeCommitMessage determines the default message for merge commits.
+                  - "PR_BODY": Use the pull request body
+                  - "PR_TITLE": Use the pull request title
+                  - "BLANK": Use a blank message
+                  See: https://docs.github.com/en/rest/repos/repos#update-a-repository
+                enum:
+                - PR_BODY
+                - PR_TITLE
+                - BLANK
+                type: string
+              mergeCommitTitle:
+                default: MERGE_MESSAGE
+                description: |-
+                  MergeCommitTitle determines the default title for merge commits.
+                  - "PR_TITLE": Use the pull request title
+                  - "MERGE_MESSAGE": Use the default merge message format
+                  See: https://docs.github.com/en/rest/repos/repos#update-a-repository
+                enum:
+                - PR_TITLE
+                - MERGE_MESSAGE
+                type: string
+              name:
+                description: |-
+                  Name is the GitHub repository name.
+                  Repository names can contain alphanumeric characters, hyphens, underscores, and periods.
+                maxLength: 100
+                minLength: 1
+                pattern: ^[.a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$
+                type: string
+              organizationRef:
+                description: OrganizationRef references the Organization CRD this
+                  repository belongs to.
+                properties:
+                  name:
+                    description: Name is the name of the referenced Organization CRD.
+                    type: string
+                type: object
+              rulesetPresets:
+                description: |-
+                  RulesetPresetList references RulesetPreset CRDs to apply to this repository.
+                  These define branch protection rules, required status checks, and other policies.
+                  See: https://docs.github.com/en/rest/repos/rules
+                items:
+                  description: |-
+                    LocalObjectReference contains enough information to let you locate the
+                    referenced object inside the same namespace.
+                  properties:
+                    name:
+                      default: ""
+                      description: |-
+                        Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                type: array
+              visibility:
+                default: private
+                description: |-
+                  Visibility controls who can see the repository.
+                  - "public": Anyone can see the repository
+                  - "private": Only people with explicit access can see the repository
+                  - "internal": Only members of the organization can see the repository (Enterprise only)
+                  See: https://docs.github.com/en/rest/repos/repos#create-an-organization-repository
+                enum:
+                - public
+                - private
+                - internal
+                type: string
+              webhookIgnorePresets:
+                description: |-
+                  WebhookIgnorePresetsList references WebhookIgnorePreset CRDs that define webhooks to ignore.
+                  Webhooks matching these patterns will not be created even if they are in WebhookPresetList.
+                items:
+                  description: |-
+                    LocalObjectReference contains enough information to let you locate the
+                    referenced object inside the same namespace.
+                  properties:
+                    name:
+                      default: ""
+                      description: |-
+                        Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                type: array
+              webhookPresets:
+                description: |-
+                  WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.
+                  Webhooks send HTTP POST payloads to external services when specific events occur.
+                  See: https://docs.github.com/en/rest/webhooks/repos
+                items:
+                  description: |-
+                    LocalObjectReference contains enough information to let you locate the
+                    referenced object inside the same namespace.
+                  properties:
+                    name:
+                      default: ""
+                      description: |-
+                        Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                type: array
+            required:
+            - name
+            - organizationRef
+            type: object
+          status:
+            description: status defines the observed state of Repository
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the Repository resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              id:
+                description: ID is the repository ID as created by GitHub.
+                format: int64
+                type: integer
+              observedSubResourceGenerations:
+                additionalProperties:
+                  format: int64
+                  type: integer
+                description: |-
+                  ObservedSubResourceGenerations is a map of sub-resource names to their observed generations.
+                  Keys are in the format "<kind>/<namespace/<name>".
+                  SubResources are kubernetes resources that are referenced by this Repository and are not managed
+                  by their own controllers like WebhookPresets, RuleSetPresets and the attached CodeSecurityConfiguration
+                type: object
+              webhooks:
+                additionalProperties:
+                  description: WebhookStatus defines the status of a webhook configured
+                    for a repository
+                  properties:
+                    secretHash:
+                      description: Secret is a hash of the secret used for the webhook
+                      type: string
+                  type: object
+                description: |-
+                  Webhooks is a list of webhooks configured for this repository
+                  the key is the hash of the configuration
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

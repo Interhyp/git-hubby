@@ -1,0 +1,29 @@
+# Exclude build artifacts and cache
+bin/
+dist/
+*.out
+cover.out
+.cache/
+
+# Exclude version control
+.git/
+.gitignore
+
+# Exclude documentation
+docs/
+*.md
+!README.md
+
+# Exclude CI/CD files (if not needed for build)
+.github/
+Jenkinsfile*.groovy
+
+# Exclude development files
+.vscode/
+.idea/
+
+# Exclude helm chart (already built)
+chart/
+
+# Exclude grafana dashboards
+grafana/

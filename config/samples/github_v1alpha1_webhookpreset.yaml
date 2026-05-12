@@ -1,0 +1,20 @@
+apiVersion: github.interhyp.de/v1alpha1
+kind: WebhookPreset
+metadata:
+  labels:
+    app.kubernetes.io/name: git-hubby
+    app.kubernetes.io/managed-by: kustomize
+  name: webhookpreset-sample
+spec:
+  payloadUrl: "https://api.example.com/webhooks/github"
+  secret: "my-webhook-secret-token"
+  contentType: "application/json"  # Optional: json or form (defaults to json)
+  active: true
+  events:
+    - "push"
+    - "pull_request"
+    - "issues"
+    - "issue_comment"
+    - "pull_request_review"
+    - "release"
+  sslVerify: true

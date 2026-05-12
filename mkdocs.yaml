@@ -1,0 +1,10 @@
+site_name: git-hubby
+
+docs_dir: docs/techdocs/
+
+repo_url: ${REPO_BROWSE_URL} #inserted by "Create service techdocs" pipeline
+edit_uri: docs/techdocs/
+
+plugins:
+  - techdocs-core
+  - mkdocs-nav-weight

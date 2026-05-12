@@ -1,0 +1,12 @@
+apiVersion: github.interhyp.de/v1alpha1
+kind: Organization
+metadata:
+  labels:
+    app.kubernetes.io/name: git-hubby
+    app.kubernetes.io/managed-by: kustomize
+  name: sample-org
+spec:
+  description: "GitHub Sample Organization"
+  githubAppCredentials:
+    secretRef:
+      name: sample-org-app-credentials

@@ -1,0 +1,127 @@
+apiVersion: github.interhyp.de/v1alpha1
+kind: RulesetPreset
+metadata:
+  labels:
+    app.kubernetes.io/name: git-hubby
+    app.kubernetes.io/managed-by: kustomize
+  name: rulesetpreset-sample
+spec:
+  # Name of the ruleset that will be created in GitHub
+  name: main-branch-protection
+  
+  # Enforcement level: disabled, active, or evaluate
+  enforcement: active
+  
+  # Target configuration - what branches/tags this ruleset applies to
+  # Additional conditions for repository targeting are available to RulesetPresets applied to Organizations
+  conditions:
+    refName:
+      include:
+        - refs/heads/main
+        - refs/heads/master
+      exclude:
+        - feature/*
+  
+  # Bypass actors who can bypass these rules
+  bypassActors:
+    - actorId: 123456
+      actorType: OrganizationAdmin
+      bypassMode: always
+    - actorId: 789012
+      actorType: Team
+      bypassMode: pull_request
+  
+  # Ruleset rules configuration
+  rules:
+    # Restrict creation of matching refs
+    creation: true
+    
+    # Restrict updates to matching refs
+    update: false
+    
+    # Prevent deletion of matching refs
+    deletion: true
+    
+    # Require linear history
+    requiredLinearHistory: true
+    
+    # Prevent non-fast-forward updates
+    nonFastForward: true
+    
+    # Require signed commits
+    requiredSignatures: false
+    
+    # Required deployment environments
+    requiredDeployments:
+      requiredDeploymentEnvironments:
+        - production
+        - staging
+    
+    # Pull request requirements
+    pullRequest:
+      dismissStaleReviewsOnPush: true
+      requireCodeOwnerReviews: true
+      requireLastPushApproval: false
+      requiredApprovingReviewCount: 2
+      requiredReviewThreadResolution: true
+    
+    # Required status checks
+    requiredStatusChecks:
+      requiredStatusChecks:
+        - context: continuous-integration/jenkins/pr-merge
+          integrationId: 15368
+        - context: security/codeql
+        - context: ci/build
+      strictRequiredStatusChecksPolicy: true
+    
+    # Commit message pattern
+    commitMessagePattern:
+      pattern: "^(feat|fix|docs|style|refactor|test|chore):"
+      operator: regex
+      negate: false
+    
+    # Branch name pattern (negate=true means this pattern is NOT allowed)
+    branchNamePattern:
+      pattern: hotfix/
+      operator: starts_with
+      negate: true
+    
+    # Commit author email pattern
+    commitAuthorEmailPattern:
+      pattern: "@company.com"
+      operator: ends_with
+      negate: false
+---
+# Example: Organization-level ruleset with repository property conditions and workflow rule
+apiVersion: github.interhyp.de/v1alpha1
+kind: RulesetPreset
+metadata:
+  labels:
+    app.kubernetes.io/name: git-hubby
+    app.kubernetes.io/managed-by: kustomize
+  name: org-workflow-ruleset
+spec:
+  name: "My Org Workflow Ruleset"
+  enforcement: active
+
+  conditions:
+    # apply to the default branch of all targeted repositories
+    refName:
+      include:
+        - "~DEFAULT_BRANCH"
+    # Only target repositories with custom property "type" = "helm-deployment"
+    # (only effective for organization-level rulesets)
+    repositoryProperty:
+      include:
+        - name: type
+          propertyValues:
+            - helm-deployment
+
+  rules:
+    # Require a workflow to pass before merging
+    # (only effective for organization-level rulesets)
+    workflows: # this is the rule type
+      workflows: # this is the parameter which workflows to execute
+        - repositoryName: .github
+          path: ".github/workflows/my-workflow.yaml"
+          ref: "refs/heads/main"

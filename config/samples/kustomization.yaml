@@ -1,0 +1,11 @@
+## Append samples of your project ##
+resources:
+- github_v1alpha1_organization.yaml
+- github_v1alpha1_repository.yaml
+- github_v1alpha1_rulesetpreset.yaml
+- github_v1alpha1_webhookpreset.yaml
+- github_v1alpha1_team.yaml
+- github_v1alpha1_codesecurityconfiguration.yaml
+- github_v1alpha1_webhookignorepreset.yaml
+- github_v1alpha1_autolinkspreset.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

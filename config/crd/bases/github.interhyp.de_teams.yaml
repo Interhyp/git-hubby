@@ -1,0 +1,242 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: teams.github.interhyp.de
+spec:
+  group: github.interhyp.de
+  names:
+    kind: Team
+    listKind: TeamList
+    plural: teams
+    singular: team
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of Team
+            properties:
+              description:
+                description: |-
+                  Description provides additional information about the team's purpose.
+                  This appears on the team's page in GitHub.
+                maxLength: 1000
+                type: string
+              idpGroup:
+                description: |-
+                  IDPGroup is the name of the Identity Provider group to synchronize with this team.
+                  This field is mutually exclusive with Members.
+                  When set, team membership is automatically synchronized from the IDP group.
+                  See: https://docs.github.com/en/organizations/organizing-members-into-teams/synchronizing-a-team-with-an-identity-provider-group
+                maxLength: 100
+                pattern: ^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$
+                type: string
+              members:
+                description: |-
+                  Members is a list of GitHub usernames to add to the team.
+                  This field is mutually exclusive with IDPGroup.
+                  When set, team membership is managed manually through this list.
+                  Members not in this list will be removed from the team.
+                items:
+                  type: string
+                maxItems: 100
+                type: array
+              name:
+                description: |-
+                  Name is the display name of the team in GitHub.
+                  GitHub automatically generates a "slug" from this name for use in URLs and APIs.
+                maxLength: 100
+                minLength: 1
+                pattern: ^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$
+                type: string
+              notificationSetting:
+                default: notifications_disabled
+                description: |-
+                  NotificationSetting controls whether team members receive notifications for the team.
+                  - "notifications_disabled": No one receives notifications.
+                  - "notifications_enabled": Everyone receives notifications when the team is @mentioned.
+                  See: https://docs.github.com/en/rest/teams/teams#create-a-team
+                enum:
+                - notifications_disabled
+                - notifications_enabled
+                type: string
+              organizationRefs:
+                description: |-
+                  OrganizationRefs is a list of Organization CRDs that this team belongs to.
+                  The team will be created or updated in all referenced organizations.
+                  Removing an organization from this list will delete the team from that organization
+                  while preserving it in other organizations.
+                items:
+                  description: OrganizationRef is a reference to an Organization CRD.
+                  properties:
+                    name:
+                      description: Name is the name of the referenced Organization
+                        CRD.
+                      type: string
+                  type: object
+                minItems: 1
+                type: array
+              organizationRoles:
+                description: |-
+                  OrganizationRoles is a list of organization role names to assign to this team.
+                  Organization roles define the permissions the team has within the organization.
+                  If not specified, defaults to empty list.
+                  Set to an empty list to remove all role assignments.
+                  See: https://docs.github.com/en/rest/orgs/organization-roles
+                items:
+                  type: string
+                type: array
+                x-kubernetes-list-type: set
+              permission:
+                default: pull
+                description: |-
+                  Permission specifies the default permission granted to team members for organization repositories.
+                  - "pull": Team members can pull (read) from organization repositories.
+                  - "push": Team members can pull and push (read and write) to organization repositories.
+                  Note: This is a legacy field. Use organization roles for more fine-grained permissions.
+                  See: https://docs.github.com/en/rest/teams/teams#create-a-team
+                enum:
+                - pull
+                - push
+                type: string
+              privacy:
+                default: closed
+                description: |-
+                  Privacy controls the visibility of the team within the organization.
+                  - "closed": The team is visible to all members of the organization, but only team members can see team discussions and manage team membership.
+                  - "secret": The team is only visible to organization owners and team members.
+                  See: https://docs.github.com/en/rest/teams/teams#create-a-team
+                enum:
+                - closed
+                - secret
+                type: string
+            required:
+            - name
+            - organizationRefs
+            type: object
+            x-kubernetes-validations:
+            - message: exactly one of the fields in [idpGroup members] must be set
+              rule: '[has(self.idpGroup),has(self.members)].filter(x,x==true).size()
+                == 1'
+          status:
+            description: status defines the observed state of Team
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the Team resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              previousOrganizationRefs:
+                description: |-
+                  PreviousOrganizationRefs tracks the organization references from the last successful reconciliation.
+                  This allows the reconciler to detect when organizations are removed from the spec
+                  and clean up teams from those organizations while preserving them in remaining organizations.
+                items:
+                  description: OrganizationRef is a reference to an Organization CRD.
+                  properties:
+                    name:
+                      description: Name is the name of the referenced Organization
+                        CRD.
+                      type: string
+                  type: object
+                type: array
+              slug:
+                description: |-
+                  Slug is the URL-friendly version of the team name as assigned by GitHub.
+                  This slug is used in URLs and API calls. GitHub generates it automatically from the Name field.
+                  Example: A team named "Platform Engineers" might have the slug "platform-engineers".
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

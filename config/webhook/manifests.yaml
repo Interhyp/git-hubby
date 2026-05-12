@@ -1,0 +1,46 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-github-interhyp-de-v1alpha1-organization
+  failurePolicy: Fail
+  name: vorganization-v1alpha1.kb.io
+  rules:
+  - apiGroups:
+    - github.interhyp.de
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - organizations
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-github-interhyp-de-v1alpha1-repository
+  failurePolicy: Fail
+  name: vrepository-v1alpha1.kb.io
+  rules:
+  - apiGroups:
+    - github.interhyp.de
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - repositories
+  sideEffects: None

@@ -1,0 +1,32 @@
+package utils
+
+func WithDefaultAsPtr[T any](value *T, defaultValue T) *T {
+	if value == nil {
+		return &defaultValue
+	}
+	return value
+}
+
+func WithDefault[T any](in *T, defaultValue T) T {
+	if in == nil {
+		return defaultValue
+	}
+	return *in
+}
+
+func WithEmptyDefault[T any](value []T) []T {
+	if value == nil {
+		return make([]T, 0)
+	}
+	return value
+}
+
+func BoolPtrDiffer(a, b *bool) bool {
+	if a == nil && b == nil {
+		return false
+	}
+	if a == nil || b == nil {
+		return true
+	}
+	return *a != *b
+}

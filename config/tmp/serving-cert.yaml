@@ -1,0 +1,33 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "chart.fullname" . }}-serving-cert
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+  - '{{ include "chart.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc'
+  - '{{ include "chart.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc.{{
+    .Values.kubernetesClusterDomain }}'
+  secretName: webhook-server-certificate
+  {{- with .Values.servingCert.duration }}
+  duration: {{ . }}
+  {{- end }}
+  issuerRef:
+    {{- toYaml .Values.servingCert.issuerRef | nindent 4 }}
+  {{- with .Values.servingCert.privateKey }}
+  privateKey:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.servingCert.renewBefore }}
+  renewBefore: {{ . }}
+  {{- end }}
+  {{- with .Values.servingCert.subject }}
+  subject:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.servingCert.usages }}
+  usages:
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
+

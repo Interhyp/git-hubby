@@ -1,0 +1,454 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: organizations.github.interhyp.de
+spec:
+  group: github.interhyp.de
+  names:
+    kind: Organization
+    listKind: OrganizationList
+    plural: organizations
+    singular: organization
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Organization is the Schema for the organizations API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of Organization
+            properties:
+              actionsSettings:
+                description: |-
+                  ActionsSettings configures GitHub Actions permissions and behavior for the organization.
+                  This includes which repositories can use Actions, which actions are allowed, and runner group configurations.
+                  See: https://docs.github.com/en/rest/actions/permissions
+                properties:
+                  allowedActions:
+                    description: |-
+                      AllowedActions configures which actions and workflows are allowed to run.
+                      Must be nil if EnabledRepositories is "none".
+                      - "all": All actions and reusable workflows are allowed
+                      - "local_only": Only actions and workflows defined in the same repository or organization are allowed
+                      - "selected": Only specific actions are allowed (requires SelectedAllowedActions)
+                    enum:
+                    - all
+                    - local_only
+                    - selected
+                    type: string
+                  artifactAndLogRetentionDays:
+                    default: 400
+                    description: |-
+                      ArtifactAndLogRetentionDays specifies how many days workflow artifacts and logs are retained.
+                      Must be between 1 and 400 days. Shorter retention periods reduce storage costs.
+                    type: integer
+                  canApprovePullRequestReviews:
+                    default: false
+                    description: |-
+                      CanApprovePullRequestReviews determines whether the GITHUB_TOKEN can approve pull requests.
+                      When false, prevents workflows from approving pull requests automatically.
+                    type: boolean
+                  defaultWorkflowPermissions:
+                    default: read
+                    description: |-
+                      DefaultWorkflowPermissions sets the default GITHUB_TOKEN permissions for workflows.
+                      - "read": Token has read-only access to repository contents
+                      - "write": Token has read and write access to repository contents
+                    enum:
+                    - read
+                    - write
+                    type: string
+                  enabledRepositories:
+                    default: none
+                    description: |-
+                      EnabledRepositories determines which repositories can use GitHub Actions.
+                      - "all": Actions enabled for all repositories
+                      - "none": Actions disabled for all repositories
+                      - "selected": Actions enabled for specific repositories (requires additional configuration)
+                    enum:
+                    - all
+                    - none
+                    - selected
+                    type: string
+                  runnerGroups:
+                    description: |-
+                      RunnerGroups configures self-hosted runner groups for the organization.
+                      Each group can have different visibility and workflow restrictions.
+                    items:
+                      description: |-
+                        RunnerGroup configures a self-hosted runner group for GitHub Actions in an organization.
+                        Runner groups allow you to control which repositories can use specific sets of self-hosted runners.
+                        See: https://docs.github.com/en/rest/actions/self-hosted-runner-groups
+                      properties:
+                        name:
+                          description: Name is the unique name of the runner group
+                            within the organization.
+                          type: string
+                        restrictedToWorkflows:
+                          default: false
+                          description: |-
+                            RestrictedToWorkflows determines whether this runner group can only run specific workflows.
+                            If true, only workflows listed in SelectedWorkflows can use runners in this group.
+                            This provides additional security by limiting which workflows can execute on sensitive runners.
+                          type: boolean
+                        selectedWorkflows:
+                          description: |-
+                            SelectedWorkflows lists the workflows that can use runners in this group.
+                            This field is only used when RestrictedToWorkflows is true.
+                            Each entry must be a full workflow path with a reference (branch, tag, or SHA).
+                            Example: "octo-org/octo-repo/.github/workflows/deploy.yaml@refs/heads/main"
+                          items:
+                            type: string
+                          type: array
+                        visibility:
+                          default: all
+                          description: |-
+                            Visibility determines which repositories can access runners in this group.
+                            - "all": All repositories in the organization can use these runners
+                            - "private": Only private repositories can use these runners
+                            - "selected": Only specific repositories can use these runners (selected via AvailableActionsRunnerGroups in RepositorySpec)
+                          enum:
+                          - all
+                          - private
+                          - selected
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  selectedAllowedActions:
+                    description: |-
+                      SelectedAllowedActions specifies which actions are allowed when AllowedActions is "selected".
+                      This field is required when AllowedActions is "selected" and ignored otherwise.
+                    properties:
+                      githubOwnedAllowed:
+                        default: false
+                        description: |-
+                          GitHubOwnedAllowed determines whether actions created by GitHub are allowed to run.
+                          This includes actions in the "actions" and "github" organizations.
+                        type: boolean
+                      patternsAllowed:
+                        default: []
+                        description: |-
+                          PatternsAllowed is a list of glob patterns specifying allowed actions.
+                          Each pattern can match action repositories using wildcards, e.g., "my-org/*" or "*/action-name@*".
+                        items:
+                          type: string
+                        type: array
+                      verifiedAllowed:
+                        default: false
+                        description: |-
+                          VerifiedAllowed determines whether actions from verified creators are allowed to run.
+                          Verified creators are trusted partners and organizations with verified domains.
+                        type: boolean
+                    type: object
+                  shaPinningRequired:
+                    default: false
+                    description: |-
+                      ShaPinningRequired determines whether workflows must reference actions using the commit SHA instead of tags or branches.
+                      When true, improves security by preventing tag manipulation attacks.
+                    type: boolean
+                type: object
+              codeSecurityConfigurations:
+                description: |-
+                  CodeSecurityConfigurations lists code security configurations to create and optionally attach to repositories.
+                  Each configuration defines security features like dependency scanning, secret scanning, and code scanning.
+                  See: https://docs.github.com/en/rest/code-security/configurations
+                items:
+                  description: |-
+                    AttachableCodeSecurityConfigurationRef references a CodeSecurityConfiguration CRD and specifies its attachment scope.
+                    Code security configurations define security settings like dependency scanning, secret scanning, and code scanning.
+                    See: https://docs.github.com/en/rest/code-security/configurations
+                  properties:
+                    attachmentScope:
+                      description: |-
+                        AttachmentScope defines which repositories the code security configuration applies to.
+                        - "all": Apply to all repositories in the organization
+                        - "all_without_configurations": Apply to repositories without an existing configuration
+                        - "public": Apply only to public repositories
+                        - "private_or_internal": Apply only to private and internal repositories
+                        - "selected": Apply only to repositories that explicitly reference this configuration in their AttachedCodeSecurityConfiguration field
+                        If not set, the configuration is created but not attached to any repositories.
+
+                        Note: GitHub's API does not provide a way to retrieve the current attachment scope type.
+                        The reconciler ensures functional correctness by comparing the actual list of attached repositories
+                        to the desired state, not the scope label itself. This means GitHub's UI may display "selected repositories"
+                        even when the scope is set to "all" (if all repositories happen to be selected), which is a cosmetic
+                        discrepancy that does not affect the actual security configuration. The reconciler will only re-attach
+                        if the actual repository attachments differ from what the scope implies.
+
+                        For scope "all_without_configurations", the attachment is performed unconditionally without
+                        comparing repository lists, as there is no reliable way to determine which repositories should
+                        be included (repositories without configurations at the time of attachment may have since
+                        been configured). The reconciler will re-attach on every reconciliation for this scope.
+                      enum:
+                      - all
+                      - all_without_configurations
+                      - public
+                      - private_or_internal
+                      - selected
+                      type: string
+                    name:
+                      description: Name is the name of the referenced CodeSecurityConfiguration
+                        CRD.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              customProperties:
+                description: |-
+                  CustomProperties defines custom metadata properties that can be assigned to repositories in the organization.
+                  These properties allow you to categorize and add structured metadata to your repositories.
+                  See: https://docs.github.com/en/rest/orgs/custom-properties
+                items:
+                  description: |-
+                    OrgCustomProperty defines a custom property for an organization.
+                    Custom properties allow you to add metadata to repositories in your organization.
+                    This is a kubebuilder annotated copy of github.CustomProperty without the source_type (as it is fixed to "organization").
+                    For the logic to work the json field names must match the ones in github.CustomProperty.
+                    See: https://docs.github.com/en/rest/orgs/custom-properties
+                  properties:
+                    allowedValues:
+                      description: |-
+                        AllowedValues is a list of allowed values for the property.
+                        This property is required for ValueType "single_select" and "multi_select".
+                        For the other ValueTypes, it must be empty.
+                      items:
+                        type: string
+                      maxItems: 200
+                      type: array
+                    defaultValue:
+                      description: |-
+                        DefaultValue is the default value for the property.
+                        This property must be set if Required is true. It must be empty if Required is false.
+                        The allowed format depends on the ValueType.
+                        For ValueType "string" or "single_select", it must be a string. For "single_select", it must be one of the AllowedValues.
+                        For ValueType "multi_select", it must be a JSON array of strings only containing elements of AllowedValues.
+                        For ValueType "true_false", it must be a string that is either "true" or "false".
+                      properties:
+                        value:
+                          description: |-
+                            Value is the default value for properties with ValueType "string", "single_select", or "true_false".
+                            For "true_false", it must be either "true" or "false".
+                            For "single_select", it must be one of the AllowedValues defined in the property.
+                          type: string
+                        values:
+                          description: |-
+                            Values is the default value for properties with ValueType "multi_select".
+                            Each value must be one of the AllowedValues defined in the property.
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                      x-kubernetes-validations:
+                      - message: exactly one of the fields in [value values] must
+                          be set
+                        rule: '[has(self.value),has(self.values)].filter(x,x==true).size()
+                          == 1'
+                    description:
+                      description: Description provides additional information about
+                        the purpose and usage of this custom property.
+                      type: string
+                    propertyName:
+                      description: |-
+                        PropertyName is the unique name of the custom property.
+                        Must start with a letter, number, _, $, or # and can only contain letters, numbers, _, $, #, and -.
+                      pattern: ^[a-zA-Z0-9_\$#\-]+$
+                      type: string
+                    required:
+                      default: false
+                      description: |-
+                        Required indicates whether this property must be set on all repositories.
+                        If true, a DefaultValue must be provided.
+                      type: boolean
+                    valueType:
+                      description: |-
+                        ValueType specifies the type of value this property accepts.
+                        - "string": A free-form text value
+                        - "single_select": A single value from a predefined list (requires AllowedValues)
+                        - "multi_select": Multiple values from a predefined list (requires AllowedValues)
+                        - "true_false": A boolean value represented as "true" or "false"
+                      enum:
+                      - string
+                      - single_select
+                      - multi_select
+                      - true_false
+                      type: string
+                    valuesEditableBy:
+                      default: org_actors
+                      description: |-
+                        ValuesEditableBy determines who can edit the property values on repositories.
+                        - "org_actors": Only organization members can edit values
+                        - "org_and_repo_actors": Both organization and repository members can edit values
+                      enum:
+                      - org_actors
+                      - org_and_repo_actors
+                      type: string
+                  required:
+                  - propertyName
+                  - valueType
+                  type: object
+                maxItems: 100
+                type: array
+              description:
+                description: |-
+                  Description is a human-readable description of the organization.
+                  This appears on the organization's GitHub profile page.
+                type: string
+              githubAppInstallationId:
+                description: |-
+                  GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.
+                  This is used to authenticate API requests to GitHub. You can find this ID in your GitHub App's
+                  installation settings or via the GitHub API.
+                format: int64
+                minimum: 1
+                type: integer
+              name:
+                description: |-
+                  Name is the GitHub organization name (also known as the organization login).
+                  This is the unique identifier for the organization on GitHub.
+                maxLength: 100
+                minLength: 1
+                pattern: ^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$
+                type: string
+              rulesetPresets:
+                description: |-
+                  RulesetPresetList references RulesetPreset CRDs that define repository rulesets for this organization.
+                  Rulesets enforce policies like branch protection, required reviews, and status checks.
+                  See: https://docs.github.com/en/rest/orgs/rules
+                items:
+                  description: |-
+                    LocalObjectReference contains enough information to let you locate the
+                    referenced object inside the same namespace.
+                  properties:
+                    name:
+                      default: ""
+                      description: |-
+                        Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                type: array
+            required:
+            - actionsSettings
+            - codeSecurityConfigurations
+            - description
+            - githubAppInstallationId
+            - name
+            type: object
+          status:
+            description: status defines the observed state of Organization
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the Organization resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedSubResourceGenerations:
+                additionalProperties:
+                  format: int64
+                  type: integer
+                description: |-
+                  ObservedSubResourceGenerations is a map of sub-resource names to their observed generations.
+                  Keys are in the format "<kind>/<namespace/<name>".
+                  SubResources are kubernetes resources that are referenced by this Organization and are not managed
+                  by their own controllers like RuleSetPresets and CodeSecurityConfigurations
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

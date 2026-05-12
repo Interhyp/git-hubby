@@ -1,0 +1,263 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: webhookpresets.github.interhyp.de
+spec:
+  group: github.interhyp.de
+  names:
+    kind: WebhookPreset
+    listKind: WebhookPresetList
+    plural: webhookpresets
+    singular: webhookpreset
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: WebhookPreset is the Schema for the webhookpresets API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of WebhookPreset
+            properties:
+              active:
+                default: true
+                description: |-
+                  Active determines whether the webhook is active and will send events.
+                  Set to false to temporarily disable the webhook without deleting it.
+                type: boolean
+              contentType:
+                description: |-
+                  ContentType specifies the format of the webhook payload.
+                  - "json": Send payload as application/json (recommended)
+                  - "form": Send payload as application/x-www-form-urlencoded
+                  See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+                enum:
+                - json
+                - form
+                type: string
+              events:
+                description: |-
+                  Events is a list of GitHub event types that trigger this webhook.
+                  If empty, the webhook subscribes to all events ("*").
+                  Common events include "push", "pull_request", "issues", "release".
+                  See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+                items:
+                  enum:
+                  - branch_protection_rule
+                  - check_run
+                  - check_suite
+                  - code_scanning_alert
+                  - commit_comment
+                  - create
+                  - delete
+                  - dependabot_alert
+                  - deploy_key
+                  - deployment
+                  - deployment_status
+                  - discussion
+                  - discussion_comment
+                  - fork
+                  - github_app_authorization
+                  - gollum
+                  - installation
+                  - installation_repositories
+                  - issue_comment
+                  - issues
+                  - label
+                  - marketplace_purchase
+                  - member
+                  - membership
+                  - merge_group
+                  - meta
+                  - milestone
+                  - organization
+                  - org_block
+                  - package
+                  - page_build
+                  - ping
+                  - project
+                  - project_card
+                  - project_column
+                  - public
+                  - pull_request
+                  - pull_request_review
+                  - pull_request_review_comment
+                  - pull_request_review_thread
+                  - push
+                  - registry_package
+                  - release
+                  - repository
+                  - repository_dispatch
+                  - repository_import
+                  - repository_vulnerability_alert
+                  - secret_scanning_alert
+                  - security_advisory
+                  - sponsorship
+                  - star
+                  - status
+                  - team
+                  - team_add
+                  - watch
+                  - workflow_dispatch
+                  - workflow_job
+                  - workflow_run
+                  type: string
+                maxItems: 100
+                minItems: 0
+                type: array
+              payloadUrl:
+                description: |-
+                  PayloadURL is the URL that will receive the webhook POST requests.
+                  Must be a publicly accessible HTTP or HTTPS endpoint.
+                  GitHub will send HTTP POST requests to this URL when subscribed events occur.
+                maxLength: 2048
+                minLength: 1
+                pattern: ^https?://[a-zA-Z0-9.-]+(:[0-9]+)?(/.*)?$
+                type: string
+              secret:
+                description: |-
+                  Secret is a reference to a Kubernetes Secret containing the webhook secret.
+                  The webhook secret is used by GitHub to sign webhook payloads.
+                  Your service can verify this signature to ensure the request came from GitHub.
+                  This field takes precedence over SecretValue if both are provided.
+                  See: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+                properties:
+                  key:
+                    description: Key is the key within the Secret that contains the
+                      webhook secret value.
+                    maxLength: 250
+                    minLength: 1
+                    pattern: ^[a-zA-Z0-9.-]+$
+                    type: string
+                  name:
+                    description: Name is the name of the Kubernetes Secret containing
+                      the webhook secret.
+                    maxLength: 250
+                    minLength: 1
+                    pattern: ^[a-zA-Z0-9.-]+$
+                    type: string
+                  namespace:
+                    description: |-
+                      Namespace is the namespace of the Secret.
+                      If not specified, the namespace of the WebhookPreset is used.
+                    type: string
+                required:
+                - key
+                - name
+                type: object
+              secretValue:
+                description: |-
+                  SecretValue is the plaintext value of the webhook secret.
+                  Use this for simple cases, but Secret (referencing a Kubernetes Secret) is more secure.
+                  If both Secret and SecretValue are provided, Secret takes precedence.
+                type: string
+              sslVerify:
+                default: true
+                description: |-
+                  SSLVerify enables SSL certificate verification for the webhook endpoint.
+                  When true, GitHub verifies the SSL certificate of the PayloadURL.
+                  Disable only for testing with self-signed certificates; always enable in production.
+                type: boolean
+            required:
+            - payloadUrl
+            type: object
+          status:
+            description: status defines the observed state of WebhookPreset
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the WebhookPreset resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

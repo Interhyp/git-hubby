@@ -1,0 +1,9 @@
+apiVersion: github.interhyp.de/v1alpha1
+kind: CodeSecurityConfiguration
+metadata:
+  labels:
+    app.kubernetes.io/name: git-hubby
+    app.kubernetes.io/managed-by: kustomize
+  name: codesecurityconfiguration-sample
+spec:
+  # TODO(user): Add fields here

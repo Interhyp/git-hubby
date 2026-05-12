@@ -1,0 +1,88 @@
+{{/*
+Manager Role and RoleBinding for each watched namespace.
+A Role + RoleBinding pair is created in each namespace listed in
+controllerManager.watchedNamespaces so the controller has RBAC
+permissions wherever it watches for CRDs.
+*/}}
+{{- range .Values.controllerManager.watchedNamespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ . | quote }}
+  name: {{ include "chart.fullname" $ }}-manager-role
+  labels:
+  {{- include "chart.labels" $ | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - github.interhyp.de
+  resources:
+  - autolinkspresets
+  - codesecurityconfigurations
+  - rulesetpresets
+  - webhookignorepresets
+  - webhookpresets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - github.interhyp.de
+  resources:
+  - organizations
+  - repositories
+  - teams
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - github.interhyp.de
+  resources:
+  - organizations/finalizers
+  - repositories/finalizers
+  - teams/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - github.interhyp.de
+  resources:
+  - organizations/status
+  - repositories/status
+  - teams/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  namespace: {{ . | quote }}
+  name: {{ include "chart.fullname" $ }}-manager-rolebinding
+  labels:
+  {{- include "chart.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "chart.fullname" $ }}-manager-role
+subjects:
+- kind: ServiceAccount
+  name: {{ include "chart.serviceAccountName" $ }}
+  namespace: {{ $.Release.Namespace | quote }}
+{{- end }}
+
+
+
