@@ -1,4 +1,5 @@
 name: Tests
+# used as pull request required check
 
 on:
   push:
@@ -6,7 +7,7 @@ on:
 
 jobs:
   test:
-    name: Run on Ubuntu
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Clone the code
