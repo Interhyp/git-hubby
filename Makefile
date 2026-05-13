@@ -142,6 +142,15 @@ build-linux: manifests generate fmt vet
 	@mkdir -p ./build-output
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build-output/manager cmd/main.go
 
+.PHONY: env
+env: ## Create .env from .env.tmpl if it does not exist.
+	@if [ -f .env ]; then \
+		echo ".env already exists, skipping (delete it first to re-create from template)"; \
+	else \
+		cp .env.tmpl .env; \
+		echo ".env created from .env.tmpl — edit it to configure your local environment"; \
+	fi
+
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/main.go
