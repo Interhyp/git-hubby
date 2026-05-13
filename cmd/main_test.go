@@ -20,6 +20,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap/zapcore"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var _ = Describe("parseLogLevel", func() {
@@ -41,4 +42,49 @@ var _ = Describe("parseLogLevel", func() {
 		Entry("numeric value is invalid", "2", zapcore.InfoLevel, false),
 		Entry("value with surrounding whitespace is trimmed", "  warn  ", zapcore.WarnLevel, true),
 	)
+})
+
+var _ = Describe("parseLogFormat", func() {
+	DescribeTable("resolves log format correctly",
+		func(input string, expected logFormat) {
+			Expect(parseLogFormat(input)).To(Equal(expected))
+		},
+		Entry("lowercase ecs", "ecs", logFormatECS),
+		Entry("uppercase ECS", "ECS", logFormatECS),
+		Entry("mixed case Ecs", "Ecs", logFormatECS),
+		Entry("ecs with whitespace", "  ecs  ", logFormatECS),
+		Entry("lowercase console", "console", logFormatConsole),
+		Entry("uppercase CONSOLE", "CONSOLE", logFormatConsole),
+		Entry("mixed case Console", "Console", logFormatConsole),
+		Entry("console with whitespace", "  console  ", logFormatConsole),
+		Entry("lowercase json defaults to json", "json", logFormatJSON),
+		Entry("uppercase JSON defaults to json", "JSON", logFormatJSON),
+		Entry("empty string defaults to json", "", logFormatJSON),
+		Entry("whitespace only defaults to json", "   ", logFormatJSON),
+		Entry("unknown value defaults to json", "foobar", logFormatJSON),
+		Entry("text defaults to json", "text", logFormatJSON),
+	)
+})
+
+var _ = Describe("buildLoggerOpts", func() {
+	It("returns opts with standard JSON encoder when format is json", func() {
+		flagOpts := &zap.Options{Development: true}
+		result := buildLoggerOpts(flagOpts, logFormatJSON)
+		// UseFlagOptions + RawZapOpts(LogMapper) + JSONEncoder = 3 opts
+		Expect(result).To(HaveLen(3))
+	})
+
+	It("returns opts with ECS encoder when format is ecs", func() {
+		flagOpts := &zap.Options{Development: true}
+		result := buildLoggerOpts(flagOpts, logFormatECS)
+		// UseFlagOptions + RawZapOpts(LogMapper) + JSONEncoder(ecs) + RawZapOpts(ecsWrapCore) = 4 opts
+		Expect(result).To(HaveLen(4))
+	})
+
+	It("returns opts with console encoder when format is console", func() {
+		flagOpts := &zap.Options{Development: true}
+		result := buildLoggerOpts(flagOpts, logFormatConsole)
+		// UseFlagOptions + RawZapOpts(LogMapper) + ConsoleEncoder = 3 opts
+		Expect(result).To(HaveLen(3))
+	})
 })

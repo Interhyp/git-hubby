@@ -36,9 +36,6 @@ Dockerfile.cross
 # Test binary, built with `go test -c`
 *.test
 
-# test report
-report.xml
-
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
@@ -57,12 +54,15 @@ go.work
 # Kubeconfig might contain secrets
 *.kubeconfig
 
+# env may contain secrets
+.env
+
 # created by build related make targets
+report.xml
 test_results.json
 build-output/
 
 # place to store untracked files
 .gitignored
 
-# possible build output
-main
+

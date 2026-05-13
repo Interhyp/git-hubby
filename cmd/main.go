@@ -122,6 +122,66 @@ func parseLogLevel(value string) (zapcore.Level, bool) {
 	return level, true
 }
 
+// logFormat represents the supported log output formats.
+type logFormat string
+
+const (
+	// logFormatJSON is the default structured JSON format.
+	logFormatJSON logFormat = "json"
+	// logFormatECS is the Elastic Common Schema JSON format.
+	logFormatECS logFormat = "ecs"
+	// logFormatConsole is a human-readable console format for local development.
+	logFormatConsole logFormat = "console"
+)
+
+// parseLogFormat normalises the LOG_FORMAT env value into a known logFormat.
+// The comparison is case-insensitive and surrounding whitespace is trimmed.
+// Unknown or empty values fall back to logFormatJSON.
+func parseLogFormat(value string) logFormat {
+	switch logFormat(strings.ToLower(strings.TrimSpace(value))) {
+	case logFormatECS:
+		return logFormatECS
+	case logFormatConsole:
+		return logFormatConsole
+	default:
+		return logFormatJSON
+	}
+}
+
+// buildLoggerOpts returns the zap.Opts slice for configuring the controller-runtime logger.
+//   - logFormatECS: ECS-compatible JSON encoding with ecszap core wrapping.
+//   - logFormatConsole: human-readable console encoder (ideal for local development).
+//   - logFormatJSON (default): standard kubebuilder JSON encoder.
+func buildLoggerOpts(flagOpts *zap.Options, format logFormat) []zap.Opts {
+	logOpts := []zap.Opts{
+		zap.UseFlagOptions(flagOpts),
+		zap.RawZapOpts(
+			uberzap.WrapCore(func(core zapcore.Core) zapcore.Core {
+				return logging.NewLogMapper(core, nil)
+			}),
+		),
+	}
+
+	switch format {
+	case logFormatECS:
+		ecsConfigOpt := func(config *zapcore.EncoderConfig) {
+			if config != nil {
+				*config = ecszap.ECSCompatibleEncoderConfig(*config)
+			}
+		}
+		logOpts = append(logOpts,
+			zap.JSONEncoder(ecsConfigOpt),
+			zap.RawZapOpts(ecszap.WrapCoreOption()),
+		)
+	case logFormatConsole:
+		logOpts = append(logOpts, zap.ConsoleEncoder())
+	default:
+		logOpts = append(logOpts, zap.JSONEncoder())
+	}
+
+	return logOpts
+}
+
 // nolint:gocyclo
 func main() {
 	var metricsAddr string
@@ -170,24 +230,7 @@ func main() {
 		opts.Level = level
 	}
 
-	ecsConfigOpt := func(config *zapcore.EncoderConfig) {
-		if config != nil {
-			*config = ecszap.ECSCompatibleEncoderConfig(*config)
-		}
-	}
-
-	ctrl.SetLogger(
-		zap.New(
-			zap.UseFlagOptions(&opts),
-			zap.JSONEncoder(ecsConfigOpt),
-			zap.RawZapOpts(
-				uberzap.WrapCore(func(core zapcore.Core) zapcore.Core {
-					return logging.NewLogMapper(core, nil)
-				}),
-				ecszap.WrapCoreOption(),
-			),
-		),
-	)
+	ctrl.SetLogger(zap.New(buildLoggerOpts(&opts, parseLogFormat(os.Getenv("LOG_FORMAT")))...))
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -381,16 +424,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Team")
 		os.Exit(1)
 	}
-	// nolint:goconst
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		setupLog.V(1).Info("WEBHOOKS ENABLED!!!!")
+
+	webhooksEnabled := os.Getenv("ENABLE_WEBHOOKS") != "false"
+	if webhooksEnabled {
+		setupLog.Info("Webhooks enabled")
 		if err := webhookv1alpha1.SetupOrganizationWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Organization")
 			os.Exit(1)
 		}
-	}
-	// nolint:goconst
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err := webhookv1alpha1.SetupRepositoryWebhookWithManager(mgr, clientManager); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
 			os.Exit(1)
@@ -406,7 +447,7 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if webhooksEnabled {
 		if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
 			setupLog.Error(err, "unable to set up webhook ready check")
 			os.Exit(1)
