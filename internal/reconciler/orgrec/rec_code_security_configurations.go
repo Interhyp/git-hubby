@@ -223,6 +223,7 @@ func (o *GitHubOrgReconciler) attachCSC(ctx context.Context, attachmentScope str
 	}
 	if attachmentsDiffer(currentAttachments, desiredAttachments) {
 		var ids []int64
+		//nolint:goconst
 		if attachmentScope == "selected" {
 			ids = slices.Collect(maps.Values(desiredAttachments))
 		}
