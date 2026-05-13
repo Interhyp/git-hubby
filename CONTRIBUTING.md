@@ -264,8 +264,51 @@ Edit `.env` freely — it won't be committed. The template (`.env.tmpl`) contain
    make test
    ```
 4. Write or update tests for your changes.
-5. Commit with a clear, descriptive message.
+5. Commit using [Conventional Commits](https://www.conventionalcommits.org/) format. This is enforced by CI on pull requests.
 6. Open a **Pull Request** against `main` with a description of what changed and why.
+
+### Commit Message Format
+
+This project uses **Conventional Commits** for automated semantic versioning and changelog generation.
+
+```
+<type>(<scope>): <subject>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Types** (determines version bump):
+
+| Type | Description | Version bump |
+|---|---|---|
+| `feat` | A new feature | Minor |
+| `fix` | A bug fix | Patch |
+| `docs` | Documentation only | None |
+| `style` | Code style (formatting, no logic change) | None |
+| `refactor` | Code change (no new feature, no fix) | None |
+| `perf` | Performance improvement | Patch |
+| `test` | Adding or updating tests | None |
+| `build` | Build system or dependency changes | None |
+| `ci` | CI configuration changes | None |
+| `chore` | Maintenance tasks | None |
+| `revert` | Reverts a previous commit | Patch |
+
+**Breaking changes** (major version bump): Add `BREAKING CHANGE:` in the footer or `!` after the type:
+```
+feat!: remove deprecated API endpoints
+
+BREAKING CHANGE: The /v1/legacy endpoint has been removed.
+```
+
+**Examples:**
+```
+feat(org): add support for organization-level custom roles
+fix(repo): handle 404 when repository is deleted externally
+docs: update CONTRIBUTING.md with commit format guide
+chore(deps): bump go-github to v87
+```
 
 ## License
 
