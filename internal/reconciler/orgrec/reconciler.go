@@ -52,7 +52,7 @@ func (o *GitHubOrgReconciler) RequiredReconciliations() []reconciler.ParallelRec
 			{Function: o.reconcileOrganization, Condition: conditions.TypeBaseSettingsSynced},
 			{Function: o.reconcileCustomProperties, Condition: conditions.TypeCustomPropertyDefinitionsSynced},
 			{Function: o.reconcileRulesetPresets, Condition: conditions.TypeRulesetsSynced},
-			// {Function: o.reconcileCodeSecurityConfigurations, Condition: conditions.TypeCodeSecurityConfigurationsSynced},
+			{Function: o.reconcileCodeSecurityConfigurations, Condition: conditions.TypeCodeSecurityConfigurationsSynced},
 			{Function: o.reconcileActionsSettings, Condition: conditions.TypeActionsConfigurationSynced},
 		},
 	}

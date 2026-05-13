@@ -16,7 +16,7 @@ env:
 
 jobs:
   test:
-    name: Test
+    name: Pre-Release Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,8 +27,10 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Run tests
-        run: make test
+      - name: Running Tests
+        run: |
+          go mod tidy
+          make test
 
   build-and-publish:
     name: Build & Publish Image
