@@ -1,0 +1,40 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "successComment": ":tada: This ${issue.pull_request ? 'PR is included' : 'issue is fixed'} in version ${nextRelease.version} :tada:\n\nThe release is available on [GitHub release](${releases.filter(release => /github\\.com/i.test(release.url))[0].url}) and as container image [`ghcr.io/${process.env.GITHUB_REPOSITORY.toLowerCase()}:${nextRelease.version}`](https://ghcr.io/${process.env.GITHUB_REPOSITORY.toLowerCase()}:${nextRelease.version})",
+        "releasedLabels": ["released"],
+        "addReleases": "bottom"
+      }
+    ]
+  ]
+}
+
+

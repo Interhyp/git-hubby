@@ -136,12 +136,6 @@ validate: lint-config lint test-with-report
 build: manifests generate fmt vet ## Build manager binary.
 	go build -o bin/manager cmd/main.go
 
-.PHONY: build-linux
-build-linux: manifests generate fmt vet
-	@echo "Building linux/amd64 binary..."
-	@mkdir -p ./build-output
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build-output/manager cmd/main.go
-
 .PHONY: env
 env: ## Create .env from .env.tmpl if it does not exist.
 	@if [ -f .env ]; then \
