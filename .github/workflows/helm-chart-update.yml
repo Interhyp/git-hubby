@@ -14,10 +14,11 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   HELM_REPO: Interhyp/git-hubby-helm
+  CHART_DIR: helm-chart
 
 jobs:
   update-helm-chart:
-    name: Update Helm Chart
+    name: Update Helm Chart CRDs
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
@@ -43,9 +44,6 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Lowercase image name
-        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
-
       - name: Determine image version
         id: version
         run: |
@@ -66,69 +64,78 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Image version: ${VERSION}"
 
+      - name: Generate CRDs
+        run: make manifests
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.HELM_APP_ID }}
+          private-key: ${{ secrets.HELM_APP_PRIVATE_KEY }}
+          owner: Interhyp
+          repositories: git-hubby-helm
+
       - name: Checkout Helm chart repository
         uses: actions/checkout@v6
         with:
           repository: ${{ env.HELM_REPO }}
-          token: ${{ secrets.HELM_CHART_PAT }}
-          path: helm-repo
-
-      - name: Generate Helm chart
-        run: make helm CHART_DIR=helm-repo/chart
-
-      - name: Update image tag in Helm chart
-        run: |
-          if [[ -f helm-repo/chart/values.yaml ]]; then
-            sed -i "s|tag:.*|tag: \"${{ steps.version.outputs.version }}\"|" helm-repo/chart/values.yaml
-            sed -i "s|repository:.*|repository: ${REGISTRY}/${IMAGE_NAME}|" helm-repo/chart/values.yaml
-          fi
-          if [[ -f helm-repo/chart/Chart.yaml ]]; then
-            sed -i "s|^appVersion:.*|appVersion: \"${{ steps.version.outputs.version }}\"|" helm-repo/chart/Chart.yaml
-          fi
+          token: ${{ steps.app-token.outputs.token }}
+          path: ${{ env.CHART_DIR }}
 
       - name: Determine target branch
         id: branch
         run: |
           if [[ "${{ steps.source.outputs.branch }}" == "main" ]]; then
-            echo "name=update/v${{ steps.version.outputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "name=crd-update/v${{ steps.version.outputs.version }}" >> "$GITHUB_OUTPUT"
           else
-            BRANCH="$(echo '${{ steps.source.outputs.branch }}' | sed 's|[^a-zA-Z0-9._-]|-|g' | cut -c1-50)"
-            echo "name=snapshot/${BRANCH}" >> "$GITHUB_OUTPUT"
+            echo "name=crd-update/${{ steps.source.outputs.branch }}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Checkout or create target branch
+        working-directory: ${{ env.CHART_DIR }}
+        run: |
+          git fetch origin "${{ steps.branch.outputs.name }}" 2>/dev/null && \
+            git checkout "${{ steps.branch.outputs.name }}" || \
+            git checkout -b "${{ steps.branch.outputs.name }}"
+
+      - name: Update CRDs in Helm chart
+        run: cp config/crd/bases/*.yaml ${{ env.CHART_DIR }}/crds/
+
+      - name: Update appVersion in Helm chart
+        run: |
+          if [[ -f ${{ env.CHART_DIR }}/Chart.yaml ]]; then
+            sed -i "s|^appVersion:.*|appVersion: \"${{ steps.version.outputs.version }}\"|" ${{ env.CHART_DIR }}/Chart.yaml
+          fi
 
       - name: Commit and push changes
-        working-directory: helm-repo
+        working-directory: ${{ env.CHART_DIR }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b "${{ steps.branch.outputs.name }}"
           git add -A
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update helm chart to version ${{ steps.version.outputs.version }}"
-          git push --force origin "${{ steps.branch.outputs.name }}"
+          git commit -m "feat: update CRDs to version ${{ steps.version.outputs.version }}"
+          git push origin "${{ steps.branch.outputs.name }}"
 
       - name: Create Pull Request for main branch
         if: steps.source.outputs.branch == 'main'
         env:
-          GH_TOKEN: ${{ secrets.HELM_CHART_PAT }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          cd helm-repo
+          cd ${{ env.CHART_DIR }}
           EXISTING_PR=$(gh pr list --head "${{ steps.branch.outputs.name }}" --json number --jq '.[0].number' 2>/dev/null || true)
           if [[ -n "$EXISTING_PR" ]]; then
             echo "PR #${EXISTING_PR} already exists, updating..."
             gh pr edit "$EXISTING_PR" \
-              --title "chore: update helm chart to v${{ steps.version.outputs.version }}" \
-              --body "Automated Helm chart update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})"
+              --title "feat: update CRDs to v${{ steps.version.outputs.version }}" \
+              --body "Automated CRD update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})"
           else
             gh pr create \
               --repo "${{ env.HELM_REPO }}" \
               --head "${{ steps.branch.outputs.name }}" \
               --base main \
-              --title "chore: update helm chart to v${{ steps.version.outputs.version }}" \
-              --body "Automated Helm chart update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})" \
-              --label "automatic-update" \
-              --draft
+              --title "feat: update CRDs to v${{ steps.version.outputs.version }}" \
+              --body "Automated CRD update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})" \
+              --label "automatic-update"
           fi
-
-

@@ -285,22 +285,6 @@ ginkgo: $(GINKGO) ## Download ginkgo CLI locally if necessary.
 $(GINKGO): $(LOCALBIN)
 	$(call go-install-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo,$(GINKGO_VERSION))
 
-# Generate helm chart from kustomize using helmify
-
-HELMIFY ?= $(LOCALBIN)/helmify
-
-.PHONY: helmify
-helmify: $(HELMIFY) ## Download helmify locally if necessary.
-$(HELMIFY): $(LOCALBIN)
-	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
-
-CHART_DIR ?= chart
-
-.PHONY: helm
-helm: manifests generate kustomize crd-docs helmify
-	$(KUSTOMIZE) build config/default | $(HELMIFY) -crd-dir $(CHART_DIR) && \
-	go run ./hack/post-helmify $(CHART_DIR)
-
 # Generate CRD Documentation using crd-ref-docs
 
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
