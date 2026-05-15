@@ -11,6 +11,7 @@ Thank you for your interest in contributing to git-hubby! This guide covers ever
 - [Code Conventions](#code-conventions)
 - [Testing](#testing)
 - [Submitting Changes](#submitting-changes)
+- [CI/CD Workflows](#cicd-workflows)
 
 ## Prerequisites
 
@@ -266,6 +267,31 @@ Edit `.env` freely — it won't be committed. The template (`.env.tmpl`) contain
 4. Write or update tests for your changes.
 5. Commit using [Conventional Commits](https://www.conventionalcommits.org/) format. This is enforced by CI on pull requests.
 6. Open a **Pull Request** against `main` with a description of what changed and why.
+
+## CI/CD Workflows
+
+### Codegen Check
+
+The **Codegen Check** workflow verifies that generated code is up to date on every PR. It runs `make manifests`, `make generate`, and `make crd-docs`, then fails if there are uncommitted changes. Always run these before pushing:
+
+```bash
+make manifests generate crd-docs
+```
+
+### Helm Chart Update
+
+The **Update Helm Chart** workflow manages the Helm chart in [Interhyp/git-hubby-helm](https://github.com/Interhyp/git-hubby-helm):
+
+- **Automatic (main only)**: After a successful release on `main`, the workflow regenerates the Helm chart, updates the image tag to the released version, pushes a branch to `git-hubby-helm`, and creates a draft PR labeled `automatic-update`.
+- **Manual (any branch)**: You can trigger the workflow manually via `workflow_dispatch` to test Helm chart generation from your feature branch. The result is pushed to a `snapshot/<branch>` branch in `git-hubby-helm` (no PR is created).
+
+To manually trigger from your branch:
+
+```bash
+gh workflow run "Update Helm Chart" --ref <your-branch-name>
+```
+
+This lets you verify Helm chart changes before merging to `main`.
 
 ### Commit Message Format
 

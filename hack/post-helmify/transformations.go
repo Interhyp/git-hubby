@@ -223,8 +223,15 @@ func templateWebhookNamespaceSelector(cfg Config) error {
 
 // --- PodDisruptionBudget patches ---
 
-// copyPDBTemplate copies the values-driven PDB template from config/tmp/.
+// copyPDBTemplate copies the values-driven PDB template from hack/post-helmify/templates/.
 // Only requires the source to exist; the destination is created if missing.
+func copyEnvsConfigmapTemplate(cfg Config) error {
+	if _, err := os.Stat(cfg.envsConfigmapSrc()); os.IsNotExist(err) {
+		return nil
+	}
+	return copyFile(cfg.envsConfigmapSrc(), cfg.envsConfigmap())
+}
+
 func copyPDBTemplate(cfg Config) error {
 	if _, err := os.Stat(cfg.pdbSrc()); os.IsNotExist(err) {
 		return nil

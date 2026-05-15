@@ -65,7 +65,7 @@ The post-helmify tool is a Go binary at `hack/post-helmify/` with full test cove
 | `config/default/kustomization.yaml` | Kustomize overlay configuration |
 | `config/default/*_patch.yaml` | Kustomize strategic merge patches |
 | `hack/post-helmify/` | Post-generation Go binary that patches the Helm chart |
-| `config/tmp/*.yaml` | Pre-built Helm templates copied by post-helmify |
+| `hack/post-helmify/templates/*.yaml` | Pre-built Helm templates copied by post-helmify |
 | `chart/templates/_helpers.tpl` | Helm template helpers (manually maintained) |
 | `internal/controller/*_controller.go` | RBAC markers that generate `config/rbac/role.yaml` |
 
