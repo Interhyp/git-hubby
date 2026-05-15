@@ -287,20 +287,19 @@ $(GINKGO): $(LOCALBIN)
 
 # Generate helm chart from kustomize using helmify
 
-## TODO needs update to update github.com/Interhyp/git-hubby-helm instead of local update
+HELMIFY ?= $(LOCALBIN)/helmify
 
-#HELMIFY ?= $(LOCALBIN)/helmify
-#
-#.PHONY: helmify
-#helmify: $(HELMIFY) ## Download helmify locally if necessary.
-#$(HELMIFY): $(LOCALBIN)
-#	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
-#
-#.PHONY: helm
-#helm: manifests generate kustomize crd-docs helmify
-#	$(KUSTOMIZE) build config/default | $(HELMIFY) -crd-dir && \
-#    	cp config/tmp/envs.configmap.yaml chart/templates/envs.configmap.yaml && \
-#	go run ./hack/post-helmify chart
+.PHONY: helmify
+helmify: $(HELMIFY) ## Download helmify locally if necessary.
+$(HELMIFY): $(LOCALBIN)
+	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
+
+CHART_DIR ?= chart
+
+.PHONY: helm
+helm: manifests generate kustomize crd-docs helmify
+	$(KUSTOMIZE) build config/default | $(HELMIFY) -crd-dir $(CHART_DIR) && \
+	go run ./hack/post-helmify $(CHART_DIR)
 
 # Generate CRD Documentation using crd-ref-docs
 

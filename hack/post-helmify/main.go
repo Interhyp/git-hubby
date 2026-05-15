@@ -2,7 +2,7 @@
 // customizations that helmify cannot produce natively.
 //
 // It performs the following transformations:
-//   - Replaces helmify-generated templates with pre-built versions from config/tmp/
+//   - Replaces helmify-generated templates with pre-built versions from hack/post-helmify/templates/
 //   - Patches deployment.yaml with custom Helm helpers for env vars and labels
 //   - Patches values.yaml to introduce watchedNamespaces list and remove kustomize artifacts
 //   - Adds namespace templating to RBAC and webhook resources
@@ -27,11 +27,11 @@ func main() {
 
 	cfg := Config{
 		ChartPath:      chartPath,
-		TemplateSrcDir: "config/tmp",
+		TemplateSrcDir: "hack/post-helmify/templates",
 	}
 
 	if err := run(cfg); err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -41,6 +41,7 @@ func run(cfg Config) error {
 		name string
 		fn   func(Config) error
 	}{
+		{"copy envs configmap template", copyEnvsConfigmapTemplate},
 		{"patch deployment podLabels", patchDeploymentPodLabels},
 		{"patch deployment strategy", patchDeploymentStrategy},
 		{"patch deployment preStop hook", patchDeploymentPreStop},
@@ -91,3 +92,9 @@ func (c Config) pdb() string            { return c.ChartPath + "/templates/poddi
 func (c Config) pdbSrc() string         { return c.TemplateSrcDir + "/poddisruptionbudget.yaml" }
 func (c Config) servingCertSrc() string { return c.TemplateSrcDir + "/serving-cert.yaml" }
 func (c Config) managerRBACSrc() string { return c.TemplateSrcDir + "/manager-rbac.yaml" }
+func (c Config) envsConfigmapSrc() string {
+	return c.TemplateSrcDir + "/envs.configmap.yaml"
+}
+func (c Config) envsConfigmap() string {
+	return c.ChartPath + "/templates/envs.configmap.yaml"
+}

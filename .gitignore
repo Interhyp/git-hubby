@@ -67,3 +67,10 @@ build-output/
 
 
 node_modules/
+
+# Generated Helm chart (output of make helm)
+chart/
+
+# post-helmify binary (built by go build ./hack/post-helmify/)
+/post-helmify
+

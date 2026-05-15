@@ -391,6 +391,8 @@ func main() {
 		K8sClient:        mgr.GetClient(),
 	}
 
+	webhooksEnabled := os.Getenv("ENABLE_WEBHOOKS") != "false"
+
 	globalLimiter := ratelimit.NewGitHubRateLimiter(ratelimit.GitHubRateLimiterConfig{
 		RequestsPerHour: 15000, // GitHub's rate limit
 		BurstSize:       500,   // Allow some burst
@@ -424,10 +426,8 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Team")
 		os.Exit(1)
 	}
-
-	webhooksEnabled := os.Getenv("ENABLE_WEBHOOKS") != "false"
 	if webhooksEnabled {
-		setupLog.Info("Webhooks enabled")
+		setupLog.V(1).Info("Webhooks enabled")
 		if err := webhookv1alpha1.SetupOrganizationWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Organization")
 			os.Exit(1)
