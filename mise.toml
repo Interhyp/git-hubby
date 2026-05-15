@@ -2,5 +2,5 @@
 go = "1.26.3"
 kubebuilder = "4.14.0"
 
-[env]
-MISE_IDIOMATIC_VERSION_FILE_ENABLE_TOOLS='node'
+[settings]
+idiomatic_version_file_enable_tools = ["node"] # use .node-version

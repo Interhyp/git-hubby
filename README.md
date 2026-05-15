@@ -28,6 +28,7 @@ A Kubernetes operator for managing GitHub organizations and repositories as code
 
 ### Prerequisites
 
+- A **GitHub Enterprise Cloud** organization — the operator relies on Enterprise-only APIs (organization rulesets, code security configurations, IDP group sync). Repository and team management works on all plans, but full organization reconciliation requires Enterprise Cloud.
 - Go 1.25.5 or later
 - Kubernetes cluster (v1.34+ recommended)
 - kubectl configured to access your cluster
