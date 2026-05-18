@@ -18,7 +18,7 @@ env:
 
 jobs:
   update-helm-chart:
-    name: Update Helm Chart CRDs
+    name: Update Helm Chart CRDs and appVersion
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
@@ -87,9 +87,9 @@ jobs:
         id: branch
         run: |
           if [[ "${{ steps.source.outputs.branch }}" == "main" ]]; then
-            echo "name=crd-update/v${{ steps.version.outputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "name=auto-update/v${{ steps.version.outputs.version }}" >> "$GITHUB_OUTPUT"
           else
-            echo "name=crd-update/${{ steps.source.outputs.branch }}" >> "$GITHUB_OUTPUT"
+            echo "name=auto-update/${{ steps.source.outputs.branch }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Checkout or create target branch
@@ -115,7 +115,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "feat: update CRDs to version ${{ steps.version.outputs.version }}"
+          git commit -m "feat: update CRDs and appVersion to version ${{ steps.version.outputs.version }}"
           git push origin "${{ steps.branch.outputs.name }}"
 
       - name: Create Pull Request for main branch
@@ -124,18 +124,20 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           cd ${{ env.CHART_DIR }}
+          # Ensure the label exists
+          gh label create "automatic-update" --description "Automated updates" --color "0E8A16" --repo "${{ env.HELM_REPO }}" 2>/dev/null || true
           EXISTING_PR=$(gh pr list --head "${{ steps.branch.outputs.name }}" --json number --jq '.[0].number' 2>/dev/null || true)
           if [[ -n "$EXISTING_PR" ]]; then
             echo "PR #${EXISTING_PR} already exists, updating..."
             gh pr edit "$EXISTING_PR" \
-              --title "feat: update CRDs to v${{ steps.version.outputs.version }}" \
-              --body "Automated CRD update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})"
+              --title "feat: update CRDs and appVersion to v${{ steps.version.outputs.version }}" \
+              --body "Automated CRD and appVersion update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})"
           else
             gh pr create \
               --repo "${{ env.HELM_REPO }}" \
               --head "${{ steps.branch.outputs.name }}" \
               --base main \
-              --title "feat: update CRDs to v${{ steps.version.outputs.version }}" \
-              --body "Automated CRD update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})" \
+              --title "feat: update CRDs and appVersion to v${{ steps.version.outputs.version }}" \
+              --body "Automated CRD and appVersion update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})" \
               --label "automatic-update"
           fi
