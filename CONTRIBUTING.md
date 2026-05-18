@@ -79,7 +79,6 @@ Run `make help` for the full list. The most important targets are:
 | `make lint-fix` | Lint with auto-fix |
 | `make generate` | Regenerate deepcopy and apply-configuration code |
 | `make manifests` | Regenerate CRDs and RBAC from kubebuilder markers |
-| `make helm` | Regenerate Helm chart from Kustomize manifests |
 | `make install` | Install CRDs into the current cluster |
 | `make deploy IMG=<image>` | Deploy the operator to the current cluster |
 | `make undeploy` | Remove the operator from the current cluster |
@@ -135,7 +134,6 @@ kubebuilder create webhook --group github --version v1alpha1 --kind <Kind> --def
 │   ├── conditions/            Status condition helpers
 │   └── logging/               Log mapping utilities
 ├── config/                    Kustomize manifests (mostly auto-generated)
-├── chart/                     Helm chart (generated via helmify)
 └── test/                      E2E and integration tests
 ```
 
@@ -280,10 +278,10 @@ make manifests generate crd-docs
 
 ### Helm Chart Update
 
-The **Update Helm Chart** workflow manages the Helm chart in [Interhyp/git-hubby-helm](https://github.com/Interhyp/git-hubby-helm):
+The **Update Helm Chart** workflow manages CRD updates in [Interhyp/git-hubby-helm](https://github.com/Interhyp/git-hubby-helm):
 
-- **Automatic (main only)**: After a successful release on `main`, the workflow regenerates the Helm chart, updates the image tag to the released version, pushes a branch to `git-hubby-helm`, and creates a draft PR labeled `automatic-update`.
-- **Manual (any branch)**: You can trigger the workflow manually via `workflow_dispatch` to test Helm chart generation from your feature branch. The result is pushed to a `snapshot/<branch>` branch in `git-hubby-helm` (no PR is created).
+- **Automatic (after release)**: After a successful "Build & Release" workflow, CRDs are copied to the helm chart repo with an updated `appVersion`, and a draft PR is created (main only) labeled `automatic-update`.
+- **Manual (any branch)**: You can trigger the workflow manually via `workflow_dispatch` to test CRD updates from your feature branch. The result is pushed to a `snapshot/<branch>` branch in `git-hubby-helm` (no PR is created).
 
 To manually trigger from your branch:
 
@@ -291,7 +289,10 @@ To manually trigger from your branch:
 gh workflow run "Update Helm Chart" --ref <your-branch-name>
 ```
 
-This lets you verify Helm chart changes before merging to `main`.
+> **Note**: Only CRDs are updated automatically. The Helm chart's other templates (deployment, RBAC, webhooks) are maintained manually. The CI workflow will comment on your PR if it detects changes that require a matching Helm chart update:
+> - `+kubebuilder:rbac` markers → RBAC template
+> - `+kubebuilder:webhook` markers → webhook configuration template
+> - `config/manager/manager.yaml` → deployment template (env vars, args, ports, volumes)
 
 ### Commit Message Format
 
