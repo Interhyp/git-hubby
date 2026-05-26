@@ -47,15 +47,25 @@ func (o *GitHubOrgReconciler) GetAdditionalLabels() labels.Set {
 }
 
 func (o *GitHubOrgReconciler) RequiredReconciliations() []reconciler.ParallelReconciliationGroup {
-	return []reconciler.ParallelReconciliationGroup{
-		{ // org reconciliations are all independent and can run in parallel as no orgs are created - they need to exist beforehand
+	// org reconciliations are all independent and can run in parallel as no orgs are created - they need to exist beforehand
+	reconcilers := []reconciler.ParallelReconciliationGroup{
+		{
 			{Function: o.reconcileOrganization, Condition: conditions.TypeBaseSettingsSynced},
 			{Function: o.reconcileCustomProperties, Condition: conditions.TypeCustomPropertyDefinitionsSynced},
-			{Function: o.reconcileRulesetPresets, Condition: conditions.TypeRulesetsSynced},
-			{Function: o.reconcileCodeSecurityConfigurations, Condition: conditions.TypeCodeSecurityConfigurationsSynced},
 			{Function: o.reconcileActionsSettings, Condition: conditions.TypeActionsConfigurationSynced},
 		},
 	}
+	// these reconcilers reconcile features that are only available in the enterprise plan
+	enterpriseReconcilers := []reconciler.ParallelReconciliationGroup{
+		{
+			{Function: o.reconcileRulesetPresets, Condition: conditions.TypeRulesetsSynced},
+			{Function: o.reconcileCodeSecurityConfigurations, Condition: conditions.TypeCodeSecurityConfigurationsSynced},
+		},
+	}
+	if o.Kubernetes.Resource.Spec.Plan == "enterprise" {
+		reconcilers = append(reconcilers, enterpriseReconcilers...)
+	}
+	return reconcilers
 }
 
 func (o *GitHubOrgReconciler) K8s() reconciler.Kubernetes[*githubv1alpha1.Organization] {

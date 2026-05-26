@@ -319,6 +319,13 @@ type OrganizationSpec struct {
 	// Description is a human-readable description of the organization.
 	// This appears on the organization's GitHub profile page.
 	Description string `json:"description"`
+
+	// Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).
+	// Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped.
+	// +kubebuilder:validation:Enum=enterprise;team;free
+	// +kubebuilder:default=enterprise
+	// +optional
+	Plan string `json:"plan,omitempty"`
 }
 
 // OrganizationStatus defines the observed state of Organization.
