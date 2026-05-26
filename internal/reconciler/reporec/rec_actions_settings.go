@@ -26,9 +26,13 @@ func (r *GitHubRepoReconciler) reconcileActionsSettings(ctx context.Context) err
 		return nil
 	}
 
-	err := r.reconcileActionsAccessLevelForExternalWorkflows(ctx)
-	if err != nil {
-		return err
+	// Access Level is not supported for public and free repos
+	if org.HasEnterpriseFeatures() && r.Kubernetes.Resource.Spec.Visibility != githubv1alpha1.VisibilityPublic {
+		if err := r.reconcileActionsAccessLevelForExternalWorkflows(ctx); err != nil {
+			return err
+		}
+	} else {
+		log.V(1).Info("Skipping reconciliation of actions access policies on GitHub as repository is either public or belongs to an organization on the free plan")
 	}
 
 	log.V(1).Info("Successfully reconciled repository GitHub actions configurations on GitHub")
@@ -36,6 +40,9 @@ func (r *GitHubRepoReconciler) reconcileActionsSettings(ctx context.Context) err
 }
 
 func (r *GitHubRepoReconciler) reconcileActionsAccessLevelForExternalWorkflows(ctx context.Context) error {
+	log := logPkg.FromContext(ctx)
+	log.V(1).Info("Reconciling repository GitHub actions access policies on GitHub")
+
 	expectedActionsAccessLevel := utils.WithDefaultAsPtr(r.Kubernetes.Resource.Spec.AccessLevelForExternalWorkflows, "none")
 	currentAccessLevel, err := r.GitHub.Client.GetAccessLevelForExternalWorkflowsForRepo(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name)
 	if err != nil {
@@ -49,5 +56,7 @@ func (r *GitHubRepoReconciler) reconcileActionsAccessLevelForExternalWorkflows(c
 			return err
 		}
 	}
+
+	log.V(1).Info("Successfully reconciled GitHub actions access policies on GitHub")
 	return nil
 }

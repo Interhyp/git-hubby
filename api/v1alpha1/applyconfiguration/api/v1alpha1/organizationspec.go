@@ -55,6 +55,9 @@ type OrganizationSpecApplyConfiguration struct {
 	// Description is a human-readable description of the organization.
 	// This appears on the organization's GitHub profile page.
 	Description *string `json:"description,omitempty"`
+	// Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).
+	// Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped.
+	Plan *string `json:"plan,omitempty"`
 }
 
 // OrganizationSpecApplyConfiguration constructs a declarative configuration of the OrganizationSpec type for use with
@@ -128,5 +131,13 @@ func (b *OrganizationSpecApplyConfiguration) WithRulesetPresetList(values ...v1.
 // If called multiple times, the Description field is set to the value of the last call.
 func (b *OrganizationSpecApplyConfiguration) WithDescription(value string) *OrganizationSpecApplyConfiguration {
 	b.Description = &value
+	return b
+}
+
+// WithPlan sets the Plan field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Plan field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithPlan(value string) *OrganizationSpecApplyConfiguration {
+	b.Plan = &value
 	return b
 }

@@ -10,7 +10,8 @@ A Kubernetes operator for managing GitHub organizations and repositories as code
 
 - **Declarative GitHub Management**: Define organizations and repositories as Kubernetes resources
 - **GitHub App Integration**: Secure authentication using GitHub App credentials
-- **Advanced Features**: Manage repository rulesets, webhooks, and organization custom properties
+- **Multi-Plan Support**: Works with GitHub `free`, `team`, and `enterprise` plans — plan-gated features are automatically skipped when not available
+- **Advanced Features**: Manage repository rulesets, webhooks, organization custom properties, and code security configurations
 - **Rate Limit Awareness**: Built-in GitHub API rate limit handling with intelligent backoff
 - **Startup Spreading**: Distributes reconciliations over time during pod startup to prevent API thundering herd
 - **Webhook Validation**: Comprehensive validation of resource specifications
@@ -28,7 +29,7 @@ A Kubernetes operator for managing GitHub organizations and repositories as code
 
 ### Prerequisites
 
-- A **GitHub Enterprise Cloud** organization — the operator relies on Enterprise-only APIs (organization rulesets, code security configurations, IDP group sync). Repository and team management works on all plans, but full organization reconciliation requires Enterprise Cloud.
+- A GitHub organization on any plan (`free`, `team`, or `enterprise`). Set `spec.plan` on the `Organization` resource to match your GitHub plan — defaults to `enterprise` for backward compatibility. Feature availability varies by plan (see [GitHub Plan Compatibility](#github-plan-compatibility) below).
 - Go 1.25.5 or later
 - Kubernetes cluster (v1.34+ recommended)
 - kubectl configured to access your cluster
@@ -49,6 +50,22 @@ make run              # run locally with webhooks disabled
 Edit `.env` to configure local settings such as `LOG_LEVEL`, `LOG_FORMAT`, and `WATCH_NAMESPACE`.
 
 For the full development setup, make targets, testing, and code conventions, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## GitHub Plan Compatibility
+
+The operator supports GitHub organizations on all billing plans. Feature availability is automatically gated by the `spec.plan` field on the `Organization` resource:
+
+| Feature | free | team | enterprise |
+|---|---|---|---|
+| Repository & organization settings | ✓ | ✓ | ✓ |
+| Repository rulesets (public repos) | ✓ | ✓ | ✓ |
+| Repository rulesets (private/internal repos) | ✗ | ✓ | ✓ |
+| Organization rulesets | ✗ | ✓ | ✓ |
+| Code security configurations | ✗ | ✗ | ✓ |
+| IDP group sync (Teams) | ✗ | ✗ | ✓ |
+| Internal repository visibility | ✗ | ✗ | ✓ |
+
+Invalid plan and feature combinations are rejected during resource validation (admission webhook). Plan defaults to `enterprise` for backward compatibility.
 
 ## Configuration
 

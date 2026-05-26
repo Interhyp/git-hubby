@@ -53,9 +53,30 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			},
 		}
 
+		// Create Organization objects that the IDP group reconciliation will fetch
+		org1 := &v1alpha1.Organization{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "org1",
+				Namespace: "default",
+			},
+			Spec: v1alpha1.OrganizationSpec{
+				Plan: v1alpha1.PlanEnterprise,
+			},
+		}
+
+		org2 := &v1alpha1.Organization{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "org2",
+				Namespace: "default",
+			},
+			Spec: v1alpha1.OrganizationSpec{
+				Plan: v1alpha1.PlanEnterprise,
+			},
+		}
+
 		k8sClient = fake.NewClientBuilder().
 			WithScheme(scheme).
-			WithObjects(team).
+			WithObjects(team, org1, org2).
 			WithStatusSubresource(team).
 			Build()
 	})

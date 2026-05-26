@@ -521,6 +521,7 @@ var _ = Describe("ReconcileAllowedActions", func() {
 
 		actionsSettings = v1alpha1.ActionsSettings{
 			EnabledRepositories: new("all"),
+			AllowedActions:      new("selected"),
 		}
 	})
 
@@ -555,6 +556,66 @@ var _ = Describe("ReconcileAllowedActions", func() {
 		}
 
 		err = rec.reconcileAllowedActions(ctx)
+	})
+
+	Context("when allowedActions is all", func() {
+		BeforeEach(func() {
+			actionsSettings.AllowedActions = new("all")
+		})
+
+		It("should skip reconciling and not call GitHub API", func() {
+			Expect(err).NotTo(HaveOccurred())
+
+			calls := mockClient.GetActionsCalls()
+			for _, call := range calls {
+				Expect(call.Method).NotTo(Equal("GetActionsAllowedForOrg"))
+				Expect(call.Method).NotTo(Equal("SetActionsAllowedForOrg"))
+			}
+		})
+	})
+
+	Context("when allowedActions is nil", func() {
+		BeforeEach(func() {
+			actionsSettings.AllowedActions = nil
+		})
+
+		It("should skip reconciling and not call GitHub API", func() {
+			Expect(err).NotTo(HaveOccurred())
+
+			calls := mockClient.GetActionsCalls()
+			for _, call := range calls {
+				Expect(call.Method).NotTo(Equal("GetActionsAllowedForOrg"))
+				Expect(call.Method).NotTo(Equal("SetActionsAllowedForOrg"))
+			}
+		})
+	})
+
+	Context("when allowedActions is selected in K8s", func() {
+		BeforeEach(func() {
+			actionsSettings.AllowedActions = new("selected")
+
+			mockClient.GetActionsAllowedForOrgFunc = func(ctx context.Context, org string) (*github.ActionsAllowed, error) {
+				return &github.ActionsAllowed{
+					GithubOwnedAllowed: new(true),
+					VerifiedAllowed:    new(true),
+					PatternsAllowed:    []string{},
+				}, nil
+			}
+		})
+
+		It("should proceed to reconcile and call GetActionsAllowedForOrg", func() {
+			Expect(err).NotTo(HaveOccurred())
+
+			calls := mockClient.GetActionsCalls()
+			foundGetCall := false
+			for _, call := range calls {
+				if call.Method == "GetActionsAllowedForOrg" {
+					foundGetCall = true
+					break
+				}
+			}
+			Expect(foundGetCall).To(BeTrue(), "Expected GetActionsAllowedForOrg to be called")
+		})
 	})
 
 	Context("when SelectedAllowedActions is nil", func() {

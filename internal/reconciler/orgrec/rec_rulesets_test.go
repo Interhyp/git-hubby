@@ -157,6 +157,26 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 		err = rec.reconcileRulesetPresets(ctx)
 	})
 
+	Context("when plan is 'free'", func() {
+		BeforeEach(func() {
+			org.Spec.Plan = "free"
+			org.Spec.RulesetPresetList = []corev1.LocalObjectReference{
+				{Name: "ruleset-1"},
+			}
+		})
+
+		It("should skip reconciliation and return no error", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should not create, update, or delete any rulesets", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(createdRulesets).To(BeEmpty())
+			Expect(updatedRulesets).To(BeEmpty())
+			Expect(deletedRulesetIDs).To(BeEmpty())
+		})
+	})
+
 	Context("when no rulesets are configured", func() {
 		It("should reconcile successfully with no changes", func() {
 			Expect(err).NotTo(HaveOccurred())

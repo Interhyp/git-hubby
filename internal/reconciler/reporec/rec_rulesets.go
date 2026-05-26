@@ -16,6 +16,21 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
 	log.V(1).Info("Reconciling repository rule sets on GitHub")
 
+	// Rulesets are not supported on non-public repositories in the free plan
+	var org githubv1alpha1.Organization
+	if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{
+		Name:      r.Kubernetes.Resource.Spec.OrganizationRef.Name,
+		Namespace: r.Kubernetes.Resource.Namespace,
+	}, &org); err != nil {
+		log.Error(err, "unable to fetch Organization for Repository")
+		return err
+	}
+
+	if org.GetPlan() == githubv1alpha1.PlanFree && r.Kubernetes.Resource.Spec.Visibility != githubv1alpha1.VisibilityPublic {
+		log.V(1).Info("Skipping rulesets reconciliation for non-public repository on free plan")
+		return nil
+	}
+
 	existingRulesets, err := r.GitHub.Client.GetAllRepositoryRulesets(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, false)
 	if err != nil {
 		log.Error(err, "failed to get existing repository rulesets")

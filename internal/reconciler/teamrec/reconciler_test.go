@@ -514,3 +514,43 @@ var _ = Describe("ReconcileDeletion", func() {
 		})
 	})
 })
+
+var _ = Describe("RequiredReconciliations", func() {
+	var (
+		rec    *GitHubTeamReconciler
+		team   *v1alpha1.Team
+		scheme *runtime.Scheme
+	)
+
+	BeforeEach(func() {
+		scheme = runtime.NewScheme()
+		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+
+		team = &v1alpha1.Team{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-team",
+				Namespace: "default",
+			},
+			Spec: v1alpha1.TeamSpec{
+				Name:    "test-team",
+				Members: []string{"user1"},
+				OrganizationRefs: []v1alpha1.OrganizationRef{
+					{Name: "my-org"},
+				},
+			},
+		}
+	})
+
+	It("should always return a static list with all reconcilers including IDP group", func() {
+		rec = &GitHubTeamReconciler{
+			Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
+				Client:   fake.NewClientBuilder().WithScheme(scheme).WithObjects(team).Build(),
+				Resource: team,
+			},
+		}
+		groups := rec.RequiredReconciliations()
+		Expect(groups).To(HaveLen(2))
+		// Second group should have 4 reconcilers (IDP plan check is inside reconcileIDPGroup)
+		Expect(groups[1]).To(HaveLen(4))
+	})
+})

@@ -206,8 +206,16 @@ func (o *GitHubOrgReconciler) reconcileRetention(ctx context.Context) error {
 }
 
 func (o *GitHubOrgReconciler) reconcileAllowedActions(ctx context.Context) error {
+	log := logPkg.FromContext(ctx)
+
 	if reconciler.IsActionsDisabledForOrgSpec(o.Kubernetes.Resource) {
 		// If Actions are disabled for all repositories, skip reconciling allowed actions
+		return nil
+	}
+
+	allowedActions := o.Kubernetes.Resource.Spec.ActionsSettings.AllowedActions
+	if allowedActions == nil || *allowedActions != "selected" {
+		log.V(1).Info("AllowedActions is not in mode selected, skipping reconciliation of allowed actions")
 		return nil
 	}
 

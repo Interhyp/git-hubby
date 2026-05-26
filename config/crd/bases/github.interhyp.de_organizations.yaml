@@ -333,6 +333,16 @@ spec:
                 minLength: 1
                 pattern: ^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$
                 type: string
+              plan:
+                default: enterprise
+                description: |-
+                  Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).
+                  Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped.
+                enum:
+                - enterprise
+                - team
+                - free
+                type: string
               rulesetPresets:
                 description: |-
                   RulesetPresetList references RulesetPreset CRDs that define repository rulesets for this organization.

@@ -127,9 +127,21 @@ var _ = Describe("ReconcileRuleSets", func() {
 			},
 		}
 
+		// Create organization that the ruleset reconciliation will fetch
+		org := &v1alpha1.Organization{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-org",
+				Namespace: "default",
+			},
+			Spec: v1alpha1.OrganizationSpec{
+				Plan: v1alpha1.PlanEnterprise,
+			},
+		}
+
 		// Build k8s objects slice
-		k8sObjects := make([]client.Object, 1, 1+len(rulesetPresets))
+		k8sObjects := make([]client.Object, 2, 2+len(rulesetPresets))
 		k8sObjects[0] = repo
+		k8sObjects[1] = org
 		for _, preset := range rulesetPresets {
 			k8sObjects = append(k8sObjects, preset)
 		}

@@ -3,8 +3,10 @@ package teamrec
 import (
 	"context"
 
+	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/google/go-github/v86/github"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -17,6 +19,20 @@ func (t *GitHubTeamReconciler) reconcileIDPGroup(ctx context.Context) error {
 		return nil // nothing to do
 	}
 	for _, githubOrg := range t.Team.Organizations.Current {
+		var org githubv1alpha1.Organization
+		if err := t.Kubernetes.Client.Get(ctx, client.ObjectKey{
+			Name:      githubOrg.Resource,
+			Namespace: t.Kubernetes.Resource.Namespace,
+		}, &org); err != nil {
+			log.Error(err, "unable to fetch Organization for Team IDP group", "organization", githubOrg.Resource)
+			continue
+		}
+
+		if org.GetPlan() != githubv1alpha1.PlanEnterprise {
+			log.V(1).Info("Skipping IDP team group settings for organization because plan does not support it",
+				"organization", githubOrg.Resource, "plan", org.GetPlan())
+			continue
+		}
 		err := t.reconcileIDPGroupForOrg(ctx, githubOrg)
 		if err != nil {
 			return err

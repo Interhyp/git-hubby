@@ -111,6 +111,36 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 		}
 	})
 
+	Context("when plan is 'free'", func() {
+		BeforeEach(func() {
+			org.Spec.Plan = "free"
+			mockClient.GetDefaultCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfigurationWithDefaultForNewRepos, error) {
+				return []*github.CodeSecurityConfigurationWithDefaultForNewRepos{}, nil
+			}
+			mockClient.GetCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfiguration, error) {
+				return []*github.CodeSecurityConfiguration{}, nil
+			}
+		})
+
+		JustBeforeEach(func() {
+			err = rec.reconcileCodeSecurityConfigurations(ctx)
+		})
+
+		It("should skip reconciliation and return no error", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should not call any modifying GitHub API methods", func() {
+			Expect(err).NotTo(HaveOccurred())
+			calls := mockClient.GetCodeSecurityConfigurationCalls()
+			for _, call := range calls {
+				Expect(call.Method).NotTo(Equal("CreateCodeSecurityConfigurationForOrg"))
+				Expect(call.Method).NotTo(Equal("UpdateCodeSecurityConfigurationForOrg"))
+				Expect(call.Method).NotTo(Equal("DeleteCodeSecurityConfigurationForOrg"))
+			}
+		})
+	})
+
 	Context("when no code security configurations are referenced", func() {
 		BeforeEach(func() {
 			mockClient.GetDefaultCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfigurationWithDefaultForNewRepos, error) {
