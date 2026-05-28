@@ -18,13 +18,13 @@ func (m *MockGitHubClientWrapper) GetRepository(ctx context.Context, owner, repo
 
 	// Default implementation
 	return &github.Repository{
-		ID:       github.Ptr(int64(12345)),
-		Name:     github.Ptr(repo),
-		FullName: github.Ptr(fmt.Sprintf("%s/%s", owner, repo)),
+		ID:       new(int64(12345)),
+		Name:     new(repo),
+		FullName: new(fmt.Sprintf("%s/%s", owner, repo)),
 		Owner: &github.User{
-			Login: github.Ptr(owner),
+			Login: new(owner),
 		},
-		Archived: github.Ptr(false),
+		Archived: new(false),
 	}, nil
 }
 
@@ -37,11 +37,11 @@ func (m *MockGitHubClientWrapper) CreateRepository(ctx context.Context, org stri
 
 	// Default implementation - return the created repository
 	createdRepo := *repo
-	createdRepo.ID = github.Ptr(int64(12345))
-	createdRepo.FullName = github.Ptr(fmt.Sprintf("%s/%s", org, repo.GetName()))
-	createdRepo.Owner = &github.User{Login: github.Ptr(org)}
+	createdRepo.ID = new(int64(12345))
+	createdRepo.FullName = new(fmt.Sprintf("%s/%s", org, repo.GetName()))
+	createdRepo.Owner = &github.User{Login: new(org)}
 	if createdRepo.Archived == nil {
-		createdRepo.Archived = github.Ptr(false)
+		createdRepo.Archived = new(false)
 	}
 
 	return &createdRepo, nil
@@ -56,11 +56,11 @@ func (m *MockGitHubClientWrapper) EditRepository(ctx context.Context, owner, rep
 
 	// Default implementation - return the updated repository
 	updatedRepo := *repository
-	updatedRepo.FullName = github.Ptr(fmt.Sprintf("%s/%s", owner, repo))
-	updatedRepo.Owner = &github.User{Login: github.Ptr(owner)}
+	updatedRepo.FullName = new(fmt.Sprintf("%s/%s", owner, repo))
+	updatedRepo.Owner = &github.User{Login: new(owner)}
 	// Ensure ID is set if not already present
 	if updatedRepo.ID == nil {
-		updatedRepo.ID = github.Ptr(int64(12345))
+		updatedRepo.ID = new(int64(12345))
 	}
 
 	return &updatedRepo, nil

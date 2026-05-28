@@ -45,11 +45,11 @@ func (m *MockGitHubClientWrapper) SetRepositoryArchived(owner, repo string, arch
 	m.GetRepositoryFunc = func(ctx context.Context, repoOwner, repoName string) (*github.Repository, error) {
 		if repoOwner == owner && repoName == repo {
 			return &github.Repository{
-				ID:       github.Ptr(int64(12345)),
-				Name:     github.Ptr(repo),
-				FullName: github.Ptr(fmt.Sprintf("%s/%s", owner, repo)),
-				Owner:    &github.User{Login: github.Ptr(owner)},
-				Archived: github.Ptr(archived),
+				ID:       new(int64(12345)),
+				Name:     new(repo),
+				FullName: new(fmt.Sprintf("%s/%s", owner, repo)),
+				Owner:    &github.User{Login: new(owner)},
+				Archived: new(archived),
 			}, nil
 		}
 		return m.GetRepository(ctx, repoOwner, repoName)

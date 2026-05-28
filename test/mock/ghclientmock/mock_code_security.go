@@ -40,7 +40,7 @@ func (m *MockGitHubClientWrapper) CreateCodeSecurityConfigurationForOrg(ctx cont
 	}
 
 	// Default implementation
-	config.ID = github.Ptr(int64(1))
+	config.ID = new(int64(1))
 	return &config, nil
 }
 

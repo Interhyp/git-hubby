@@ -26,7 +26,6 @@ import (
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -125,7 +124,7 @@ func (r *OrganizationCtl) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.AnnotationChangedPredicate{})).
 		WithOptions(controller.Options{
-			UsePriorityQueue: ptr.To[bool](true),
+			UsePriorityQueue: new(true),
 			RateLimiter: workqueue.NewTypedMaxOfRateLimiter(
 				workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
 					1*time.Second,    // base delay

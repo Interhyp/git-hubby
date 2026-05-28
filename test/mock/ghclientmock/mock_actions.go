@@ -176,7 +176,7 @@ func (m *MockGitHubClientWrapper) CreateRunnerGroupForOrg(ctx context.Context, o
 	}
 
 	return &github.RunnerGroup{
-		ID:   github.Ptr(int64(1)),
+		ID:   new(int64(1)),
 		Name: createRequest.Name,
 	}, nil
 }
@@ -189,7 +189,7 @@ func (m *MockGitHubClientWrapper) UpdateRunnerGroupForOrg(ctx context.Context, o
 	}
 
 	return &github.RunnerGroup{
-		ID:                    github.Ptr(groupID),
+		ID:                    new(groupID),
 		Name:                  updateRequest.Name,
 		Visibility:            updateRequest.Visibility,
 		RestrictedToWorkflows: updateRequest.RestrictedToWorkflows,

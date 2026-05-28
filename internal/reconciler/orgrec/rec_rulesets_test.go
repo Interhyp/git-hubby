@@ -69,8 +69,8 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 				Target:      "branch",
 				Enforcement: "active",
 				Rules: v1alpha1.RulesetRules{
-					Creation: github.Ptr(true),
-					Deletion: github.Ptr(true),
+					Creation: new(true),
+					Deletion: new(true),
 				},
 			},
 		}
@@ -88,7 +88,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 				Target:      "branch",
 				Enforcement: "active",
 				Rules: v1alpha1.RulesetRules{
-					Update: github.Ptr(true),
+					Update: new(true),
 				},
 			},
 		}
@@ -219,7 +219,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			// Existing ruleset with different configuration
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"), // Different enforcement
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -261,7 +261,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			// Existing ruleset that matches desired state (including default ~ALL repository name condition)
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("active"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -273,7 +273,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 						RepositoryName: &github.RepositoryRulesetRepositoryNamesConditionParameters{
 							Include:   []string{"~ALL"},
 							Exclude:   []string{},
-							Protected: github.Ptr(false),
+							Protected: new(false),
 						},
 					},
 					Rules: &github.RepositoryRulesetRules{
@@ -301,7 +301,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			// Two existing rulesets, but only one is referenced
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("active"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -317,7 +317,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					},
 				},
 				{
-					ID:          github.Ptr(int64(200)),
+					ID:          new(int64(200)),
 					Name:        "orphaned-ruleset",
 					Enforcement: github.RulesetEnforcement("active"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -375,7 +375,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -426,7 +426,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -460,7 +460,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "orphaned-ruleset",
 					Enforcement: github.RulesetEnforcement("active"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -542,7 +542,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "", // Empty name
 					Enforcement: github.RulesetEnforcement("active"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -584,7 +584,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 		BeforeEach(func() {
 			rulesetPreset1.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorID:    github.Ptr(int64(12345)),
+					ActorID:    new(int64(12345)),
 					ActorType:  "Team",
 					BypassMode: "always",
 				},
@@ -644,7 +644,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 				RepositoryName: &v1alpha1.RepositoryNameCondition{
 					Include:   []string{"backend-*", "frontend-*"},
 					Exclude:   []string{"backend-legacy"},
-					Protected: github.Ptr(true),
+					Protected: new(true),
 				},
 			}
 
@@ -660,7 +660,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			Expect(createdRulesets[0].Conditions.RepositoryName).NotTo(BeNil())
 			Expect(createdRulesets[0].Conditions.RepositoryName.Include).To(ConsistOf("backend-*", "frontend-*"))
 			Expect(createdRulesets[0].Conditions.RepositoryName.Exclude).To(ConsistOf("backend-legacy"))
-			Expect(createdRulesets[0].Conditions.RepositoryName.Protected).To(Equal(github.Ptr(true)))
+			Expect(createdRulesets[0].Conditions.RepositoryName.Protected).To(Equal(new(true)))
 		})
 
 		It("should not override with default ~ALL repository name condition", func() {
@@ -772,7 +772,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("active"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -822,7 +822,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("active"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -888,7 +888,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(100)),
+					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"),
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -931,7 +931,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			// Ruleset-2 already exists but needs update
 			existingRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(200)),
+					ID:          new(int64(200)),
 					Name:        "ruleset-2",
 					Enforcement: github.RulesetEnforcement("evaluate"), // Different
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -944,7 +944,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					Rules: &github.RepositoryRulesetRules{},
 				},
 				{
-					ID:          github.Ptr(int64(300)),
+					ID:          new(int64(300)),
 					Name:        "orphaned-ruleset", // Will be deleted
 					Enforcement: github.RulesetEnforcement("active"),
 					Target:      github.Ptr(github.RulesetTargetBranch),

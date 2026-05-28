@@ -40,7 +40,7 @@ func WebhookPresetToGithubHook(preset v1alpha1.WebhookPreset) *github.Hook {
 	}
 	conf.InsecureSSL = &sslVerify
 	hook := &github.Hook{
-		Name:   github.Ptr("web"),
+		Name:   new("web"),
 		Active: utils.WithDefaultAsPtr(preset.Spec.Active, true),
 		Config: conf,
 	}

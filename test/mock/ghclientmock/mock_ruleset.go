@@ -17,7 +17,7 @@ func (m *MockGitHubClientWrapper) GetRepositoryRuleset(ctx context.Context, owne
 
 	// Default implementation - return a ruleset with the given ID
 	return &github.RepositoryRuleset{
-		ID:   github.Ptr(rulesetID),
+		ID:   new(rulesetID),
 		Name: "test-ruleset",
 	}, nil
 }
@@ -42,7 +42,7 @@ func (m *MockGitHubClientWrapper) CreateRepositoryRuleset(ctx context.Context, o
 
 	// Default implementation - return the created ruleset with an ID
 	createdRuleset := *ruleset
-	createdRuleset.ID = github.Ptr(int64(456))
+	createdRuleset.ID = new(int64(456))
 
 	return &createdRuleset, nil
 }
@@ -56,7 +56,7 @@ func (m *MockGitHubClientWrapper) UpdateRepositoryRuleset(ctx context.Context, o
 
 	// Default implementation - return the updated ruleset
 	updatedRuleset := *ruleset
-	updatedRuleset.ID = github.Ptr(rulesetID)
+	updatedRuleset.ID = new(rulesetID)
 
 	return &updatedRuleset, nil
 }
@@ -83,7 +83,7 @@ func (m *MockGitHubClientWrapper) GetOrganizationRuleset(ctx context.Context, or
 
 	// Default implementation - return a ruleset with the given ID
 	return &github.RepositoryRuleset{
-		ID:   github.Ptr(rulesetID),
+		ID:   new(rulesetID),
 		Name: "org-test-ruleset",
 	}, nil
 }
@@ -108,7 +108,7 @@ func (m *MockGitHubClientWrapper) CreateOrganizationRuleset(ctx context.Context,
 
 	// Default implementation - return the created ruleset with an ID
 	createdRuleset := *ruleset
-	createdRuleset.ID = github.Ptr(int64(789))
+	createdRuleset.ID = new(int64(789))
 
 	return &createdRuleset, nil
 }
@@ -122,7 +122,7 @@ func (m *MockGitHubClientWrapper) UpdateOrganizationRuleset(ctx context.Context,
 
 	// Default implementation - return the updated ruleset
 	updatedRuleset := *ruleset
-	updatedRuleset.ID = github.Ptr(rulesetID)
+	updatedRuleset.ID = new(rulesetID)
 
 	return &updatedRuleset, nil
 }

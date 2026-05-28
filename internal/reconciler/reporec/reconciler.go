@@ -149,7 +149,7 @@ func (r *GitHubRepoReconciler) archiveRepository(ctx context.Context) error {
 
 	log.V(1).Info("Archiving repository")
 	_, err = r.GitHub.Client.EditRepository(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, &github.Repository{
-		Archived: github.Ptr(true),
+		Archived: new(true),
 	})
 	if err != nil {
 		log.Error(err, "failed to archive repository on GitHub")

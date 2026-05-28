@@ -148,7 +148,7 @@ func addDefaultOrgRepositoryConditions(conditions *v1alpha1.RulesetConditions) *
 		conditions.RepositoryName = &v1alpha1.RepositoryNameCondition{
 			Include:   []string{"~ALL"},
 			Exclude:   []string{},
-			Protected: github.Ptr(false),
+			Protected: new(false),
 		}
 	}
 	return conditions

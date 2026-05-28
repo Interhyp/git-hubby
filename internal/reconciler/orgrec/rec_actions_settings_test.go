@@ -97,7 +97,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 				return &github.ActionsPermissions{}, nil
 			}
 			mockClient.GetActionsRetentionForOrgFunc = func(ctx context.Context, org string) (*github.ArtifactPeriod, error) {
-				return &github.ArtifactPeriod{Days: github.Ptr(400)}, nil
+				return &github.ArtifactPeriod{Days: new(400)}, nil
 			}
 			mockClient.GetActionsAllowedForOrgFunc = func(ctx context.Context, org string) (*github.ActionsAllowed, error) {
 				return &github.ActionsAllowed{}, nil
@@ -107,7 +107,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			}
 			mockClient.GetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string) (*github.SelfHostedRunnersSettingsOrganization, error) {
 				return &github.SelfHostedRunnersSettingsOrganization{
-					EnabledRepositories: github.Ptr("none"),
+					EnabledRepositories: new("none"),
 				}, nil
 			}
 		})
@@ -123,30 +123,30 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("none"),
-					AllowedActions:      github.Ptr("selected"),
-					SHAPinningRequired:  github.Ptr(false),
+					EnabledRepositories: new("none"),
+					AllowedActions:      new("selected"),
+					SHAPinningRequired:  new(false),
 				}, nil
 			}
 			mockClient.GetActionsRetentionForOrgFunc = func(ctx context.Context, org string) (*github.ArtifactPeriod, error) {
-				return &github.ArtifactPeriod{Days: github.Ptr(400)}, nil
+				return &github.ArtifactPeriod{Days: new(400)}, nil
 			}
 			mockClient.GetActionsAllowedForOrgFunc = func(ctx context.Context, org string) (*github.ActionsAllowed, error) {
 				return &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(false),
-					VerifiedAllowed:    github.Ptr(false),
+					GithubOwnedAllowed: new(false),
+					VerifiedAllowed:    new(false),
 					PatternsAllowed:    []string{},
 				}, nil
 			}
 			mockClient.GetActionsDefaultWorkflowPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.DefaultWorkflowPermissionOrganization, error) {
 				return &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions:   github.Ptr("read"),
-					CanApprovePullRequestReviews: github.Ptr(false),
+					DefaultWorkflowPermissions:   new("read"),
+					CanApprovePullRequestReviews: new(false),
 				}, nil
 			}
 			mockClient.GetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string) (*github.SelfHostedRunnersSettingsOrganization, error) {
 				return &github.SelfHostedRunnersSettingsOrganization{
-					EnabledRepositories: github.Ptr("none"),
+					EnabledRepositories: new("none"),
 				}, nil
 			}
 		})
@@ -215,15 +215,15 @@ var _ = Describe("ReconcilePermissions", func() {
 
 	Context("when permissions match current state", func() {
 		BeforeEach(func() {
-			actionsSettings.EnabledRepositories = github.Ptr("all")
-			actionsSettings.AllowedActions = github.Ptr("all")
-			actionsSettings.ShaPinningRequired = github.Ptr(true)
+			actionsSettings.EnabledRepositories = new("all")
+			actionsSettings.AllowedActions = new("all")
+			actionsSettings.ShaPinningRequired = new(true)
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
-					AllowedActions:      github.Ptr("all"),
-					SHAPinningRequired:  github.Ptr(true),
+					EnabledRepositories: new("all"),
+					AllowedActions:      new("all"),
+					SHAPinningRequired:  new(true),
 				}, nil
 			}
 		})
@@ -245,15 +245,15 @@ var _ = Describe("ReconcilePermissions", func() {
 
 		BeforeEach(func() {
 			setPermissionsCalled = false
-			actionsSettings.EnabledRepositories = github.Ptr("selected")
-			actionsSettings.AllowedActions = github.Ptr("local_only")
-			actionsSettings.ShaPinningRequired = github.Ptr(true)
+			actionsSettings.EnabledRepositories = new("selected")
+			actionsSettings.AllowedActions = new("local_only")
+			actionsSettings.ShaPinningRequired = new(true)
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
-					AllowedActions:      github.Ptr("all"),
-					SHAPinningRequired:  github.Ptr(false),
+					EnabledRepositories: new("all"),
+					AllowedActions:      new("all"),
+					SHAPinningRequired:  new(false),
 				}, nil
 			}
 			mockClient.SetActionsPermissionsForOrgFunc = func(ctx context.Context, org string, permissions github.ActionsPermissions) (*github.ActionsPermissions, error) {
@@ -266,9 +266,9 @@ var _ = Describe("ReconcilePermissions", func() {
 		It("should update permissions", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(setPermissionsCalled).To(BeTrue())
-			Expect(capturedPermissions.EnabledRepositories).To(Equal(github.Ptr("selected")))
-			Expect(capturedPermissions.AllowedActions).To(Equal(github.Ptr("local_only")))
-			Expect(capturedPermissions.SHAPinningRequired).To(Equal(github.Ptr(true)))
+			Expect(capturedPermissions.EnabledRepositories).To(Equal(new("selected")))
+			Expect(capturedPermissions.AllowedActions).To(Equal(new("local_only")))
+			Expect(capturedPermissions.SHAPinningRequired).To(Equal(new(true)))
 		})
 	})
 
@@ -278,14 +278,14 @@ var _ = Describe("ReconcilePermissions", func() {
 		BeforeEach(func() {
 			// Only set EnabledRepositories to trigger reconciliation and defaults are used for everything else
 			actionsSettings = v1alpha1.ActionsSettings{
-				EnabledRepositories: github.Ptr("selected"),
+				EnabledRepositories: new("selected"),
 			}
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
-					AllowedActions:      github.Ptr("all"),
-					SHAPinningRequired:  github.Ptr(true),
+					EnabledRepositories: new("all"),
+					AllowedActions:      new("all"),
+					SHAPinningRequired:  new(true),
 				}, nil
 			}
 			mockClient.SetActionsPermissionsForOrgFunc = func(ctx context.Context, org string, permissions github.ActionsPermissions) (*github.ActionsPermissions, error) {
@@ -296,9 +296,9 @@ var _ = Describe("ReconcilePermissions", func() {
 
 		It("should use default values (<what was input>, selected, false)", func() {
 			Expect(err).NotTo(HaveOccurred())
-			Expect(capturedPermissions.EnabledRepositories).To(Equal(github.Ptr("selected")))
-			Expect(capturedPermissions.AllowedActions).To(Equal(github.Ptr("selected")))
-			Expect(capturedPermissions.SHAPinningRequired).To(Equal(github.Ptr(false)))
+			Expect(capturedPermissions.EnabledRepositories).To(Equal(new("selected")))
+			Expect(capturedPermissions.AllowedActions).To(Equal(new("selected")))
+			Expect(capturedPermissions.SHAPinningRequired).To(Equal(new(false)))
 		})
 	})
 
@@ -317,11 +317,11 @@ var _ = Describe("ReconcilePermissions", func() {
 
 	Context("when GitHub API returns error on set", func() {
 		BeforeEach(func() {
-			actionsSettings.EnabledRepositories = github.Ptr("selected")
+			actionsSettings.EnabledRepositories = new("selected")
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
+					EnabledRepositories: new("all"),
 				}, nil
 			}
 			mockClient.SetActionsPermissionsForOrgFunc = func(ctx context.Context, org string, permissions github.ActionsPermissions) (*github.ActionsPermissions, error) {
@@ -394,11 +394,11 @@ var _ = Describe("ReconcileRetention", func() {
 
 	Context("when retention matches current state", func() {
 		BeforeEach(func() {
-			actionsSettings.ArtifactAndLogRetentionDays = github.Ptr(90)
+			actionsSettings.ArtifactAndLogRetentionDays = new(90)
 
 			mockClient.GetActionsRetentionForOrgFunc = func(ctx context.Context, org string) (*github.ArtifactPeriod, error) {
 				return &github.ArtifactPeriod{
-					Days: github.Ptr(90),
+					Days: new(90),
 				}, nil
 			}
 		})
@@ -420,11 +420,11 @@ var _ = Describe("ReconcileRetention", func() {
 
 		BeforeEach(func() {
 			setRetentionCalled = false
-			actionsSettings.ArtifactAndLogRetentionDays = github.Ptr(30)
+			actionsSettings.ArtifactAndLogRetentionDays = new(30)
 
 			mockClient.GetActionsRetentionForOrgFunc = func(ctx context.Context, org string) (*github.ArtifactPeriod, error) {
 				return &github.ArtifactPeriod{
-					Days: github.Ptr(90),
+					Days: new(90),
 				}, nil
 			}
 			mockClient.SetActionsRetentionForOrgFunc = func(ctx context.Context, org string, retentionInDays int) error {
@@ -450,7 +450,7 @@ var _ = Describe("ReconcileRetention", func() {
 
 			mockClient.GetActionsRetentionForOrgFunc = func(ctx context.Context, org string) (*github.ArtifactPeriod, error) {
 				return &github.ArtifactPeriod{
-					Days: github.Ptr(90),
+					Days: new(90),
 				}, nil
 			}
 			mockClient.SetActionsRetentionForOrgFunc = func(ctx context.Context, org string, retentionInDays int) error {
@@ -480,11 +480,11 @@ var _ = Describe("ReconcileRetention", func() {
 
 	Context("when GitHub API returns error on set", func() {
 		BeforeEach(func() {
-			actionsSettings.ArtifactAndLogRetentionDays = github.Ptr(30)
+			actionsSettings.ArtifactAndLogRetentionDays = new(30)
 
 			mockClient.GetActionsRetentionForOrgFunc = func(ctx context.Context, org string) (*github.ArtifactPeriod, error) {
 				return &github.ArtifactPeriod{
-					Days: github.Ptr(90),
+					Days: new(90),
 				}, nil
 			}
 			mockClient.SetActionsRetentionForOrgFunc = func(ctx context.Context, org string, retentionInDays int) error {
@@ -520,7 +520,7 @@ var _ = Describe("ReconcileAllowedActions", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		actionsSettings = v1alpha1.ActionsSettings{
-			EnabledRepositories: github.Ptr("all"),
+			EnabledRepositories: new("all"),
 		}
 	})
 
@@ -565,8 +565,8 @@ var _ = Describe("ReconcileAllowedActions", func() {
 
 			mockClient.GetActionsAllowedForOrgFunc = func(ctx context.Context, org string) (*github.ActionsAllowed, error) {
 				return &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
-					VerifiedAllowed:    github.Ptr(true),
+					GithubOwnedAllowed: new(true),
+					VerifiedAllowed:    new(true),
 					PatternsAllowed:    []string{"some/pattern@*"},
 				}, nil
 			}
@@ -578,8 +578,8 @@ var _ = Describe("ReconcileAllowedActions", func() {
 
 		It("should set all flags to false and empty patterns", func() {
 			Expect(err).NotTo(HaveOccurred())
-			Expect(capturedAllowedActions.GithubOwnedAllowed).To(Equal(github.Ptr(false)))
-			Expect(capturedAllowedActions.VerifiedAllowed).To(Equal(github.Ptr(false)))
+			Expect(capturedAllowedActions.GithubOwnedAllowed).To(Equal(new(false)))
+			Expect(capturedAllowedActions.VerifiedAllowed).To(Equal(new(false)))
 			Expect(capturedAllowedActions.PatternsAllowed).To(BeEmpty())
 		})
 	})
@@ -591,15 +591,15 @@ var _ = Describe("ReconcileAllowedActions", func() {
 		BeforeEach(func() {
 			setAllowedCalled = false
 			actionsSettings.SelectedAllowedActions = &v1alpha1.SelectedAllowedActions{
-				GitHubOwnedAllowed: github.Ptr(true),
-				VerifiedAllowed:    github.Ptr(true),
+				GitHubOwnedAllowed: new(true),
+				VerifiedAllowed:    new(true),
 				PatternsAllowed:    []string{"org/action@*", "another/action@v1"},
 			}
 
 			mockClient.GetActionsAllowedForOrgFunc = func(ctx context.Context, org string) (*github.ActionsAllowed, error) {
 				return &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(false),
-					VerifiedAllowed:    github.Ptr(false),
+					GithubOwnedAllowed: new(false),
+					VerifiedAllowed:    new(false),
 					PatternsAllowed:    []string{},
 				}, nil
 			}
@@ -613,8 +613,8 @@ var _ = Describe("ReconcileAllowedActions", func() {
 		It("should update allowed actions with specified values", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(setAllowedCalled).To(BeTrue())
-			Expect(capturedAllowedActions.GithubOwnedAllowed).To(Equal(github.Ptr(true)))
-			Expect(capturedAllowedActions.VerifiedAllowed).To(Equal(github.Ptr(true)))
+			Expect(capturedAllowedActions.GithubOwnedAllowed).To(Equal(new(true)))
+			Expect(capturedAllowedActions.VerifiedAllowed).To(Equal(new(true)))
 			Expect(capturedAllowedActions.PatternsAllowed).To(ConsistOf("org/action@*", "another/action@v1"))
 		})
 	})
@@ -622,15 +622,15 @@ var _ = Describe("ReconcileAllowedActions", func() {
 	Context("when allowed actions match current state", func() {
 		BeforeEach(func() {
 			actionsSettings.SelectedAllowedActions = &v1alpha1.SelectedAllowedActions{
-				GitHubOwnedAllowed: github.Ptr(true),
-				VerifiedAllowed:    github.Ptr(false),
+				GitHubOwnedAllowed: new(true),
+				VerifiedAllowed:    new(false),
 				PatternsAllowed:    []string{"org/action@*"},
 			}
 
 			mockClient.GetActionsAllowedForOrgFunc = func(ctx context.Context, org string) (*github.ActionsAllowed, error) {
 				return &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
-					VerifiedAllowed:    github.Ptr(false),
+					GithubOwnedAllowed: new(true),
+					VerifiedAllowed:    new(false),
 					PatternsAllowed:    []string{"org/action@*"},
 				}, nil
 			}
@@ -657,8 +657,8 @@ var _ = Describe("ReconcileAllowedActions", func() {
 
 			mockClient.GetActionsAllowedForOrgFunc = func(ctx context.Context, org string) (*github.ActionsAllowed, error) {
 				return &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
-					VerifiedAllowed:    github.Ptr(true),
+					GithubOwnedAllowed: new(true),
+					VerifiedAllowed:    new(true),
 					PatternsAllowed:    []string{"some/pattern@*"},
 				}, nil
 			}
@@ -670,8 +670,8 @@ var _ = Describe("ReconcileAllowedActions", func() {
 
 		It("should use default values (false, false, empty)", func() {
 			Expect(err).NotTo(HaveOccurred())
-			Expect(capturedAllowedActions.GithubOwnedAllowed).To(Equal(github.Ptr(false)))
-			Expect(capturedAllowedActions.VerifiedAllowed).To(Equal(github.Ptr(false)))
+			Expect(capturedAllowedActions.GithubOwnedAllowed).To(Equal(new(false)))
+			Expect(capturedAllowedActions.VerifiedAllowed).To(Equal(new(false)))
 			Expect(capturedAllowedActions.PatternsAllowed).To(BeEmpty())
 		})
 	})
@@ -692,12 +692,12 @@ var _ = Describe("ReconcileAllowedActions", func() {
 	Context("when GitHub API returns error on set", func() {
 		BeforeEach(func() {
 			actionsSettings.SelectedAllowedActions = &v1alpha1.SelectedAllowedActions{
-				GitHubOwnedAllowed: github.Ptr(true),
+				GitHubOwnedAllowed: new(true),
 			}
 
 			mockClient.GetActionsAllowedForOrgFunc = func(ctx context.Context, org string) (*github.ActionsAllowed, error) {
 				return &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(false),
+					GithubOwnedAllowed: new(false),
 				}, nil
 			}
 			mockClient.SetActionsAllowedForOrgFunc = func(ctx context.Context, org string, allowedActions github.ActionsAllowed) (*github.ActionsAllowed, error) {
@@ -770,13 +770,13 @@ var _ = Describe("ReconcileDefaultWorkflowPermissions", func() {
 
 	Context("when workflow permissions match current state", func() {
 		BeforeEach(func() {
-			actionsSettings.DefaultWorkflowPermissions = github.Ptr("write")
-			actionsSettings.CanApprovePullRequestReviews = github.Ptr(true)
+			actionsSettings.DefaultWorkflowPermissions = new("write")
+			actionsSettings.CanApprovePullRequestReviews = new(true)
 
 			mockClient.GetActionsDefaultWorkflowPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.DefaultWorkflowPermissionOrganization, error) {
 				return &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions:   github.Ptr("write"),
-					CanApprovePullRequestReviews: github.Ptr(true),
+					DefaultWorkflowPermissions:   new("write"),
+					CanApprovePullRequestReviews: new(true),
 				}, nil
 			}
 		})
@@ -798,13 +798,13 @@ var _ = Describe("ReconcileDefaultWorkflowPermissions", func() {
 
 		BeforeEach(func() {
 			setPermissionsCalled = false
-			actionsSettings.DefaultWorkflowPermissions = github.Ptr("write")
-			actionsSettings.CanApprovePullRequestReviews = github.Ptr(true)
+			actionsSettings.DefaultWorkflowPermissions = new("write")
+			actionsSettings.CanApprovePullRequestReviews = new(true)
 
 			mockClient.GetActionsDefaultWorkflowPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.DefaultWorkflowPermissionOrganization, error) {
 				return &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions:   github.Ptr("read"),
-					CanApprovePullRequestReviews: github.Ptr(false),
+					DefaultWorkflowPermissions:   new("read"),
+					CanApprovePullRequestReviews: new(false),
 				}, nil
 			}
 			mockClient.SetActionsDefaultWorkflowPermissionsForOrgFunc = func(ctx context.Context, org string, permissions github.DefaultWorkflowPermissionOrganization) (*github.DefaultWorkflowPermissionOrganization, error) {
@@ -817,8 +817,8 @@ var _ = Describe("ReconcileDefaultWorkflowPermissions", func() {
 		It("should update workflow permissions", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(setPermissionsCalled).To(BeTrue())
-			Expect(capturedPermissions.DefaultWorkflowPermissions).To(Equal(github.Ptr("write")))
-			Expect(capturedPermissions.CanApprovePullRequestReviews).To(Equal(github.Ptr(true)))
+			Expect(capturedPermissions.DefaultWorkflowPermissions).To(Equal(new("write")))
+			Expect(capturedPermissions.CanApprovePullRequestReviews).To(Equal(new(true)))
 		})
 	})
 
@@ -832,8 +832,8 @@ var _ = Describe("ReconcileDefaultWorkflowPermissions", func() {
 
 			mockClient.GetActionsDefaultWorkflowPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.DefaultWorkflowPermissionOrganization, error) {
 				return &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions:   github.Ptr("write"),
-					CanApprovePullRequestReviews: github.Ptr(true),
+					DefaultWorkflowPermissions:   new("write"),
+					CanApprovePullRequestReviews: new(true),
 				}, nil
 			}
 			mockClient.SetActionsDefaultWorkflowPermissionsForOrgFunc = func(ctx context.Context, org string, permissions github.DefaultWorkflowPermissionOrganization) (*github.DefaultWorkflowPermissionOrganization, error) {
@@ -844,8 +844,8 @@ var _ = Describe("ReconcileDefaultWorkflowPermissions", func() {
 
 		It("should use default values (read, false)", func() {
 			Expect(err).NotTo(HaveOccurred())
-			Expect(capturedPermissions.DefaultWorkflowPermissions).To(Equal(github.Ptr("read")))
-			Expect(capturedPermissions.CanApprovePullRequestReviews).To(Equal(github.Ptr(false)))
+			Expect(capturedPermissions.DefaultWorkflowPermissions).To(Equal(new("read")))
+			Expect(capturedPermissions.CanApprovePullRequestReviews).To(Equal(new(false)))
 		})
 	})
 
@@ -864,11 +864,11 @@ var _ = Describe("ReconcileDefaultWorkflowPermissions", func() {
 
 	Context("when GitHub API returns error on set", func() {
 		BeforeEach(func() {
-			actionsSettings.DefaultWorkflowPermissions = github.Ptr("write")
+			actionsSettings.DefaultWorkflowPermissions = new("write")
 
 			mockClient.GetActionsDefaultWorkflowPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.DefaultWorkflowPermissionOrganization, error) {
 				return &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions: github.Ptr("read"),
+					DefaultWorkflowPermissions: new("read"),
 				}, nil
 			}
 			mockClient.SetActionsDefaultWorkflowPermissionsForOrgFunc = func(ctx context.Context, org string, permissions github.DefaultWorkflowPermissionOrganization) (*github.DefaultWorkflowPermissionOrganization, error) {
@@ -943,7 +943,7 @@ var _ = Describe("ReconcileSelfHostedRunnerSettings", func() {
 		BeforeEach(func() {
 			mockClient.GetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string) (*github.SelfHostedRunnersSettingsOrganization, error) {
 				return &github.SelfHostedRunnersSettingsOrganization{
-					EnabledRepositories: github.Ptr("none"),
+					EnabledRepositories: new("none"),
 				}, nil
 			}
 		})
@@ -968,7 +968,7 @@ var _ = Describe("ReconcileSelfHostedRunnerSettings", func() {
 
 			mockClient.GetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string) (*github.SelfHostedRunnersSettingsOrganization, error) {
 				return &github.SelfHostedRunnersSettingsOrganization{
-					EnabledRepositories: github.Ptr("all"),
+					EnabledRepositories: new("all"),
 				}, nil
 			}
 			mockClient.SetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string, settings github.SelfHostedRunnersSettingsOrganizationOpt) error {
@@ -981,7 +981,7 @@ var _ = Describe("ReconcileSelfHostedRunnerSettings", func() {
 		It("should update settings to none", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(setSettingsCalled).To(BeTrue())
-			Expect(capturedSettings.EnabledRepositories).To(Equal(github.Ptr("none")))
+			Expect(capturedSettings.EnabledRepositories).To(Equal(new("none")))
 		})
 	})
 
@@ -993,7 +993,7 @@ var _ = Describe("ReconcileSelfHostedRunnerSettings", func() {
 
 			mockClient.GetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string) (*github.SelfHostedRunnersSettingsOrganization, error) {
 				return &github.SelfHostedRunnersSettingsOrganization{
-					EnabledRepositories: github.Ptr("selected"),
+					EnabledRepositories: new("selected"),
 				}, nil
 			}
 			mockClient.SetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string, settings github.SelfHostedRunnersSettingsOrganizationOpt) error {
@@ -1025,7 +1025,7 @@ var _ = Describe("ReconcileSelfHostedRunnerSettings", func() {
 		BeforeEach(func() {
 			mockClient.GetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string) (*github.SelfHostedRunnersSettingsOrganization, error) {
 				return &github.SelfHostedRunnersSettingsOrganization{
-					EnabledRepositories: github.Ptr("all"),
+					EnabledRepositories: new("all"),
 				}, nil
 			}
 			mockClient.SetSelfHostedRunnersSettingsForOrgFunc = func(ctx context.Context, org string, settings github.SelfHostedRunnersSettingsOrganizationOpt) error {
@@ -1096,7 +1096,7 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 				Name:                    "test-org",
 				GitHubAppInstallationId: 12345,
 				ActionsSettings: v1alpha1.ActionsSettings{
-					EnabledRepositories: github.Ptr("all"),
+					EnabledRepositories: new("all"),
 				},
 			},
 		}
@@ -1148,7 +1148,7 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{}
 			currentEnabledRepos = []*github.Repository{
-				{ID: github.Ptr(int64(999))},
+				{ID: new(int64(999))},
 			}
 		})
 
@@ -1169,11 +1169,11 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 				{
@@ -1183,11 +1183,11 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo2",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(222)),
+						ID: new(int64(222)),
 					},
 				},
 			}
@@ -1211,16 +1211,16 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(false),
+						ActionsEnabled:  new(false),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 			}
 			currentEnabledRepos = []*github.Repository{
-				{ID: github.Ptr(int64(111))},
+				{ID: new(int64(111))},
 			}
 		})
 
@@ -1241,11 +1241,11 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 				{
@@ -1255,11 +1255,11 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo2",
-						ActionsEnabled:  github.Ptr(false),
+						ActionsEnabled:  new(false),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(222)),
+						ID: new(int64(222)),
 					},
 				},
 				{
@@ -1269,11 +1269,11 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo3",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(333)),
+						ID: new(int64(333)),
 					},
 				},
 			}
@@ -1297,16 +1297,16 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 			}
 			currentEnabledRepos = []*github.Repository{
-				{ID: github.Ptr(int64(111))},
+				{ID: new(int64(111))},
 			}
 		})
 
@@ -1326,7 +1326,7 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
@@ -1353,7 +1353,7 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
@@ -1362,7 +1362,7 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 				},
 			}
 			currentEnabledRepos = []*github.Repository{
-				{ID: github.Ptr(int64(999))},
+				{ID: new(int64(999))},
 			}
 		})
 
@@ -1395,11 +1395,11 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 			}
@@ -1424,11 +1424,11 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 				{
@@ -1438,11 +1438,11 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo2",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "other-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(222)),
+						ID: new(int64(222)),
 					},
 				},
 			}
@@ -1466,16 +1466,16 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 			}
 			currentEnabledRepos = []*github.Repository{
-				{ID: github.Ptr(int64(222))}, // Different repo enabled
+				{ID: new(int64(222))}, // Different repo enabled
 			}
 		})
 
@@ -1496,18 +1496,18 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
-						ActionsEnabled:  github.Ptr(true),
+						ActionsEnabled:  new(true),
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 			}
 			currentEnabledRepos = []*github.Repository{
-				{ID: github.Ptr(int64(111))},
-				{ID: github.Ptr(int64(222))},
-				{ID: github.Ptr(int64(333))},
+				{ID: new(int64(111))},
+				{ID: new(int64(222))},
+				{ID: new(int64(333))},
 			}
 		})
 
@@ -1532,7 +1532,7 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 						OrganizationRef: v1alpha1.OrganizationRef{Name: "test-org"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(111)),
+						ID: new(int64(111)),
 					},
 				},
 			}
@@ -1550,8 +1550,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 var _ = Describe("containsSameIDs", func() {
 	It("should return true for matching IDs", func() {
 		current := []*github.Repository{
-			{ID: github.Ptr(int64(111))},
-			{ID: github.Ptr(int64(222))},
+			{ID: new(int64(111))},
+			{ID: new(int64(222))},
 		}
 		desired := map[int64]any{
 			111: nil,
@@ -1562,7 +1562,7 @@ var _ = Describe("containsSameIDs", func() {
 
 	It("should return false for different counts", func() {
 		current := []*github.Repository{
-			{ID: github.Ptr(int64(111))},
+			{ID: new(int64(111))},
 		}
 		desired := map[int64]any{
 			111: nil,
@@ -1573,8 +1573,8 @@ var _ = Describe("containsSameIDs", func() {
 
 	It("should return false for different IDs", func() {
 		current := []*github.Repository{
-			{ID: github.Ptr(int64(111))},
-			{ID: github.Ptr(int64(333))},
+			{ID: new(int64(111))},
+			{ID: new(int64(333))},
 		}
 		desired := map[int64]any{
 			111: nil,
@@ -1599,7 +1599,7 @@ var _ = Describe("containsSameIDs", func() {
 
 	It("should return false when desired is empty but current is not", func() {
 		current := []*github.Repository{
-			{ID: github.Ptr(int64(111))},
+			{ID: new(int64(111))},
 		}
 		desired := map[int64]any{}
 		Expect(containsSameIDs(current, desired)).To(BeFalse())
@@ -1662,7 +1662,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 				return nil, createRunnerGroupError
 			}
 			return &github.RunnerGroup{
-				ID:                    github.Ptr(int64(999)),
+				ID:                    new(int64(999)),
 				Name:                  createRequest.Name,
 				Visibility:            createRequest.Visibility,
 				RestrictedToWorkflows: createRequest.RestrictedToWorkflows,
@@ -1679,7 +1679,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 				return nil, updateRunnerGroupError
 			}
 			return &github.RunnerGroup{
-				ID:                    github.Ptr(groupID),
+				ID:                    new(groupID),
 				Name:                  updateRequest.Name,
 				Visibility:            updateRequest.Visibility,
 				RestrictedToWorkflows: updateRequest.RestrictedToWorkflows,
@@ -1764,8 +1764,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{}
@@ -1774,8 +1774,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should create the runner group", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(github.Ptr("test-group")))
-			Expect(createRunnerGroupCalls[0].Visibility).To(Equal(github.Ptr("all")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("test-group")))
+			Expect(createRunnerGroupCalls[0].Visibility).To(Equal(new("all")))
 			Expect(deleteRunnerGroupCalls).To(BeEmpty())
 		})
 	})
@@ -1785,10 +1785,10 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:                    github.Ptr(int64(111)),
-					Name:                  github.Ptr("old-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					ID:                    new(int64(111)),
+					Name:                  new("old-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				},
 			}
 		})
@@ -1806,16 +1806,16 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:                    github.Ptr(int64(111)),
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					ID:                    new(int64(111)),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				},
 			}
 		})
@@ -1832,17 +1832,17 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:                    github.Ptr(int64(111)),
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					ID:                    new(int64(111)),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				},
 			}
 		})
@@ -1853,9 +1853,9 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			Expect(createRunnerGroupCalls).To(BeEmpty())
 			Expect(updateRunnerGroupCalls).To(HaveLen(1))
 			Expect(updateRunnerGroupCalls[0].GroupID).To(Equal(int64(111)))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.Name).To(Equal(github.Ptr("test-group")))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(github.Ptr("selected")))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.Name).To(Equal(new("test-group")))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(new("selected")))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.RestrictedToWorkflows).To(Equal(new(true)))
 			// Repository IDs are equal (both empty: current via mock default, desired has no repos), so no SetSelectedRepositories call
 			Expect(setSelectedRepositoriesCalls).To(BeEmpty())
 		})
@@ -1875,24 +1875,24 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"group1"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "group1",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 				{
 					Name:       "group2",
-					Visibility: github.Ptr("all"),
+					Visibility: new("all"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:   github.Ptr(int64(222)),
-					Name: github.Ptr("old-group"),
+					ID:   new(int64(222)),
+					Name: new("old-group"),
 				},
 			}
 		})
@@ -1926,8 +1926,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:   github.Ptr(int64(111)),
-					Name: github.Ptr("old-group"),
+					ID:   new(int64(111)),
+					Name: new("old-group"),
 				},
 			}
 			deleteRunnerGroupError = errors.New("API error: failed to delete runner group")
@@ -1945,7 +1945,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("all"),
+					Visibility: new("all"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{}
@@ -1964,14 +1964,14 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "new-name",
-					Visibility: github.Ptr("all"),
+					Visibility: new("all"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("old-name"),
-					Visibility: github.Ptr("all"),
+					ID:         new(int64(111)),
+					Name:       new("old-name"),
+					Visibility: new("all"),
 				},
 			}
 		})
@@ -1981,7 +1981,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			Expect(deleteRunnerGroupCalls).To(HaveLen(1))
 			Expect(deleteRunnerGroupCalls[0]).To(Equal(int64(111)))
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(github.Ptr("new-name")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("new-name")))
 		})
 	})
 
@@ -1990,8 +1990,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:                  "restricted-group",
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows: []string{
 						"org/repo/.github/workflows/deploy.yaml@refs/heads/main",
 						"org/repo/.github/workflows/test.yaml@refs/tags/v1.0.0",
@@ -2004,8 +2004,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should create runner group with workflow restrictions", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(github.Ptr("restricted-group")))
-			Expect(createRunnerGroupCalls[0].RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("restricted-group")))
+			Expect(createRunnerGroupCalls[0].RestrictedToWorkflows).To(Equal(new(true)))
 			Expect(createRunnerGroupCalls[0].SelectedWorkflows).To(ConsistOf(
 				"org/repo/.github/workflows/deploy.yaml@refs/heads/main",
 				"org/repo/.github/workflows/test.yaml@refs/tags/v1.0.0",
@@ -2027,7 +2027,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"selected-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 				{
@@ -2041,14 +2041,14 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"selected-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(200)),
+						ID: new(int64(200)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "selected-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{}
@@ -2057,8 +2057,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should create runner group with selected repositories", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(github.Ptr("selected-group")))
-			Expect(createRunnerGroupCalls[0].Visibility).To(Equal(github.Ptr("selected")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("selected-group")))
+			Expect(createRunnerGroupCalls[0].Visibility).To(Equal(new("selected")))
 			Expect(createRunnerGroupCalls[0].SelectedRepositoryIDs).To(ConsistOf(int64(100), int64(200)))
 		})
 	})
@@ -2077,7 +2077,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"my-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 				{
@@ -2091,14 +2091,14 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"my-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(200)),
+						ID: new(int64(200)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "my-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{}
@@ -2116,31 +2116,31 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "group-keep",
-					Visibility: github.Ptr("all"),
+					Visibility: new("all"),
 				},
 				{
 					Name:       "group-update",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 				{
 					Name:       "group-new",
-					Visibility: github.Ptr("private"),
+					Visibility: new("private"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("group-keep"),
-					Visibility: github.Ptr("all"),
+					ID:         new(int64(111)),
+					Name:       new("group-keep"),
+					Visibility: new("all"),
 				},
 				{
-					ID:         github.Ptr(int64(222)),
-					Name:       github.Ptr("group-update"),
-					Visibility: github.Ptr("all"), // Different visibility
+					ID:         new(int64(222)),
+					Name:       new("group-update"),
+					Visibility: new("all"), // Different visibility
 				},
 				{
-					ID:   github.Ptr(int64(333)),
-					Name: github.Ptr("group-delete"),
+					ID:   new(int64(333)),
+					Name: new("group-delete"),
 				},
 			}
 		})
@@ -2153,11 +2153,11 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			// Should update: group-update
 			Expect(updateRunnerGroupCalls).To(HaveLen(1))
 			Expect(updateRunnerGroupCalls[0].GroupID).To(Equal(int64(222)))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.Name).To(Equal(github.Ptr("group-update")))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(github.Ptr("selected")))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.Name).To(Equal(new("group-update")))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(new("selected")))
 			// Should create: group-new
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(github.Ptr("group-new")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("group-new")))
 			// Repository IDs are equal (both empty) for group-update, so no SetSelectedRepositories call
 			// group-keep has visibility='all' so it also skips repository operations
 			Expect(setSelectedRepositoriesCalls).To(BeEmpty())
@@ -2178,7 +2178,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 				{
@@ -2192,21 +2192,21 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(200)),
+						ID: new(int64(200)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("selected"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("selected"),
 				},
 			}
 		})
@@ -2227,14 +2227,14 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("all"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("all"),
 				},
 			}
 			updateRunnerGroupError = errors.New("API error: failed to update runner group")
@@ -2261,21 +2261,21 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("all"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("all"),
 				},
 			}
 			setSelectedRepositoriesError = errors.New("API error: failed to set repositories")
@@ -2294,8 +2294,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows: []string{
 						"org/repo/.github/workflows/ci.yaml@main",
 						"org/repo/.github/workflows/deploy.yaml@main",
@@ -2304,10 +2304,10 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:                    github.Ptr(int64(111)),
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(true),
+					ID:                    new(int64(111)),
+					Name:                  new("test-group"),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows: []string{
 						"org/repo/.github/workflows/ci.yaml@main",
 					},
@@ -2330,16 +2330,16 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(false),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:                    github.Ptr(int64(111)),
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(true),
+					ID:                    new(int64(111)),
+					Name:                  new("test-group"),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				},
 			}
@@ -2348,7 +2348,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should update the runner group", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(updateRunnerGroupCalls).To(HaveLen(1))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.RestrictedToWorkflows).To(Equal(github.Ptr(false)))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.RestrictedToWorkflows).To(Equal(new(false)))
 		})
 	})
 
@@ -2366,21 +2366,21 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("all"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("all"),
 				},
 			}
 		})
@@ -2388,7 +2388,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should update visibility and set selected repositories", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(updateRunnerGroupCalls).To(HaveLen(1))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(github.Ptr("selected")))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(new("selected")))
 			Expect(setSelectedRepositoriesCalls).To(HaveLen(1))
 			Expect(setSelectedRepositoriesCalls[0].RepositoryIDs).To(ConsistOf(int64(100)))
 		})
@@ -2399,14 +2399,14 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("all"),
+					Visibility: new("all"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("selected"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("selected"),
 				},
 			}
 		})
@@ -2414,7 +2414,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should update visibility but not set repositories", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(updateRunnerGroupCalls).To(HaveLen(1))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(github.Ptr("all")))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(new("all")))
 			// When visibility is 'all', SetSelectedRepositories should not be called
 			Expect(setSelectedRepositoriesCalls).To(BeEmpty())
 		})
@@ -2434,27 +2434,27 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("selected"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("selected"),
 				},
 			}
 			// Mock GetSelectedRepositories to return the same repo that's desired
 			mockClient.GetSelectedRepositoriesForRunnerGroupFunc = func(ctx context.Context, org string, groupID int64) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(100))},
+					{ID: new(int64(100))},
 				}, nil
 			}
 		})
@@ -2481,7 +2481,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 				{
@@ -2495,27 +2495,27 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(200)),
+						ID: new(int64(200)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("selected"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("selected"),
 				},
 			}
 			// Mock GetSelectedRepositories to return different repos
 			mockClient.GetSelectedRepositoriesForRunnerGroupFunc = func(ctx context.Context, org string, groupID int64) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(300))}, // Different repo
+					{ID: new(int64(300))}, // Different repo
 				}, nil
 			}
 		})
@@ -2544,21 +2544,21 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("private"),
+					Visibility: new("private"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("private"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("private"),
 				},
 			}
 		})
@@ -2576,14 +2576,14 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("selected"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("selected"),
 				},
 			}
 			mockClient.GetSelectedRepositoriesForRunnerGroupFunc = func(ctx context.Context, org string, groupID int64) ([]*github.Repository, error) {
@@ -2611,21 +2611,21 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 						AvailableActionsRunnerGroups: []string{"test-group"},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(100)),
+						ID: new(int64(100)),
 					},
 				},
 			}
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("selected"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("selected"),
 				},
 			}
 			// Current has no repositories
@@ -2651,20 +2651,20 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			actionsSettings.RunnerGroups = []v1alpha1.RunnerGroup{
 				{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				},
 			}
 			currentRunnerGroups = []*github.RunnerGroup{
 				{
-					ID:         github.Ptr(int64(111)),
-					Name:       github.Ptr("test-group"),
-					Visibility: github.Ptr("selected"),
+					ID:         new(int64(111)),
+					Name:       new("test-group"),
+					Visibility: new("selected"),
 				},
 			}
 			// Current has a repository
 			mockClient.GetSelectedRepositoriesForRunnerGroupFunc = func(ctx context.Context, org string, groupID int64) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(100))},
+					{ID: new(int64(100))},
 				}, nil
 			}
 		})
@@ -2703,9 +2703,9 @@ var _ = Describe("ReconcilePermissions with selected repositories", func() {
 
 		mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 			return &github.ActionsPermissions{
-				EnabledRepositories: github.Ptr("selected"),
-				AllowedActions:      github.Ptr("selected"),
-				SHAPinningRequired:  github.Ptr(false),
+				EnabledRepositories: new("selected"),
+				AllowedActions:      new("selected"),
+				SHAPinningRequired:  new(false),
 			}, nil
 		}
 
@@ -2760,7 +2760,7 @@ var _ = Describe("ReconcilePermissions with selected repositories", func() {
 	Context("when enabled repositories is 'selected'", func() {
 		BeforeEach(func() {
 			actionsSettings = v1alpha1.ActionsSettings{
-				EnabledRepositories: github.Ptr("selected"),
+				EnabledRepositories: new("selected"),
 			}
 		})
 
@@ -2782,7 +2782,7 @@ var _ = Describe("ReconcilePermissions with selected repositories", func() {
 	Context("when enabled repositories is not 'selected'", func() {
 		BeforeEach(func() {
 			actionsSettings = v1alpha1.ActionsSettings{
-				EnabledRepositories: github.Ptr("all"),
+				EnabledRepositories: new("all"),
 			}
 		})
 

@@ -26,8 +26,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 				githubOrg := OrgToGithubOrg(org)
 
 				Expect(githubOrg).NotTo(BeNil())
-				Expect(githubOrg.Name).To(Equal(github.Ptr("my-org")))
-				Expect(githubOrg.Description).To(Equal(github.Ptr("This is a test organization")))
+				Expect(githubOrg.Name).To(Equal(new("my-org")))
+				Expect(githubOrg.Description).To(Equal(new("This is a test organization")))
 			})
 		})
 
@@ -46,8 +46,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 				githubOrg := OrgToGithubOrg(org)
 
 				Expect(githubOrg).NotTo(BeNil())
-				Expect(githubOrg.Name).To(Equal(github.Ptr("my-org")))
-				Expect(githubOrg.Description).To(Equal(github.Ptr("")))
+				Expect(githubOrg.Name).To(Equal(new("my-org")))
+				Expect(githubOrg.Description).To(Equal(new("")))
 			})
 		})
 
@@ -70,8 +70,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 				githubOrg := OrgToGithubOrg(org)
 
 				Expect(githubOrg).NotTo(BeNil())
-				Expect(githubOrg.Name).To(Equal(github.Ptr("my-org")))
-				Expect(githubOrg.Description).To(Equal(github.Ptr(longDesc)))
+				Expect(githubOrg.Name).To(Equal(new("my-org")))
+				Expect(githubOrg.Description).To(Equal(new(longDesc)))
 			})
 		})
 
@@ -92,7 +92,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 				githubOrg := OrgToGithubOrg(org)
 
 				Expect(githubOrg).NotTo(BeNil())
-				Expect(githubOrg.Description).To(Equal(github.Ptr(specialDesc)))
+				Expect(githubOrg.Description).To(Equal(new(specialDesc)))
 			})
 		})
 	})
@@ -115,8 +115,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when organizations match exactly", func() {
 			It("should return false", func() {
 				githubOrg := github.Organization{
-					Name:        github.Ptr("my-org"),
-					Description: github.Ptr("Test organization"),
+					Name:        new("my-org"),
+					Description: new("Test organization"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -128,8 +128,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when name differs", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
-					Name:        github.Ptr("different-org"),
-					Description: github.Ptr("Test organization"),
+					Name:        new("different-org"),
+					Description: new("Test organization"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -141,8 +141,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when description differs", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
-					Name:        github.Ptr("my-org"),
-					Description: github.Ptr("Different description"),
+					Name:        new("my-org"),
+					Description: new("Different description"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -154,8 +154,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when both name and description differ", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
-					Name:        github.Ptr("different-org"),
-					Description: github.Ptr("Different description"),
+					Name:        new("different-org"),
+					Description: new("Different description"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -168,7 +168,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
 					Name:        nil,
-					Description: github.Ptr("Test organization"),
+					Description: new("Test organization"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -180,7 +180,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when GitHub organization has nil description", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
-					Name:        github.Ptr("my-org"),
+					Name:        new("my-org"),
 					Description: nil,
 				}
 
@@ -194,8 +194,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 			It("should return false", func() {
 				org.Spec.Description = ""
 				githubOrg := github.Organization{
-					Name:        github.Ptr("my-org"),
-					Description: github.Ptr(""),
+					Name:        new("my-org"),
+					Description: new(""),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -208,8 +208,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 			It("should return true", func() {
 				org.Spec.Description = ""
 				githubOrg := github.Organization{
-					Name:        github.Ptr("my-org"),
-					Description: github.Ptr("Some description"),
+					Name:        new("my-org"),
+					Description: new("Some description"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -221,8 +221,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when K8s has description but GitHub description is empty", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
-					Name:        github.Ptr("my-org"),
-					Description: github.Ptr(""),
+					Name:        new("my-org"),
+					Description: new(""),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -234,8 +234,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when checking whitespace differences", func() {
 			It("should detect trailing whitespace differences", func() {
 				githubOrg := github.Organization{
-					Name:        github.Ptr("my-org"),
-					Description: github.Ptr("Test organization "),
+					Name:        new("my-org"),
+					Description: new("Test organization "),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -245,8 +245,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 
 			It("should detect leading whitespace differences", func() {
 				githubOrg := github.Organization{
-					Name:        github.Ptr("my-org"),
-					Description: github.Ptr(" Test organization"),
+					Name:        new("my-org"),
+					Description: new(" Test organization"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)

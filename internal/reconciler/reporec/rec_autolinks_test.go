@@ -153,15 +153,15 @@ var _ = Describe("ReconcileAutolinks", func() {
 			}
 			currentAutolinks = []*github.Autolink{
 				{
-					ID:             github.Ptr(int64(12345)),
-					KeyPrefix:      github.Ptr("foo"),
-					URLTemplate:    github.Ptr("https://example.com/foo"),
-					IsAlphanumeric: github.Ptr(false),
+					ID:             new(int64(12345)),
+					KeyPrefix:      new("foo"),
+					URLTemplate:    new("https://example.com/foo"),
+					IsAlphanumeric: new(false),
 				}, {
-					ID:             github.Ptr(int64(23456)),
-					KeyPrefix:      github.Ptr("bar"),
-					URLTemplate:    github.Ptr("https://example.com/bar"),
-					IsAlphanumeric: github.Ptr(false),
+					ID:             new(int64(23456)),
+					KeyPrefix:      new("bar"),
+					URLTemplate:    new("https://example.com/bar"),
+					IsAlphanumeric: new(false),
 				},
 			}
 		})
@@ -228,15 +228,15 @@ var _ = Describe("ReconcileAutolinks", func() {
 			}
 			currentAutolinks = []*github.Autolink{
 				{
-					ID:             github.Ptr(int64(12345)),
-					KeyPrefix:      github.Ptr("fooz"),
-					URLTemplate:    github.Ptr("https://example.com/fooz"),
-					IsAlphanumeric: github.Ptr(false),
+					ID:             new(int64(12345)),
+					KeyPrefix:      new("fooz"),
+					URLTemplate:    new("https://example.com/fooz"),
+					IsAlphanumeric: new(false),
 				}, {
-					ID:             github.Ptr(int64(23456)),
-					KeyPrefix:      github.Ptr("bar"),
-					URLTemplate:    github.Ptr("https://example.com/bar"),
-					IsAlphanumeric: github.Ptr(false),
+					ID:             new(int64(23456)),
+					KeyPrefix:      new("bar"),
+					URLTemplate:    new("https://example.com/bar"),
+					IsAlphanumeric: new(false),
 				},
 			}
 		})
@@ -259,15 +259,15 @@ var _ = Describe("ReconcileAutolinks", func() {
 		BeforeEach(func() {
 			currentAutolinks = []*github.Autolink{
 				{
-					ID:             github.Ptr(int64(12345)),
-					KeyPrefix:      github.Ptr("fooz"),
-					URLTemplate:    github.Ptr("https://example.com/fooz"),
-					IsAlphanumeric: github.Ptr(false),
+					ID:             new(int64(12345)),
+					KeyPrefix:      new("fooz"),
+					URLTemplate:    new("https://example.com/fooz"),
+					IsAlphanumeric: new(false),
 				}, {
-					ID:             github.Ptr(int64(23456)),
-					KeyPrefix:      github.Ptr("bar"),
-					URLTemplate:    github.Ptr("https://example.com/bar"),
-					IsAlphanumeric: github.Ptr(false),
+					ID:             new(int64(23456)),
+					KeyPrefix:      new("bar"),
+					URLTemplate:    new("https://example.com/bar"),
+					IsAlphanumeric: new(false),
 				},
 			}
 		})
@@ -327,10 +327,10 @@ var _ = Describe("ReconcileAutolinks", func() {
 			}
 			currentAutolinks = []*github.Autolink{
 				{
-					ID:             github.Ptr(int64(12345)),
-					KeyPrefix:      github.Ptr("fooz"),
-					URLTemplate:    github.Ptr("https://example.com/fooz"),
-					IsAlphanumeric: github.Ptr(false),
+					ID:             new(int64(12345)),
+					KeyPrefix:      new("fooz"),
+					URLTemplate:    new("https://example.com/fooz"),
+					IsAlphanumeric: new(false),
 				},
 			}
 		})
@@ -768,16 +768,16 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			// JIRA- and GH- already exist in GitHub
 			currentAutolinks = []*github.Autolink{
 				{
-					ID:             github.Ptr(int64(12345)),
-					KeyPrefix:      github.Ptr("JIRA-"),
-					URLTemplate:    github.Ptr("https://jira.example.com/browse/JIRA-<num>"),
-					IsAlphanumeric: github.Ptr(true),
+					ID:             new(int64(12345)),
+					KeyPrefix:      new("JIRA-"),
+					URLTemplate:    new("https://jira.example.com/browse/JIRA-<num>"),
+					IsAlphanumeric: new(true),
 				},
 				{
-					ID:             github.Ptr(int64(23456)),
-					KeyPrefix:      github.Ptr("GH-"),
-					URLTemplate:    github.Ptr("https://github.com/org/repo/issues/<num>"),
-					IsAlphanumeric: github.Ptr(true),
+					ID:             new(int64(23456)),
+					KeyPrefix:      new("GH-"),
+					URLTemplate:    new("https://github.com/org/repo/issues/<num>"),
+					IsAlphanumeric: new(true),
 				},
 			}
 
@@ -870,28 +870,28 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			// GitHub has extra autolinks (OLD- and LEGACY-) that are not in presets
 			currentAutolinks = []*github.Autolink{
 				{
-					ID:             github.Ptr(int64(12345)),
-					KeyPrefix:      github.Ptr("JIRA-"),
-					URLTemplate:    github.Ptr("https://jira.example.com/browse/JIRA-<num>"),
-					IsAlphanumeric: github.Ptr(true),
+					ID:             new(int64(12345)),
+					KeyPrefix:      new("JIRA-"),
+					URLTemplate:    new("https://jira.example.com/browse/JIRA-<num>"),
+					IsAlphanumeric: new(true),
 				},
 				{
-					ID:             github.Ptr(int64(23456)),
-					KeyPrefix:      github.Ptr("GH-"),
-					URLTemplate:    github.Ptr("https://github.com/org/repo/issues/<num>"),
-					IsAlphanumeric: github.Ptr(true),
+					ID:             new(int64(23456)),
+					KeyPrefix:      new("GH-"),
+					URLTemplate:    new("https://github.com/org/repo/issues/<num>"),
+					IsAlphanumeric: new(true),
 				},
 				{
-					ID:             github.Ptr(int64(34567)),
-					KeyPrefix:      github.Ptr("OLD-"),
-					URLTemplate:    github.Ptr("https://old.example.com/<num>"),
-					IsAlphanumeric: github.Ptr(true),
+					ID:             new(int64(34567)),
+					KeyPrefix:      new("OLD-"),
+					URLTemplate:    new("https://old.example.com/<num>"),
+					IsAlphanumeric: new(true),
 				},
 				{
-					ID:             github.Ptr(int64(45678)),
-					KeyPrefix:      github.Ptr("LEGACY-"),
-					URLTemplate:    github.Ptr("https://legacy.example.com/<num>"),
-					IsAlphanumeric: github.Ptr(false),
+					ID:             new(int64(45678)),
+					KeyPrefix:      new("LEGACY-"),
+					URLTemplate:    new("https://legacy.example.com/<num>"),
+					IsAlphanumeric: new(false),
 				},
 			}
 
@@ -988,16 +988,16 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			// GitHub has: JIRA- (keep), OLD- (remove), and missing: TICKET-, GH-, PR-
 			currentAutolinks = []*github.Autolink{
 				{
-					ID:             github.Ptr(int64(12345)),
-					KeyPrefix:      github.Ptr("JIRA-"),
-					URLTemplate:    github.Ptr("https://jira.example.com/browse/JIRA-<num>"),
-					IsAlphanumeric: github.Ptr(true),
+					ID:             new(int64(12345)),
+					KeyPrefix:      new("JIRA-"),
+					URLTemplate:    new("https://jira.example.com/browse/JIRA-<num>"),
+					IsAlphanumeric: new(true),
 				},
 				{
-					ID:             github.Ptr(int64(99999)),
-					KeyPrefix:      github.Ptr("OLD-"),
-					URLTemplate:    github.Ptr("https://old.example.com/<num>"),
-					IsAlphanumeric: github.Ptr(true),
+					ID:             new(int64(99999)),
+					KeyPrefix:      new("OLD-"),
+					URLTemplate:    new("https://old.example.com/<num>"),
+					IsAlphanumeric: new(true),
 				},
 			}
 
@@ -1236,10 +1236,10 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 
 			currentAutolinks = []*github.Autolink{
 				{
-					ID:             github.Ptr(int64(12345)),
-					KeyPrefix:      github.Ptr("OLD-"),
-					URLTemplate:    github.Ptr("https://old.example.com/<num>"),
-					IsAlphanumeric: github.Ptr(true),
+					ID:             new(int64(12345)),
+					KeyPrefix:      new("OLD-"),
+					URLTemplate:    new("https://old.example.com/<num>"),
+					IsAlphanumeric: new(true),
 				},
 			}
 

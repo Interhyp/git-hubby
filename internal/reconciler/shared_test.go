@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-github/v86/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/utils/ptr"
 )
 
 var _ = Describe("ResolveNamesToIDsInRuleset", func() {
@@ -38,7 +37,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				},
 				Enforcement: "active",
 				Rules: v1alpha1.RulesetRules{
-					Creation: github.Ptr(true),
+					Creation: new(true),
 				},
 			},
 		}
@@ -86,7 +85,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorID:    ptr.To(int64(12345)),
+					ActorID:    new(int64(12345)),
 					ActorType:  "Team",
 					BypassMode: "always",
 				},
@@ -100,7 +99,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		It("should preserve the ActorID without resolution", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Spec.BypassActors).To(HaveLen(1))
-			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(ptr.To(int64(12345))))
+			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(new(int64(12345))))
 			Expect(result.Spec.BypassActors[0].ActorType).To(Equal("Team"))
 		})
 
@@ -114,7 +113,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("engineering-team"),
+					ActorSlug:  new("engineering-team"),
 					ActorType:  "Team",
 					BypassMode: "always",
 				},
@@ -128,9 +127,9 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				Expect(org).To(Equal(orgName))
 				Expect(slug).To(Equal("engineering-team"))
 				return &github.Team{
-					ID:   ptr.To(int64(98765)),
-					Slug: ptr.To("engineering-team"),
-					Name: ptr.To("Engineering Team"),
+					ID:   new(int64(98765)),
+					Slug: new("engineering-team"),
+					Name: new("Engineering Team"),
 				}, nil
 			}
 		})
@@ -138,7 +137,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		It("should resolve the team slug to ActorID", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Spec.BypassActors).To(HaveLen(1))
-			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(ptr.To(int64(98765))))
+			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(new(int64(98765))))
 			Expect(result.Spec.BypassActors[0].ActorType).To(Equal("Team"))
 		})
 
@@ -155,7 +154,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("nonexistent-team"),
+					ActorSlug:  new("nonexistent-team"),
 					ActorType:  "Team",
 					BypassMode: "always",
 				},
@@ -180,7 +179,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("github-actions"),
+					ActorSlug:  new("github-actions"),
 					ActorType:  "Integration",
 					BypassMode: "pull_request",
 				},
@@ -189,14 +188,14 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
 				return []*github.Installation{
 					{
-						ID:      ptr.To(int64(1)),
-						AppID:   ptr.To(int64(15368)),
-						AppSlug: ptr.To("github-actions"),
+						ID:      new(int64(1)),
+						AppID:   new(int64(15368)),
+						AppSlug: new("github-actions"),
 					},
 					{
-						ID:      ptr.To(int64(2)),
-						AppID:   ptr.To(int64(99999)),
-						AppSlug: ptr.To("other-app"),
+						ID:      new(int64(2)),
+						AppID:   new(int64(99999)),
+						AppSlug: new("other-app"),
 					},
 				}, nil
 			}
@@ -205,7 +204,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		It("should resolve the app slug to ActorID", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Spec.BypassActors).To(HaveLen(1))
-			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(ptr.To(int64(15368))))
+			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(new(int64(15368))))
 			Expect(result.Spec.BypassActors[0].ActorType).To(Equal("Integration"))
 		})
 	})
@@ -214,7 +213,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("nonexistent-app"),
+					ActorSlug:  new("nonexistent-app"),
 					ActorType:  "Integration",
 					BypassMode: "always",
 				},
@@ -223,9 +222,9 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
 				return []*github.Installation{
 					{
-						ID:      ptr.To(int64(1)),
-						AppID:   ptr.To(int64(15368)),
-						AppSlug: ptr.To("github-actions"),
+						ID:      new(int64(1)),
+						AppID:   new(int64(15368)),
+						AppSlug: new("github-actions"),
 					},
 				}, nil
 			}
@@ -242,7 +241,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("maintain"),
+					ActorSlug:  new("maintain"),
 					ActorType:  "RepositoryRole",
 					BypassMode: "always",
 				},
@@ -256,8 +255,8 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				Expect(org).To(Equal(orgName))
 				Expect(roleName).To(Equal("maintain"))
 				return &github.CustomOrgRole{
-					ID:   ptr.To(int64(54321)),
-					Name: ptr.To("maintain"),
+					ID:   new(int64(54321)),
+					Name: new("maintain"),
 				}, nil
 			}
 		})
@@ -265,7 +264,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		It("should resolve the role slug to ActorID", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Spec.BypassActors).To(HaveLen(1))
-			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(ptr.To(int64(54321))))
+			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(new(int64(54321))))
 			Expect(result.Spec.BypassActors[0].ActorType).To(Equal("RepositoryRole"))
 		})
 
@@ -282,7 +281,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("nonexistent-role"),
+					ActorSlug:  new("nonexistent-role"),
 					ActorType:  "RepositoryRole",
 					BypassMode: "always",
 				},
@@ -307,7 +306,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("some-slug"),
+					ActorSlug:  new("some-slug"),
 					ActorType:  "OrganizationAdmin",
 					BypassMode: "always",
 				},
@@ -356,7 +355,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				{
 					ActorType:  "DeployKey",
 					BypassMode: "always",
-					ActorID:    github.Ptr(int64(12354)),
+					ActorID:    new(int64(12354)),
 				},
 			}
 
@@ -400,7 +399,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 	})
 
 	Context("when bypass actor is EnterpriseOwner with any ActorID", func() {
-		actorID := github.Ptr(int64(84354))
+		actorID := new(int64(84354))
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
@@ -513,7 +512,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorID:    ptr.To(int64(99999)), // API requires this to be null for DeployKey
+					ActorID:    new(int64(99999)), // API requires this to be null for DeployKey
 					ActorType:  "DeployKey",
 					BypassMode: "always",
 				},
@@ -537,7 +536,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("some-slug"), // API requires this to be null for DeployKey
+					ActorSlug:  new("some-slug"), // API requires this to be null for DeployKey
 					ActorType:  "DeployKey",
 					BypassMode: "always",
 				},
@@ -561,22 +560,22 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorID:    ptr.To(int64(111)),
+					ActorID:    new(int64(111)),
 					ActorType:  "Team",
 					BypassMode: "always",
 				},
 				{
-					ActorSlug:  ptr.To("security-team"),
+					ActorSlug:  new("security-team"),
 					ActorType:  "Team",
 					BypassMode: "pull_request",
 				},
 				{
-					ActorSlug:  ptr.To("renovate"),
+					ActorSlug:  new("renovate"),
 					ActorType:  "Integration",
 					BypassMode: "always",
 				},
 				{
-					ActorSlug:  ptr.To("admin"),
+					ActorSlug:  new("admin"),
 					ActorType:  "RepositoryRole",
 					BypassMode: "always",
 				},
@@ -585,9 +584,9 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
 				return []*github.Installation{
 					{
-						ID:      ptr.To(int64(10)),
-						AppID:   ptr.To(int64(29)),
-						AppSlug: ptr.To("renovate"),
+						ID:      new(int64(10)),
+						AppID:   new(int64(29)),
+						AppSlug: new("renovate"),
 					},
 				}, nil
 			}
@@ -595,8 +594,8 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				if slug == "security-team" {
 					return &github.Team{
-						ID:   ptr.To(int64(222)),
-						Slug: ptr.To("security-team"),
+						ID:   new(int64(222)),
+						Slug: new("security-team"),
 					}, nil
 				}
 				return nil, errors.New("team not found")
@@ -605,8 +604,8 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetRoleByNameFunc = func(ctx context.Context, org string, roleName string) (*github.CustomOrgRole, error) {
 				if roleName == "admin" {
 					return &github.CustomOrgRole{
-						ID:   ptr.To(int64(333)),
-						Name: ptr.To("admin"),
+						ID:   new(int64(333)),
+						Name: new("admin"),
 					}, nil
 				}
 				return nil, errors.New("role not found")
@@ -618,19 +617,19 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			Expect(result.Spec.BypassActors).To(HaveLen(4))
 
 			// First actor - already has ID
-			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(ptr.To(int64(111))))
+			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(new(int64(111))))
 			Expect(result.Spec.BypassActors[0].ActorType).To(Equal("Team"))
 
 			// Second actor - team slug resolved
-			Expect(result.Spec.BypassActors[1].ActorID).To(Equal(ptr.To(int64(222))))
+			Expect(result.Spec.BypassActors[1].ActorID).To(Equal(new(int64(222))))
 			Expect(result.Spec.BypassActors[1].ActorType).To(Equal("Team"))
 
 			// Third actor - integration slug resolved
-			Expect(result.Spec.BypassActors[2].ActorID).To(Equal(ptr.To(int64(29))))
+			Expect(result.Spec.BypassActors[2].ActorID).To(Equal(new(int64(29))))
 			Expect(result.Spec.BypassActors[2].ActorType).To(Equal("Integration"))
 
 			// Fourth actor - role slug resolved
-			Expect(result.Spec.BypassActors[3].ActorID).To(Equal(ptr.To(int64(333))))
+			Expect(result.Spec.BypassActors[3].ActorID).To(Equal(new(int64(333))))
 			Expect(result.Spec.BypassActors[3].ActorType).To(Equal("RepositoryRole"))
 		})
 
@@ -646,7 +645,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("platform-team"),
+					ActorSlug:  new("platform-team"),
 					ActorType:  "Team",
 					BypassMode: "always",
 				},
@@ -659,7 +658,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 					BypassMode: "pull_request",
 				},
 				{
-					ActorSlug:  ptr.To("dependabot"),
+					ActorSlug:  new("dependabot"),
 					ActorType:  "Integration",
 					BypassMode: "always",
 				},
@@ -672,9 +671,9 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
 				return []*github.Installation{
 					{
-						ID:      ptr.To(int64(1)),
-						AppID:   ptr.To(int64(29110)),
-						AppSlug: ptr.To("dependabot"),
+						ID:      new(int64(1)),
+						AppID:   new(int64(29110)),
+						AppSlug: new("dependabot"),
 					},
 				}, nil
 			}
@@ -682,8 +681,8 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				if slug == "platform-team" {
 					return &github.Team{
-						ID:   ptr.To(int64(444)),
-						Slug: ptr.To("platform-team"),
+						ID:   new(int64(444)),
+						Slug: new("platform-team"),
 					}, nil
 				}
 				return nil, errors.New("team not found")
@@ -695,7 +694,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			Expect(result.Spec.BypassActors).To(HaveLen(5))
 
 			// First actor - team slug resolved
-			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(ptr.To(int64(444))))
+			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(new(int64(444))))
 			Expect(result.Spec.BypassActors[0].ActorType).To(Equal("Team"))
 
 			// Second actor - DeployKey with no ActorID/ActorSlug
@@ -711,7 +710,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			Expect(result.Spec.BypassActors[2].BypassMode).To(Equal("pull_request"))
 
 			// Fourth actor - integration slug resolved
-			Expect(result.Spec.BypassActors[3].ActorID).To(Equal(ptr.To(int64(29110))))
+			Expect(result.Spec.BypassActors[3].ActorID).To(Equal(new(int64(29110))))
 			Expect(result.Spec.BypassActors[3].ActorType).To(Equal("Integration"))
 
 			// Fifth actor - EnterpriseOwner with no ActorID/ActorSlug
@@ -728,10 +727,10 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				Checks: []v1alpha1.StatusCheck{
 					{
 						Context:       "ci/build",
-						IntegrationID: ptr.To(int64(77777)),
+						IntegrationID: new(int64(77777)),
 					},
 				},
-				StrictPolicy: github.Ptr(true),
+				StrictPolicy: new(true),
 			}
 
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
@@ -743,7 +742,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Spec.Rules.RequiredStatusChecks).NotTo(BeNil())
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks).To(HaveLen(1))
-			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].IntegrationID).To(Equal(ptr.To(int64(77777))))
+			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].IntegrationID).To(Equal(new(int64(77777))))
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].Context).To(Equal("ci/build"))
 		})
 	})
@@ -754,23 +753,23 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				Checks: []v1alpha1.StatusCheck{
 					{
 						Context: "ci/build",
-						AppSlug: ptr.To("circleci"),
+						AppSlug: new("circleci"),
 					},
 				},
-				StrictPolicy: github.Ptr(false),
+				StrictPolicy: new(false),
 			}
 
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
 				return []*github.Installation{
 					{
-						ID:      ptr.To(int64(5)),
-						AppID:   ptr.To(int64(12345)),
-						AppSlug: ptr.To("circleci"),
+						ID:      new(int64(5)),
+						AppID:   new(int64(12345)),
+						AppSlug: new("circleci"),
 					},
 					{
-						ID:      ptr.To(int64(6)),
-						AppID:   ptr.To(int64(67890)),
-						AppSlug: ptr.To("jenkins"),
+						ID:      new(int64(6)),
+						AppID:   new(int64(67890)),
+						AppSlug: new("jenkins"),
 					},
 				}, nil
 			}
@@ -780,7 +779,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Spec.Rules.RequiredStatusChecks).NotTo(BeNil())
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks).To(HaveLen(1))
-			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].IntegrationID).To(Equal(ptr.To(int64(12345))))
+			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].IntegrationID).To(Equal(new(int64(12345))))
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].Context).To(Equal("ci/build"))
 		})
 	})
@@ -791,7 +790,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				Checks: []v1alpha1.StatusCheck{
 					{
 						Context: "ci/build",
-						AppSlug: ptr.To("nonexistent-ci"),
+						AppSlug: new("nonexistent-ci"),
 					},
 				},
 			}
@@ -799,9 +798,9 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
 				return []*github.Installation{
 					{
-						ID:      ptr.To(int64(1)),
-						AppID:   ptr.To(int64(100)),
-						AppSlug: ptr.To("other-app"),
+						ID:      new(int64(1)),
+						AppID:   new(int64(100)),
+						AppSlug: new("other-app"),
 					},
 				}, nil
 			}
@@ -846,34 +845,34 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				Checks: []v1alpha1.StatusCheck{
 					{
 						Context:       "ci/build",
-						IntegrationID: ptr.To(int64(999)),
+						IntegrationID: new(int64(999)),
 					},
 					{
 						Context: "ci/test",
-						AppSlug: ptr.To("github-actions"),
+						AppSlug: new("github-actions"),
 					},
 					{
 						Context: "ci/lint",
 					},
 					{
 						Context: "ci/security",
-						AppSlug: ptr.To("snyk"),
+						AppSlug: new("snyk"),
 					},
 				},
-				StrictPolicy: github.Ptr(true),
+				StrictPolicy: new(true),
 			}
 
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
 				return []*github.Installation{
 					{
-						ID:      ptr.To(int64(1)),
-						AppID:   ptr.To(int64(15368)),
-						AppSlug: ptr.To("github-actions"),
+						ID:      new(int64(1)),
+						AppID:   new(int64(15368)),
+						AppSlug: new("github-actions"),
 					},
 					{
-						ID:      ptr.To(int64(2)),
-						AppID:   ptr.To(int64(24680)),
-						AppSlug: ptr.To("snyk"),
+						ID:      new(int64(2)),
+						AppID:   new(int64(24680)),
+						AppSlug: new("snyk"),
 					},
 				}, nil
 			}
@@ -886,11 +885,11 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 
 			// First check - already has IntegrationID
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].Context).To(Equal("ci/build"))
-			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].IntegrationID).To(Equal(ptr.To(int64(999))))
+			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].IntegrationID).To(Equal(new(int64(999))))
 
 			// Second check - AppSlug resolved
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[1].Context).To(Equal("ci/test"))
-			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[1].IntegrationID).To(Equal(ptr.To(int64(15368))))
+			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[1].IntegrationID).To(Equal(new(int64(15368))))
 
 			// Third check - no integration
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[2].Context).To(Equal("ci/lint"))
@@ -898,7 +897,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 
 			// Fourth check - AppSlug resolved
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[3].Context).To(Equal("ci/security"))
-			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[3].IntegrationID).To(Equal(ptr.To(int64(24680))))
+			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[3].IntegrationID).To(Equal(new(int64(24680))))
 		})
 	})
 
@@ -906,7 +905,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 		BeforeEach(func() {
 			rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 				{
-					ActorSlug:  ptr.To("dependabot"),
+					ActorSlug:  new("dependabot"),
 					ActorType:  "Integration",
 					BypassMode: "always",
 				},
@@ -915,7 +914,7 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 				Checks: []v1alpha1.StatusCheck{
 					{
 						Context: "ci/build",
-						AppSlug: ptr.To("github-actions"),
+						AppSlug: new("github-actions"),
 					},
 				},
 			}
@@ -923,14 +922,14 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
 				return []*github.Installation{
 					{
-						ID:      ptr.To(int64(1)),
-						AppID:   ptr.To(int64(29110)),
-						AppSlug: ptr.To("dependabot"),
+						ID:      new(int64(1)),
+						AppID:   new(int64(29110)),
+						AppSlug: new("dependabot"),
 					},
 					{
-						ID:      ptr.To(int64(2)),
-						AppID:   ptr.To(int64(15368)),
-						AppSlug: ptr.To("github-actions"),
+						ID:      new(int64(2)),
+						AppID:   new(int64(15368)),
+						AppSlug: new("github-actions"),
 					},
 				}, nil
 			}
@@ -941,12 +940,12 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 
 			// Check bypass actor
 			Expect(result.Spec.BypassActors).To(HaveLen(1))
-			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(ptr.To(int64(29110))))
+			Expect(result.Spec.BypassActors[0].ActorID).To(Equal(new(int64(29110))))
 
 			// Check status check
 			Expect(result.Spec.Rules.RequiredStatusChecks).NotTo(BeNil())
 			Expect(result.Spec.Rules.RequiredStatusChecks.Checks).To(HaveLen(1))
-			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].IntegrationID).To(Equal(ptr.To(int64(15368))))
+			Expect(result.Spec.Rules.RequiredStatusChecks.Checks[0].IntegrationID).To(Equal(new(int64(15368))))
 		})
 
 		It("should only fetch installations once", func() {

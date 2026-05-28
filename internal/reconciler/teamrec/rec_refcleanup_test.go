@@ -72,7 +72,7 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -150,7 +150,7 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -232,7 +232,7 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -320,7 +320,7 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -399,7 +399,7 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -463,7 +463,7 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{

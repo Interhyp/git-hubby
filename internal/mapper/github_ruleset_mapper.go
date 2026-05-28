@@ -19,7 +19,7 @@ func RulesetPresetToGithubRuleset(preset githubv1alpha1.RulesetPreset) (*github.
 	ruleset := &github.RepositoryRuleset{
 		Name:        preset.Spec.Name,
 		Enforcement: github.RulesetEnforcement(preset.Spec.Enforcement),
-		Target:      github.Ptr(github.RulesetTarget(preset.Spec.Target)),
+		Target:      new(github.RulesetTarget(preset.Spec.Target)),
 	}
 
 	ruleset.Conditions = mapConditions(preset.Spec.Conditions)

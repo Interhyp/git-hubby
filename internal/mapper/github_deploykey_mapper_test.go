@@ -158,7 +158,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should convert all fields correctly", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "production-deploy-key",
 			}
 
@@ -176,7 +176,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle read-write deploy key", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...",
-				ReadOnly: github.Ptr(false),
+				ReadOnly: new(false),
 				Title:    "write-access-key",
 			}
 
@@ -189,7 +189,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle empty key", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "empty-key",
 			}
 
@@ -202,7 +202,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle empty title", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3...",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "",
 			}
 
@@ -215,7 +215,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should create proper GitHub Key type", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "test-key",
-				ReadOnly: github.Ptr(false),
+				ReadOnly: new(false),
 				Title:    "test-title",
 			}
 
@@ -227,7 +227,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle all fields as pointers", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3...",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "deploy-key",
 			}
 
@@ -241,7 +241,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle special characters in key", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3...+/=",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "special-key",
 			}
 
@@ -253,7 +253,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle unicode in title", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3...",
-				ReadOnly: github.Ptr(false),
+				ReadOnly: new(false),
 				Title:    "部署密钥-デプロイキー",
 			}
 
@@ -265,12 +265,12 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should preserve readonly flag exactly", func() {
 			presetTrue := v1alpha1.DeployKey{
 				Key:      "key1",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "readonly-key",
 			}
 			presetFalse := v1alpha1.DeployKey{
 				Key:      "key2",
-				ReadOnly: github.Ptr(false),
+				ReadOnly: new(false),
 				Title:    "readwrite-key",
 			}
 
@@ -286,7 +286,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle RSA keys", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "rsa-key",
 			}
 
@@ -298,7 +298,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle Ed25519 keys", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "ed25519-key",
 			}
 
@@ -310,7 +310,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle ECDSA keys", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTY...",
-				ReadOnly: github.Ptr(false),
+				ReadOnly: new(false),
 				Title:    "ecdsa-key",
 			}
 
@@ -322,7 +322,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle keys with comments", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3... user@host",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "key-with-comment",
 			}
 
@@ -337,7 +337,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 			longTitle := string(make([]byte, 1000))
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3...",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    longTitle,
 			}
 
@@ -349,7 +349,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle whitespace in key", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "  ssh-rsa AAAAB3...  ",
-				ReadOnly: github.Ptr(false),
+				ReadOnly: new(false),
 				Title:    "whitespace-key",
 			}
 
@@ -361,7 +361,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 		It("should handle whitespace in title", func() {
 			preset := v1alpha1.DeployKey{
 				Key:      "ssh-rsa AAAAB3...",
-				ReadOnly: github.Ptr(true),
+				ReadOnly: new(true),
 				Title:    "  deploy key  ",
 			}
 

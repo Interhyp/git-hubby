@@ -48,7 +48,7 @@ var _ = Describe("ReconcileArchive", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:     "test-repo",
-				Archived: github.Ptr(false),
+				Archived: new(false),
 				OrganizationRef: v1alpha1.OrganizationRef{
 					Name: "test-org",
 				},
@@ -61,10 +61,10 @@ var _ = Describe("ReconcileArchive", func() {
 
 		// Default: repository is not archived
 		currentGHRepo = &github.Repository{
-			Name:       github.Ptr("test-repo"),
-			Visibility: github.Ptr("internal"),
-			Archived:   github.Ptr(false),
-			ID:         github.Ptr(int64(12345)),
+			Name:       new("test-repo"),
+			Visibility: new("internal"),
+			Archived:   new(false),
+			ID:         new(int64(12345)),
 		}
 
 		// Set default mock functions (can be overridden in nested BeforeEach)
@@ -96,7 +96,7 @@ var _ = Describe("ReconcileArchive", func() {
 				Resource: GitHubRepoIdentifier{
 					Owner: "test-org",
 					Name:  "test-repo",
-					ID:    github.Ptr(int64(12345)),
+					ID:    new(int64(12345)),
 				},
 			},
 			Kubernetes: reconciler.Kubernetes[*v1alpha1.Repository]{
@@ -136,10 +136,10 @@ var _ = Describe("ReconcileArchive", func() {
 	Context("when repository is already archived", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("test-repo"),
-				Visibility: github.Ptr("internal"),
-				Archived:   github.Ptr(true),
-				ID:         github.Ptr(int64(12345)),
+				Name:       new("test-repo"),
+				Visibility: new("internal"),
+				Archived:   new(true),
+				ID:         new(int64(12345)),
 			}
 		})
 
@@ -248,10 +248,10 @@ var _ = Describe("ReconcileArchive", func() {
 		BeforeEach(func() {
 			// Edge case: Archived pointer exists but is nil (shouldn't happen, but let's be defensive)
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("test-repo"),
-				Visibility: github.Ptr("internal"),
+				Name:       new("test-repo"),
+				Visibility: new("internal"),
 				Archived:   nil, // nil pointer
-				ID:         github.Ptr(int64(12345)),
+				ID:         new(int64(12345)),
 			}
 		})
 
