@@ -18,7 +18,9 @@ package v1alpha1
 
 import (
 	"context"
+	stderrors "errors"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -870,6 +872,91 @@ var _ = Describe("Organization Webhook", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("expected an Organization object but got nil"))
 			Expect(warnings).To(BeEmpty())
+		})
+	})
+
+	Context("When validating plan/feature combinations", func() {
+		It("Should allow rulesetPresets on enterprise plan", func() {
+			obj.Spec.Plan = "enterprise"
+			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should allow rulesetPresets when plan is empty (defaults to enterprise)", func() {
+			obj.Spec.Plan = ""
+			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should reject rulesetPresets on team plan", func() {
+			obj.Spec.Plan = "team"
+			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).To(ContainSubstring("rulesetPresets"))
+			Expect(statusErr.Error()).To(ContainSubstring("enterprise"))
+		})
+
+		It("Should reject rulesetPresets on free plan", func() {
+			obj.Spec.Plan = "free"
+			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).To(ContainSubstring("rulesetPresets"))
+		})
+
+		It("Should reject codeSecurityConfigurations on team plan", func() {
+			obj.Spec.Plan = "team"
+			obj.Spec.CodeSecurityConfigurations = []githubv1alpha1.AttachableCodeSecurityConfigurationRef{
+				{Name: "my-config"},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).To(ContainSubstring("codeSecurityConfigurations"))
+			Expect(statusErr.Error()).To(ContainSubstring("enterprise"))
+		})
+
+		It("Should reject both rulesetPresets and codeSecurityConfigurations on free plan", func() {
+			obj.Spec.Plan = "free"
+			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
+			obj.Spec.CodeSecurityConfigurations = []githubv1alpha1.AttachableCodeSecurityConfigurationRef{
+				{Name: "my-config"},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).To(ContainSubstring("rulesetPresets"))
+			Expect(statusErr.Error()).To(ContainSubstring("codeSecurityConfigurations"))
+		})
+
+		It("Should allow empty enterprise-only fields on team plan", func() {
+			obj.Spec.Plan = "team"
+			obj.Spec.RulesetPresetList = nil
+			obj.Spec.CodeSecurityConfigurations = nil
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should validate plan/feature combinations on update", func() {
+			obj.Spec.Plan = "team"
+			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).To(ContainSubstring("rulesetPresets"))
 		})
 	})
 })

@@ -538,3 +538,86 @@ var _ = Describe("ReconcileDeletion", func() {
 		})
 	})
 })
+
+var _ = Describe("RequiredReconciliations", func() {
+	var (
+		ctx context.Context
+		rec *GitHubOrgReconciler
+		org *v1alpha1.Organization
+	)
+
+	BeforeEach(func() {
+		ctx = context.Background()
+		org = &v1alpha1.Organization{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-org",
+				Namespace: "default",
+			},
+			Spec: v1alpha1.OrganizationSpec{
+				Name:                    "test-org",
+				Description:             "Test Organization",
+				GitHubAppInstallationId: 12345,
+			},
+		}
+	})
+
+	JustBeforeEach(func() {
+		rec = &GitHubOrgReconciler{
+			Kubernetes: reconciler.Kubernetes[*v1alpha1.Organization]{
+				Resource: org,
+			},
+		}
+	})
+
+	Context("when plan is 'enterprise'", func() {
+		BeforeEach(func() {
+			org.Spec.Plan = "enterprise"
+		})
+
+		It("should include enterprise-only reconcilers", func() {
+			groups := rec.RequiredReconciliations(ctx)
+			Expect(groups).To(HaveLen(2))
+			// First group: base reconcilers
+			Expect(groups[0]).To(HaveLen(3))
+			// Second group: enterprise reconcilers
+			Expect(groups[1]).To(HaveLen(2))
+		})
+	})
+
+	Context("when plan is empty (defaults to enterprise)", func() {
+		BeforeEach(func() {
+			org.Spec.Plan = ""
+		})
+
+		It("should include enterprise-only reconcilers", func() {
+			groups := rec.RequiredReconciliations(ctx)
+			Expect(groups).To(HaveLen(2))
+			Expect(groups[0]).To(HaveLen(3))
+			Expect(groups[1]).To(HaveLen(2))
+		})
+	})
+
+	Context("when plan is 'team'", func() {
+		BeforeEach(func() {
+			org.Spec.Plan = "team"
+		})
+
+		It("should not include enterprise-only reconcilers", func() {
+			groups := rec.RequiredReconciliations(ctx)
+			Expect(groups).To(HaveLen(1))
+			Expect(groups[0]).To(HaveLen(3))
+		})
+	})
+
+	Context("when plan is 'free'", func() {
+		BeforeEach(func() {
+			org.Spec.Plan = "free"
+		})
+
+		It("should not include enterprise-only reconcilers", func() {
+			groups := rec.RequiredReconciliations(ctx)
+			Expect(groups).To(HaveLen(1))
+			Expect(groups[0]).To(HaveLen(3))
+		})
+	})
+})
