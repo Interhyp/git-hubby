@@ -19,7 +19,6 @@ package v1alpha1
 import (
 	"context"
 
-	"github.com/google/go-github/v86/github"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -88,7 +87,7 @@ var _ = Describe("Organization Webhook", func() {
 		Context("Custom Properties Validation", func() {
 			It("Should allow valid string type custom property", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("test-value")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("test-value")}
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
 						PropertyName: "test-prop",
@@ -105,7 +104,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should allow valid single_select custom property", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("option1")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("option1")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -143,7 +142,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should allow valid true_false custom property", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("true")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("true")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -161,7 +160,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject single_select without allowed_values", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("option1")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("option1")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -201,7 +200,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject string type with allowed_values", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("test-value")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("test-value")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -238,7 +237,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject non-required property with default_value", func() {
 				required := false
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("should-not-be-here")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("should-not-be-here")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -257,7 +256,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject duplicate property names", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("test-value")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("test-value")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -282,7 +281,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject invalid true_false default value", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("invalid-bool")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("invalid-bool")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -301,7 +300,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject single_select with invalid default value", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("invalid-option")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("invalid-option")}
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
 						PropertyName:  "test-select",
@@ -340,7 +339,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject multi_select with single value instead of array", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("option1")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("option1")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -380,7 +379,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject empty allowed_values for single_select", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("option1")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("option1")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -414,7 +413,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should validate property name pattern with special characters", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("value")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("value")}
 
 				// Valid property names with special characters
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
@@ -451,7 +450,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should handle multiple validation errors at once", func() {
 				required := true
-				invalidDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("invalid")}
+				invalidDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("invalid")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -485,7 +484,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should verify field paths in error messages for invalid bool", func() {
 				required := true
-				invalidBool := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("not-a-bool")}
+				invalidBool := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("not-a-bool")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -507,7 +506,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should verify field paths for duplicate property names", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("value")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("value")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -535,7 +534,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should verify field paths for missing allowed_values", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("option1")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("option1")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -556,7 +555,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should verify field paths for invalid allowed_values usage", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("value")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("value")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -578,7 +577,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should verify error message for single_select with invalid default", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("invalid-option")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("invalid-option")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -644,7 +643,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should allow description field in custom properties", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("value")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("value")}
 				description := "A test property"
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
@@ -664,9 +663,9 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should validate all value types in one organization", func() {
 				required := true
-				stringDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("string-value")}
-				boolDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("true")}
-				singleSelectDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("opt1")}
+				stringDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("string-value")}
+				boolDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("true")}
+				singleSelectDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("opt1")}
 				multiSelectDefault := githubv1alpha1.OrgCustomPropertyDefaultValue{Values: []string{"opt1", "opt2"}}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
@@ -705,7 +704,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should allow 'false' as valid true_false default value", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("false")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("false")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -723,7 +722,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should reject true_false with case-incorrect values", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("True")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("True")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -764,7 +763,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should verify field paths for non-required with default", func() {
 				required := false
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("should-not-be-here")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("should-not-be-here")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -804,7 +803,7 @@ var _ = Describe("Organization Webhook", func() {
 
 			It("Should verify error message contains property name context", func() {
 				required := true
-				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("invalid-bool")}
+				defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("invalid-bool")}
 
 				obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 					{
@@ -841,7 +840,7 @@ var _ = Describe("Organization Webhook", func() {
 
 		It("Should validate updated custom properties", func() {
 			required := true
-			defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("updated-value")}
+			defaultValue := githubv1alpha1.OrgCustomPropertyDefaultValue{Value: new("updated-value")}
 
 			obj.Spec.CustomProperties = []githubv1alpha1.OrgCustomProperty{
 				{

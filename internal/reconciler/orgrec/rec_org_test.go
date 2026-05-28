@@ -57,9 +57,9 @@ var _ = Describe("ReconcileOrganization", func() {
 
 		// Default: current GitHub org matches desired state
 		currentGHOrg = &github.Organization{
-			Name:        github.Ptr("test-org"),
-			Description: github.Ptr("Test Organization"),
-			Login:       github.Ptr("test-org"),
+			Name:        new("test-org"),
+			Description: new("Test Organization"),
+			Login:       new("test-org"),
 		}
 	})
 
@@ -105,9 +105,9 @@ var _ = Describe("ReconcileOrganization", func() {
 	Context("when organization name differs", func() {
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("old-name"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("old-name"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -122,9 +122,9 @@ var _ = Describe("ReconcileOrganization", func() {
 	Context("when organization description differs", func() {
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr("Old Description"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new("Old Description"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -139,9 +139,9 @@ var _ = Describe("ReconcileOrganization", func() {
 	Context("when both name and description differ", func() {
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("old-name"),
-				Description: github.Ptr("Old Description"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("old-name"),
+				Description: new("Old Description"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -158,9 +158,9 @@ var _ = Describe("ReconcileOrganization", func() {
 		BeforeEach(func() {
 			org.Spec.Description = ""
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr("Old Description"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new("Old Description"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -175,9 +175,9 @@ var _ = Describe("ReconcileOrganization", func() {
 	Context("when current description is empty and desired is not", func() {
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr(""),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new(""),
+				Login:       new("test-org"),
 			}
 			org.Spec.Description = "New Description"
 		})
@@ -253,9 +253,9 @@ var _ = Describe("ReconcileOrganization", func() {
 
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("old-name"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("old-name"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 			}
 			editErr = errors.New("GitHub API error during update")
 		})
@@ -279,9 +279,9 @@ var _ = Describe("ReconcileOrganization", func() {
 	Context("when EditOrganization returns 403 Forbidden", func() {
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("old-name"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("old-name"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -308,9 +308,9 @@ var _ = Describe("ReconcileOrganization", func() {
 	Context("when EditOrganization returns 422 Unprocessable Entity", func() {
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("old-name"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("old-name"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -338,9 +338,9 @@ var _ = Describe("ReconcileOrganization", func() {
 		BeforeEach(func() {
 			org.Spec.Description = "Test & Special <chars> \"quotes\" 'apostrophes' 日本語"
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr("Old Description"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new("Old Description"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -360,9 +360,9 @@ var _ = Describe("ReconcileOrganization", func() {
 			}
 			org.Spec.Description = longDesc.String()
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr("Short"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new("Short"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -378,9 +378,9 @@ var _ = Describe("ReconcileOrganization", func() {
 		BeforeEach(func() {
 			org.Spec.Description = "Line 1\nLine 2\nLine 3"
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr("Old Description"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new("Old Description"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -408,9 +408,9 @@ var _ = Describe("ReconcileOrganization", func() {
 			// Update the mock to return the already-updated org
 			mockClient.GetOrganizationFunc = func(ctx context.Context, orgName string) (*github.Organization, error) {
 				return &github.Organization{
-					Name:        github.Ptr("test-org"),
-					Description: github.Ptr("Test Organization"),
-					Login:       github.Ptr("test-org"),
+					Name:        new("test-org"),
+					Description: new("Test Organization"),
+					Login:       new("test-org"),
 				}, nil
 			}
 
@@ -421,9 +421,9 @@ var _ = Describe("ReconcileOrganization", func() {
 		BeforeEach(func() {
 			// Start with different state
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("old-name"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("old-name"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -442,9 +442,9 @@ var _ = Describe("ReconcileOrganization", func() {
 		BeforeEach(func() {
 			org.Spec.Description = "Test  Organization"
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -459,9 +459,9 @@ var _ = Describe("ReconcileOrganization", func() {
 		BeforeEach(func() {
 			org.Spec.Description = "  Test Organization  "
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 			}
 		})
 
@@ -475,9 +475,9 @@ var _ = Describe("ReconcileOrganization", func() {
 	Context("when EditOrganization succeeds but returns nil", func() {
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("old-name"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("old-name"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 			}
 
 			mockClient.EditOrganizationFunc = func(ctx context.Context, orgName string, organization *github.Organization) (*github.Organization, error) {
@@ -496,9 +496,9 @@ var _ = Describe("ReconcileOrganization", func() {
 		BeforeEach(func() {
 			org.Spec.Name = "actual-org-name"
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("old-name"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("actual-org-name"),
+				Name:        new("old-name"),
+				Description: new("Test Organization"),
+				Login:       new("actual-org-name"),
 			}
 		})
 
@@ -512,14 +512,14 @@ var _ = Describe("ReconcileOrganization", func() {
 	Context("when GitHub organization has additional fields not in spec", func() {
 		BeforeEach(func() {
 			currentGHOrg = &github.Organization{
-				Name:        github.Ptr("test-org"),
-				Description: github.Ptr("Test Organization"),
-				Login:       github.Ptr("test-org"),
+				Name:        new("test-org"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
 				// Additional fields that aren't in our spec
-				Company:  github.Ptr("Test Company"),
-				Blog:     github.Ptr("https://example.com"),
-				Location: github.Ptr("Test Location"),
-				Email:    github.Ptr("test@example.com"),
+				Company:  new("Test Company"),
+				Blog:     new("https://example.com"),
+				Location: new("Test Location"),
+				Email:    new("test@example.com"),
 			}
 		})
 

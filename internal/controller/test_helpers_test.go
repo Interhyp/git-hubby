@@ -7,7 +7,6 @@ import (
 
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v86/github"
 
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -133,7 +132,7 @@ func (te *TestEnvironment) SetupTeamWithMembersTest(_ *testing.T, namespace, tea
 			Members: []string{"new-member", "existing-member"},
 		},
 		Status: githubv1alpha1.TeamStatus{
-			Slug: github.Ptr(teamName),
+			Slug: new(teamName),
 		},
 	}
 
@@ -189,14 +188,14 @@ func (te *TestEnvironment) SetupRepositoryTest(_ *testing.T, namespace, repoName
 				Name: orgName,
 			},
 			// Default value for tests
-			Archived:            github.Ptr(false),
+			Archived:            new(false),
 			Visibility:          "internal",
-			HasIssues:           github.Ptr(true),
-			HasProjects:         github.Ptr(false),
-			HasWiki:             github.Ptr(false),
-			HasDownloads:        github.Ptr(false),
-			IsTemplate:          github.Ptr(false),
-			DeleteBranchOnMerge: github.Ptr(true),
+			HasIssues:           new(true),
+			HasProjects:         new(false),
+			HasWiki:             new(false),
+			HasDownloads:        new(false),
+			IsTemplate:          new(false),
+			DeleteBranchOnMerge: new(true),
 			MergeCommitMessage:  "PR_TITLE",
 			MergeCommitTitle:    "MERGE_MESSAGE",
 

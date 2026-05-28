@@ -71,7 +71,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -104,15 +104,15 @@ var _ = Describe("ReconcileTeamMembers", func() {
 
 			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
-					{Login: github.Ptr("user2")},
+					{Login: new("user1")},
+					{Login: new("user2")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -150,15 +150,15 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		BeforeEach(func() {
 			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
-					{Login: github.Ptr("user2")},
+					{Login: new("user1")},
+					{Login: new("user2")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -193,17 +193,17 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		BeforeEach(func() {
 			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
-					{Login: github.Ptr("user2")},
-					{Login: github.Ptr("user3")},
-					{Login: github.Ptr("user4")},
+					{Login: new("user1")},
+					{Login: new("user2")},
+					{Login: new("user3")},
+					{Login: new("user4")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -243,21 +243,21 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		BeforeEach(func() {
 			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
+					{Login: new("user1")},
 				}, nil
 			}
 
 			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
-					{Login: github.Ptr("user2")},
+					{Login: new("user1")},
+					{Login: new("user2")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -299,14 +299,14 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
 				// Only user1 exists in the org
 				return []*github.User{
-					{Login: github.Ptr("user1")},
+					{Login: new("user1")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -350,7 +350,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -388,7 +388,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -421,7 +421,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 
 			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
+					{Login: new("user1")},
 				}, nil
 			}
 
@@ -432,7 +432,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -461,8 +461,8 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		BeforeEach(func() {
 			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
-					{Login: github.Ptr("user3")},
+					{Login: new("user1")},
+					{Login: new("user3")},
 				}, nil
 			}
 
@@ -473,7 +473,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -508,15 +508,15 @@ var _ = Describe("ReconcileTeamMembers", func() {
 
 			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1@example.com")},
-					{Login: github.Ptr("user2@example.com")},
+					{Login: new("user1@example.com")},
+					{Login: new("user2@example.com")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -560,28 +560,28 @@ var _ = Describe("ReconcileTeamMembers", func() {
 
 			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
+					{Login: new("user1")},
 				}, nil
 			}
 
 			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
-					{Login: github.Ptr("user2")},
+					{Login: new("user1")},
+					{Login: new("user2")},
 				}, nil
 			}
 
 			mockClient2.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
-					{Login: github.Ptr("user2")},
+					{Login: new("user1")},
+					{Login: new("user2")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -640,15 +640,15 @@ var _ = Describe("ReconcileTeamMembers", func() {
 
 			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{
-					{Login: github.Ptr("user1")},
-					{Login: github.Ptr("user2")},
+					{Login: new("user1")},
+					{Login: new("user2")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -686,14 +686,14 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{
 					{Login: nil},
-					{Login: github.Ptr("user1")},
+					{Login: new("user1")},
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -730,7 +730,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{

@@ -28,10 +28,10 @@ var _ = Describe("GitHub Team Mapper", func() {
 
 				Expect(newTeam).NotTo(BeNil())
 				Expect(newTeam.Name).To(Equal("my-team"))
-				Expect(newTeam.Description).To(Equal(github.Ptr("This is a test team")))
-				Expect(newTeam.Privacy).To(Equal(github.Ptr("closed")))
-				Expect(newTeam.Permission).To(Equal(github.Ptr("pull"))) //nolint:staticcheck
-				Expect(newTeam.NotificationSetting).To(Equal(github.Ptr("notifications_disabled")))
+				Expect(newTeam.Description).To(Equal(new("This is a test team")))
+				Expect(newTeam.Privacy).To(Equal(new("closed")))
+				Expect(newTeam.Permission).To(Equal(new("pull"))) //nolint:staticcheck
+				Expect(newTeam.NotificationSetting).To(Equal(new("notifications_disabled")))
 			})
 		})
 
@@ -52,7 +52,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 				newTeam := TeamToNewGitHubTeam(team)
 
 				Expect(newTeam).NotTo(BeNil())
-				Expect(newTeam.Description).To(Equal(github.Ptr("IDP synchronized team")))
+				Expect(newTeam.Description).To(Equal(new("IDP synchronized team")))
 			})
 		})
 
@@ -131,7 +131,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 
 				newTeam := TeamToNewGitHubTeam(team)
 
-				Expect(newTeam.Privacy).To(Equal(github.Ptr("secret")))
+				Expect(newTeam.Privacy).To(Equal(new("secret")))
 			})
 		})
 
@@ -150,7 +150,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 
 				newTeam := TeamToNewGitHubTeam(team)
 
-				Expect(newTeam.Permission).To(Equal(github.Ptr("push"))) //nolint:staticcheck
+				Expect(newTeam.Permission).To(Equal(new("push"))) //nolint:staticcheck
 			})
 		})
 
@@ -169,7 +169,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 
 				newTeam := TeamToNewGitHubTeam(team)
 
-				Expect(newTeam.NotificationSetting).To(Equal(github.Ptr("notifications_enabled")))
+				Expect(newTeam.NotificationSetting).To(Equal(new("notifications_enabled")))
 			})
 		})
 
@@ -192,10 +192,10 @@ var _ = Describe("GitHub Team Mapper", func() {
 				newTeam := TeamToNewGitHubTeam(team)
 
 				Expect(newTeam.Name).To(Equal("my-team"))
-				Expect(newTeam.Description).To(Equal(github.Ptr("Custom team")))
-				Expect(newTeam.Privacy).To(Equal(github.Ptr("secret")))
-				Expect(newTeam.Permission).To(Equal(github.Ptr("push"))) //nolint:staticcheck
-				Expect(newTeam.NotificationSetting).To(Equal(github.Ptr("notifications_enabled")))
+				Expect(newTeam.Description).To(Equal(new("Custom team")))
+				Expect(newTeam.Privacy).To(Equal(new("secret")))
+				Expect(newTeam.Permission).To(Equal(new("push"))) //nolint:staticcheck
+				Expect(newTeam.NotificationSetting).To(Equal(new("notifications_enabled")))
 			})
 		})
 	})
@@ -219,11 +219,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when teams match exactly", func() {
 			It("should return false", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -235,7 +235,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when K8s team is nil", func() {
 			It("should return true", func() {
 				githubTeam := &github.Team{
-					Name: github.Ptr("my-team"),
+					Name: new("my-team"),
 				}
 
 				differs := TeamDiffers(nil, githubTeam, "my-org")
@@ -255,11 +255,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when name differs", func() {
 			It("should return true", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("different-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("different-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -271,11 +271,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when description differs", func() {
 			It("should return true", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Different description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("my-team"),
+					Description:         new("Different description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -287,11 +287,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when description is nil on GitHub", func() {
 			It("should return true", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
+					Name:                new("my-team"),
 					Description:         nil,
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -303,11 +303,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when privacy differs", func() {
 			It("should return true for secret privacy", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("secret"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("secret"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -317,11 +317,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 
 			It("should return true when privacy is nil", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
 					Privacy:             nil,
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -333,11 +333,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when permission differs", func() {
 			It("should return true for push permission", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("push"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("push"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -347,11 +347,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 
 			It("should return true when permission is nil", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
 					Permission:          nil,
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -363,11 +363,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when notification setting differs", func() {
 			It("should return true for notifications enabled", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_enabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_enabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -377,10 +377,10 @@ var _ = Describe("GitHub Team Mapper", func() {
 
 			It("should return true when notification setting is nil", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
 					NotificationSetting: nil,
 				}
 
@@ -394,11 +394,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 			It("should compare against empty description", func() {
 				team.Spec.Description = ""
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr(""),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("my-team"),
+					Description:         new(""),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -410,11 +410,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when multiple fields differ", func() {
 			It("should return true", func() {
 				githubTeam := &github.Team{
-					Name:                github.Ptr("different-team"),
-					Description:         github.Ptr("Different description"),
-					Privacy:             github.Ptr("secret"),
-					Permission:          github.Ptr("admin"),
-					NotificationSetting: github.Ptr("notifications_enabled"),
+					Name:                new("different-team"),
+					Description:         new("Different description"),
+					Privacy:             new("secret"),
+					Permission:          new("admin"),
+					NotificationSetting: new("notifications_enabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -427,11 +427,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 			It("should return false when GitHub matches", func() {
 				team.Spec.Privacy = "secret"
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("secret"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("secret"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -442,11 +442,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 			It("should return true when GitHub has different privacy", func() {
 				team.Spec.Privacy = "secret"
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -459,11 +459,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 			It("should return false when GitHub matches", func() {
 				team.Spec.Permission = "push"
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("push"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("push"),
+					NotificationSetting: new("notifications_disabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -476,11 +476,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 			It("should return false when GitHub matches", func() {
 				team.Spec.NotificationSetting = "notifications_enabled"
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_enabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_enabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")
@@ -495,11 +495,11 @@ var _ = Describe("GitHub Team Mapper", func() {
 				team.Spec.Permission = "push"
 				team.Spec.NotificationSetting = "notifications_enabled"
 				githubTeam := &github.Team{
-					Name:                github.Ptr("my-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("secret"),
-					Permission:          github.Ptr("push"),
-					NotificationSetting: github.Ptr("notifications_enabled"),
+					Name:                new("my-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("secret"),
+					Permission:          new("push"),
+					NotificationSetting: new("notifications_enabled"),
 				}
 
 				differs := TeamDiffers(team, githubTeam, "my-org")

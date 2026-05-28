@@ -46,7 +46,7 @@ var _ = Describe("ReconcileIgnore", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:     "test-repo",
-				Archived: github.Ptr(false),
+				Archived: new(false),
 				OrganizationRef: v1alpha1.OrganizationRef{
 					Name: "test-org",
 				},
@@ -59,10 +59,10 @@ var _ = Describe("ReconcileIgnore", func() {
 
 		// Default: repository is not archived
 		currentGHRepo = &github.Repository{
-			Name:       github.Ptr("test-repo"),
-			Visibility: github.Ptr("internal"),
-			Archived:   github.Ptr(false),
-			ID:         github.Ptr(int64(12345)),
+			Name:       new("test-repo"),
+			Visibility: new("internal"),
+			Archived:   new(false),
+			ID:         new(int64(12345)),
 		}
 
 		// Set default mock functions (can be overridden in nested BeforeEach)
@@ -98,7 +98,7 @@ var _ = Describe("ReconcileIgnore", func() {
 				Resource: GitHubRepoIdentifier{
 					Owner: "test-org",
 					Name:  "test-repo",
-					ID:    github.Ptr(int64(12345)),
+					ID:    new(int64(12345)),
 				},
 			},
 			Kubernetes: reconciler.Kubernetes[*v1alpha1.Repository]{
@@ -152,7 +152,7 @@ var _ = Describe("ReconcileIgnore", func() {
 					Resource: GitHubRepoIdentifier{
 						Owner: "test-org",
 						Name:  "test-repo",
-						ID:    github.Ptr(int64(12345)),
+						ID:    new(int64(12345)),
 					},
 				},
 				Kubernetes: reconciler.Kubernetes[*v1alpha1.Repository]{

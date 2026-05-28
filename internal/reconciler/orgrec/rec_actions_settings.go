@@ -55,7 +55,7 @@ func (o *GitHubOrgReconciler) disableActionsForGHOrg(ctx context.Context) error 
 		return err
 	}
 	if current.GetEnabledRepositories() != enabledReposNone {
-		_, err = o.GitHub.Client.SetActionsPermissionsForOrg(ctx, o.GitHub.Resource, github.ActionsPermissions{EnabledRepositories: github.Ptr(enabledReposNone)})
+		_, err = o.GitHub.Client.SetActionsPermissionsForOrg(ctx, o.GitHub.Resource, github.ActionsPermissions{EnabledRepositories: new(enabledReposNone)})
 		return err
 	}
 	return nil
@@ -217,8 +217,8 @@ func (o *GitHubOrgReconciler) reconcileAllowedActions(ctx context.Context) error
 	}
 
 	expected := github.ActionsAllowed{
-		GithubOwnedAllowed: github.Ptr(false),
-		VerifiedAllowed:    github.Ptr(false),
+		GithubOwnedAllowed: new(false),
+		VerifiedAllowed:    new(false),
 		PatternsAllowed:    make([]string, 0),
 	}
 	if o.Kubernetes.Resource.Spec.ActionsSettings.SelectedAllowedActions != nil {
@@ -263,7 +263,7 @@ func (o *GitHubOrgReconciler) reconcileSelfHostedRunnerSettings(ctx context.Cont
 
 	if current.GetEnabledRepositories() != enabledReposNone {
 		err = o.GitHub.Client.SetSelfHostedRunnersSettingsForOrg(ctx, o.GitHub.Resource, github.SelfHostedRunnersSettingsOrganizationOpt{
-			EnabledRepositories: github.Ptr(enabledReposNone),
+			EnabledRepositories: new(enabledReposNone),
 		})
 		if err != nil {
 			return err

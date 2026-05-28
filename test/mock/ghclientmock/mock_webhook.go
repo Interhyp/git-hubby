@@ -28,7 +28,7 @@ func (m *MockGitHubClientWrapper) CreateHook(ctx context.Context, owner, repo st
 
 	// Default implementation - return the created hook with an ID
 	createdHook := *hook
-	createdHook.ID = github.Ptr(int64(123))
+	createdHook.ID = new(int64(123))
 
 	return &createdHook, nil
 }

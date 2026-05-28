@@ -435,7 +435,7 @@ var _ = Describe("Factory", func() {
 					},
 				},
 				Status: v1alpha1.TeamStatus{
-					Slug: stringPtr("test-team"),
+					Slug: new("test-team"),
 				},
 			}
 
@@ -1858,9 +1858,4 @@ func (m *mockGitHubClientManager) GetGitHubClientAndCheckRateLimit(_ context.Con
 	}
 
 	return m.client, nil
-}
-
-// stringPtr returns a pointer to a string
-func stringPtr(s string) *string {
-	return &s
 }

@@ -39,10 +39,10 @@ func teamNotificationSetting(team *v1alpha1.Team) string {
 func TeamToNewGitHubTeam(team *v1alpha1.Team) *github.NewTeam {
 	return &github.NewTeam{
 		Name:                team.Spec.Name,
-		Description:         github.Ptr(team.Spec.Description),
-		Privacy:             github.Ptr(teamPrivacy(team)),
-		Permission:          github.Ptr(teamPermission(team)),
-		NotificationSetting: github.Ptr(teamNotificationSetting(team)),
+		Description:         new(team.Spec.Description),
+		Privacy:             new(teamPrivacy(team)),
+		Permission:          new(teamPermission(team)),
+		NotificationSetting: new(teamNotificationSetting(team)),
 	}
 }
 
@@ -108,5 +108,5 @@ func TeamNameToSlug(name string) *string {
 	// Trim leading/trailing hyphens
 	cleanedSlug = strings.Trim(cleanedSlug, "-")
 
-	return github.Ptr(cleanedSlug)
+	return new(cleanedSlug)
 }

@@ -64,7 +64,7 @@ func (r *GitHubRepoReconciler) getRepo(ctx context.Context) (*github.Repository,
 		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
 			log.V(1).Info("Repository does not exist, creating it")
 			newRepo := mapper.RepoToGithubRepo(r.Kubernetes.Resource)
-			newRepo.AutoInit = github.Ptr(true)
+			newRepo.AutoInit = new(true)
 			ghRepo, err = r.GitHub.Client.CreateRepository(ctx, r.GitHub.Resource.Owner, newRepo)
 			if err != nil {
 				log.Error(err, "failed to create repository on GitHub")

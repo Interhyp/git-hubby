@@ -68,8 +68,8 @@ var _ = Describe("ReconcileDeletion", func() {
 		BeforeEach(func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name: github.Ptr("test-team"),
-					Slug: github.Ptr("test-team"),
+					Name: new("test-team"),
+					Slug: new("test-team"),
 				}, nil
 			}
 
@@ -80,7 +80,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -116,8 +116,8 @@ var _ = Describe("ReconcileDeletion", func() {
 		BeforeEach(func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name: github.Ptr("test-team"),
-					Slug: github.Ptr("test-team"),
+					Name: new("test-team"),
+					Slug: new("test-team"),
 				}, nil
 			}
 
@@ -127,8 +127,8 @@ var _ = Describe("ReconcileDeletion", func() {
 
 			mockClient2.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name: github.Ptr("test-team"),
-					Slug: github.Ptr("test-team"),
+					Name: new("test-team"),
+					Slug: new("test-team"),
 				}, nil
 			}
 
@@ -139,7 +139,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -193,7 +193,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -229,7 +229,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -265,7 +265,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -297,8 +297,8 @@ var _ = Describe("ReconcileDeletion", func() {
 		BeforeEach(func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name: github.Ptr("test-team"),
-					Slug: github.Ptr("test-team"),
+					Name: new("test-team"),
+					Slug: new("test-team"),
 				}, nil
 			}
 
@@ -309,7 +309,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -341,8 +341,8 @@ var _ = Describe("ReconcileDeletion", func() {
 		BeforeEach(func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name: github.Ptr("test-team"),
-					Slug: github.Ptr("test-team"),
+					Name: new("test-team"),
+					Slug: new("test-team"),
 				}, nil
 			}
 
@@ -352,8 +352,8 @@ var _ = Describe("ReconcileDeletion", func() {
 
 			mockClient2.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name: github.Ptr("test-team"),
-					Slug: github.Ptr("test-team"),
+					Name: new("test-team"),
+					Slug: new("test-team"),
 				}, nil
 			}
 
@@ -364,7 +364,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -404,8 +404,8 @@ var _ = Describe("ReconcileDeletion", func() {
 		BeforeEach(func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name: github.Ptr("Test Team"),
-					Slug: github.Ptr("test-team"),
+					Name: new("Test Team"),
+					Slug: new("test-team"),
 				}, nil
 			}
 
@@ -417,7 +417,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "Test Team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -451,8 +451,8 @@ var _ = Describe("ReconcileDeletion", func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				Expect(slug).To(Equal(""))
 				return &github.Team{
-					Name: github.Ptr("test-team"),
-					Slug: github.Ptr(""),
+					Name: new("test-team"),
+					Slug: new(""),
 				}, nil
 			}
 
@@ -463,7 +463,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr(""),
+					Slug: new(""),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -497,7 +497,7 @@ var _ = Describe("ReconcileDeletion", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{},
 					},

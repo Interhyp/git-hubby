@@ -17,18 +17,18 @@ func IsActionsDisabledForOrgSpec(org *v1alpha1.Organization) bool {
 		*org.Spec.ActionsSettings.EnabledRepositories == "none"
 }
 
-func ResolveNamesToIDsInRuleset(ctx context.Context, client ghclient.GitHubClient, orgName string, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
-	installations, err := client.GetGitHubAppsInstallations(ctx, orgName) // fetch installations only once
+func ResolveNamesToIDsInRuleset(ctx context.Context, githubClient ghclient.GitHubClient, orgName string, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+	installations, err := githubClient.GetGitHubAppsInstallations(ctx, orgName) // fetch installations only once
 	if err != nil {
 		return rs, err
 	}
 
-	rs, err = resolveBypassActors(ctx, client, orgName, installations, rs)
+	rs, err = resolveBypassActors(ctx, githubClient, orgName, installations, rs)
 	if err != nil {
 		return rs, err
 	}
 
-	rs, err = resolveWorkflowRepositoryNames(ctx, client, orgName, rs)
+	rs, err = resolveWorkflowRepositoryNames(ctx, githubClient, orgName, rs)
 	if err != nil {
 		return rs, err
 	}
@@ -39,13 +39,13 @@ func ResolveNamesToIDsInRuleset(ctx context.Context, client ghclient.GitHubClien
 }
 
 // resolveBypassActors resolves slugs/names in bypass actors to their numeric IDs.
-func resolveBypassActors(ctx context.Context, client ghclient.GitHubClient, orgName string, installations []*github.Installation, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+func resolveBypassActors(ctx context.Context, githubClient ghclient.GitHubClient, orgName string, installations []*github.Installation, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
 	result := make([]v1alpha1.RulesetBypassActor, 0, len(rs.Spec.BypassActors))
 	for _, bypassActor := range rs.Spec.BypassActors {
 		actorType := github.BypassActorType(bypassActor.ActorType)
 		switch actorType {
 		case github.BypassActorTypeTeam:
-			updatedActor, err := resolveBypassActor(&bypassActor, teamSlugResolver(ctx, client, orgName))
+			updatedActor, err := resolveBypassActor(&bypassActor, teamSlugResolver(ctx, githubClient, orgName))
 			if err != nil {
 				return rs, err
 			}
@@ -57,7 +57,7 @@ func resolveBypassActors(ctx context.Context, client ghclient.GitHubClient, orgN
 			}
 			bypassActor = *updatedActor
 		case github.BypassActorTypeRepositoryRole:
-			updatedActor, err := resolveBypassActor(&bypassActor, repoRoleNameResolver(ctx, client, orgName))
+			updatedActor, err := resolveBypassActor(&bypassActor, repoRoleNameResolver(ctx, githubClient, orgName))
 			if err != nil {
 				return rs, err
 			}
@@ -76,7 +76,7 @@ func resolveBypassActors(ctx context.Context, client ghclient.GitHubClient, orgN
 }
 
 // resolveWorkflowRepositoryNames resolves RepositoryName to ResolvedRepositoryID for each workflow rule in the ruleset.
-func resolveWorkflowRepositoryNames(ctx context.Context, client ghclient.GitHubClient, orgName string, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+func resolveWorkflowRepositoryNames(ctx context.Context, githubClient ghclient.GitHubClient, orgName string, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
 	if rs.Spec.Rules.Workflows == nil {
 		return rs, nil
 	}
@@ -84,7 +84,7 @@ func resolveWorkflowRepositoryNames(ctx context.Context, client ghclient.GitHubC
 		if wf.ResolvedRepositoryID != nil {
 			continue
 		}
-		repo, err := client.GetRepository(ctx, orgName, wf.RepositoryName)
+		repo, err := githubClient.GetRepository(ctx, orgName, wf.RepositoryName)
 		if err != nil {
 			return rs, fmt.Errorf("failed to resolve workflow repository %q to ID: %w", wf.RepositoryName, err)
 		}
@@ -149,18 +149,18 @@ func appSlugResolver(installations []*github.Installation, orgName string) slugR
 	}
 }
 
-func teamSlugResolver(ctx context.Context, client ghclient.GitHubClient, orgName string) slugResolverFunc {
+func teamSlugResolver(ctx context.Context, githubClient ghclient.GitHubClient, orgName string) slugResolverFunc {
 	return func(slug string) (*int64, error) {
-		team, err := client.GetTeamBySlug(ctx, orgName, slug)
+		team, err := githubClient.GetTeamBySlug(ctx, orgName, slug)
 		if err != nil {
 			return nil, err
 		}
 		return team.ID, nil
 	}
 }
-func repoRoleNameResolver(ctx context.Context, client ghclient.GitHubClient, orgName string) slugResolverFunc {
+func repoRoleNameResolver(ctx context.Context, githubClient ghclient.GitHubClient, orgName string) slugResolverFunc {
 	return func(slug string) (*int64, error) {
-		role, err := client.GetRoleByName(ctx, orgName, slug)
+		role, err := githubClient.GetRoleByName(ctx, orgName, slug)
 		if err != nil {
 			return nil, err
 		}

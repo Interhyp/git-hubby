@@ -73,7 +73,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 		mockClient.CreateHookFunc = func(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
 			createHookCalled = true
 			created := *hook
-			created.ID = github.Ptr(int64(1000 + len(createdHooks)))
+			created.ID = new(int64(1000 + len(createdHooks)))
 			createdHooks = append(createdHooks, &created)
 			return &created, nil
 		}
@@ -109,7 +109,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:                     "test-repo",
-				Archived:                 github.Ptr(false),
+				Archived:                 new(false),
 				WebhookPresetList:        webhookPresetRefs,
 				WebhookIgnorePresetsList: webhookIgnorePresetRefs,
 				OrganizationRef: v1alpha1.OrganizationRef{
@@ -181,13 +181,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret123"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret123"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push", "pull_request"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -233,13 +233,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook1",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret1"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 				{
@@ -250,13 +250,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://slack.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret2"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret2"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"pull_request", "issues"},
-						SSLVerify:   github.Ptr(false),
+						SSLVerify:   new(false),
 					},
 				},
 			}
@@ -307,13 +307,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 				Spec: v1alpha1.WebhookPresetSpec{
 					PayloadURL: "https://example.com/webhook",
 					Secret: &v1alpha1.WebhookPresetSecretSpec{
-						Name: github.Ptr("secret123"),
-						Key:  github.Ptr("newkey456"),
+						Name: new("secret123"),
+						Key:  new("newkey456"),
 					},
 					ContentType: "application/json",
-					Active:      github.Ptr(true),
+					Active:      new(true),
 					Events:      []string{"pull_request", "push"}, // Sorted alphabetically to match hash
-					SSLVerify:   github.Ptr(true),
+					SSLVerify:   new(true),
 				},
 			}
 			webhookPresets = []*v1alpha1.WebhookPreset{preset}
@@ -333,10 +333,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 			// Existing webhook matches
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request", "push"},
 				},
@@ -378,13 +378,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("newsecret456"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("newsecret456"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push", "pull_request"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -397,7 +397,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 				},
 				Spec: v1alpha1.RepositorySpec{
 					Name:     "test-repo",
-					Archived: github.Ptr(false),
+					Archived: new(false),
 					OrganizationRef: v1alpha1.OrganizationRef{
 						Name: "test-org",
 					},
@@ -426,10 +426,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 			// Existing webhook with same URL/content type/events but different secret
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push", "pull_request"},
 				},
@@ -456,10 +456,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push"},
 				},
@@ -521,13 +521,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret123"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret123"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -561,10 +561,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push"},
 				},
@@ -585,7 +585,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			existingGHHooks = []*github.Hook{
 				{
-					ID:     github.Ptr(int64(123)),
+					ID:     new(int64(123)),
 					Config: nil, // Missing config
 				},
 			}
@@ -602,8 +602,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 				{
 					ID: nil, // Missing ID
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push"},
 				},
@@ -619,10 +619,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
 						URL:         nil, // Missing URL
-						ContentType: github.Ptr("application/json"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push"},
 				},
@@ -638,9 +638,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
+						URL:         new("https://example.com/webhook"),
 						ContentType: nil, // Missing ContentType
 					},
 					Events: []string{"push"},
@@ -664,13 +664,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret123"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret123"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/x-www-form-urlencoded",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -690,10 +690,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 			// Existing webhook with different content type
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push"},
 				},
@@ -722,13 +722,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret123"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret123"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push", "pull_request", "issues"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -748,10 +748,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 			// Existing webhook with different events
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push"},
 				},
@@ -780,9 +780,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -808,13 +808,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook1",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret1"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -851,13 +851,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook1",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret1"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -887,10 +887,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://foo.bar.random.info/webhook/fooz"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://foo.bar.random.info/webhook/fooz"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request", "push"},
 				},
@@ -903,7 +903,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Namespace: "default",
 					},
 					Spec: v1alpha1.WebhookIgnorePresetSpec{
-						IgnoreURLRegex: github.Ptr("https:\\/\\/foo\\.bar\\.random\\.info\\/webhook\\/.*"),
+						IgnoreURLRegex: new("https:\\/\\/foo\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
 				},
 			}
@@ -920,26 +920,26 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://foo.bar.random.info/webhook/fooz"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://foo.bar.random.info/webhook/fooz"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request", "push"},
 				},
 				{
-					ID: github.Ptr(int64(234)),
+					ID: new(int64(234)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://bar.bar.random.info/webhook/fooz"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://bar.bar.random.info/webhook/fooz"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request", "push"},
 				},
 				{
-					ID: github.Ptr(int64(345)),
+					ID: new(int64(345)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://foo.foo.random.info/webhook/random"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://foo.foo.random.info/webhook/random"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request", "push"},
 				},
@@ -952,7 +952,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Namespace: "default",
 					},
 					Spec: v1alpha1.WebhookIgnorePresetSpec{
-						IgnoreURLRegex: github.Ptr("https:\\/\\/foo\\.bar\\.random\\.info\\/webhook\\/.*"),
+						IgnoreURLRegex: new("https:\\/\\/foo\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
 				},
 				{
@@ -961,7 +961,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Namespace: "default",
 					},
 					Spec: v1alpha1.WebhookIgnorePresetSpec{
-						IgnoreURLRegex: github.Ptr("https:\\/\\/bar\\.bar\\.random\\.info\\/webhook\\/.*"),
+						IgnoreURLRegex: new("https:\\/\\/bar\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
 				},
 			}
@@ -978,10 +978,10 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://foo.bar.random.info/webhook/fooz"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://foo.bar.random.info/webhook/fooz"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request", "push"},
 				},
@@ -994,7 +994,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Namespace: "default",
 					},
 					Spec: v1alpha1.WebhookIgnorePresetSpec{
-						IgnoreURLRegex: github.Ptr("("),
+						IgnoreURLRegex: new("("),
 					},
 				},
 			}
@@ -1018,13 +1018,13 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/hooks/{{.SSHURL}}",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("webhook-secret"),
-							Key:  github.Ptr("token"),
+							Name: new("webhook-secret"),
+							Key:  new("token"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push", "pull_request"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -1043,15 +1043,15 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, repo string) (*github.Repository, error) {
 				return &github.Repository{
-					ID:       github.Ptr(int64(12345)),
-					Name:     github.Ptr(repo),
-					FullName: github.Ptr(fmt.Sprintf("%s/%s", owner, repo)),
+					ID:       new(int64(12345)),
+					Name:     new(repo),
+					FullName: new(fmt.Sprintf("%s/%s", owner, repo)),
 					Owner: &github.User{
-						Login: github.Ptr(owner),
+						Login: new(owner),
 					},
-					SSHURL:   github.Ptr("git@github.com:test-org/test-repo.git"),
-					HTMLURL:  github.Ptr("https://github.com/test-org/test-repo"),
-					Archived: github.Ptr(false),
+					SSHURL:   new("git@github.com:test-org/test-repo.git"),
+					HTMLURL:  new("https://github.com/test-org/test-repo"),
+					Archived: new(false),
 				}, nil
 			}
 		})
@@ -1120,7 +1120,7 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 		mockClient.CreateHookFunc = func(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
 			createHookCalled = true
 			created := *hook
-			created.ID = github.Ptr(int64(2000 + len(createdHooks)))
+			created.ID = new(int64(2000 + len(createdHooks)))
 			createdHooks = append(createdHooks, &created)
 			return &created, nil
 		}
@@ -1195,13 +1195,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("key1"),
+							Name: new("secret1"),
+							Key:  new("key1"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 				{
@@ -1212,13 +1212,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("key1"),
+							Name: new("secret1"),
+							Key:  new("key1"),
 						},
 						ContentType: "application/x-www-form-urlencoded",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -1279,13 +1279,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("key1"),
+							Name: new("secret1"),
+							Key:  new("key1"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 				{
@@ -1296,13 +1296,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("key1"),
+							Name: new("secret1"),
+							Key:  new("key1"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"pull_request"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -1355,13 +1355,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("key1"),
+							Name: new("secret1"),
+							Key:  new("key1"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push", "pull_request"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -1384,13 +1384,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 			// Existing webhook on GitHub with same hash (event order doesn't matter)
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(999)),
+					ID: new(int64(999)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request", "push"}, // Different order, same hash
-					Active: github.Ptr(true),
+					Active: new(true),
 				},
 			}
 		})
@@ -1456,13 +1456,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/hooks/{{.SSHURL}}",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("key1"),
+							Name: new("secret1"),
+							Key:  new("key1"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push", "pull_request"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -1485,28 +1485,28 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 			// Existing webhook on GitHub with templated URL resolved
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(999)),
+					ID: new(int64(999)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/hooks/git@github.com:test-org/test-repo.git"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/hooks/git@github.com:test-org/test-repo.git"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request", "push"}, // Different order, same hash
-					Active: github.Ptr(true),
+					Active: new(true),
 				},
 			}
 
 			// Mock GetRepository to provide template data
 			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, repo string) (*github.Repository, error) {
 				return &github.Repository{
-					ID:       github.Ptr(int64(12345)),
-					Name:     github.Ptr(repo),
-					FullName: github.Ptr(fmt.Sprintf("%s/%s", owner, repo)),
+					ID:       new(int64(12345)),
+					Name:     new(repo),
+					FullName: new(fmt.Sprintf("%s/%s", owner, repo)),
 					Owner: &github.User{
-						Login: github.Ptr(owner),
+						Login: new(owner),
 					},
-					SSHURL:   github.Ptr("git@github.com:test-org/test-repo.git"),
-					HTMLURL:  github.Ptr("https://github.com/test-org/test-repo"),
-					Archived: github.Ptr(false),
+					SSHURL:   new("git@github.com:test-org/test-repo.git"),
+					HTMLURL:  new("https://github.com/test-org/test-repo"),
+					Archived: new(false),
 				}, nil
 			}
 		})
@@ -1570,13 +1570,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("key1"),
+							Name: new("secret1"),
+							Key:  new("key1"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -1595,13 +1595,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(999)),
+					ID: new(int64(999)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push"},
-					Active: github.Ptr(true),
+					Active: new(true),
 				},
 			}
 		})
@@ -1654,13 +1654,13 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("key1"),
+							Name: new("secret1"),
+							Key:  new("key1"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -1680,22 +1680,22 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 			// Both webhooks exist on GitHub
 			existingGHHooks = []*github.Hook{
 				{
-					ID: github.Ptr(int64(1001)),
+					ID: new(int64(1001)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"push"},
-					Active: github.Ptr(true),
+					Active: new(true),
 				},
 				{
-					ID: github.Ptr(int64(1002)),
+					ID: new(int64(1002)),
 					Config: &github.HookConfig{
-						URL:         github.Ptr("https://example.com/webhook"),
-						ContentType: github.Ptr("application/json"),
+						URL:         new("https://example.com/webhook"),
+						ContentType: new("application/json"),
 					},
 					Events: []string{"pull_request"},
-					Active: github.Ptr(true),
+					Active: new(true),
 				},
 			}
 		})
@@ -1829,7 +1829,7 @@ var _ = Describe("cleanupUnusedWebhooks", func() {
 		BeforeEach(func() {
 			hooksToRemove = map[string]*github.Hook{
 				"hash1": {
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 				},
 			}
 		})
@@ -1844,10 +1844,10 @@ var _ = Describe("cleanupUnusedWebhooks", func() {
 		BeforeEach(func() {
 			hooksToRemove = map[string]*github.Hook{
 				"hash1": {
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 				},
 				"hash2": {
-					ID: github.Ptr(int64(456)),
+					ID: new(int64(456)),
 				},
 			}
 		})
@@ -1890,7 +1890,7 @@ var _ = Describe("cleanupUnusedWebhooks", func() {
 		BeforeEach(func() {
 			hooksToRemove = map[string]*github.Hook{
 				"hash1": {
-					ID: github.Ptr(int64(123)),
+					ID: new(int64(123)),
 				},
 			}
 			deleteError = errors.New("delete failed")
@@ -1988,13 +1988,13 @@ var _ = Describe("createMissingWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret123"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret123"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -2017,13 +2017,13 @@ var _ = Describe("createMissingWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook1",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret1"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret1"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 				"hash2": {
@@ -2033,13 +2033,13 @@ var _ = Describe("createMissingWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://slack.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret2"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret2"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(false),
+						Active:      new(false),
 						Events:      []string{"issues"},
-						SSLVerify:   github.Ptr(false),
+						SSLVerify:   new(false),
 					},
 				},
 			}
@@ -2074,13 +2074,13 @@ var _ = Describe("createMissingWebhooks", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
-							Name: github.Ptr("secret123"),
-							Key:  github.Ptr("newkey456"),
+							Name: new("secret123"),
+							Key:  new("newkey456"),
 						},
 						ContentType: "application/json",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 						Events:      []string{"push"},
-						SSLVerify:   github.Ptr(true),
+						SSLVerify:   new(true),
 					},
 				},
 			}
@@ -2171,8 +2171,8 @@ var _ = Describe("updateWebhooksStatus", func() {
 				Spec: v1alpha1.WebhookPresetSpec{
 					PayloadURL: "https://example.com/webhook",
 					Secret: &v1alpha1.WebhookPresetSecretSpec{
-						Name: github.Ptr("secret123"),
-						Key:  github.Ptr("newkey456"),
+						Name: new("secret123"),
+						Key:  new("newkey456"),
 					},
 					ContentType: "application/json",
 					Events:      []string{"push"},
@@ -2203,8 +2203,8 @@ var _ = Describe("updateWebhooksStatus", func() {
 				Spec: v1alpha1.WebhookPresetSpec{
 					PayloadURL: "https://example.com/webhook1",
 					Secret: &v1alpha1.WebhookPresetSecretSpec{
-						Name: github.Ptr("secret1"),
-						Key:  github.Ptr("newkey456"),
+						Name: new("secret1"),
+						Key:  new("newkey456"),
 					},
 					ContentType: "application/json",
 					Events:      []string{"push"},
@@ -2217,8 +2217,8 @@ var _ = Describe("updateWebhooksStatus", func() {
 				Spec: v1alpha1.WebhookPresetSpec{
 					PayloadURL: "https://slack.com/webhook",
 					Secret: &v1alpha1.WebhookPresetSecretSpec{
-						Name: github.Ptr("secret2"),
-						Key:  github.Ptr("newkey456"),
+						Name: new("secret2"),
+						Key:  new("newkey456"),
 					},
 					ContentType: "application/json",
 					Events:      []string{"issues"},
@@ -2303,22 +2303,22 @@ var _ = Describe("templatePayloadURL", func() {
 			Spec: v1alpha1.WebhookPresetSpec{
 				PayloadURL:  "https://example.com/webhook",
 				ContentType: "application/json",
-				Active:      github.Ptr(true),
+				Active:      new(true),
 				Events:      []string{"push"},
-				SSLVerify:   github.Ptr(true),
+				SSLVerify:   new(true),
 			},
 		}
 
 		mockRepo = &github.Repository{
-			ID:       github.Ptr(int64(12345)),
-			Name:     github.Ptr("test-repo"),
-			FullName: github.Ptr("test-org/test-repo"),
+			ID:       new(int64(12345)),
+			Name:     new("test-repo"),
+			FullName: new("test-org/test-repo"),
 			Owner: &github.User{
-				Login: github.Ptr("test-org"),
+				Login: new("test-org"),
 			},
-			SSHURL:   github.Ptr("git@github.com:test-org/test-repo.git"),
-			HTMLURL:  github.Ptr("https://github.com/test-org/test-repo"),
-			Archived: github.Ptr(false),
+			SSHURL:   new("git@github.com:test-org/test-repo.git"),
+			HTMLURL:  new("https://github.com/test-org/test-repo"),
+			Archived: new(false),
 		}
 
 		mockClient.GetRepositoryFunc = func(ctx context.Context, owner, repo string) (*github.Repository, error) {
@@ -2498,7 +2498,7 @@ var _ = Describe("templatePayloadURL", func() {
 
 	Context("when URL contains special characters", func() {
 		BeforeEach(func() {
-			mockRepo.Name = github.Ptr("test-repo-with-special")
+			mockRepo.Name = new("test-repo-with-special")
 			preset.Spec.PayloadURL = "https://example.com/{{.Name}}/webhook"
 		})
 

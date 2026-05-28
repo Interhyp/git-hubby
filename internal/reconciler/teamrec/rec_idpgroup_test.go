@@ -68,7 +68,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -99,7 +99,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			mockClient1.GetExternalGroupsForTeamBySlugFunc = func(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error) {
 				return []*github.ExternalGroup{
 					{
-						GroupID:   github.Ptr(int64(12345)),
+						GroupID:   new(int64(12345)),
 						GroupName: &groupName,
 					},
 				}, nil
@@ -108,7 +108,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -152,7 +152,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -199,7 +199,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -238,7 +238,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -276,7 +276,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -320,7 +320,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -351,7 +351,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			mockClient1.GetExternalGroupsForTeamBySlugFunc = func(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error) {
 				return []*github.ExternalGroup{
 					{
-						GroupID:   github.Ptr(int64(99999)),
+						GroupID:   new(int64(99999)),
 						GroupName: &otherGroupName,
 					},
 				}, nil
@@ -367,7 +367,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -407,7 +407,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			mockClient1.GetExternalGroupsForTeamBySlugFunc = func(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error) {
 				return []*github.ExternalGroup{
 					{
-						GroupID:   github.Ptr(int64(12345)),
+						GroupID:   new(int64(12345)),
 						GroupName: &groupName,
 					},
 				}, nil
@@ -426,7 +426,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -473,11 +473,11 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			mockClient1.GetExternalGroupsForTeamBySlugFunc = func(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error) {
 				return []*github.ExternalGroup{
 					{
-						GroupID:   github.Ptr(int64(99999)),
+						GroupID:   new(int64(99999)),
 						GroupName: &otherGroupName,
 					},
 					{
-						GroupID:   github.Ptr(int64(12345)),
+						GroupID:   new(int64(12345)),
 						GroupName: &groupName,
 					},
 				}, nil
@@ -493,7 +493,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -526,7 +526,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			mockClient1.GetExternalGroupsForTeamBySlugFunc = func(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error) {
 				return []*github.ExternalGroup{
 					{
-						GroupID:   github.Ptr(int64(99999)),
+						GroupID:   new(int64(99999)),
 						GroupName: nil, // nil group name
 					},
 				}, nil
@@ -541,7 +541,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -574,7 +574,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{},
 					},
@@ -605,7 +605,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			mockClient1.GetExternalGroupsForTeamBySlugFunc = func(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error) {
 				return []*github.ExternalGroup{
 					{
-						GroupID:   github.Ptr(int64(12345)),
+						GroupID:   new(int64(12345)),
 						GroupName: &groupName,
 					},
 				}, nil
@@ -624,7 +624,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -675,7 +675,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{

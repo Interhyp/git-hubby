@@ -80,7 +80,7 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 				return &github.Organization{
 					Login:       github.Ptr(orgName),
 					Name:        github.Ptr(orgName),
-					Description: github.Ptr("Test organization for unit tests"),
+					Description: new("Test organization for unit tests"),
 				}, nil
 			}
 			mockClient.GetAllOrganizationCustomPropertiesFunc = func(ctx context.Context, org string) ([]*github.CustomProperty, error) {
@@ -108,7 +108,7 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 				return &github.Organization{
 					Login:       github.Ptr(orgName),
 					Name:        github.Ptr(orgName),
-					Description: github.Ptr("Test organization for unit tests"),
+					Description: new("Test organization for unit tests"),
 				}, nil
 			}
 			mockClient.GetAllOrganizationCustomPropertiesFunc = func(ctx context.Context, org string) ([]*github.CustomProperty, error) {
@@ -148,7 +148,7 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 				return &github.Organization{
 					Login:       github.Ptr(orgName),
 					Name:        github.Ptr(orgName),
-					Description: github.Ptr("Test organization for unit tests"),
+					Description: new("Test organization for unit tests"),
 				}, nil
 			}
 			mockClient.GetAllOrganizationCustomPropertiesFunc = func(ctx context.Context, org string) ([]*github.CustomProperty, error) {
@@ -194,7 +194,7 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 				return &github.Organization{
 					Login:       github.Ptr(orgName),
 					Name:        github.Ptr(orgName),
-					Description: github.Ptr("Test organization"),
+					Description: new("Test organization"),
 				}, nil
 			}
 			mockClient.GetAllOrganizationCustomPropertiesFunc = func(ctx context.Context, org string) ([]*github.CustomProperty, error) {

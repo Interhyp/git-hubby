@@ -19,9 +19,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 			desired = v1alpha1.OrgCustomProperty{
 				PropertyName:     "test-property",
 				ValueType:        "string",
-				Required:         github.Ptr(true),
-				DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("default")},
-				Description:      github.Ptr("test description"),
+				Required:         new(true),
+				DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("default")},
+				Description:      new("test description"),
 				AllowedValues:    nil,
 				ValuesEditableBy: "org_actors",
 			}
@@ -38,9 +38,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when current property is not organization type", func() {
 			BeforeEach(func() {
 				current = &github.CustomProperty{
-					PropertyName: github.Ptr("test-property"),
+					PropertyName: new("test-property"),
 					ValueType:    "string",
-					SourceType:   github.Ptr("repository"),
+					SourceType:   new("repository"),
 				}
 			})
 
@@ -54,14 +54,14 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when current property is organization type and matches", func() {
 			BeforeEach(func() {
 				current = &github.CustomProperty{
-					PropertyName:     github.Ptr("test-property"),
+					PropertyName:     new("test-property"),
 					ValueType:        "string",
-					SourceType:       github.Ptr(CustomPropertySourceTypeOrganization),
-					Required:         github.Ptr(true),
+					SourceType:       new(CustomPropertySourceTypeOrganization),
+					Required:         new(true),
 					DefaultValue:     "default",
-					Description:      github.Ptr("test description"),
+					Description:      new("test description"),
 					AllowedValues:    []string{},
-					ValuesEditableBy: github.Ptr("org_actors"),
+					ValuesEditableBy: new("org_actors"),
 				}
 			})
 
@@ -75,14 +75,14 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when current property is organization type but does not match", func() {
 			BeforeEach(func() {
 				current = &github.CustomProperty{
-					PropertyName:     github.Ptr("test-property"),
+					PropertyName:     new("test-property"),
 					ValueType:        "string",
-					SourceType:       github.Ptr(CustomPropertySourceTypeOrganization),
-					Required:         github.Ptr(false),
+					SourceType:       new(CustomPropertySourceTypeOrganization),
+					Required:         new(false),
 					DefaultValue:     "different",
-					Description:      github.Ptr("different description"),
+					Description:      new("different description"),
 					AllowedValues:    []string{},
-					ValuesEditableBy: github.Ptr("org_actors"),
+					ValuesEditableBy: new("org_actors"),
 				}
 			})
 
@@ -99,7 +99,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when property is organization type", func() {
 			It("should return true", func() {
 				property := &github.CustomProperty{
-					SourceType: github.Ptr(CustomPropertySourceTypeOrganization),
+					SourceType: new(CustomPropertySourceTypeOrganization),
 				}
 				result := IsK8sOrgCustomProperty(property)
 				Expect(result).To(BeTrue())
@@ -109,7 +109,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when property is repository type", func() {
 			It("should return false", func() {
 				property := &github.CustomProperty{
-					SourceType: github.Ptr("repository"),
+					SourceType: new("repository"),
 				}
 				result := IsK8sOrgCustomProperty(property)
 				Expect(result).To(BeFalse())
@@ -129,7 +129,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when property has empty source type", func() {
 			It("should return false", func() {
 				property := &github.CustomProperty{
-					SourceType: github.Ptr(""),
+					SourceType: new(""),
 				}
 				result := IsK8sOrgCustomProperty(property)
 				Expect(result).To(BeFalse())
@@ -141,13 +141,13 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when converting valid GitHub custom property", func() {
 			It("should successfully convert string property", func() {
 				githubProperty := &github.CustomProperty{
-					PropertyName:     github.Ptr("test-string"),
+					PropertyName:     new("test-string"),
 					ValueType:        "string",
-					Required:         github.Ptr(true),
+					Required:         new(true),
 					DefaultValue:     "default-value",
-					Description:      github.Ptr("test description"),
+					Description:      new("test description"),
 					AllowedValues:    []string{},
-					ValuesEditableBy: github.Ptr("org_actors"),
+					ValuesEditableBy: new("org_actors"),
 				}
 
 				result, err := ToK8sOrgCustomProperty(githubProperty)
@@ -164,13 +164,13 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 
 			It("should successfully convert single_select property", func() {
 				githubProperty := &github.CustomProperty{
-					PropertyName:     github.Ptr("test-select"),
+					PropertyName:     new("test-select"),
 					ValueType:        "single_select",
-					Required:         github.Ptr(false),
+					Required:         new(false),
 					DefaultValue:     "option1",
-					Description:      github.Ptr("select description"),
+					Description:      new("select description"),
 					AllowedValues:    []string{"option1", "option2", "option3"},
-					ValuesEditableBy: github.Ptr("org_and_repo_actors"),
+					ValuesEditableBy: new("org_and_repo_actors"),
 				}
 
 				result, err := ToK8sOrgCustomProperty(githubProperty)
@@ -186,13 +186,13 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 
 			It("should successfully convert multi_select property", func() {
 				githubProperty := &github.CustomProperty{
-					PropertyName:     github.Ptr("test-multi"),
+					PropertyName:     new("test-multi"),
 					ValueType:        "multi_select",
-					Required:         github.Ptr(true),
+					Required:         new(true),
 					DefaultValue:     []string{"option1", "option2"},
-					Description:      github.Ptr("multi select description"),
+					Description:      new("multi select description"),
 					AllowedValues:    []string{"option1", "option2", "option3", "option4"},
-					ValuesEditableBy: github.Ptr("org_actors"),
+					ValuesEditableBy: new("org_actors"),
 				}
 
 				result, err := ToK8sOrgCustomProperty(githubProperty)
@@ -208,13 +208,13 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 
 			It("should successfully convert true_false property", func() {
 				githubProperty := &github.CustomProperty{
-					PropertyName:     github.Ptr("test-boolean"),
+					PropertyName:     new("test-boolean"),
 					ValueType:        "true_false",
-					Required:         github.Ptr(false),
+					Required:         new(false),
 					DefaultValue:     "true",
 					Description:      nil,
 					AllowedValues:    []string{},
-					ValuesEditableBy: github.Ptr("org_actors"),
+					ValuesEditableBy: new("org_actors"),
 				}
 
 				result, err := ToK8sOrgCustomProperty(githubProperty)
@@ -229,7 +229,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 
 			It("should handle property with nil values", func() {
 				githubProperty := &github.CustomProperty{
-					PropertyName:     github.Ptr("minimal-property"),
+					PropertyName:     new("minimal-property"),
 					ValueType:        "string",
 					Required:         nil,
 					DefaultValue:     nil,
@@ -258,9 +258,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 				k8sProperty := v1alpha1.OrgCustomProperty{
 					PropertyName:     "test-string",
 					ValueType:        "string",
-					Required:         github.Ptr(true),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("default-value")},
-					Description:      github.Ptr("test description"),
+					Required:         new(true),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("default-value")},
+					Description:      new("test description"),
 					AllowedValues:    []string{},
 					ValuesEditableBy: "org_actors",
 				}
@@ -281,9 +281,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 				k8sProperty := v1alpha1.OrgCustomProperty{
 					PropertyName:     "test-select",
 					ValueType:        "single_select",
-					Required:         github.Ptr(false),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("option1")},
-					Description:      github.Ptr("select description"),
+					Required:         new(false),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("option1")},
+					Description:      new("select description"),
 					AllowedValues:    []string{"option1", "option2", "option3"},
 					ValuesEditableBy: "org_and_repo_actors",
 				}
@@ -302,9 +302,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 				k8sProperty := v1alpha1.OrgCustomProperty{
 					PropertyName:     "test-multi",
 					ValueType:        "multi_select",
-					Required:         github.Ptr(true),
+					Required:         new(true),
 					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Values: []string{"option1", "option2"}},
-					Description:      github.Ptr("multi select description"),
+					Description:      new("multi select description"),
 					AllowedValues:    []string{"option1", "option2", "option3", "option4"},
 					ValuesEditableBy: "org_actors",
 				}
@@ -323,8 +323,8 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 				k8sProperty := v1alpha1.OrgCustomProperty{
 					PropertyName:     "test-boolean",
 					ValueType:        "true_false",
-					Required:         github.Ptr(false),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("false")},
+					Required:         new(false),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("false")},
 					Description:      nil,
 					AllowedValues:    []string{},
 					ValuesEditableBy: "org_actors",
@@ -343,7 +343,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 				k8sProperty := v1alpha1.OrgCustomProperty{
 					PropertyName:     "minimal-property",
 					ValueType:        "string",
-					Required:         github.Ptr(false),
+					Required:         new(false),
 					DefaultValue:     nil,
 					Description:      nil,
 					AllowedValues:    nil,
@@ -394,10 +394,10 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when converting valid property values", func() {
 			It("should successfully convert all supported types", func() {
 				raw := []v1alpha1.CustomPropertyValue{
-					{PropertyName: stringProp, Value: github.Ptr("test-value")},
-					{PropertyName: selectProp, Value: github.Ptr("option1")},
+					{PropertyName: stringProp, Value: new("test-value")},
+					{PropertyName: selectProp, Value: new("option1")},
 					{PropertyName: multiProp, Values: []string{"option1", "option2"}},
-					{PropertyName: boolProp, Value: github.Ptr("true")},
+					{PropertyName: boolProp, Value: new("true")},
 				}
 
 				result, err := ToGitHubCustomPropertyValues(raw, definitions)
@@ -438,7 +438,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 			It("should handle nil values", func() {
 				raw := []v1alpha1.CustomPropertyValue{
 					{PropertyName: stringProp, Value: nil},
-					{PropertyName: selectProp, Value: github.Ptr("option1")},
+					{PropertyName: selectProp, Value: new("option1")},
 				}
 
 				result, err := ToGitHubCustomPropertyValues(raw, definitions)
@@ -462,7 +462,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when property is not defined", func() {
 			It("should return error for undefined property", func() {
 				raw := []v1alpha1.CustomPropertyValue{
-					{PropertyName: "undefined-prop", Value: github.Ptr("value")},
+					{PropertyName: "undefined-prop", Value: new("value")},
 				}
 
 				result, err := ToGitHubCustomPropertyValues(raw, definitions)
@@ -477,9 +477,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 
 			It("should return multiple errors for multiple undefined properties", func() {
 				raw := []v1alpha1.CustomPropertyValue{
-					{PropertyName: "undefined-prop1", Value: github.Ptr("value1")},
-					{PropertyName: "undefined-prop2", Value: github.Ptr("value2")},
-					{PropertyName: stringProp, Value: github.Ptr("valid-value")},
+					{PropertyName: "undefined-prop1", Value: new("value1")},
+					{PropertyName: "undefined-prop2", Value: new("value2")},
+					{PropertyName: stringProp, Value: new("valid-value")},
 				}
 				result, err := ToGitHubCustomPropertyValues(raw, definitions)
 				// No longer errors - undefined properties are ignored
@@ -501,7 +501,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when definitions are empty", func() {
 			It("should return error for any property", func() {
 				raw := []v1alpha1.CustomPropertyValue{
-					{PropertyName: "any-prop", Value: github.Ptr("value")},
+					{PropertyName: "any-prop", Value: new("value")},
 				}
 				result, err := ToGitHubCustomPropertyValues(raw, []*github.CustomProperty{})
 				// No longer errors - empty definitions means nothing to process
@@ -513,7 +513,7 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		Context("when definitions are nil", func() {
 			It("should return error for any property", func() {
 				raw := []v1alpha1.CustomPropertyValue{
-					{PropertyName: "any-prop", Value: github.Ptr("value")},
+					{PropertyName: "any-prop", Value: new("value")},
 				}
 				result, err := ToGitHubCustomPropertyValues(raw, nil)
 				// No longer errors - nil definitions means nothing to process
@@ -526,9 +526,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 			It("should use default value for required string property", func() {
 				definitions := []*github.CustomProperty{
 					{
-						PropertyName: github.Ptr("required-string"),
+						PropertyName: new("required-string"),
 						ValueType:    github.PropertyValueTypeString,
-						Required:     github.Ptr(true),
+						Required:     new(true),
 						DefaultValue: "default-value",
 					},
 				}
@@ -544,9 +544,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 			It("should use default value for required single_select property", func() {
 				definitions := []*github.CustomProperty{
 					{
-						PropertyName: github.Ptr("required-select"),
+						PropertyName: new("required-select"),
 						ValueType:    github.PropertyValueTypeSingleSelect,
-						Required:     github.Ptr(true),
+						Required:     new(true),
 						DefaultValue: "option1",
 					},
 				}
@@ -562,9 +562,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 			It("should use default values for required multi_select property", func() {
 				definitions := []*github.CustomProperty{
 					{
-						PropertyName: github.Ptr("required-multi"),
+						PropertyName: new("required-multi"),
 						ValueType:    github.PropertyValueTypeMultiSelect,
-						Required:     github.Ptr(true),
+						Required:     new(true),
 						DefaultValue: []any{"option1", "option2"},
 					},
 				}
@@ -580,9 +580,9 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 			It("should set nil for optional property not in raw input", func() {
 				definitions := []*github.CustomProperty{
 					{
-						PropertyName: github.Ptr("optional-string"),
+						PropertyName: new("optional-string"),
 						ValueType:    github.PropertyValueTypeString,
-						Required:     github.Ptr(false),
+						Required:     new(false),
 						DefaultValue: "default-value",
 					},
 				}
@@ -598,25 +598,25 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 			It("should handle mix of required and optional properties", func() {
 				definitions := []*github.CustomProperty{
 					{
-						PropertyName: github.Ptr("required-prop"),
+						PropertyName: new("required-prop"),
 						ValueType:    github.PropertyValueTypeString,
-						Required:     github.Ptr(true),
+						Required:     new(true),
 						DefaultValue: "required-default",
 					},
 					{
-						PropertyName: github.Ptr("optional-prop"),
+						PropertyName: new("optional-prop"),
 						ValueType:    github.PropertyValueTypeString,
-						Required:     github.Ptr(false),
+						Required:     new(false),
 						DefaultValue: "optional-default",
 					},
 					{
-						PropertyName: github.Ptr("provided-prop"),
+						PropertyName: new("provided-prop"),
 						ValueType:    github.PropertyValueTypeString,
-						Required:     github.Ptr(false),
+						Required:     new(false),
 					},
 				}
 				raw := []v1alpha1.CustomPropertyValue{
-					{PropertyName: "provided-prop", Value: github.Ptr("user-value")},
+					{PropertyName: "provided-prop", Value: new("user-value")},
 				}
 
 				result, err := ToGitHubCustomPropertyValues(raw, definitions)

@@ -59,7 +59,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 						},
@@ -75,12 +75,12 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				// org1 already has the team
 				mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name:                github.Ptr("test-team"),
-						Slug:                github.Ptr("test-team"),
-						Description:         github.Ptr("Test team description"),
-						Privacy:             github.Ptr("closed"),
-						Permission:          github.Ptr("pull"),
-						NotificationSetting: github.Ptr("notifications_disabled"),
+						Name:                new("test-team"),
+						Slug:                new("test-team"),
+						Description:         new("Test team description"),
+						Privacy:             new("closed"),
+						Permission:          new("pull"),
+						NotificationSetting: new("notifications_disabled"),
 					}, nil
 				}
 
@@ -108,7 +108,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -174,7 +174,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 						},
@@ -190,12 +190,12 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				// org1 already has the team
 				mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name:                github.Ptr("test-team"),
-						Slug:                github.Ptr("test-team"),
-						Description:         github.Ptr("Test team description"),
-						Privacy:             github.Ptr("closed"),
-						Permission:          github.Ptr("pull"),
-						NotificationSetting: github.Ptr("notifications_disabled"),
+						Name:                new("test-team"),
+						Slug:                new("test-team"),
+						Description:         new("Test team description"),
+						Privacy:             new("closed"),
+						Permission:          new("pull"),
+						NotificationSetting: new("notifications_disabled"),
 					}, nil
 				}
 
@@ -229,7 +229,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -293,7 +293,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 						},
@@ -308,12 +308,12 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 
 				mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name:                github.Ptr("test-team"),
-						Slug:                github.Ptr("test-team"),
-						Description:         github.Ptr(""),
-						Privacy:             github.Ptr("closed"),
-						Permission:          github.Ptr("pull"),
-						NotificationSetting: github.Ptr("notifications_disabled"),
+						Name:                new("test-team"),
+						Slug:                new("test-team"),
+						Description:         new(""),
+						Privacy:             new("closed"),
+						Permission:          new("pull"),
+						NotificationSetting: new("notifications_disabled"),
 					}, nil
 				}
 
@@ -333,7 +333,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -390,7 +390,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 							{Name: "org2"},
@@ -411,7 +411,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -479,7 +479,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 							{Name: "org2"},
@@ -505,7 +505,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -574,7 +574,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 							{Name: "org2"},
@@ -595,7 +595,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -673,7 +673,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -730,7 +730,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 							{Name: "org2"},
@@ -747,7 +747,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -811,7 +811,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 							{Name: "org2"},
@@ -828,7 +828,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -1006,7 +1006,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 							{Name: "org2"},
@@ -1023,12 +1023,12 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				// org1 - team exists with old description, update succeeds
 				mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name:                github.Ptr("test-team"),
-						Slug:                github.Ptr("test-team"),
-						Description:         github.Ptr("Old description"),
-						Privacy:             github.Ptr("closed"),
-						Permission:          github.Ptr("pull"),
-						NotificationSetting: github.Ptr("notifications_disabled"),
+						Name:                new("test-team"),
+						Slug:                new("test-team"),
+						Description:         new("Old description"),
+						Privacy:             new("closed"),
+						Permission:          new("pull"),
+						NotificationSetting: new("notifications_disabled"),
 					}, nil
 				}
 
@@ -1046,12 +1046,12 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				// org2 - team exists with old description, update fails
 				mockClient2.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name:                github.Ptr("test-team"),
-						Slug:                github.Ptr("test-team"),
-						Description:         github.Ptr("Old description"),
-						Privacy:             github.Ptr("closed"),
-						Permission:          github.Ptr("pull"),
-						NotificationSetting: github.Ptr("notifications_disabled"),
+						Name:                new("test-team"),
+						Slug:                new("test-team"),
+						Description:         new("Old description"),
+						Privacy:             new("closed"),
+						Permission:          new("pull"),
+						NotificationSetting: new("notifications_disabled"),
 					}, nil
 				}
 
@@ -1062,7 +1062,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -1130,7 +1130,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 							{Name: "org2"},
@@ -1158,7 +1158,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -1232,7 +1232,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						PreviousOrganizationRefs: []v1alpha1.OrganizationRef{
 							{Name: "org1"},
 							{Name: "org2"},
@@ -1249,12 +1249,12 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				// org1 - already exists, no change needed
 				mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name:                github.Ptr("test-team"),
-						Slug:                github.Ptr("test-team"),
-						Description:         github.Ptr(""),
-						Privacy:             github.Ptr("closed"),
-						Permission:          github.Ptr("pull"),
-						NotificationSetting: github.Ptr("notifications_disabled"),
+						Name:                new("test-team"),
+						Slug:                new("test-team"),
+						Description:         new(""),
+						Privacy:             new("closed"),
+						Permission:          new("pull"),
+						NotificationSetting: new("notifications_disabled"),
 					}, nil
 				}
 
@@ -1280,7 +1280,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -1357,7 +1357,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 					},
 				}
 
@@ -1369,8 +1369,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 
 				mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name: github.Ptr("test-team"),
-						Slug: github.Ptr("test-team"),
+						Name: new("test-team"),
+						Slug: new("test-team"),
 					}, nil
 				}
 
@@ -1380,8 +1380,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 
 				mockClient2.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name: github.Ptr("test-team"),
-						Slug: github.Ptr("test-team"),
+						Name: new("test-team"),
+						Slug: new("test-team"),
 					}, nil
 				}
 
@@ -1392,7 +1392,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -1448,7 +1448,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 					},
 				}
 
@@ -1461,8 +1461,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				// org1 deletion succeeds
 				mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name: github.Ptr("test-team"),
-						Slug: github.Ptr("test-team"),
+						Name: new("test-team"),
+						Slug: new("test-team"),
 					}, nil
 				}
 
@@ -1473,8 +1473,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				// org2 deletion fails
 				mockClient2.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name: github.Ptr("test-team"),
-						Slug: github.Ptr("test-team"),
+						Name: new("test-team"),
+						Slug: new("test-team"),
 					}, nil
 				}
 
@@ -1485,7 +1485,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -1544,7 +1544,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 					},
 				}
 
@@ -1557,8 +1557,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				// org1 - team exists and should be deleted
 				mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 					return &github.Team{
-						Name: github.Ptr("test-team"),
-						Slug: github.Ptr("test-team"),
+						Name: new("test-team"),
+						Slug: new("test-team"),
 					}, nil
 				}
 
@@ -1574,7 +1574,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{
@@ -1631,7 +1631,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 						},
 					},
 					Status: v1alpha1.TeamStatus{
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 					},
 				}
 
@@ -1648,7 +1648,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				rec = &GitHubTeamReconciler{
 					Team: reconciler.GitHubTeamIdentifier{
 						Name: "test-team",
-						Slug: github.Ptr("test-team"),
+						Slug: new("test-team"),
 						Organizations: reconciler.ReferencedOrganizations{
 							Current: []reconciler.GitHub[string]{
 								{

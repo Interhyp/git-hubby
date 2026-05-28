@@ -62,7 +62,7 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 		testEnv.CreateTestNamespace(namespaceName)
 		testEnv.CreateSecret(namespaceName, secretName)
 		organization = testEnv.SetupOrganizationTest(nil, namespaceName, orgName)
-		organization.Spec.ActionsSettings.EnabledRepositories = github.Ptr("all")
+		organization.Spec.ActionsSettings.EnabledRepositories = new("all")
 		Expect(testEnv.Client.Update(testEnv.Context, organization)).To(Succeed())
 	})
 
@@ -94,12 +94,12 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 			By("Setting up mock to return existing repository")
 			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, repo string) (*github.Repository, error) {
 				return &github.Repository{
-					ID:         github.Ptr(int64(12345)),
+					ID:         new(int64(12345)),
 					Name:       github.Ptr(repoName),
-					FullName:   github.Ptr(owner + "/" + repo),
-					Owner:      &github.User{Login: github.Ptr(owner)},
-					Archived:   github.Ptr(false),
-					Visibility: github.Ptr("internal"),
+					FullName:   new(owner + "/" + repo),
+					Owner:      &github.User{Login: new(owner)},
+					Archived:   new(false),
+					Visibility: new("internal"),
 				}, nil
 			}
 
@@ -189,27 +189,27 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 			By("Setting up mock to return repository with ID")
 			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, repo string) (*github.Repository, error) {
 				return &github.Repository{
-					ID:                  github.Ptr(int64(99999)),
+					ID:                  new(int64(99999)),
 					Name:                github.Ptr(repoName),
-					FullName:            github.Ptr(owner + "/" + repo),
-					Owner:               &github.User{Login: github.Ptr(owner)},
-					Archived:            github.Ptr(false),
-					Visibility:          github.Ptr("internal"),
-					HasIssues:           github.Ptr(true),
-					HasProjects:         github.Ptr(false),
-					HasWiki:             github.Ptr(false),
-					HasDownloads:        github.Ptr(false),
-					IsTemplate:          github.Ptr(false),
-					AutoInit:            github.Ptr(true),
-					AllowSquashMerge:    github.Ptr(false),
-					AllowRebaseMerge:    github.Ptr(false),
-					AllowMergeCommit:    github.Ptr(false),
-					DeleteBranchOnMerge: github.Ptr(true),
-					MergeCommitTitle:    github.Ptr("MERGE_MESSAGE"),
-					MergeCommitMessage:  github.Ptr("PR_TITLE"),
-					Homepage:            github.Ptr(""),
-					Description:         github.Ptr(""),
-					DefaultBranch:       github.Ptr(""),
+					FullName:            new(owner + "/" + repo),
+					Owner:               &github.User{Login: new(owner)},
+					Archived:            new(false),
+					Visibility:          new("internal"),
+					HasIssues:           new(true),
+					HasProjects:         new(false),
+					HasWiki:             new(false),
+					HasDownloads:        new(false),
+					IsTemplate:          new(false),
+					AutoInit:            new(true),
+					AllowSquashMerge:    new(false),
+					AllowRebaseMerge:    new(false),
+					AllowMergeCommit:    new(false),
+					DeleteBranchOnMerge: new(true),
+					MergeCommitTitle:    new("MERGE_MESSAGE"),
+					MergeCommitMessage:  new("PR_TITLE"),
+					Homepage:            new(""),
+					Description:         new(""),
+					DefaultBranch:       new(""),
 				}, nil
 			}
 

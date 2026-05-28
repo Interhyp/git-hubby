@@ -80,7 +80,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 				},
 			},
 			Status: v1alpha1.RepositoryStatus{
-				ID: github.Ptr(int64(12345)),
+				ID: new(int64(12345)),
 			},
 		}
 	})
@@ -146,7 +146,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			}
 			mockClient.CreateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
 				createdConfig = &config
-				createdConfig.ID = github.Ptr(int64(999))
+				createdConfig.ID = new(int64(999))
 				return createdConfig, nil
 			}
 		})
@@ -168,7 +168,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 		var defaultScope string
 
 		BeforeEach(func() {
-			csc.Spec.DefaultForNewRepos = github.Ptr("all")
+			csc.Spec.DefaultForNewRepos = new("all")
 			org.Spec.CodeSecurityConfigurations = []v1alpha1.AttachableCodeSecurityConfigurationRef{
 				{Name: testCsc},
 			}
@@ -181,7 +181,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			}
 			mockClient.CreateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
 				return &github.CodeSecurityConfiguration{
-					ID:          github.Ptr(int64(999)),
+					ID:          new(int64(999)),
 					Name:        config.Name,
 					Description: config.Description,
 				}, nil
@@ -219,16 +219,16 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			mockClient.GetCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfiguration, error) {
 				return []*github.CodeSecurityConfiguration{
 					{
-						ID:          github.Ptr(int64(999)),
+						ID:          new(int64(999)),
 						Name:        testCsc,
 						Description: "Old description",
-						TargetType:  github.Ptr(targetTypeOrganization),
+						TargetType:  new(targetTypeOrganization),
 					},
 				}, nil
 			}
 			mockClient.UpdateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, configId int64, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
 				updatedConfig = &config
-				updatedConfig.ID = github.Ptr(configId)
+				updatedConfig.ID = new(configId)
 				return updatedConfig, nil
 			}
 		})
@@ -256,10 +256,10 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			mockClient.GetCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfiguration, error) {
 				return []*github.CodeSecurityConfiguration{
 					{
-						ID:          github.Ptr(int64(999)),
+						ID:          new(int64(999)),
 						Name:        testCsc,
 						Description: "Test code security configuration",
-						TargetType:  github.Ptr(targetTypeOrganization),
+						TargetType:  new(targetTypeOrganization),
 					},
 				}, nil
 			}
@@ -295,9 +295,9 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			mockClient.GetCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfiguration, error) {
 				return []*github.CodeSecurityConfiguration{
 					{
-						ID:         github.Ptr(int64(999)),
+						ID:         new(int64(999)),
 						Name:       "orphaned-csc",
-						TargetType: github.Ptr(targetTypeOrganization),
+						TargetType: new(targetTypeOrganization),
 					},
 				}, nil
 			}
@@ -362,9 +362,9 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 		var defaultScope string
 
 		BeforeEach(func() {
-			csc.Spec.DefaultForNewRepos = github.Ptr("selected")
+			csc.Spec.DefaultForNewRepos = new("selected")
 			org.Spec.CodeSecurityConfigurations = []v1alpha1.AttachableCodeSecurityConfigurationRef{
-				{Name: testCsc, AttachmentScope: github.Ptr("selected")},
+				{Name: testCsc, AttachmentScope: new("selected")},
 			}
 
 			mockClient.GetDefaultCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfigurationWithDefaultForNewRepos, error) {
@@ -375,7 +375,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			}
 			mockClient.CreateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
 				return &github.CodeSecurityConfiguration{
-					ID:          github.Ptr(int64(999)),
+					ID:          new(int64(999)),
 					Name:        config.Name,
 					Description: config.Description,
 				}, nil
@@ -406,7 +406,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 
 	Context("when SetCodeSecurityConfigurationAsDefaultForOrg fails during creation", func() {
 		BeforeEach(func() {
-			csc.Spec.DefaultForNewRepos = github.Ptr("all")
+			csc.Spec.DefaultForNewRepos = new("all")
 			org.Spec.CodeSecurityConfigurations = []v1alpha1.AttachableCodeSecurityConfigurationRef{
 				{Name: testCsc},
 			}
@@ -419,7 +419,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			}
 			mockClient.CreateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
 				return &github.CodeSecurityConfiguration{
-					ID:          github.Ptr(int64(999)),
+					ID:          new(int64(999)),
 					Name:        config.Name,
 					Description: config.Description,
 				}, nil
@@ -452,10 +452,10 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			mockClient.GetCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfiguration, error) {
 				return []*github.CodeSecurityConfiguration{
 					{
-						ID:          github.Ptr(int64(999)),
+						ID:          new(int64(999)),
 						Name:        testCsc,
 						Description: "Old description",
-						TargetType:  github.Ptr(targetTypeOrganization),
+						TargetType:  new(targetTypeOrganization),
 					},
 				}, nil
 			}
@@ -484,9 +484,9 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			mockClient.GetCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfiguration, error) {
 				return []*github.CodeSecurityConfiguration{
 					{
-						ID:         github.Ptr(int64(999)),
+						ID:         new(int64(999)),
 						Name:       "orphaned-csc",
-						TargetType: github.Ptr(targetTypeOrganization),
+						TargetType: new(targetTypeOrganization),
 					},
 				}, nil
 			}
@@ -531,16 +531,16 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			mockClient.GetCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfiguration, error) {
 				return []*github.CodeSecurityConfiguration{
 					{
-						ID:          github.Ptr(int64(999)),
+						ID:          new(int64(999)),
 						Name:        testCsc,
 						Description: "Test code security configuration",
-						TargetType:  github.Ptr(targetTypeOrganization),
+						TargetType:  new(targetTypeOrganization),
 					},
 				}, nil
 			}
 			mockClient.CreateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
 				return &github.CodeSecurityConfiguration{
-					ID:          github.Ptr(int64(1000)),
+					ID:          new(int64(1000)),
 					Name:        config.Name,
 					Description: config.Description,
 				}, nil
@@ -594,13 +594,13 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			}
 			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					ID:   github.Ptr(int64(12345)),
-					Slug: github.Ptr("security-team"),
+					ID:   new(int64(12345)),
+					Slug: new("security-team"),
 				}, nil
 			}
 			mockClient.CreateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
 				return &github.CodeSecurityConfiguration{
-					ID:          github.Ptr(int64(999)),
+					ID:          new(int64(999)),
 					Name:        config.Name,
 					Description: config.Description,
 				}, nil
@@ -686,7 +686,7 @@ var _ = Describe("UnsetObsoleteDefaults", func() {
 
 		BeforeEach(func() {
 			// CSC is not marked as default (or is set to "none")
-			csc.Spec.DefaultForNewRepos = github.Ptr("none")
+			csc.Spec.DefaultForNewRepos = new("none")
 			org.Spec.CodeSecurityConfigurations = []v1alpha1.AttachableCodeSecurityConfigurationRef{
 				{Name: testCsc},
 			}
@@ -695,9 +695,9 @@ var _ = Describe("UnsetObsoleteDefaults", func() {
 				return []*github.CodeSecurityConfigurationWithDefaultForNewRepos{
 					{
 						Configuration: &github.CodeSecurityConfiguration{
-							ID:         github.Ptr(int64(999)),
+							ID:         new(int64(999)),
 							Name:       testCsc,
-							TargetType: github.Ptr(targetTypeOrganization),
+							TargetType: new(targetTypeOrganization),
 						},
 					},
 				}, nil
@@ -716,7 +716,7 @@ var _ = Describe("UnsetObsoleteDefaults", func() {
 
 	Context("when a default config is still marked as default in k8s", func() {
 		BeforeEach(func() {
-			csc.Spec.DefaultForNewRepos = github.Ptr("all")
+			csc.Spec.DefaultForNewRepos = new("all")
 			org.Spec.CodeSecurityConfigurations = []v1alpha1.AttachableCodeSecurityConfigurationRef{
 				{Name: testCsc},
 			}
@@ -725,9 +725,9 @@ var _ = Describe("UnsetObsoleteDefaults", func() {
 				return []*github.CodeSecurityConfigurationWithDefaultForNewRepos{
 					{
 						Configuration: &github.CodeSecurityConfiguration{
-							ID:         github.Ptr(int64(999)),
+							ID:         new(int64(999)),
 							Name:       testCsc,
-							TargetType: github.Ptr(targetTypeOrganization),
+							TargetType: new(targetTypeOrganization),
 						},
 					},
 				}, nil
@@ -857,14 +857,14 @@ var _ = Describe("ResolveBypassReviewerNames", func() {
 
 			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					ID:   github.Ptr(int64(12345)),
-					Slug: github.Ptr(testTeam),
+					ID:   new(int64(12345)),
+					Slug: new(testTeam),
 				}, nil
 			}
 			mockClient.GetRoleByNameFunc = func(ctx context.Context, org string, roleName string) (*github.CustomOrgRole, error) {
 				return &github.CustomOrgRole{
-					ID:   github.Ptr(int64(67890)),
-					Name: github.Ptr(testRole),
+					ID:   new(int64(67890)),
+					Name: new(testRole),
 				}, nil
 			}
 		})
@@ -908,14 +908,14 @@ var _ = Describe("ResolveBypassReviewerNames", func() {
 
 			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					ID:   github.Ptr(int64(12345)),
-					Slug: github.Ptr(testTeam),
+					ID:   new(int64(12345)),
+					Slug: new(testTeam),
 				}, nil
 			}
 			mockClient.GetRoleByNameFunc = func(ctx context.Context, org string, roleName string) (*github.CustomOrgRole, error) {
 				return &github.CustomOrgRole{
-					ID:   github.Ptr(int64(67890)),
-					Name: github.Ptr(testRole),
+					ID:   new(int64(67890)),
+					Name: new(testRole),
 				}, nil
 			}
 		})
@@ -1031,7 +1031,7 @@ var _ = Describe("AttachToRepos", func() {
 				},
 			},
 			Status: v1alpha1.RepositoryStatus{
-				ID: github.Ptr(int64(12345)),
+				ID: new(int64(12345)),
 			},
 		}
 	})
@@ -1073,8 +1073,8 @@ var _ = Describe("AttachToRepos", func() {
 			}
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
-					{ID: github.Ptr(int64(2)), Name: github.Ptr("repo2"), Visibility: github.Ptr("private")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
+					{ID: new(int64(2)), Name: new("repo2"), Visibility: new("private")},
 				}, nil
 			}
 			mockClient.AttachCodeSecurityConfigurationsFunc = func(ctx context.Context, org string, cscID int64, scope string, repoIDs []int64) error {
@@ -1146,8 +1146,8 @@ var _ = Describe("AttachToRepos", func() {
 			}
 			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, repoName string) (*github.Repository, error) {
 				return &github.Repository{
-					ID:   github.Ptr(int64(54321)),
-					Name: github.Ptr(testRepo),
+					ID:   new(int64(54321)),
+					Name: new(testRepo),
 				}, nil
 			}
 			mockClient.AttachCodeSecurityConfigurationsFunc = func(ctx context.Context, org string, cscID int64, scope string, repoIDs []int64) error {
@@ -1191,7 +1191,7 @@ var _ = Describe("AttachToRepos", func() {
 			}
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
 				}, nil
 			}
 			mockClient.AttachCodeSecurityConfigurationsFunc = func(ctx context.Context, org string, cscID int64, scope string, repoIDs []int64) error {
@@ -1211,7 +1211,7 @@ var _ = Describe("AttachmentsDiffer", func() {
 	Context("when attachments have different counts", func() {
 		It("should return true", func() {
 			current := []*github.RepositoryAttachment{
-				{Repository: &github.Repository{Name: github.Ptr("repo1")}},
+				{Repository: &github.Repository{Name: new("repo1")}},
 			}
 			desired := map[string]int64{
 				"repo1": 1,
@@ -1224,8 +1224,8 @@ var _ = Describe("AttachmentsDiffer", func() {
 	Context("when all current attachments exist in desired", func() {
 		It("should return false (no difference when repos match)", func() {
 			current := []*github.RepositoryAttachment{
-				{Repository: &github.Repository{Name: github.Ptr("repo1")}},
-				{Repository: &github.Repository{Name: github.Ptr("repo2")}},
+				{Repository: &github.Repository{Name: new("repo1")}},
+				{Repository: &github.Repository{Name: new("repo2")}},
 			}
 			desired := map[string]int64{
 				"repo1": 1,
@@ -1238,7 +1238,7 @@ var _ = Describe("AttachmentsDiffer", func() {
 	Context("when a current attachment is not in desired", func() {
 		It("should return true (counts differ)", func() {
 			current := []*github.RepositoryAttachment{
-				{Repository: &github.Repository{Name: github.Ptr("repo3")}},
+				{Repository: &github.Repository{Name: new("repo3")}},
 			}
 			desired := map[string]int64{
 				"repo1": 1,
@@ -1262,8 +1262,8 @@ var _ = Describe("AttachmentsDiffer", func() {
 	Context("when current attachments match desired exactly", func() {
 		It("should return false", func() {
 			current := []*github.RepositoryAttachment{
-				{Repository: &github.Repository{Name: github.Ptr("repo1"), ID: github.Ptr(int64(1))}},
-				{Repository: &github.Repository{Name: github.Ptr("repo2"), ID: github.Ptr(int64(2))}},
+				{Repository: &github.Repository{Name: new("repo1"), ID: new(int64(1))}},
+				{Repository: &github.Repository{Name: new("repo2"), ID: new(int64(2))}},
 			}
 			desired := map[string]int64{
 				"repo1": 1,
@@ -1296,9 +1296,9 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 		It("should return all repositories", func() {
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
-					{ID: github.Ptr(int64(2)), Name: github.Ptr("repo2"), Visibility: github.Ptr("private")},
-					{ID: github.Ptr(int64(3)), Name: github.Ptr("repo3"), Visibility: github.Ptr("internal")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
+					{ID: new(int64(2)), Name: new("repo2"), Visibility: new("private")},
+					{ID: new(int64(3)), Name: new("repo3"), Visibility: new("internal")},
 				}, nil
 			}
 
@@ -1315,9 +1315,9 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 		It("should return only public repositories", func() {
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
-					{ID: github.Ptr(int64(2)), Name: github.Ptr("repo2"), Visibility: github.Ptr("private")},
-					{ID: github.Ptr(int64(3)), Name: github.Ptr("repo3"), Visibility: github.Ptr("internal")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
+					{ID: new(int64(2)), Name: new("repo2"), Visibility: new("private")},
+					{ID: new(int64(3)), Name: new("repo3"), Visibility: new("internal")},
 				}, nil
 			}
 
@@ -1332,9 +1332,9 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 		It("should return only private and internal repositories", func() {
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
-					{ID: github.Ptr(int64(2)), Name: github.Ptr("repo2"), Visibility: github.Ptr("private")},
-					{ID: github.Ptr(int64(3)), Name: github.Ptr("repo3"), Visibility: github.Ptr("internal")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
+					{ID: new(int64(2)), Name: new("repo2"), Visibility: new("private")},
+					{ID: new(int64(3)), Name: new("repo3"), Visibility: new("internal")},
 				}, nil
 			}
 
@@ -1392,9 +1392,9 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 		It("should skip that repository", func() {
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
-					{ID: nil, Name: github.Ptr("repo2"), Visibility: github.Ptr("private")},
-					{ID: github.Ptr(int64(3)), Name: nil, Visibility: github.Ptr("internal")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
+					{ID: nil, Name: new("repo2"), Visibility: new("private")},
+					{ID: new(int64(3)), Name: nil, Visibility: new("internal")},
 				}, nil
 			}
 
@@ -1458,19 +1458,19 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
 					{
-						Repository: &github.Repository{Name: github.Ptr("repo1"), ID: github.Ptr(int64(1))},
-						Status:     github.Ptr("attached"),
+						Repository: &github.Repository{Name: new("repo1"), ID: new(int64(1))},
+						Status:     new("attached"),
 					},
 					{
-						Repository: &github.Repository{Name: github.Ptr("repo2"), ID: github.Ptr(int64(2))},
-						Status:     github.Ptr("attached"),
+						Repository: &github.Repository{Name: new("repo2"), ID: new(int64(2))},
+						Status:     new("attached"),
 					},
 				}, nil
 			}
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
-					{ID: github.Ptr(int64(2)), Name: github.Ptr("repo2"), Visibility: github.Ptr("private")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
+					{ID: new(int64(2)), Name: new("repo2"), Visibility: new("private")},
 				}, nil
 			}
 
@@ -1491,15 +1491,15 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
 					{
-						Repository: &github.Repository{Name: github.Ptr("repo1"), ID: github.Ptr(int64(1))},
-						Status:     github.Ptr("attached"),
+						Repository: &github.Repository{Name: new("repo1"), ID: new(int64(1))},
+						Status:     new("attached"),
 					},
 				}, nil
 			}
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
-					{ID: github.Ptr(int64(2)), Name: github.Ptr("repo2"), Visibility: github.Ptr("private")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
+					{ID: new(int64(2)), Name: new("repo2"), Visibility: new("private")},
 				}, nil
 			}
 
@@ -1522,8 +1522,8 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 			}
 			mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
 				return []*github.Repository{
-					{ID: github.Ptr(int64(1)), Name: github.Ptr("repo1"), Visibility: github.Ptr("public")},
-					{ID: github.Ptr(int64(2)), Name: github.Ptr("repo2"), Visibility: github.Ptr("private")},
+					{ID: new(int64(1)), Name: new("repo1"), Visibility: new("public")},
+					{ID: new(int64(2)), Name: new("repo2"), Visibility: new("private")},
 				}, nil
 			}
 
@@ -1553,7 +1553,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 					},
 				},
 				Status: v1alpha1.RepositoryStatus{
-					ID: github.Ptr(int64(12345)),
+					ID: new(int64(12345)),
 				},
 			}
 
@@ -1636,8 +1636,8 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return attachments", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("attached")},
-					{Repository: &github.Repository{Name: github.Ptr("repo2")}, Status: github.Ptr("attached")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("attached")},
+					{Repository: &github.Repository{Name: new("repo2")}, Status: new("attached")},
 				}, nil
 			}
 
@@ -1651,7 +1651,7 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return attachments", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("enforced")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("enforced")},
 				}, nil
 			}
 
@@ -1665,7 +1665,7 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return attachments", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("removed_by_enterprise")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("removed_by_enterprise")},
 				}, nil
 			}
 
@@ -1679,8 +1679,8 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return nil without error", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("attached")},
-					{Repository: &github.Repository{Name: github.Ptr("repo2")}, Status: github.Ptr("attaching")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("attached")},
+					{Repository: &github.Repository{Name: new("repo2")}, Status: new("attaching")},
 				}, nil
 			}
 
@@ -1694,7 +1694,7 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return nil without error", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("updating")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("updating")},
 				}, nil
 			}
 
@@ -1708,7 +1708,7 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return nil without error", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("failed")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("failed")},
 				}, nil
 			}
 
@@ -1722,7 +1722,7 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return error", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("failed")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("failed")},
 				}, nil
 			}
 
@@ -1738,7 +1738,7 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return nil without error", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("detached")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("detached")},
 				}, nil
 			}
 
@@ -1752,7 +1752,7 @@ var _ = Describe("GetAttachmentsIfAllAttached", func() {
 		It("should return nil without error", func() {
 			mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
 				return []*github.RepositoryAttachment{
-					{Repository: &github.Repository{Name: github.Ptr("repo1")}, Status: github.Ptr("removed")},
+					{Repository: &github.Repository{Name: new("repo1")}, Status: new("removed")},
 				}, nil
 			}
 
@@ -1782,11 +1782,11 @@ var _ = Describe("ByName", func() {
 			configs := []*github.CodeSecurityConfiguration{
 				{
 					Name:       "org-config",
-					TargetType: github.Ptr(targetTypeOrganization),
+					TargetType: new(targetTypeOrganization),
 				},
 				{
 					Name:       "enterprise-config",
-					TargetType: github.Ptr("enterprise"),
+					TargetType: new("enterprise"),
 				},
 			}
 
@@ -1806,15 +1806,15 @@ var _ = Describe("ByName", func() {
 			configs := []*github.CodeSecurityConfiguration{
 				{
 					Name:       "org-config-1",
-					TargetType: github.Ptr(targetTypeOrganization),
+					TargetType: new(targetTypeOrganization),
 				},
 				{
 					Name:       "enterprise-config",
-					TargetType: github.Ptr("enterprise"),
+					TargetType: new("enterprise"),
 				},
 				{
 					Name:       "org-config-excluded",
-					TargetType: github.Ptr(targetTypeOrganization),
+					TargetType: new(targetTypeOrganization),
 				},
 			}
 
@@ -1853,15 +1853,15 @@ var _ = Describe("ByName", func() {
 			configs := []*github.CodeSecurityConfiguration{
 				{
 					Name:       "org-config-1",
-					TargetType: github.Ptr(targetTypeOrganization),
+					TargetType: new(targetTypeOrganization),
 				},
 				{
 					Name:       "enterprise-config",
-					TargetType: github.Ptr("enterprise"),
+					TargetType: new("enterprise"),
 				},
 				{
 					Name:       "org-config-excluded",
-					TargetType: github.Ptr(targetTypeOrganization),
+					TargetType: new(targetTypeOrganization),
 				},
 			}
 

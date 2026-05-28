@@ -26,50 +26,50 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					BypassActors: []githubv1alpha1.RulesetBypassActor{
 						{
-							ActorID:    github.Ptr(int64(123)),
+							ActorID:    new(int64(123)),
 							ActorType:  "Team",
 							BypassMode: "always",
 						},
 					},
 					Rules: githubv1alpha1.RulesetRules{
-						Creation:              github.Ptr(true),
-						Update:                github.Ptr(false),
-						Deletion:              github.Ptr(true),
-						RequiredLinearHistory: github.Ptr(true),
-						RequiredSignatures:    github.Ptr(false),
-						NonFastForward:        github.Ptr(true),
+						Creation:              new(true),
+						Update:                new(false),
+						Deletion:              new(true),
+						RequiredLinearHistory: new(true),
+						RequiredSignatures:    new(false),
+						NonFastForward:        new(true),
 						PullRequest: &githubv1alpha1.PullRequestRule{
-							DismissStaleReviewsOnPush:      github.Ptr(true),
-							RequireCodeOwnerReviews:        github.Ptr(true),
-							RequireLastPushApproval:        github.Ptr(false),
+							DismissStaleReviewsOnPush:      new(true),
+							RequireCodeOwnerReviews:        new(true),
+							RequireLastPushApproval:        new(false),
 							RequiredApprovingReviewCount:   2,
-							RequiredReviewThreadResolution: github.Ptr(true),
+							RequiredReviewThreadResolution: new(true),
 						},
 						RequiredStatusChecks: &githubv1alpha1.RequiredStatusChecks{
 							Checks: []githubv1alpha1.StatusCheck{
 								{
 									Context:       "ci/build",
-									IntegrationID: github.Ptr(int64(456)),
+									IntegrationID: new(int64(456)),
 								},
 								{
 									Context: "ci/test",
 								},
 							},
-							StrictPolicy: github.Ptr(true),
+							StrictPolicy: new(true),
 						},
 						CopilotReview: &githubv1alpha1.CopilotCodeReviewRule{
-							ReviewOnPush:            github.Ptr(true),
-							ReviewDraftPullRequests: github.Ptr(false),
+							ReviewOnPush:            new(true),
+							ReviewDraftPullRequests: new(false),
 						},
 						CommitMessagePattern: &githubv1alpha1.PatternRule{
 							Pattern:  "^(feat|fix|docs):",
 							Operator: "regex",
-							Negate:   github.Ptr(false),
+							Negate:   new(false),
 						},
 						BranchNamePattern: &githubv1alpha1.PatternRule{
 							Pattern:  "hotfix/",
 							Operator: "starts_with",
-							Negate:   github.Ptr(true),
+							Negate:   new(true),
 						},
 					},
 				},
@@ -129,7 +129,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			Expect(githubRuleset.Rules.CommitMessagePattern.Pattern).To(Equal("^(feat|fix|docs):"))
 
 			Expect(hasRule(githubRuleset.Rules, "branch_name_pattern")).To(BeTrue())
-			Expect(githubRuleset.Rules.BranchNamePattern.Negate).To(Equal(github.Ptr(true)))
+			Expect(githubRuleset.Rules.BranchNamePattern.Negate).To(Equal(new(true)))
 		})
 
 		It("should convert CopilotCodeReview rule", func() {
@@ -144,8 +144,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					Rules: githubv1alpha1.RulesetRules{
 						CopilotReview: &githubv1alpha1.CopilotCodeReviewRule{
-							ReviewOnPush:            github.Ptr(true),
-							ReviewDraftPullRequests: github.Ptr(false),
+							ReviewOnPush:            new(true),
+							ReviewDraftPullRequests: new(false),
 						},
 					},
 				},
@@ -172,8 +172,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					Rules: githubv1alpha1.RulesetRules{
 						CopilotReview: &githubv1alpha1.CopilotCodeReviewRule{
-							ReviewOnPush:            github.Ptr(true),
-							ReviewDraftPullRequests: github.Ptr(true),
+							ReviewOnPush:            new(true),
+							ReviewDraftPullRequests: new(true),
 						},
 					},
 				},
@@ -198,7 +198,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 					Rules: githubv1alpha1.RulesetRules{
-						RequiredLinearHistory: github.Ptr(true),
+						RequiredLinearHistory: new(true),
 					},
 				},
 			}
@@ -220,7 +220,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 					Rules: githubv1alpha1.RulesetRules{
-						RequiredLinearHistory: github.Ptr(true),
+						RequiredLinearHistory: new(true),
 					},
 				},
 			}
@@ -268,11 +268,11 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							RepositoryName: &githubv1alpha1.RepositoryNameCondition{
 								Include:   []string{"backend-*", "frontend-*"},
 								Exclude:   []string{"legacy-*"},
-								Protected: github.Ptr(true),
+								Protected: new(true),
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				}
@@ -285,7 +285,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				Expect(githubRuleset.Conditions.RepositoryName).NotTo(BeNil())
 				Expect(githubRuleset.Conditions.RepositoryName.Include).To(Equal([]string{"backend-*", "frontend-*"}))
 				Expect(githubRuleset.Conditions.RepositoryName.Exclude).To(Equal([]string{"legacy-*"}))
-				Expect(githubRuleset.Conditions.RepositoryName.Protected).To(Equal(github.Ptr(true)))
+				Expect(githubRuleset.Conditions.RepositoryName.Protected).To(Equal(new(true)))
 				Expect(githubRuleset.Conditions.RepositoryProperty).To(BeNil())
 			})
 
@@ -301,7 +301,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 							RepositoryProperty: &githubv1alpha1.RepositoryPropertyCondition{
 								Include: []githubv1alpha1.RepositoryPropertyTarget{
-									{Name: "environment", PropertyValues: []string{"production", "staging"}, Source: github.Ptr("custom")},
+									{Name: "environment", PropertyValues: []string{"production", "staging"}, Source: new("custom")},
 								},
 								Exclude: []githubv1alpha1.RepositoryPropertyTarget{
 									{Name: "archived", PropertyValues: []string{"true"}},
@@ -309,7 +309,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				}
@@ -323,7 +323,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				Expect(githubRuleset.Conditions.RepositoryProperty.Include).To(HaveLen(1))
 				Expect(githubRuleset.Conditions.RepositoryProperty.Include[0].Name).To(Equal("environment"))
 				Expect(githubRuleset.Conditions.RepositoryProperty.Include[0].PropertyValues).To(Equal([]string{"production", "staging"}))
-				Expect(githubRuleset.Conditions.RepositoryProperty.Include[0].Source).To(Equal(github.Ptr("custom")))
+				Expect(githubRuleset.Conditions.RepositoryProperty.Include[0].Source).To(Equal(new("custom")))
 				Expect(githubRuleset.Conditions.RepositoryProperty.Exclude).To(HaveLen(1))
 				Expect(githubRuleset.Conditions.RepositoryProperty.Exclude[0].Name).To(Equal("archived"))
 				Expect(githubRuleset.Conditions.RepositoryProperty.Exclude[0].PropertyValues).To(Equal([]string{"true"}))
@@ -341,7 +341,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				}
@@ -374,7 +374,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				}
@@ -401,7 +401,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				}
@@ -435,7 +435,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				}
@@ -465,7 +465,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				}
@@ -488,7 +488,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredSignatures: github.Ptr(true),
+							RequiredSignatures: new(true),
 						},
 					},
 				}
@@ -511,7 +511,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							Creation: github.Ptr(true),
+							Creation: new(true),
 						},
 					},
 				}
@@ -534,7 +534,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				}
@@ -558,13 +558,13 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							},
 						},
 						Rules: githubv1alpha1.RulesetRules{
-							Creation:           github.Ptr(true),
-							Deletion:           github.Ptr(true),
-							RequiredSignatures: github.Ptr(true),
+							Creation:           new(true),
+							Deletion:           new(true),
+							RequiredSignatures: new(true),
 							TagNamePattern: &githubv1alpha1.PatternRule{
 								Pattern:  "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
 								Operator: "regex",
-								Negate:   github.Ptr(false),
+								Negate:   new(false),
 							},
 						},
 					},
@@ -592,7 +592,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Target:      TargetTypeBranch, // Set default target type
 					BypassActors: []githubv1alpha1.RulesetBypassActor{
-						{ActorID: github.Ptr(int64(123)), ActorType: "Team"},
+						{ActorID: new(int64(123)), ActorType: "Team"},
 					},
 					Conditions: &githubv1alpha1.RulesetConditions{
 						RefName: &githubv1alpha1.RefNameCondition{
@@ -600,7 +600,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 					Rules: githubv1alpha1.RulesetRules{
-						Creation: github.Ptr(true),
+						Creation: new(true),
 						PullRequest: &githubv1alpha1.PullRequestRule{
 							RequiredApprovingReviewCount: 2,
 						},
@@ -623,7 +623,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				Enforcement: github.RulesetEnforcementActive,
 				Target:      github.Ptr(github.RulesetTargetBranch), // Set target type
 				BypassActors: []*github.BypassActor{
-					{ActorID: github.Ptr(int64(123)), ActorType: &actorType},
+					{ActorID: new(int64(123)), ActorType: &actorType},
 				},
 				Conditions: &github.RepositoryRulesetConditions{
 					RefName: &github.RepositoryRulesetRefConditionParameters{
@@ -709,8 +709,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should return false when CopilotCodeReview rules match", func() {
 			rulesetPreset.Spec.Rules.CopilotReview = &githubv1alpha1.CopilotCodeReviewRule{
-				ReviewOnPush:            github.Ptr(true),
-				ReviewDraftPullRequests: github.Ptr(false),
+				ReviewOnPush:            new(true),
+				ReviewDraftPullRequests: new(false),
 			}
 			githubRuleset.Rules.CopilotCodeReview = &github.CopilotCodeReviewRuleParameters{
 				ReviewOnPush:            true,
@@ -723,8 +723,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should return true when CopilotCodeReview ReviewOnPush differs", func() {
 			rulesetPreset.Spec.Rules.CopilotReview = &githubv1alpha1.CopilotCodeReviewRule{
-				ReviewOnPush:            github.Ptr(true),
-				ReviewDraftPullRequests: github.Ptr(false),
+				ReviewOnPush:            new(true),
+				ReviewDraftPullRequests: new(false),
 			}
 			githubRuleset.Rules.CopilotCodeReview = &github.CopilotCodeReviewRuleParameters{
 				ReviewOnPush:            false, // Different
@@ -737,8 +737,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should return true when CopilotCodeReview ReviewDraftPullRequests differs", func() {
 			rulesetPreset.Spec.Rules.CopilotReview = &githubv1alpha1.CopilotCodeReviewRule{
-				ReviewOnPush:            github.Ptr(true),
-				ReviewDraftPullRequests: github.Ptr(false),
+				ReviewOnPush:            new(true),
+				ReviewDraftPullRequests: new(false),
 			}
 			githubRuleset.Rules.CopilotCodeReview = &github.CopilotCodeReviewRuleParameters{
 				ReviewOnPush:            true,
@@ -751,8 +751,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should return true when CopilotCodeReview is present in preset but missing in GitHub", func() {
 			rulesetPreset.Spec.Rules.CopilotReview = &githubv1alpha1.CopilotCodeReviewRule{
-				ReviewOnPush:            github.Ptr(true),
-				ReviewDraftPullRequests: github.Ptr(false),
+				ReviewOnPush:            new(true),
+				ReviewDraftPullRequests: new(false),
 			}
 			githubRuleset.Rules.CopilotCodeReview = nil
 
@@ -1136,7 +1136,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					RepositoryProperty: &githubv1alpha1.RepositoryPropertyCondition{
 						Include: []githubv1alpha1.RepositoryPropertyTarget{
-							{Name: "environment", PropertyValues: []string{"production"}, Source: github.Ptr("custom")},
+							{Name: "environment", PropertyValues: []string{"production"}, Source: new("custom")},
 						},
 					},
 				}
@@ -1146,7 +1146,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					RepositoryProperty: &github.RepositoryRulesetRepositoryPropertyConditionParameters{
 						Include: []*github.RepositoryRulesetRepositoryPropertyTargetParameters{
-							{Name: "environment", PropertyValues: []string{"production"}, Source: github.Ptr("system")},
+							{Name: "environment", PropertyValues: []string{"production"}, Source: new("system")},
 						},
 					},
 				}
@@ -1162,7 +1162,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					RepositoryProperty: &githubv1alpha1.RepositoryPropertyCondition{
 						Include: []githubv1alpha1.RepositoryPropertyTarget{
-							{Name: "environment", PropertyValues: []string{"production"}, Source: github.Ptr("custom")},
+							{Name: "environment", PropertyValues: []string{"production"}, Source: new("custom")},
 						},
 					},
 				}
@@ -1172,7 +1172,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					RepositoryProperty: &github.RepositoryRulesetRepositoryPropertyConditionParameters{
 						Include: []*github.RepositoryRulesetRepositoryPropertyTargetParameters{
-							{Name: "environment", PropertyValues: []string{"production"}, Source: github.Ptr("custom")},
+							{Name: "environment", PropertyValues: []string{"production"}, Source: new("custom")},
 						},
 					},
 				}
@@ -1198,7 +1198,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					RepositoryProperty: &github.RepositoryRulesetRepositoryPropertyConditionParameters{
 						Include: []*github.RepositoryRulesetRepositoryPropertyTargetParameters{
-							{Name: "environment", PropertyValues: []string{"production"}, Source: github.Ptr("custom")},
+							{Name: "environment", PropertyValues: []string{"production"}, Source: new("custom")},
 						},
 					},
 				}
@@ -1224,7 +1224,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					RepositoryProperty: &github.RepositoryRulesetRepositoryPropertyConditionParameters{
 						Include: []*github.RepositoryRulesetRepositoryPropertyTargetParameters{
-							{Name: "environment", PropertyValues: []string{"production"}, Source: github.Ptr("system")},
+							{Name: "environment", PropertyValues: []string{"production"}, Source: new("system")},
 						},
 					},
 				}
@@ -1314,11 +1314,11 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				teamType := github.BypassActorTypeTeam
 				deployKeyType := github.BypassActorTypeDeployKey
 				rulesetPreset.Spec.BypassActors = []githubv1alpha1.RulesetBypassActor{
-					{ActorID: github.Ptr(int64(123)), ActorType: "Team", BypassMode: "always"},
+					{ActorID: new(int64(123)), ActorType: "Team", BypassMode: "always"},
 					{ActorType: "DeployKey", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: github.Ptr(int64(123)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorID: new(int64(123)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
 					{ActorType: &deployKeyType, BypassMode: github.Ptr(github.BypassMode("always"))},
 				}
 
@@ -1336,13 +1336,13 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: "DeployKey", BypassMode: "always"},
 					{ActorType: "OrganizationAdmin", BypassMode: "pull_request"},
 					{ActorType: "EnterpriseOwner", BypassMode: "always"},
-					{ActorID: github.Ptr(int64(456)), ActorType: "Team", BypassMode: "always"},
+					{ActorID: new(int64(456)), ActorType: "Team", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
 					{ActorType: &deployKeyType, BypassMode: github.Ptr(github.BypassMode("always"))},
 					{ActorType: &orgAdminType, BypassMode: github.Ptr(github.BypassMode("pull_request"))},
 					{ActorType: &enterpriseOwnerType, BypassMode: github.Ptr(github.BypassMode("always"))},
-					{ActorID: github.Ptr(int64(456)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorID: new(int64(456)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1366,10 +1366,10 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			It("should return true when actors with same type but different ActorIDs", func() {
 				teamType := github.BypassActorTypeTeam
 				rulesetPreset.Spec.BypassActors = []githubv1alpha1.RulesetBypassActor{
-					{ActorID: github.Ptr(int64(123)), ActorType: "Team", BypassMode: "always"},
+					{ActorID: new(int64(123)), ActorType: "Team", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: github.Ptr(int64(456)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorID: new(int64(456)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1379,10 +1379,10 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			It("should return false when Integration actors match with same ActorID", func() {
 				integrationType := github.BypassActorTypeIntegration
 				rulesetPreset.Spec.BypassActors = []githubv1alpha1.RulesetBypassActor{
-					{ActorID: github.Ptr(int64(789)), ActorType: "Integration", BypassMode: "always"},
+					{ActorID: new(int64(789)), ActorType: "Integration", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: github.Ptr(int64(789)), ActorType: &integrationType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorID: new(int64(789)), ActorType: &integrationType, BypassMode: github.Ptr(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1392,10 +1392,10 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			It("should return false when RepositoryRole actors match with same ActorID", func() {
 				roleType := github.BypassActorTypeRepositoryRole
 				rulesetPreset.Spec.BypassActors = []githubv1alpha1.RulesetBypassActor{
-					{ActorID: github.Ptr(int64(321)), ActorType: "RepositoryRole", BypassMode: "pull_request"},
+					{ActorID: new(int64(321)), ActorType: "RepositoryRole", BypassMode: "pull_request"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: github.Ptr(int64(321)), ActorType: &roleType, BypassMode: github.Ptr(github.BypassMode("pull_request"))},
+					{ActorID: new(int64(321)), ActorType: &roleType, BypassMode: github.Ptr(github.BypassMode("pull_request"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1405,10 +1405,10 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			It("should handle empty bypass mode correctly", func() {
 				teamType := github.BypassActorTypeTeam
 				rulesetPreset.Spec.BypassActors = []githubv1alpha1.RulesetBypassActor{
-					{ActorID: github.Ptr(int64(123)), ActorType: "Team", BypassMode: ""},
+					{ActorID: new(int64(123)), ActorType: "Team", BypassMode: ""},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: github.Ptr(int64(123)), ActorType: &teamType, BypassMode: nil},
+					{ActorID: new(int64(123)), ActorType: &teamType, BypassMode: nil},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1418,10 +1418,10 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			It("should return true when bypass mode differs between empty and set", func() {
 				teamType := github.BypassActorTypeTeam
 				rulesetPreset.Spec.BypassActors = []githubv1alpha1.RulesetBypassActor{
-					{ActorID: github.Ptr(int64(123)), ActorType: "Team", BypassMode: "always"},
+					{ActorID: new(int64(123)), ActorType: "Team", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: github.Ptr(int64(123)), ActorType: &teamType, BypassMode: nil},
+					{ActorID: new(int64(123)), ActorType: &teamType, BypassMode: nil},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1545,7 +1545,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						Rules: githubv1alpha1.RulesetRules{
 							Workflows: &githubv1alpha1.WorkflowsRule{
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: github.Ptr(int64(42))},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: new(int64(42))},
 								},
 							},
 						},
@@ -1577,7 +1577,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						Rules: githubv1alpha1.RulesetRules{
 							Workflows: &githubv1alpha1.WorkflowsRule{
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: github.Ptr(int64(42)), Ref: github.Ptr("refs/heads/main")},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: new(int64(42)), Ref: new("refs/heads/main")},
 								},
 							},
 						},
@@ -1593,7 +1593,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					Rules: &github.RepositoryRulesetRules{
 						Workflows: &github.WorkflowsRuleParameters{
 							Workflows: []*github.RuleWorkflow{
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(42)), Ref: github.Ptr("refs/heads/main")},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(42)), Ref: new("refs/heads/main")},
 							},
 						},
 					},
@@ -1615,7 +1615,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						Rules: githubv1alpha1.RulesetRules{
 							Workflows: &githubv1alpha1.WorkflowsRule{
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: github.Ptr(int64(42))},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: new(int64(42))},
 								},
 							},
 						},
@@ -1631,7 +1631,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					Rules: &github.RepositoryRulesetRules{
 						Workflows: &github.WorkflowsRuleParameters{
 							Workflows: []*github.RuleWorkflow{
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(99))},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(99))},
 							},
 						},
 					},
@@ -1653,7 +1653,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						Rules: githubv1alpha1.RulesetRules{
 							Workflows: &githubv1alpha1.WorkflowsRule{
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: github.Ptr(int64(42)), Ref: github.Ptr("refs/heads/main")},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: new(int64(42)), Ref: new("refs/heads/main")},
 								},
 							},
 						},
@@ -1669,7 +1669,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					Rules: &github.RepositoryRulesetRules{
 						Workflows: &github.WorkflowsRuleParameters{
 							Workflows: []*github.RuleWorkflow{
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(42)), Ref: github.Ptr("refs/heads/develop")},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(42)), Ref: new("refs/heads/develop")},
 							},
 						},
 					},
@@ -1690,9 +1690,9 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 						Rules: githubv1alpha1.RulesetRules{
 							Workflows: &githubv1alpha1.WorkflowsRule{
-								DoNotEnforceOnCreate: github.Ptr(true),
+								DoNotEnforceOnCreate: new(true),
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: github.Ptr(int64(42))},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: new(int64(42))},
 								},
 							},
 						},
@@ -1707,9 +1707,9 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					Rules: &github.RepositoryRulesetRules{
 						Workflows: &github.WorkflowsRuleParameters{
-							DoNotEnforceOnCreate: github.Ptr(false),
+							DoNotEnforceOnCreate: new(false),
 							Workflows: []*github.RuleWorkflow{
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(42))},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(42))},
 							},
 						},
 					},
@@ -1730,9 +1730,9 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 						Rules: githubv1alpha1.RulesetRules{
 							Workflows: &githubv1alpha1.WorkflowsRule{
-								DoNotEnforceOnCreate: github.Ptr(true),
+								DoNotEnforceOnCreate: new(true),
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: github.Ptr(int64(42))},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: new(int64(42))},
 								},
 							},
 						},
@@ -1747,9 +1747,9 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					Rules: &github.RepositoryRulesetRules{
 						Workflows: &github.WorkflowsRuleParameters{
-							DoNotEnforceOnCreate: github.Ptr(true),
+							DoNotEnforceOnCreate: new(true),
 							Workflows: []*github.RuleWorkflow{
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(42))},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(42))},
 							},
 						},
 					},
@@ -1772,7 +1772,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 							Workflows: &githubv1alpha1.WorkflowsRule{
 								DoNotEnforceOnCreate: nil,
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: github.Ptr(int64(42))},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "my-repo", ResolvedRepositoryID: new(int64(42))},
 								},
 							},
 						},
@@ -1787,9 +1787,9 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					Rules: &github.RepositoryRulesetRules{
 						Workflows: &github.WorkflowsRuleParameters{
-							DoNotEnforceOnCreate: github.Ptr(false),
+							DoNotEnforceOnCreate: new(false),
 							Workflows: []*github.RuleWorkflow{
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(42))},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(42))},
 							},
 						},
 					},
@@ -1811,7 +1811,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						Rules: githubv1alpha1.RulesetRules{
 							Workflows: &githubv1alpha1.WorkflowsRule{
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "repo-a", ResolvedRepositoryID: github.Ptr(int64(42))},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "repo-a", ResolvedRepositoryID: new(int64(42))},
 								},
 							},
 						},
@@ -1827,7 +1827,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					Rules: &github.RepositoryRulesetRules{
 						Workflows: &github.WorkflowsRuleParameters{
 							Workflows: []*github.RuleWorkflow{
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(99))},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(99))},
 							},
 						},
 					},
@@ -1849,8 +1849,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						Rules: githubv1alpha1.RulesetRules{
 							Workflows: &githubv1alpha1.WorkflowsRule{
 								Workflows: []githubv1alpha1.RuleWorkflow{
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "repo-a", ResolvedRepositoryID: github.Ptr(int64(42))},
-									{Path: ".github/workflows/ci.yaml", RepositoryName: "repo-b", ResolvedRepositoryID: github.Ptr(int64(99))},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "repo-a", ResolvedRepositoryID: new(int64(42))},
+									{Path: ".github/workflows/ci.yaml", RepositoryName: "repo-b", ResolvedRepositoryID: new(int64(99))},
 								},
 							},
 						},
@@ -1866,8 +1866,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					Rules: &github.RepositoryRulesetRules{
 						Workflows: &github.WorkflowsRuleParameters{
 							Workflows: []*github.RuleWorkflow{
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(42))},
-								{Path: ".github/workflows/ci.yaml", RepositoryID: github.Ptr(int64(99))},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(42))},
+								{Path: ".github/workflows/ci.yaml", RepositoryID: new(int64(99))},
 							},
 						},
 					},
@@ -1891,13 +1891,13 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					Rules: githubv1alpha1.RulesetRules{
 						Workflows: &githubv1alpha1.WorkflowsRule{
-							DoNotEnforceOnCreate: github.Ptr(true),
+							DoNotEnforceOnCreate: new(true),
 							Workflows: []githubv1alpha1.RuleWorkflow{
 								{
 									Path:                 ".github/workflows/ci.yaml",
 									RepositoryName:       "my-repo",
-									ResolvedRepositoryID: github.Ptr(int64(42)),
-									Ref:                  github.Ptr("refs/heads/main"),
+									ResolvedRepositoryID: new(int64(42)),
+									Ref:                  new("refs/heads/main"),
 								},
 							},
 						},
@@ -1908,11 +1908,11 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			ruleset, err := RulesetPresetToGithubRuleset(preset)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ruleset.Rules.Workflows).NotTo(BeNil())
-			Expect(ruleset.Rules.Workflows.DoNotEnforceOnCreate).To(Equal(github.Ptr(true)))
+			Expect(ruleset.Rules.Workflows.DoNotEnforceOnCreate).To(Equal(new(true)))
 			Expect(ruleset.Rules.Workflows.Workflows).To(HaveLen(1))
 			Expect(ruleset.Rules.Workflows.Workflows[0].Path).To(Equal(".github/workflows/ci.yaml"))
-			Expect(ruleset.Rules.Workflows.Workflows[0].RepositoryID).To(Equal(github.Ptr(int64(42))))
-			Expect(ruleset.Rules.Workflows.Workflows[0].Ref).To(Equal(github.Ptr("refs/heads/main")))
+			Expect(ruleset.Rules.Workflows.Workflows[0].RepositoryID).To(Equal(new(int64(42))))
+			Expect(ruleset.Rules.Workflows.Workflows[0].Ref).To(Equal(new("refs/heads/main")))
 		})
 	})
 

@@ -22,7 +22,7 @@ func (o *GitHubOrgReconciler) reconcileCustomProperties(ctx context.Context) err
 	hasNewOrUpdatedProps := false
 	for _, desired := range desiredOrgCustomProps {
 		if desired.Required == nil {
-			desired.Required = github.Ptr(false)
+			desired.Required = new(false)
 		}
 		desiredGhRep := mapper.ToGitHubCustomProperty(desired)
 		// always add to apply list, we will only apply if update is needed
