@@ -38,8 +38,8 @@ func (t *GitHubTeamReconciler) FinalizerName() string {
 	return "team.github.interhyp.de/finalizer"
 }
 
-func (t *GitHubTeamReconciler) RequiredReconciliations() []reconciler.ParallelReconciliationGroup {
-	return []reconciler.ParallelReconciliationGroup{
+func (t *GitHubTeamReconciler) RequiredReconciliations(ctx context.Context) []reconciler.ParallelReconciliationGroup {
+	reconcilers := []reconciler.ParallelReconciliationGroup{
 		{
 			{ // must run in first group because it creates the team in the referenced orgs if it doesn't exist there
 				Function:  t.reconcileTeam,
@@ -59,12 +59,25 @@ func (t *GitHubTeamReconciler) RequiredReconciliations() []reconciler.ParallelRe
 				Function:  t.reconcileTeamRoleAssignments,
 				Condition: conditions.TypeTeamRoleAssignmentsSynced,
 			},
-			{
-				Function:  t.reconcileIDPGroup,
-				Condition: conditions.TypeIDPTeamGroupSettingsSynced,
-			},
 		},
 	}
+
+	var orgPlan string
+	if len(t.Kubernetes.Resource.Spec.OrganizationRefs) > 0 {
+		orgRef := t.Kubernetes.Resource.Spec.OrganizationRefs[0].Name
+		orgPlan = reconciler.GetOrgPlanByRef(ctx, t.Kubernetes.Client, t.Kubernetes.Resource.Namespace, orgRef)
+
+	}
+
+	if orgPlan == "enterprise" {
+		// these reconcilers reconcile features that are only available in the enterprise plan
+		reconcilers[1] = append(reconcilers[1], reconciler.Reconciliation{
+			Function:  t.reconcileIDPGroup,
+			Condition: conditions.TypeIDPTeamGroupSettingsSynced,
+		})
+	}
+
+	return reconcilers
 }
 
 func (t *GitHubTeamReconciler) ReconcileDeletion(ctx context.Context) error {

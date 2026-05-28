@@ -57,7 +57,7 @@ func (r *GitHubRepoReconciler) FinalizerName() string {
 	return "repository.github.interhyp.de/finalizer"
 }
 
-func (r *GitHubRepoReconciler) RequiredReconciliations() []reconciler.ParallelReconciliationGroup {
+func (r *GitHubRepoReconciler) RequiredReconciliations(_ context.Context) []reconciler.ParallelReconciliationGroup {
 	return []reconciler.ParallelReconciliationGroup{
 		{
 			{ // must run in own group before all others because it creates the repo if it doesn't exist

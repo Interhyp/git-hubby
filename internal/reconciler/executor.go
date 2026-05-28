@@ -132,7 +132,7 @@ func (x *ReconciliationExecutor[T]) runReconciliations(ctx context.Context) ([]r
 	var results []reconciliationResult
 	var allErrors []error
 
-	for groupIdx, group := range x.Reconciler.RequiredReconciliations() {
+	for groupIdx, group := range x.Reconciler.RequiredReconciliations(ctx) {
 		log.V(1).Info(fmt.Sprintf("Executing reconciliation group %d with %d reconciliations", groupIdx, len(group)))
 
 		groupResults := x.runReconciliationGroup(ctx, group)

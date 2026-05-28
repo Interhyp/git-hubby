@@ -81,12 +81,40 @@ func validateOrganization(organization *githubv1alpha1.Organization) error {
 	customPropertiesField := field.NewPath("spec").Child("customProperties")
 	allErrs = validateCustomProperties(organization.Spec.CustomProperties, customPropertiesField)
 
+	allErrs = append(allErrs, validatePlanFeatureCombinations(organization)...)
+
 	if len(allErrs) == 0 {
 		return nil
 	}
 	return errors.NewInvalid(
 		organization.GroupVersionKind().GroupKind(),
 		organization.Name, allErrs)
+}
+
+func validatePlanFeatureCombinations(organization *githubv1alpha1.Organization) field.ErrorList {
+	plan := organization.Spec.Plan
+	if plan == "" || plan == "enterprise" {
+		return nil
+	}
+
+	var errs field.ErrorList
+	specPath := field.NewPath("spec")
+
+	if len(organization.Spec.RulesetPresetList) > 0 {
+		errs = append(errs, field.Forbidden(
+			specPath.Child("rulesetPresets"),
+			fmt.Sprintf("organization rulesets require the 'enterprise' plan, but plan is '%s'", plan),
+		))
+	}
+
+	if len(organization.Spec.CodeSecurityConfigurations) > 0 {
+		errs = append(errs, field.Forbidden(
+			specPath.Child("codeSecurityConfigurations"),
+			fmt.Sprintf("code security configurations require the 'enterprise' plan, but plan is '%s'", plan),
+		))
+	}
+
+	return errs
 }
 
 func validateCustomProperties(customProperties []githubv1alpha1.OrgCustomProperty, customPropertiesField *field.Path) field.ErrorList {
