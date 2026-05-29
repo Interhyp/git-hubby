@@ -1,8 +1,11 @@
 package ghclient
 
 import (
+	"context"
+	"net/http"
 	"testing"
 
+	"github.com/PuerkitoBio/rehttp"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -216,6 +219,65 @@ invalid-base64-data-that-cannot-be-parsed-as-rsa-key
 			_, err := parseGithubPrivateKey(pemData)
 			Expect(err).To(HaveOccurred())
 		})
+	})
+})
+
+var _ = Describe("retryByContextCodes", func() {
+	It("should retry when context has matching status code", func() {
+		ctx := WithRetryableStatusCodes(context.Background(), http.StatusConflict)
+		req, _ := http.NewRequestWithContext(ctx, "PATCH", "https://api.github.com/orgs/my-org/code-security/configurations/123", nil)
+		att := rehttp.Attempt{
+			Request:  req,
+			Response: &http.Response{StatusCode: http.StatusConflict},
+		}
+		Expect(retryByContextCodes(att)).To(BeTrue())
+	})
+
+	It("should NOT retry when context has no retryable codes", func() {
+		req, _ := http.NewRequestWithContext(context.Background(), "PATCH", "https://api.github.com/orgs/my-org/code-security/configurations/123", nil)
+		att := rehttp.Attempt{
+			Request:  req,
+			Response: &http.Response{StatusCode: http.StatusConflict},
+		}
+		Expect(retryByContextCodes(att)).To(BeFalse())
+	})
+
+	It("should NOT retry when response code does not match context codes", func() {
+		ctx := WithRetryableStatusCodes(context.Background(), http.StatusConflict)
+		req, _ := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/repos/my-org/my-repo", nil)
+		att := rehttp.Attempt{
+			Request:  req,
+			Response: &http.Response{StatusCode: http.StatusNotFound},
+		}
+		Expect(retryByContextCodes(att)).To(BeFalse())
+	})
+
+	It("should NOT retry when response is nil", func() {
+		ctx := WithRetryableStatusCodes(context.Background(), http.StatusConflict)
+		req, _ := http.NewRequestWithContext(ctx, "PATCH", "https://api.github.com/test", nil)
+		att := rehttp.Attempt{
+			Request:  req,
+			Response: nil,
+		}
+		Expect(retryByContextCodes(att)).To(BeFalse())
+	})
+
+	It("should NOT retry when request is nil", func() {
+		att := rehttp.Attempt{
+			Request:  nil,
+			Response: &http.Response{StatusCode: http.StatusConflict},
+		}
+		Expect(retryByContextCodes(att)).To(BeFalse())
+	})
+
+	It("should support multiple retryable codes", func() {
+		ctx := WithRetryableStatusCodes(context.Background(), http.StatusConflict, http.StatusTooManyRequests)
+		req, _ := http.NewRequestWithContext(ctx, "POST", "https://api.github.com/test", nil)
+		att := rehttp.Attempt{
+			Request:  req,
+			Response: &http.Response{StatusCode: http.StatusTooManyRequests},
+		}
+		Expect(retryByContextCodes(att)).To(BeTrue())
 	})
 })
 
