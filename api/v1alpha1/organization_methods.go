@@ -43,6 +43,13 @@ func (in *Organization) GetObservedSubResourceGenerations() map[string]int64 {
 	return in.Status.ObservedSubResourceGenerations
 }
 
+func (in *Organization) GetPlan() string {
+	if in == nil {
+		return ""
+	}
+	return in.Spec.Plan
+}
+
 func (in *Organization) SetObservedSubResourceGeneration(new map[string]int64) {
 	if in == nil {
 		return

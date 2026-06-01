@@ -83,7 +83,7 @@ type Reconciler[T ReconcilableResource] interface {
 	// GetAdditionalLabels returns additional, resource type specific labels to be added to the K8s resource during reconciliation
 	GetAdditionalLabels() labels.Set
 	// RequiredReconciliations returns the list of reconciliations to be performed for the resource
-	RequiredReconciliations(ctx context.Context) []ParallelReconciliationGroup
+	RequiredReconciliations() []ParallelReconciliationGroup
 	// FinalizerName of the finalizer which is managed by this reconciler
 	FinalizerName() string
 	// ReconcileDeletion performs all operations required before the K8s resource of type T can be deleted.

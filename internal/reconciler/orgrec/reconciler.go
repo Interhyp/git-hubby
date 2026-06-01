@@ -46,7 +46,7 @@ func (o *GitHubOrgReconciler) GetAdditionalLabels() labels.Set {
 	}
 }
 
-func (o *GitHubOrgReconciler) RequiredReconciliations(_ context.Context) []reconciler.ParallelReconciliationGroup {
+func (o *GitHubOrgReconciler) RequiredReconciliations() []reconciler.ParallelReconciliationGroup {
 	// org reconciliations are all independent and can run in parallel as no orgs are created - they need to exist beforehand
 	reconcilers := []reconciler.ParallelReconciliationGroup{
 		{
@@ -62,7 +62,7 @@ func (o *GitHubOrgReconciler) RequiredReconciliations(_ context.Context) []recon
 			{Function: o.reconcileCodeSecurityConfigurations, Condition: conditions.TypeCodeSecurityConfigurationsSynced},
 		},
 	}
-	if reconciler.GetOrgPlan(o.Kubernetes.Resource) == "enterprise" {
+	if o.Kubernetes.Resource.GetPlan() == "enterprise" || o.Kubernetes.Resource.GetPlan() == "" {
 		reconcilers = append(reconcilers, enterpriseReconcilers...)
 	}
 	return reconcilers

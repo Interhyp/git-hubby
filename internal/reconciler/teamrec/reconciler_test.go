@@ -517,15 +517,12 @@ var _ = Describe("ReconcileDeletion", func() {
 
 var _ = Describe("RequiredReconciliations", func() {
 	var (
-		ctx       context.Context
-		k8sClient client.Client
-		rec       *GitHubTeamReconciler
-		team      *v1alpha1.Team
-		scheme    *runtime.Scheme
+		rec    *GitHubTeamReconciler
+		team   *v1alpha1.Team
+		scheme *runtime.Scheme
 	)
 
 	BeforeEach(func() {
-		ctx = context.Background()
 		scheme = runtime.NewScheme()
 		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
 
@@ -544,111 +541,16 @@ var _ = Describe("RequiredReconciliations", func() {
 		}
 	})
 
-	Context("when referenced organization has enterprise plan", func() {
-		BeforeEach(func() {
-			org := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{Name: "my-org", Namespace: "default"},
-				Spec:       v1alpha1.OrganizationSpec{Name: "my-org", Plan: "enterprise", GitHubAppInstallationId: 1},
-			}
-			k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(org, team).Build()
-			rec = &GitHubTeamReconciler{
-				Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
-					Client:   k8sClient,
-					Resource: team,
-				},
-			}
-		})
-
-		It("should include IDP group reconciler", func() {
-			groups := rec.RequiredReconciliations(ctx)
-			Expect(groups).To(HaveLen(2))
-			// Second group should have 4 reconcilers (including IDP)
-			Expect(groups[1]).To(HaveLen(4))
-		})
-	})
-
-	Context("when referenced organization has team plan", func() {
-		BeforeEach(func() {
-			org := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{Name: "my-org", Namespace: "default"},
-				Spec:       v1alpha1.OrganizationSpec{Name: "my-org", Plan: "team", GitHubAppInstallationId: 1},
-			}
-			k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(org, team).Build()
-			rec = &GitHubTeamReconciler{
-				Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
-					Client:   k8sClient,
-					Resource: team,
-				},
-			}
-		})
-
-		It("should not include IDP group reconciler", func() {
-			groups := rec.RequiredReconciliations(ctx)
-			Expect(groups).To(HaveLen(2))
-			// Second group should have 3 reconcilers (no IDP)
-			Expect(groups[1]).To(HaveLen(3))
-		})
-	})
-
-	Context("when referenced organization has free plan", func() {
-		BeforeEach(func() {
-			org := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{Name: "my-org", Namespace: "default"},
-				Spec:       v1alpha1.OrganizationSpec{Name: "my-org", Plan: "free", GitHubAppInstallationId: 1},
-			}
-			k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(org, team).Build()
-			rec = &GitHubTeamReconciler{
-				Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
-					Client:   k8sClient,
-					Resource: team,
-				},
-			}
-		})
-
-		It("should not include IDP group reconciler", func() {
-			groups := rec.RequiredReconciliations(ctx)
-			Expect(groups).To(HaveLen(2))
-			Expect(groups[1]).To(HaveLen(3))
-		})
-	})
-
-	Context("when referenced organization is not found (defaults to enterprise)", func() {
-		BeforeEach(func() {
-			k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(team).Build()
-			rec = &GitHubTeamReconciler{
-				Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
-					Client:   k8sClient,
-					Resource: team,
-				},
-			}
-		})
-
-		It("should include IDP group reconciler (safe default)", func() {
-			groups := rec.RequiredReconciliations(ctx)
-			Expect(groups).To(HaveLen(2))
-			Expect(groups[1]).To(HaveLen(4))
-		})
-	})
-
-	Context("when organization has empty plan (defaults to enterprise)", func() {
-		BeforeEach(func() {
-			org := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{Name: "my-org", Namespace: "default"},
-				Spec:       v1alpha1.OrganizationSpec{Name: "my-org", Plan: "", GitHubAppInstallationId: 1},
-			}
-			k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(org, team).Build()
-			rec = &GitHubTeamReconciler{
-				Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
-					Client:   k8sClient,
-					Resource: team,
-				},
-			}
-		})
-
-		It("should include IDP group reconciler", func() {
-			groups := rec.RequiredReconciliations(ctx)
-			Expect(groups).To(HaveLen(2))
-			Expect(groups[1]).To(HaveLen(4))
-		})
+	It("should always return a static list with all reconcilers including IDP group", func() {
+		rec = &GitHubTeamReconciler{
+			Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
+				Client:   fake.NewClientBuilder().WithScheme(scheme).WithObjects(team).Build(),
+				Resource: team,
+			},
+		}
+		groups := rec.RequiredReconciliations()
+		Expect(groups).To(HaveLen(2))
+		// Second group should have 4 reconcilers (IDP plan check is inside reconcileIDPGroup)
+		Expect(groups[1]).To(HaveLen(4))
 	})
 })

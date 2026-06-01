@@ -41,7 +41,7 @@ func (m MockReconciler) GetAdditionalLogFields() []any {
 	return nil
 }
 
-func (m MockReconciler) RequiredReconciliations(_ context.Context) []ParallelReconciliationGroup {
+func (m MockReconciler) RequiredReconciliations() []ParallelReconciliationGroup {
 	if m.reconciliations != nil {
 		return m.reconciliations
 	}

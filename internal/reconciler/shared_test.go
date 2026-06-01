@@ -9,10 +9,6 @@ import (
 	"github.com/google/go-github/v86/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var _ = Describe("ResolveNamesToIDsInRuleset", func() {
@@ -956,94 +952,5 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mockClient.EnterpriseAppsCalls).To(HaveLen(1))
 		})
-	})
-})
-
-var _ = Describe("GetOrgPlan", func() {
-	It("should return 'enterprise' when org is nil", func() {
-		Expect(GetOrgPlan(nil)).To(Equal("enterprise"))
-	})
-
-	It("should return 'enterprise' when plan is empty", func() {
-		org := &v1alpha1.Organization{
-			Spec: v1alpha1.OrganizationSpec{Plan: ""},
-		}
-		Expect(GetOrgPlan(org)).To(Equal("enterprise"))
-	})
-
-	It("should return 'enterprise' when plan is 'enterprise'", func() {
-		org := &v1alpha1.Organization{
-			Spec: v1alpha1.OrganizationSpec{Plan: "enterprise"},
-		}
-		Expect(GetOrgPlan(org)).To(Equal("enterprise"))
-	})
-
-	It("should return 'team' when plan is 'team'", func() {
-		org := &v1alpha1.Organization{
-			Spec: v1alpha1.OrganizationSpec{Plan: "team"},
-		}
-		Expect(GetOrgPlan(org)).To(Equal("team"))
-	})
-
-	It("should return 'free' when plan is 'free'", func() {
-		org := &v1alpha1.Organization{
-			Spec: v1alpha1.OrganizationSpec{Plan: "free"},
-		}
-		Expect(GetOrgPlan(org)).To(Equal("free"))
-	})
-})
-
-var _ = Describe("GetOrgPlanByRef", func() {
-	var (
-		ctx       context.Context
-		k8sClient client.Client
-		scheme    *runtime.Scheme
-	)
-
-	BeforeEach(func() {
-		ctx = context.Background()
-		scheme = runtime.NewScheme()
-		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
-	})
-
-	It("should return 'enterprise' when organization CR is not found", func() {
-		k8sClient = fake.NewClientBuilder().WithScheme(scheme).Build()
-		Expect(GetOrgPlanByRef(ctx, k8sClient, "default", "non-existent")).To(Equal("enterprise"))
-	})
-
-	It("should return 'enterprise' when plan field is empty", func() {
-		org := &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-org", Namespace: "default"},
-			Spec:       v1alpha1.OrganizationSpec{Name: "my-org", Plan: ""},
-		}
-		k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(org).Build()
-		Expect(GetOrgPlanByRef(ctx, k8sClient, "default", "my-org")).To(Equal("enterprise"))
-	})
-
-	It("should return 'team' when org plan is 'team'", func() {
-		org := &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-org", Namespace: "default"},
-			Spec:       v1alpha1.OrganizationSpec{Name: "my-org", Plan: "team"},
-		}
-		k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(org).Build()
-		Expect(GetOrgPlanByRef(ctx, k8sClient, "default", "my-org")).To(Equal("team"))
-	})
-
-	It("should return 'free' when org plan is 'free'", func() {
-		org := &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-org", Namespace: "default"},
-			Spec:       v1alpha1.OrganizationSpec{Name: "my-org", Plan: "free"},
-		}
-		k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(org).Build()
-		Expect(GetOrgPlanByRef(ctx, k8sClient, "default", "my-org")).To(Equal("free"))
-	})
-
-	It("should return 'enterprise' when namespace does not match", func() {
-		org := &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-org", Namespace: "other"},
-			Spec:       v1alpha1.OrganizationSpec{Name: "my-org", Plan: "team"},
-		}
-		k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(org).Build()
-		Expect(GetOrgPlanByRef(ctx, k8sClient, "default", "my-org")).To(Equal("enterprise"))
 	})
 })

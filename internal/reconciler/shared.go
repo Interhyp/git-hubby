@@ -9,8 +9,6 @@ import (
 	"github.com/google/go-github/v86/github"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v2 "k8s.io/client-go/applyconfigurations/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func IsActionsDisabledForOrgSpec(org *v1alpha1.Organization) bool {
@@ -187,26 +185,4 @@ func ConditionsToApplyConfigs(conditions []v1.Condition) []*v2.ConditionApplyCon
 		result[i] = ConditionToApplyConfig(c)
 	}
 	return result
-}
-
-// GetOrgPlan returns the plan tier for a given Organization resource.
-// Returns "enterprise" if the plan field is empty, as this is the most permissive
-// default (won't skip features unexpectedly).
-func GetOrgPlan(org *v1alpha1.Organization) string {
-	if org == nil || org.Spec.Plan == "" {
-		return "enterprise"
-	}
-	return org.Spec.Plan
-}
-
-// GetOrgPlanByRef retrieves the plan tier for an Organization CR referenced by name.
-// Returns "enterprise" if the Organization CR is not found or on error,
-// as this is the most permissive default (won't skip features unexpectedly).
-func GetOrgPlanByRef(ctx context.Context, k8sClient client.Client, namespace string, orgRefName string) string {
-	var org v1alpha1.Organization
-	if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: orgRefName}, &org); err != nil {
-		log.FromContext(ctx).Error(err, "Failed to get Organization for plan lookup", "name", orgRefName)
-		return "enterprise"
-	}
-	return GetOrgPlan(&org)
 }

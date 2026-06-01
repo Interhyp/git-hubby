@@ -541,13 +541,11 @@ var _ = Describe("ReconcileDeletion", func() {
 
 var _ = Describe("RequiredReconciliations", func() {
 	var (
-		ctx context.Context
 		rec *GitHubOrgReconciler
 		org *v1alpha1.Organization
 	)
 
 	BeforeEach(func() {
-		ctx = context.Background()
 		org = &v1alpha1.Organization{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-org",
@@ -575,7 +573,7 @@ var _ = Describe("RequiredReconciliations", func() {
 		})
 
 		It("should include enterprise-only reconcilers", func() {
-			groups := rec.RequiredReconciliations(ctx)
+			groups := rec.RequiredReconciliations()
 			Expect(groups).To(HaveLen(2))
 			// First group: base reconcilers
 			Expect(groups[0]).To(HaveLen(3))
@@ -590,7 +588,7 @@ var _ = Describe("RequiredReconciliations", func() {
 		})
 
 		It("should include enterprise-only reconcilers", func() {
-			groups := rec.RequiredReconciliations(ctx)
+			groups := rec.RequiredReconciliations()
 			Expect(groups).To(HaveLen(2))
 			Expect(groups[0]).To(HaveLen(3))
 			Expect(groups[1]).To(HaveLen(2))
@@ -603,7 +601,7 @@ var _ = Describe("RequiredReconciliations", func() {
 		})
 
 		It("should not include enterprise-only reconcilers", func() {
-			groups := rec.RequiredReconciliations(ctx)
+			groups := rec.RequiredReconciliations()
 			Expect(groups).To(HaveLen(1))
 			Expect(groups[0]).To(HaveLen(3))
 		})
@@ -615,7 +613,7 @@ var _ = Describe("RequiredReconciliations", func() {
 		})
 
 		It("should not include enterprise-only reconcilers", func() {
-			groups := rec.RequiredReconciliations(ctx)
+			groups := rec.RequiredReconciliations()
 			Expect(groups).To(HaveLen(1))
 			Expect(groups[0]).To(HaveLen(3))
 		})
