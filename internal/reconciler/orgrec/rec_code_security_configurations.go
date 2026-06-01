@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/http"
 	"slices"
 	"time"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/google/go-github/v86/github"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,6 +20,10 @@ import (
 const targetTypeOrganization = "organization"
 
 func (o *GitHubOrgReconciler) reconcileCodeSecurityConfigurations(ctx context.Context) error {
+	// GitHub returns 409 on code-security configuration endpoints when an enablement
+	// event is in progress. This is transient and should be retried at the transport level.
+	ctx = ghclient.WithRetryableStatusCodes(ctx, http.StatusConflict)
+
 	log := logPkg.FromContext(ctx)
 	log.V(1).Info("Reconciling organization code security configurations on GitHub")
 
@@ -290,6 +296,8 @@ func (o *GitHubOrgReconciler) getAndWaitForFinishedAttachments(ctx context.Conte
 	timeout := time.After(timeoutAfter)
 	for {
 		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		case <-timeout:
 			return nil, fmt.Errorf("timeout waiting for code security configuration attachment to complete")
 		case <-ticker.C:
@@ -349,12 +357,15 @@ func (o *GitHubOrgReconciler) attachToRepos(ctx context.Context, attachmentScope
 	if err != nil {
 		var acceptedErr *github.AcceptedError
 		if errors.As(err, &acceptedErr) {
-			if _, err := o.getAndWaitForFinishedAttachments(ctx, cscGitHubID, 5*time.Second, 2*time.Minute); err != nil {
-				log.Error(err, fmt.Sprintf("Attaching for code security configuration to repositories with scope %s failed either because of an error or it did not finish in time", attachmentScope))
-				return err
+			// Attachment was accepted and is processing asynchronously - wait for it to finish
+			log.V(1).Info("Attachment accepted, waiting for completion", "scope", attachmentScope)
+			if _, waitErr := o.getAndWaitForFinishedAttachments(ctx, cscGitHubID, 5*time.Second, 2*time.Minute); waitErr != nil {
+				log.Error(waitErr, "Attaching code security configuration did not finish in time", "scope", attachmentScope)
+				return waitErr
 			}
+			return nil
 		}
-		log.Error(err, fmt.Sprintf("Failed to attach code security configuration to repositories with scope %s", attachmentScope))
+		log.Error(err, "Failed to attach code security configuration to repositories", "scope", attachmentScope)
 		return err
 	}
 	return nil
@@ -415,7 +426,7 @@ func (o *GitHubOrgReconciler) createCsc(ctx context.Context, conf *githubv1alpha
 	ghConf := mapper.ToGithubCodeSecurityConfiguration(conf)
 	result, err := o.GitHub.Client.CreateCodeSecurityConfigurationForOrg(ctx, o.GitHub.Resource, ghConf)
 	if err != nil {
-		log.Error(err, "Failed to update code security configuration on GitHub")
+		log.Error(err, "Failed to create code security configuration on GitHub")
 		return nil, err
 	}
 	if conf.Spec.DefaultForNewRepos != nil {
