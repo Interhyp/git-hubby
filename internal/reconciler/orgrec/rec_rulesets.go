@@ -15,6 +15,12 @@ import (
 func (o *GitHubOrgReconciler) reconcileRulesetPresets(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
 
+	// Rulesets are not supported on the free plan
+	if o.Kubernetes.Resource.GetPlan() == "free" {
+		log.V(1).Info("Skipping rulesets reconciliation for non-public repository on free plan")
+		return nil
+	}
+
 	existingRulesets, err := o.GitHub.Client.GetAllOrganizationRulesets(ctx, o.GitHub.Resource, false)
 	if err != nil {
 		log.Error(err, "failed to get existing organization rulesets")

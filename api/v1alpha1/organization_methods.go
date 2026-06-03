@@ -47,6 +47,9 @@ func (in *Organization) GetPlan() string {
 	if in == nil {
 		return ""
 	}
+	if in.Spec.Plan == "" {
+		return "enterprise"
+	}
 	return in.Spec.Plan
 }
 

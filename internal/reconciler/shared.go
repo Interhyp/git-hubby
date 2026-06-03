@@ -9,6 +9,8 @@ import (
 	"github.com/google/go-github/v86/github"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v2 "k8s.io/client-go/applyconfigurations/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func IsActionsDisabledForOrgSpec(org *v1alpha1.Organization) bool {
@@ -185,4 +187,18 @@ func ConditionsToApplyConfigs(conditions []v1.Condition) []*v2.ConditionApplyCon
 		result[i] = ConditionToApplyConfig(c)
 	}
 	return result
+}
+
+// GetOrgPlanByRef retrieves the plan of the organization referenced by the given name. If the organization cannot be retrieved, it returns "enterprise" as a default to allow features to be reconciled and avoid unintended skipping.
+func GetOrgPlanByRef(ctx context.Context, k8sClient client.Client, namespace string, orgRefName string) string {
+	var org v1alpha1.Organization
+	var defaultPlan = "enterprise"
+	if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: orgRefName}, &org); err != nil {
+		logPkg.FromContext(ctx).Error(err, "Failed to get Organization for plan lookup", "name", orgRefName)
+		return defaultPlan
+	}
+	if org.Spec.Plan == "" {
+		return defaultPlan
+	}
+	return org.Spec.Plan
 }

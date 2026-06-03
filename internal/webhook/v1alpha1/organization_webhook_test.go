@@ -892,15 +892,12 @@ var _ = Describe("Organization Webhook", func() {
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Should reject rulesetPresets on team plan", func() {
+		It("Should allow rulesetPresets on team plan", func() {
 			obj.Spec.Plan = "team"
 			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
-			_, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(HaveOccurred())
-			var statusErr *errors.StatusError
-			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
-			Expect(statusErr.Error()).To(ContainSubstring("rulesetPresets"))
-			Expect(statusErr.Error()).To(ContainSubstring("enterprise"))
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
 		})
 
 		It("Should reject rulesetPresets on free plan", func() {
@@ -949,8 +946,22 @@ var _ = Describe("Organization Webhook", func() {
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Should validate plan/feature combinations on update", func() {
+		It("Should allow rulesetPresets but reject codeSecurityConfigurations on team plan", func() {
 			obj.Spec.Plan = "team"
+			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
+			obj.Spec.CodeSecurityConfigurations = []githubv1alpha1.AttachableCodeSecurityConfigurationRef{
+				{Name: "my-config"},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).NotTo(ContainSubstring("rulesetPresets"))
+			Expect(statusErr.Error()).To(ContainSubstring("codeSecurityConfigurations"))
+		})
+
+		It("Should validate plan/feature combinations on update", func() {
+			obj.Spec.Plan = "free"
 			obj.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "my-ruleset"}}
 			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
 			Expect(err).To(HaveOccurred())

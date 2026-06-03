@@ -100,13 +100,15 @@ func validatePlanFeatureCombinations(organization *githubv1alpha1.Organization) 
 	var errs field.ErrorList
 	specPath := field.NewPath("spec")
 
-	if len(organization.Spec.RulesetPresetList) > 0 {
+	// Rulesets are available on 'team' and 'enterprise' plans
+	if plan != "team" && len(organization.Spec.RulesetPresetList) > 0 {
 		errs = append(errs, field.Forbidden(
 			specPath.Child("rulesetPresets"),
-			fmt.Sprintf("organization rulesets require the 'enterprise' plan, but plan is '%s'", plan),
+			fmt.Sprintf("organization rulesets require the 'enterprise' or 'team' plan, but plan is '%s'", plan),
 		))
 	}
 
+	// Code security configurations are only available on the 'enterprise' plan
 	if len(organization.Spec.CodeSecurityConfigurations) > 0 {
 		errs = append(errs, field.Forbidden(
 			specPath.Child("codeSecurityConfigurations"),

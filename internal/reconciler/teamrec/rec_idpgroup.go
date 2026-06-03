@@ -3,10 +3,8 @@ package teamrec
 import (
 	"context"
 
-	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/google/go-github/v86/github"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -19,7 +17,7 @@ func (t *GitHubTeamReconciler) reconcileIDPGroup(ctx context.Context) error {
 		return nil // nothing to do
 	}
 	for _, githubOrg := range t.Team.Organizations.Current {
-		orgPlan := getOrgPlanByRef(ctx, t.Kubernetes.Client, t.Kubernetes.Resource.Namespace, githubOrg.Resource)
+		orgPlan := reconciler.GetOrgPlanByRef(ctx, t.Kubernetes.Client, t.Kubernetes.Resource.Namespace, githubOrg.Resource)
 		if orgPlan != "enterprise" {
 			log.V(1).Info("Skipping IDP team group settings for organization because plan does not support it", "organization", githubOrg.Resource, "plan", orgPlan)
 			continue
@@ -67,17 +65,4 @@ func (t *GitHubTeamReconciler) reconcileIDPGroupForOrg(ctx context.Context, ghOr
 	}
 
 	return nil
-}
-
-func getOrgPlanByRef(ctx context.Context, k8sClient client.Client, namespace string, orgRefName string) string {
-	var org v1alpha1.Organization
-	var defaultPlan = "enterprise"
-	if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: orgRefName}, &org); err != nil {
-		logPkg.FromContext(ctx).Error(err, "Failed to get Organization for plan lookup", "name", orgRefName)
-		return defaultPlan
-	}
-	if org.Spec.Plan == "" {
-		return defaultPlan
-	}
-	return org.Spec.Plan
 }

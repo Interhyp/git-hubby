@@ -16,6 +16,13 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
 	log.V(1).Info("Reconciling repository rule sets on GitHub")
 
+	// Rulesets are not supported on non-public repositories in the free plan
+	orgPlan := reconciler.GetOrgPlanByRef(ctx, r.Kubernetes.Client, r.Kubernetes.Resource.Namespace, r.Kubernetes.Resource.Spec.OrganizationRef.Name)
+	if orgPlan == "free" && r.Kubernetes.Resource.Spec.Visibility != "public" {
+		log.V(1).Info("Skipping rulesets reconciliation for non-public repository on free plan")
+		return nil
+	}
+
 	existingRulesets, err := r.GitHub.Client.GetAllRepositoryRulesets(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, false)
 	if err != nil {
 		log.Error(err, "failed to get existing repository rulesets")
