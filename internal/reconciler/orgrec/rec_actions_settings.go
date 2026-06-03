@@ -211,6 +211,11 @@ func (o *GitHubOrgReconciler) reconcileAllowedActions(ctx context.Context) error
 		return nil
 	}
 
+	allowedActions := o.Kubernetes.Resource.Spec.ActionsSettings.AllowedActions
+	if allowedActions == nil || *allowedActions == "all" {
+		return nil
+	}
+
 	current, err := o.GitHub.Client.GetActionsAllowedForOrg(ctx, o.GitHub.Resource)
 	if err != nil {
 		return err
