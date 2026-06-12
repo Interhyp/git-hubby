@@ -27,7 +27,6 @@ import (
 	"github.com/google/go-github/v86/github"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -189,7 +188,7 @@ func (r *RepositoryCtl) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.AnnotationChangedPredicate{})).
 		WithOptions(controller.Options{
-			UsePriorityQueue:        ptr.To[bool](true),
+			UsePriorityQueue:        new(true),
 			MaxConcurrentReconciles: 20,
 			RateLimiter: workqueue.NewTypedMaxOfRateLimiter(
 				workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](

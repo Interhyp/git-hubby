@@ -18,8 +18,8 @@ func (m *MockGitHubClientWrapper) GetOrganization(ctx context.Context, org strin
 
 	// Default implementation
 	return &github.Organization{
-		Login: github.Ptr(org),
-		Name:  github.Ptr(org),
+		Login: new(org),
+		Name:  new(org),
 	}, nil
 }
 

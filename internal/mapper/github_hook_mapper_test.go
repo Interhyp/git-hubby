@@ -21,9 +21,9 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: contentTypeApplicationJSON,
-						SecretValue: github.Ptr("secret123"),
-						SSLVerify:   github.Ptr(true),
-						Active:      github.Ptr(true),
+						SecretValue: new("secret123"),
+						SSLVerify:   new(true),
+						Active:      new(true),
 						Events:      []string{"push", "pull_request"},
 					},
 				}
@@ -31,13 +31,13 @@ var _ = Describe("GitHub Hook Mapper", func() {
 				hook := WebhookPresetToGithubHook(preset)
 
 				Expect(hook).NotTo(BeNil())
-				Expect(hook.Name).To(Equal(github.Ptr("web")))
-				Expect(hook.Active).To(Equal(github.Ptr(true)))
+				Expect(hook.Name).To(Equal(new("web")))
+				Expect(hook.Active).To(Equal(new(true)))
 				Expect(hook.Config).NotTo(BeNil())
-				Expect(hook.Config.URL).To(Equal(github.Ptr("https://example.com/webhook")))
+				Expect(hook.Config.URL).To(Equal(new("https://example.com/webhook")))
 				Expect(hook.Config.ContentType).To(Equal(github.Ptr(contentTypeApplicationJSON)))
-				Expect(hook.Config.Secret).To(Equal(github.Ptr("secret123")))
-				Expect(hook.Config.InsecureSSL).To(Equal(github.Ptr("1")))
+				Expect(hook.Config.Secret).To(Equal(new("secret123")))
+				Expect(hook.Config.InsecureSSL).To(Equal(new("1")))
 				Expect(hook.Events).To(ConsistOf("push", "pull_request"))
 			})
 		})
@@ -50,15 +50,15 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
-						SSLVerify:  github.Ptr(false),
-						Active:     github.Ptr(true),
+						SSLVerify:  new(false),
+						Active:     new(true),
 					},
 				}
 
 				hook := WebhookPresetToGithubHook(preset)
 
 				Expect(hook).NotTo(BeNil())
-				Expect(hook.Config.InsecureSSL).To(Equal(github.Ptr("0")))
+				Expect(hook.Config.InsecureSSL).To(Equal(new("0")))
 			})
 		})
 
@@ -70,7 +70,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
-						Active:     github.Ptr(true),
+						Active:     new(true),
 					},
 				}
 
@@ -90,14 +90,14 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: "application/x-www-form-urlencoded",
-						Active:      github.Ptr(true),
+						Active:      new(true),
 					},
 				}
 
 				hook := WebhookPresetToGithubHook(preset)
 
 				Expect(hook).NotTo(BeNil())
-				Expect(hook.Config.ContentType).To(Equal(github.Ptr("application/x-www-form-urlencoded")))
+				Expect(hook.Config.ContentType).To(Equal(new("application/x-www-form-urlencoded")))
 			})
 		})
 
@@ -109,7 +109,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
-						Active:     github.Ptr(true),
+						Active:     new(true),
 					},
 				}
 
@@ -128,14 +128,14 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
-						Active:     github.Ptr(false),
+						Active:     new(false),
 					},
 				}
 
 				hook := WebhookPresetToGithubHook(preset)
 
 				Expect(hook).NotTo(BeNil())
-				Expect(hook.Active).To(Equal(github.Ptr(false)))
+				Expect(hook.Active).To(Equal(new(false)))
 			})
 		})
 
@@ -147,7 +147,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
-						Active:     github.Ptr(true),
+						Active:     new(true),
 						Events:     []string{"push", "pull_request", "issues", "release"},
 					},
 				}
@@ -167,7 +167,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
-						Active:     github.Ptr(true),
+						Active:     new(true),
 					},
 				}
 

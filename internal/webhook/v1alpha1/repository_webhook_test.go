@@ -234,7 +234,7 @@ var _ = Describe("Repository Webhook", func() {
 
 			It("Should allow valid string custom property", func() {
 				obj.Spec.CustomProperties = []githubv1alpha1.CustomPropertyValue{
-					{PropertyName: "string-prop", Value: gogithub.Ptr("test-string-value")},
+					{PropertyName: "string-prop", Value: new("test-string-value")},
 				}
 
 				warnings, err := validator.ValidateCreate(ctx, obj)
@@ -244,7 +244,7 @@ var _ = Describe("Repository Webhook", func() {
 
 			It("Should allow valid single_select custom property", func() {
 				obj.Spec.CustomProperties = []githubv1alpha1.CustomPropertyValue{
-					{PropertyName: "select-prop", Value: gogithub.Ptr("option2")},
+					{PropertyName: "select-prop", Value: new("option2")},
 				}
 				warnings, err := validator.ValidateCreate(ctx, obj)
 				Expect(err).NotTo(HaveOccurred())
@@ -262,7 +262,7 @@ var _ = Describe("Repository Webhook", func() {
 
 			It("Should allow valid true_false custom property", func() {
 				obj.Spec.CustomProperties = []githubv1alpha1.CustomPropertyValue{
-					{PropertyName: "bool-prop", Value: gogithub.Ptr("true")},
+					{PropertyName: "bool-prop", Value: new("true")},
 				}
 				warnings, err := validator.ValidateCreate(ctx, obj)
 				Expect(err).NotTo(HaveOccurred())
@@ -271,7 +271,7 @@ var _ = Describe("Repository Webhook", func() {
 
 			It("Should reject invalid true_false value", func() {
 				obj.Spec.CustomProperties = []githubv1alpha1.CustomPropertyValue{
-					{PropertyName: "bool-prop", Value: gogithub.Ptr("invalid-bool")},
+					{PropertyName: "bool-prop", Value: new("invalid-bool")},
 				}
 				warnings, err := validator.ValidateCreate(ctx, obj)
 				Expect(err).To(HaveOccurred())
@@ -281,7 +281,7 @@ var _ = Describe("Repository Webhook", func() {
 
 			It("Should reject invalid single_select value", func() {
 				obj.Spec.CustomProperties = []githubv1alpha1.CustomPropertyValue{
-					{PropertyName: "select-prop", Value: gogithub.Ptr("invalid-option")},
+					{PropertyName: "select-prop", Value: new("invalid-option")},
 				}
 				warnings, err := validator.ValidateCreate(ctx, obj)
 				Expect(err).To(HaveOccurred())
@@ -312,7 +312,7 @@ var _ = Describe("Repository Webhook", func() {
 
 			It("Should allow properties not defined in organization (they are ignored)", func() {
 				obj.Spec.CustomProperties = []githubv1alpha1.CustomPropertyValue{
-					{PropertyName: "undefined-prop", Value: gogithub.Ptr("some-value")},
+					{PropertyName: "undefined-prop", Value: new("some-value")},
 				}
 				warnings, err := validator.ValidateCreate(ctx, obj)
 				Expect(err).NotTo(HaveOccurred())
@@ -357,7 +357,7 @@ var _ = Describe("Repository Webhook", func() {
 			}
 
 			obj.Spec.CustomProperties = []githubv1alpha1.CustomPropertyValue{
-				{PropertyName: "updated-prop", Value: gogithub.Ptr("updated-value")},
+				{PropertyName: "updated-prop", Value: new("updated-value")},
 			}
 			warnings, err := validator.ValidateUpdate(ctx, oldObj, obj)
 			Expect(err).NotTo(HaveOccurred())

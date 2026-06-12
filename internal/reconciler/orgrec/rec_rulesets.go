@@ -15,6 +15,12 @@ import (
 func (o *GitHubOrgReconciler) reconcileRulesetPresets(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
 
+	// Org rulesets are not supported on the free plan
+	if !o.Kubernetes.Resource.HasEnterpriseFeatures() {
+		log.V(1).Info("Skipping organization rulesets reconciliation for non-public repository on free plan")
+		return nil
+	}
+
 	existingRulesets, err := o.GitHub.Client.GetAllOrganizationRulesets(ctx, o.GitHub.Resource, false)
 	if err != nil {
 		log.Error(err, "failed to get existing organization rulesets")
@@ -148,7 +154,7 @@ func addDefaultOrgRepositoryConditions(conditions *v1alpha1.RulesetConditions) *
 		conditions.RepositoryName = &v1alpha1.RepositoryNameCondition{
 			Include:   []string{"~ALL"},
 			Exclude:   []string{},
-			Protected: github.Ptr(false),
+			Protected: new(false),
 		}
 	}
 	return conditions

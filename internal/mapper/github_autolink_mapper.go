@@ -15,8 +15,8 @@ func HashAutolink(keyPrefix, urlTemplate string, isAlphanumeric bool) string {
 
 func KubernetesAutolinkToGitHubAutolink(preset v1alpha1.Autolink) *github.AutolinkOptions {
 	return &github.AutolinkOptions{
-		KeyPrefix:      github.Ptr(preset.KeyPrefix),
-		URLTemplate:    github.Ptr(preset.URLTemplate),
-		IsAlphanumeric: github.Ptr(preset.IsAlphanumeric),
+		KeyPrefix:      new(preset.KeyPrefix),
+		URLTemplate:    new(preset.URLTemplate),
+		IsAlphanumeric: new(preset.IsAlphanumeric),
 	}
 }

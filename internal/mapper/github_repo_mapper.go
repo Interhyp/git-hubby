@@ -23,9 +23,9 @@ func RepoToGithubRepo(repo *v1alpha1.Repository) *github.Repository {
 		DeleteBranchOnMerge: repo.Spec.DeleteBranchOnMerge,
 		MergeCommitTitle:    &repo.Spec.MergeCommitTitle,
 		MergeCommitMessage:  &repo.Spec.MergeCommitMessage,
-		Homepage:            utils.WithDefaultAsPtr(github.Ptr(repo.Spec.About.Website), ""),
-		Description:         utils.WithDefaultAsPtr(github.Ptr(repo.Spec.About.Description), ""),
-		DefaultBranch:       github.Ptr(repo.Spec.DefaultBranch),
+		Homepage:            utils.WithDefaultAsPtr(new(repo.Spec.About.Website), ""),
+		Description:         utils.WithDefaultAsPtr(new(repo.Spec.About.Description), ""),
+		DefaultBranch:       new(repo.Spec.DefaultBranch),
 	}
 }
 
@@ -114,8 +114,8 @@ func RepoDiffers(repo *v1alpha1.Repository, githubRepo github.Repository) bool {
 func getMergeStrategy(repo *v1alpha1.Repository, strategy string) *bool {
 	for _, s := range repo.Spec.AllowedMergeStrategies {
 		if s.Type == strategy {
-			return github.Ptr(true)
+			return new(true)
 		}
 	}
-	return github.Ptr(false)
+	return new(false)
 }

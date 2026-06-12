@@ -538,3 +538,39 @@ var _ = Describe("ReconcileDeletion", func() {
 		})
 	})
 })
+
+var _ = Describe("RequiredReconciliations", func() {
+	var (
+		rec *GitHubOrgReconciler
+		org *v1alpha1.Organization
+	)
+
+	BeforeEach(func() {
+		org = &v1alpha1.Organization{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-org",
+				Namespace: "default",
+			},
+			Spec: v1alpha1.OrganizationSpec{
+				Name:                    "test-org",
+				Description:             "Test Organization",
+				GitHubAppInstallationId: 12345,
+			},
+		}
+	})
+
+	JustBeforeEach(func() {
+		rec = &GitHubOrgReconciler{
+			Kubernetes: reconciler.Kubernetes[*v1alpha1.Organization]{
+				Resource: org,
+			},
+		}
+	})
+
+	It("should return all reconcilers in a single parallel group regardless of plan", func() {
+		groups := rec.RequiredReconciliations()
+		Expect(groups).To(HaveLen(1))
+		// All reconcilers run in parallel; plan-based checks are handled within each reconciler
+		Expect(groups[0]).To(HaveLen(5))
+	})
+})

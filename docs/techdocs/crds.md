@@ -599,6 +599,7 @@ _Appears in:_
 | `codeSecurityConfigurations` _[AttachableCodeSecurityConfigurationRef](#attachablecodesecurityconfigurationref) array_ | CodeSecurityConfigurations lists code security configurations to create and optionally attach to repositories.<br />Each configuration defines security features like dependency scanning, secret scanning, and code scanning.<br />See: https://docs.github.com/en/rest/code-security/configurations |  |  |
 | `rulesetPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | RulesetPresetList references RulesetPreset CRDs that define repository rulesets for this organization.<br />Rulesets enforce policies like branch protection, required reviews, and status checks.<br />See: https://docs.github.com/en/rest/orgs/rules |  |  |
 | `description` _string_ | Description is a human-readable description of the organization.<br />This appears on the organization's GitHub profile page. |  |  |
+| `plan` _string_ | Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).<br />Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped. | enterprise | Enum: [enterprise team free] <br />Optional: \{\} <br /> |
 
 
 #### OrganizationStatus

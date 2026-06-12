@@ -85,7 +85,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 		mockClient.CreateRepositoryRulesetFunc = func(_ context.Context, _, _ string, ruleset *github.RepositoryRuleset) (*github.RepositoryRuleset, error) {
 			createRulesetCalled = true
 			created := *ruleset
-			created.ID = github.Ptr(int64(1000 + len(createdRulesets)))
+			created.ID = new(int64(1000 + len(createdRulesets)))
 			createdRulesets = append(createdRulesets, &created)
 			return &created, nil
 		}
@@ -93,7 +93,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 		mockClient.UpdateRepositoryRulesetFunc = func(ctx context.Context, owner, repo string, rulesetID int64, ruleset *github.RepositoryRuleset) (*github.RepositoryRuleset, error) {
 			updateRulesetCalled = true
 			updated := *ruleset
-			updated.ID = github.Ptr(rulesetID)
+			updated.ID = new(rulesetID)
 			updatedRulesets[rulesetID] = &updated
 			return &updated, nil
 		}
@@ -119,7 +119,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:              "test-repo",
-				Archived:          github.Ptr(false),
+				Archived:          new(false),
 				RulesetPresetList: rulesetPresetRefs,
 				OrganizationRef: v1alpha1.OrganizationRef{
 					Name: "test-org",
@@ -127,9 +127,21 @@ var _ = Describe("ReconcileRuleSets", func() {
 			},
 		}
 
+		// Create organization that the ruleset reconciliation will fetch
+		org := &v1alpha1.Organization{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-org",
+				Namespace: "default",
+			},
+			Spec: v1alpha1.OrganizationSpec{
+				Plan: v1alpha1.PlanEnterprise,
+			},
+		}
+
 		// Build k8s objects slice
-		k8sObjects := make([]client.Object, 1, 1+len(rulesetPresets))
+		k8sObjects := make([]client.Object, 2, 2+len(rulesetPresets))
 		k8sObjects[0] = repo
+		k8sObjects[1] = org
 		for _, preset := range rulesetPresets {
 			k8sObjects = append(k8sObjects, preset)
 		}
@@ -183,7 +195,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -217,7 +229,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -235,7 +247,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							Creation: github.Ptr(true),
+							Creation: new(true),
 						},
 					},
 				},
@@ -269,7 +281,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -278,7 +290,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 			// Existing ruleset matches - important: RefName patterns must match mapper output
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -319,8 +331,8 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
-							RequiredSignatures:    github.Ptr(true),
+							RequiredLinearHistory: new(true),
+							RequiredSignatures:    new(true),
 						},
 					},
 				},
@@ -329,7 +341,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 			// Existing ruleset has different rules
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -372,7 +384,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -381,7 +393,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 			// Existing ruleset has different enforcement
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -421,7 +433,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -430,7 +442,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 			// Existing ruleset targets only main
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -461,7 +473,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 			// But rulesets exist on GitHub
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "old-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -495,7 +507,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							Creation: github.Ptr(true),
+							Creation: new(true),
 						},
 					},
 				},
@@ -503,7 +515,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "keep-this",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -517,13 +529,13 @@ var _ = Describe("ReconcileRuleSets", func() {
 					},
 				},
 				{
-					ID:          github.Ptr(int64(456)),
+					ID:          new(int64(456)),
 					Name:        "delete-this",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
 				},
 				{
-					ID:          github.Ptr(int64(789)),
+					ID:          new(int64(789)),
 					Name:        "delete-this-too",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -555,7 +567,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -573,7 +585,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							Creation: github.Ptr(true),
+							Creation: new(true),
 						},
 					},
 				},
@@ -581,7 +593,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "existing-ruleset",
 					Enforcement: github.RulesetEnforcementActive, // Different enforcement
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -626,7 +638,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -688,7 +700,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							Creation: github.Ptr(true),
+							Creation: new(true),
 						},
 					},
 				},
@@ -720,7 +732,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -728,7 +740,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:   github.Ptr(int64(123)),
+					ID:   new(int64(123)),
 					Name: "main-protection",
 				},
 			}
@@ -761,7 +773,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -795,7 +807,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -803,7 +815,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive, // Different
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -835,7 +847,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "old-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
 				},
@@ -865,7 +877,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -902,11 +914,11 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:   github.Ptr(int64(123)),
+					ID:   new(int64(123)),
 					Name: "", // Empty name
 				},
 				{
-					ID:   github.Ptr(int64(456)),
+					ID:   new(int64(456)),
 					Name: "valid-name",
 				},
 			}
@@ -938,24 +950,24 @@ var _ = Describe("ReconcileRuleSets", func() {
 						},
 						BypassActors: []v1alpha1.RulesetBypassActor{
 							{
-								ActorID:    github.Ptr(int64(12345)),
+								ActorID:    new(int64(12345)),
 								ActorType:  "Team",
 								BypassMode: "always",
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							Creation:              github.Ptr(true),
-							Update:                github.Ptr(true),
-							Deletion:              github.Ptr(true),
-							RequiredLinearHistory: github.Ptr(true),
-							RequiredSignatures:    github.Ptr(true),
-							NonFastForward:        github.Ptr(true),
+							Creation:              new(true),
+							Update:                new(true),
+							Deletion:              new(true),
+							RequiredLinearHistory: new(true),
+							RequiredSignatures:    new(true),
+							NonFastForward:        new(true),
 							PullRequest: &v1alpha1.PullRequestRule{
-								DismissStaleReviewsOnPush:      github.Ptr(true),
-								RequireCodeOwnerReviews:        github.Ptr(true),
-								RequireLastPushApproval:        github.Ptr(true),
+								DismissStaleReviewsOnPush:      new(true),
+								RequireCodeOwnerReviews:        new(true),
+								RequireLastPushApproval:        new(true),
 								RequiredApprovingReviewCount:   2,
-								RequiredReviewThreadResolution: github.Ptr(true),
+								RequiredReviewThreadResolution: new(true),
 							},
 						},
 					},
@@ -989,13 +1001,13 @@ var _ = Describe("ReconcileRuleSets", func() {
 						},
 						BypassActors: []v1alpha1.RulesetBypassActor{
 							{
-								ActorID:    github.Ptr(int64(999)),
+								ActorID:    new(int64(999)),
 								ActorType:  "Team",
 								BypassMode: "always",
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -1003,7 +1015,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -1014,7 +1026,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					},
 					BypassActors: []*github.BypassActor{
 						{
-							ActorID:   github.Ptr(int64(888)),
+							ActorID:   new(int64(888)),
 							ActorType: github.Ptr(github.BypassActorTypeTeam),
 						},
 					},
@@ -1052,12 +1064,12 @@ var _ = Describe("ReconcileRuleSets", func() {
 							CommitMessagePattern: &v1alpha1.PatternRule{
 								Pattern:  "^[A-Z]+-[0-9]+:.*",
 								Operator: "starts_with",
-								Negate:   github.Ptr(false),
+								Negate:   new(false),
 							},
 							BranchNamePattern: &v1alpha1.PatternRule{
 								Pattern:  "^(feature|bugfix|hotfix)/",
 								Operator: "starts_with",
-								Negate:   github.Ptr(false),
+								Negate:   new(false),
 							},
 						},
 					},
@@ -1091,7 +1103,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							Creation: github.Ptr(true),
+							Creation: new(true),
 						},
 					},
 				},
@@ -1109,7 +1121,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							Update: github.Ptr(true),
+							Update: new(true),
 						},
 					},
 				},
@@ -1140,8 +1152,8 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
-							RequiredSignatures:    github.Ptr(true), // Added
+							RequiredLinearHistory: new(true),
+							RequiredSignatures:    new(true), // Added
 						},
 					},
 				},
@@ -1149,7 +1161,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -1195,7 +1207,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 									{Context: "ci/build"},
 									{Context: "ci/test"},
 								},
-								StrictPolicy: github.Ptr(true),
+								StrictPolicy: new(true),
 							},
 						},
 					},
@@ -1229,8 +1241,8 @@ var _ = Describe("ReconcileRuleSets", func() {
 						},
 						Rules: v1alpha1.RulesetRules{
 							CopilotReview: &v1alpha1.CopilotCodeReviewRule{
-								ReviewOnPush:            github.Ptr(true),
-								ReviewDraftPullRequests: github.Ptr(false),
+								ReviewOnPush:            new(true),
+								ReviewDraftPullRequests: new(false),
 							},
 						},
 					},
@@ -1269,8 +1281,8 @@ var _ = Describe("ReconcileRuleSets", func() {
 						},
 						Rules: v1alpha1.RulesetRules{
 							CopilotReview: &v1alpha1.CopilotCodeReviewRule{
-								ReviewOnPush:            github.Ptr(true),
-								ReviewDraftPullRequests: github.Ptr(true),
+								ReviewOnPush:            new(true),
+								ReviewDraftPullRequests: new(true),
 							},
 						},
 					},
@@ -1279,7 +1291,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "copilot-review-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -1325,8 +1337,8 @@ var _ = Describe("ReconcileRuleSets", func() {
 						},
 						Rules: v1alpha1.RulesetRules{
 							CopilotReview: &v1alpha1.CopilotCodeReviewRule{
-								ReviewOnPush:            github.Ptr(true),
-								ReviewDraftPullRequests: github.Ptr(true),
+								ReviewOnPush:            new(true),
+								ReviewDraftPullRequests: new(true),
 							},
 						},
 					},
@@ -1335,7 +1347,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "copilot-review-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -1384,7 +1396,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						},
 						Rules: v1alpha1.RulesetRules{
 							// No CopilotReview rule specified
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -1392,7 +1404,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(123)),
+					ID:          new(int64(123)),
 					Name:        "copilot-review-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTargetBranch),
@@ -1438,15 +1450,15 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
-							RequiredSignatures:    github.Ptr(true),
+							RequiredLinearHistory: new(true),
+							RequiredSignatures:    new(true),
 							CopilotReview: &v1alpha1.CopilotCodeReviewRule{
-								ReviewOnPush:            github.Ptr(true),
-								ReviewDraftPullRequests: github.Ptr(false),
+								ReviewOnPush:            new(true),
+								ReviewDraftPullRequests: new(false),
 							},
 							PullRequest: &v1alpha1.PullRequestRule{
 								RequiredApprovingReviewCount: 2,
-								RequireCodeOwnerReviews:      github.Ptr(true),
+								RequireCodeOwnerReviews:      new(true),
 							},
 						},
 					},
@@ -1489,7 +1501,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -1522,7 +1534,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -1541,7 +1553,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							Creation: github.Ptr(true),
+							Creation: new(true),
 						},
 					},
 				},
@@ -1574,7 +1586,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 							},
 						},
 						Rules: v1alpha1.RulesetRules{
-							RequiredLinearHistory: github.Ptr(true),
+							RequiredLinearHistory: new(true),
 						},
 					},
 				},
@@ -1583,7 +1595,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 			// An unrelated ruleset exists on GitHub that matches the skipped preset name
 			existingGHRulesets = []*github.RepositoryRuleset{
 				{
-					ID:          github.Ptr(int64(999)),
+					ID:          new(int64(999)),
 					Name:        "repo-target-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
 					Target:      github.Ptr(github.RulesetTarget("repository")),

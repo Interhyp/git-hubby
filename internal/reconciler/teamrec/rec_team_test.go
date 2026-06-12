@@ -85,7 +85,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -119,19 +119,19 @@ var _ = Describe("ReconcileTeam", func() {
 			// Team has a custom description "Test team description", so that's what should be used
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -164,12 +164,12 @@ var _ = Describe("ReconcileTeam", func() {
 		BeforeEach(func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
-					Description:         github.Ptr("Old description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
+					Description:         new("Old description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
@@ -187,7 +187,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -221,12 +221,12 @@ var _ = Describe("ReconcileTeam", func() {
 			expectedDescription := "⚠️ To join the team, create a pull request here: https://github.com/org1/github-configuration-deployment/blob/main/teams/test-team.yaml"
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
 					Description:         &expectedDescription,
-					Privacy:             github.Ptr("secret"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Privacy:             new("secret"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
@@ -244,7 +244,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -277,12 +277,12 @@ var _ = Describe("ReconcileTeam", func() {
 			expectedDescription := "⚠️ To join the team, create a pull request here: https://github.com/org1/github-configuration-deployment/blob/main/teams/test-team.yaml"
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
 					Description:         &expectedDescription,
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("push"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Privacy:             new("closed"),
+					Permission:          new("push"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
@@ -299,7 +299,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -332,12 +332,12 @@ var _ = Describe("ReconcileTeam", func() {
 			expectedDescription := "⚠️ To join the team, create a pull request here: https://github.com/org1/github-configuration-deployment/blob/main/teams/test-team.yaml"
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
 					Description:         &expectedDescription,
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_enabled"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_enabled"),
 				}, nil
 			}
 
@@ -355,7 +355,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -392,7 +392,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -435,7 +435,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -464,12 +464,12 @@ var _ = Describe("ReconcileTeam", func() {
 		BeforeEach(func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
-					Description:         github.Ptr("Old description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
+					Description:         new("Old description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
@@ -480,7 +480,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -515,23 +515,23 @@ var _ = Describe("ReconcileTeam", func() {
 			// Team has custom description "Test team description", so that's what should be used
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
 			mockClient2.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
-					Description:         github.Ptr("Old description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
+					Description:         new("Old description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
@@ -549,7 +549,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -596,19 +596,19 @@ var _ = Describe("ReconcileTeam", func() {
 
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -641,19 +641,19 @@ var _ = Describe("ReconcileTeam", func() {
 
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
-					Description:         github.Ptr(""),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
+					Description:         new(""),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -685,7 +685,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{},
 					},
@@ -709,8 +709,8 @@ var _ = Describe("ReconcileTeam", func() {
 		BeforeEach(func() {
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name: github.Ptr("test-team"),
-					Slug: github.Ptr("test-team"),
+					Name: new("test-team"),
+					Slug: new("test-team"),
 					// All other fields are nil
 				}, nil
 			}
@@ -729,7 +729,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -767,12 +767,12 @@ var _ = Describe("ReconcileTeam", func() {
 			// Team has custom description "Test team description"
 			mockClient1.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
 				return &github.Team{
-					Name:                github.Ptr("test-team"),
-					Slug:                github.Ptr("test-team"),
-					Description:         github.Ptr("Test team description"),
-					Privacy:             github.Ptr("closed"),
-					Permission:          github.Ptr("pull"),
-					NotificationSetting: github.Ptr("notifications_disabled"),
+					Name:                new("test-team"),
+					Slug:                new("test-team"),
+					Description:         new("Test team description"),
+					Privacy:             new("closed"),
+					Permission:          new("pull"),
+					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
 
@@ -783,7 +783,7 @@ var _ = Describe("ReconcileTeam", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{

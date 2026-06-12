@@ -63,29 +63,29 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		// Default property definitions - these define what properties exist in the organization
 		propertyDefinitions = []*github.CustomProperty{
 			{
-				PropertyName:  github.Ptr("environment"),
+				PropertyName:  new("environment"),
 				ValueType:     "single_select",
-				Required:      github.Ptr(true),
+				Required:      new(true),
 				DefaultValue:  "development",
-				Description:   github.Ptr("Environment type"),
+				Description:   new("Environment type"),
 				AllowedValues: []string{"development", "staging", "production"},
 			},
 			{
-				PropertyName: github.Ptr("team"),
+				PropertyName: new("team"),
 				ValueType:    "string",
-				Required:     github.Ptr(true),
+				Required:     new(true),
 				DefaultValue: "default-team",
 			},
 			{
-				PropertyName:  github.Ptr("languages"),
+				PropertyName:  new("languages"),
 				ValueType:     "multi_select",
-				Required:      github.Ptr(false),
+				Required:      new(false),
 				AllowedValues: []string{"go", "typescript", "python", "java"},
 			},
 			{
-				PropertyName: github.Ptr("archived"),
+				PropertyName: new("archived"),
 				ValueType:    "true_false",
-				Required:     github.Ptr(false),
+				Required:     new(false),
 				DefaultValue: "false",
 			},
 		}
@@ -124,7 +124,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:             "test-repo",
-				Archived:         github.Ptr(false),
+				Archived:         new(false),
 				CustomProperties: customProperties,
 				OrganizationRef: v1alpha1.OrganizationRef{
 					Name: "test-org",
@@ -175,8 +175,8 @@ var _ = Describe("ReconcileCustomProperties", func() {
 	Context("when custom properties match current values", func() {
 		BeforeEach(func() {
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
-				{PropertyName: "team", Value: github.Ptr("platform")},
+				{PropertyName: "environment", Value: new("production")},
+				{PropertyName: "team", Value: new("platform")},
 			}
 			// GitHub doesn't return properties with nil values
 			currentPropertyValues = []*github.CustomPropertyValue{
@@ -194,8 +194,8 @@ var _ = Describe("ReconcileCustomProperties", func() {
 	Context("when creating new custom property values", func() {
 		BeforeEach(func() {
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("staging")},
-				{PropertyName: "team", Value: github.Ptr("backend")},
+				{PropertyName: "environment", Value: new("staging")},
+				{PropertyName: "team", Value: new("backend")},
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{}
 		})
@@ -221,12 +221,12 @@ var _ = Describe("ReconcileCustomProperties", func() {
 	Context("when updating existing custom property values", func() {
 		BeforeEach(func() {
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
-				{PropertyName: "team", Value: github.Ptr("frontend")},
+				{PropertyName: "environment", Value: new("production")},
+				{PropertyName: "team", Value: new("frontend")},
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("development")},
-				{PropertyName: "team", Value: github.Ptr("backend")},
+				{PropertyName: "environment", Value: new("development")},
+				{PropertyName: "team", Value: new("backend")},
 			}
 		})
 
@@ -338,7 +338,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 	Context("when some properties remain and some are removed", func() {
 		BeforeEach(func() {
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
+				{PropertyName: "environment", Value: new("production")},
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{
 				{PropertyName: "environment", Value: "development"},
@@ -368,7 +368,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 	Context("when using true_false value type", func() {
 		BeforeEach(func() {
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "archived", Value: github.Ptr("true")},
+				{PropertyName: "archived", Value: new("true")},
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{}
 		})
@@ -396,8 +396,8 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			// Spec has properties in reverse order
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "team", Value: github.Ptr("backend")},
-				{PropertyName: "environment", Value: github.Ptr("production")},
+				{PropertyName: "team", Value: new("backend")},
+				{PropertyName: "environment", Value: new("production")},
 			}
 			// Current has properties in different order (GitHub doesn't return properties with nil values)
 			currentPropertyValues = []*github.CustomPropertyValue{
@@ -416,7 +416,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			getCurrentValuesError = errors.New("failed to fetch custom property values")
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
+				{PropertyName: "environment", Value: new("production")},
 			}
 		})
 
@@ -431,7 +431,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			getDefinitionsError = errors.New("failed to fetch custom property definitions")
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
+				{PropertyName: "environment", Value: new("production")},
 			}
 		})
 
@@ -446,7 +446,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			// Set up a property that doesn't exist in definitions
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "nonexistent-property", Value: github.Ptr("value")},
+				{PropertyName: "nonexistent-property", Value: new("value")},
 			}
 		})
 
@@ -463,7 +463,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			updatePropertiesError = errors.New("failed to update custom properties")
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
+				{PropertyName: "environment", Value: new("production")},
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{
 				{PropertyName: "environment", Value: "development"},
@@ -480,10 +480,10 @@ var _ = Describe("ReconcileCustomProperties", func() {
 	Context("when updating with multiple property types", func() {
 		BeforeEach(func() {
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
-				{PropertyName: "team", Value: github.Ptr("platform")},
+				{PropertyName: "environment", Value: new("production")},
+				{PropertyName: "team", Value: new("platform")},
 				{PropertyName: "languages", Values: []string{"go", "typescript"}},
-				{PropertyName: "archived", Value: github.Ptr("false")},
+				{PropertyName: "archived", Value: new("false")},
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{}
 		})
@@ -510,14 +510,14 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			// Update some, keep some, remove some
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("staging")}, // updated
-				{PropertyName: "team", Value: github.Ptr("backend")},        // kept same
+				{PropertyName: "environment", Value: new("staging")}, // updated
+				{PropertyName: "team", Value: new("backend")},        // kept same
 				// languages removed
-				{PropertyName: "archived", Value: github.Ptr("true")}, // added
+				{PropertyName: "archived", Value: new("true")}, // added
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("development")},
-				{PropertyName: "team", Value: github.Ptr("backend")},
+				{PropertyName: "environment", Value: new("development")},
+				{PropertyName: "team", Value: new("backend")},
 				{PropertyName: "languages", Value: []string{"go"}},
 			}
 		})
@@ -543,7 +543,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 	Context("when current values have extra properties not in spec", func() {
 		BeforeEach(func() {
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
+				{PropertyName: "environment", Value: new("production")},
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{
 				{PropertyName: "environment", Value: "production"},
@@ -607,7 +607,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			propertyDefinitions = []*github.CustomProperty{}
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "environment", Value: github.Ptr("production")},
+				{PropertyName: "environment", Value: new("production")},
 			}
 		})
 
@@ -642,15 +642,15 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			propertyDefinitions = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("environment"),
+					PropertyName: new("environment"),
 					ValueType:    github.PropertyValueTypeString,
-					Required:     github.Ptr(true),
+					Required:     new(true),
 					DefaultValue: "production",
 				},
 				{
-					PropertyName: github.Ptr("team"),
+					PropertyName: new("team"),
 					ValueType:    github.PropertyValueTypeString,
-					Required:     github.Ptr(false),
+					Required:     new(false),
 				},
 			}
 			customProperties = []v1alpha1.CustomPropertyValue{}
@@ -684,9 +684,9 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			propertyDefinitions = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("optional-prop"),
+					PropertyName: new("optional-prop"),
 					ValueType:    github.PropertyValueTypeString,
-					Required:     github.Ptr(false),
+					Required:     new(false),
 					DefaultValue: "default-value",
 				},
 			}
@@ -709,25 +709,25 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			propertyDefinitions = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("required-prop"),
+					PropertyName: new("required-prop"),
 					ValueType:    github.PropertyValueTypeString,
-					Required:     github.Ptr(true),
+					Required:     new(true),
 					DefaultValue: "required-default",
 				},
 				{
-					PropertyName: github.Ptr("optional-prop"),
+					PropertyName: new("optional-prop"),
 					ValueType:    github.PropertyValueTypeString,
-					Required:     github.Ptr(false),
+					Required:     new(false),
 					DefaultValue: "optional-default",
 				},
 				{
-					PropertyName: github.Ptr("user-prop"),
+					PropertyName: new("user-prop"),
 					ValueType:    github.PropertyValueTypeString,
-					Required:     github.Ptr(false),
+					Required:     new(false),
 				},
 			}
 			customProperties = []v1alpha1.CustomPropertyValue{
-				{PropertyName: "user-prop", Value: github.Ptr("user-value")},
+				{PropertyName: "user-prop", Value: new("user-value")},
 			}
 			currentPropertyValues = []*github.CustomPropertyValue{}
 		})
@@ -752,9 +752,9 @@ var _ = Describe("ReconcileCustomProperties", func() {
 		BeforeEach(func() {
 			propertyDefinitions = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("tags"),
+					PropertyName: new("tags"),
 					ValueType:    github.PropertyValueTypeMultiSelect,
-					Required:     github.Ptr(true),
+					Required:     new(true),
 					DefaultValue: []any{"default-tag1", "default-tag2"},
 				},
 			}

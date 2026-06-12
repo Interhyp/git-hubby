@@ -21,7 +21,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when only configuration is nil", func() {
 			It("should return false", func() {
 				current := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
+					EnabledRepositories: new("all"),
 				}
 				result := EqualActionsPermissions(nil, current)
 				Expect(result).To(BeFalse())
@@ -31,7 +31,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when only current is nil", func() {
 			It("should return false", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
+					EnabledRepositories: new("all"),
 				}
 				result := EqualActionsPermissions(configuration, nil)
 				Expect(result).To(BeFalse())
@@ -41,14 +41,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when both are equal", func() {
 			It("should return true for identical permissions", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
-					AllowedActions:      github.Ptr("all"),
-					SHAPinningRequired:  github.Ptr(true),
+					EnabledRepositories: new("all"),
+					AllowedActions:      new("all"),
+					SHAPinningRequired:  new(true),
 				}
 				current := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
-					AllowedActions:      github.Ptr("all"),
-					SHAPinningRequired:  github.Ptr(true),
+					EnabledRepositories: new("all"),
+					AllowedActions:      new("all"),
+					SHAPinningRequired:  new(true),
 				}
 				result := EqualActionsPermissions(configuration, current)
 				Expect(result).To(BeTrue())
@@ -65,10 +65,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when SHAPinningRequired differs", func() {
 			It("should return false", func() {
 				configuration := &github.ActionsPermissions{
-					SHAPinningRequired: github.Ptr(true),
+					SHAPinningRequired: new(true),
 				}
 				current := &github.ActionsPermissions{
-					SHAPinningRequired: github.Ptr(false),
+					SHAPinningRequired: new(false),
 				}
 				result := EqualActionsPermissions(configuration, current)
 				Expect(result).To(BeFalse())
@@ -76,7 +76,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 			It("should return false when one is nil", func() {
 				configuration := &github.ActionsPermissions{
-					SHAPinningRequired: github.Ptr(true),
+					SHAPinningRequired: new(true),
 				}
 				current := &github.ActionsPermissions{
 					SHAPinningRequired: nil,
@@ -89,10 +89,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when AllowedActions differs", func() {
 			It("should return false", func() {
 				configuration := &github.ActionsPermissions{
-					AllowedActions: github.Ptr("all"),
+					AllowedActions: new("all"),
 				}
 				current := &github.ActionsPermissions{
-					AllowedActions: github.Ptr("selected"),
+					AllowedActions: new("selected"),
 				}
 				result := EqualActionsPermissions(configuration, current)
 				Expect(result).To(BeFalse())
@@ -100,7 +100,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 			It("should return false when one is nil", func() {
 				configuration := &github.ActionsPermissions{
-					AllowedActions: github.Ptr("all"),
+					AllowedActions: new("all"),
 				}
 				current := &github.ActionsPermissions{
 					AllowedActions: nil,
@@ -113,10 +113,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when EnabledRepositories differs", func() {
 			It("should return false", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
+					EnabledRepositories: new("all"),
 				}
 				current := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("selected"),
+					EnabledRepositories: new("selected"),
 				}
 				result := EqualActionsPermissions(configuration, current)
 				Expect(result).To(BeFalse())
@@ -124,7 +124,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 			It("should return false when one is nil", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
+					EnabledRepositories: new("all"),
 				}
 				current := &github.ActionsPermissions{
 					EnabledRepositories: nil,
@@ -137,14 +137,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when multiple fields differ", func() {
 			It("should return false", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("all"),
-					AllowedActions:      github.Ptr("all"),
-					SHAPinningRequired:  github.Ptr(true),
+					EnabledRepositories: new("all"),
+					AllowedActions:      new("all"),
+					SHAPinningRequired:  new(true),
 				}
 				current := &github.ActionsPermissions{
-					EnabledRepositories: github.Ptr("selected"),
-					AllowedActions:      github.Ptr("selected"),
-					SHAPinningRequired:  github.Ptr(false),
+					EnabledRepositories: new("selected"),
+					AllowedActions:      new("selected"),
+					SHAPinningRequired:  new(false),
 				}
 				result := EqualActionsPermissions(configuration, current)
 				Expect(result).To(BeFalse())
@@ -163,7 +163,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when only actions is nil", func() {
 			It("should return false", func() {
 				current := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
+					GithubOwnedAllowed: new(true),
 				}
 				result := EqualActionsAllowed(nil, current)
 				Expect(result).To(BeFalse())
@@ -173,7 +173,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when only current is nil", func() {
 			It("should return false", func() {
 				actions := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
+					GithubOwnedAllowed: new(true),
 				}
 				result := EqualActionsAllowed(actions, nil)
 				Expect(result).To(BeFalse())
@@ -183,13 +183,13 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when both are equal", func() {
 			It("should return true for identical actions", func() {
 				actions := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
-					VerifiedAllowed:    github.Ptr(true),
+					GithubOwnedAllowed: new(true),
+					VerifiedAllowed:    new(true),
 					PatternsAllowed:    []string{"org/*", "user/repo@*"},
 				}
 				current := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
-					VerifiedAllowed:    github.Ptr(true),
+					GithubOwnedAllowed: new(true),
+					VerifiedAllowed:    new(true),
 					PatternsAllowed:    []string{"org/*", "user/repo@*"},
 				}
 				result := EqualActionsAllowed(actions, current)
@@ -218,10 +218,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when GithubOwnedAllowed differs", func() {
 			It("should return false", func() {
 				actions := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
+					GithubOwnedAllowed: new(true),
 				}
 				current := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(false),
+					GithubOwnedAllowed: new(false),
 				}
 				result := EqualActionsAllowed(actions, current)
 				Expect(result).To(BeFalse())
@@ -229,7 +229,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 			It("should return false when one is nil", func() {
 				actions := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
+					GithubOwnedAllowed: new(true),
 				}
 				current := &github.ActionsAllowed{
 					GithubOwnedAllowed: nil,
@@ -242,10 +242,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when VerifiedAllowed differs", func() {
 			It("should return false", func() {
 				actions := &github.ActionsAllowed{
-					VerifiedAllowed: github.Ptr(true),
+					VerifiedAllowed: new(true),
 				}
 				current := &github.ActionsAllowed{
-					VerifiedAllowed: github.Ptr(false),
+					VerifiedAllowed: new(false),
 				}
 				result := EqualActionsAllowed(actions, current)
 				Expect(result).To(BeFalse())
@@ -253,7 +253,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 			It("should return false when one is nil", func() {
 				actions := &github.ActionsAllowed{
-					VerifiedAllowed: github.Ptr(true),
+					VerifiedAllowed: new(true),
 				}
 				current := &github.ActionsAllowed{
 					VerifiedAllowed: nil,
@@ -323,13 +323,13 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when multiple fields differ", func() {
 			It("should return false", func() {
 				actions := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(true),
-					VerifiedAllowed:    github.Ptr(true),
+					GithubOwnedAllowed: new(true),
+					VerifiedAllowed:    new(true),
 					PatternsAllowed:    []string{"org/*"},
 				}
 				current := &github.ActionsAllowed{
-					GithubOwnedAllowed: github.Ptr(false),
-					VerifiedAllowed:    github.Ptr(false),
+					GithubOwnedAllowed: new(false),
+					VerifiedAllowed:    new(false),
 					PatternsAllowed:    []string{"user/*"},
 				}
 				result := EqualActionsAllowed(actions, current)
@@ -349,7 +349,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when only expected is nil", func() {
 			It("should return false", func() {
 				current := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions: github.Ptr("read"),
+					DefaultWorkflowPermissions: new("read"),
 				}
 				result := EqualDefaultWorkflowPermissions(nil, current)
 				Expect(result).To(BeFalse())
@@ -359,7 +359,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when only current is nil", func() {
 			It("should return false", func() {
 				expected := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions: github.Ptr("read"),
+					DefaultWorkflowPermissions: new("read"),
 				}
 				result := EqualDefaultWorkflowPermissions(expected, nil)
 				Expect(result).To(BeFalse())
@@ -369,12 +369,12 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when both are equal", func() {
 			It("should return true for identical permissions", func() {
 				expected := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions:   github.Ptr("read"),
-					CanApprovePullRequestReviews: github.Ptr(true),
+					DefaultWorkflowPermissions:   new("read"),
+					CanApprovePullRequestReviews: new(true),
 				}
 				current := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions:   github.Ptr("read"),
-					CanApprovePullRequestReviews: github.Ptr(true),
+					DefaultWorkflowPermissions:   new("read"),
+					CanApprovePullRequestReviews: new(true),
 				}
 				result := EqualDefaultWorkflowPermissions(expected, current)
 				Expect(result).To(BeTrue())
@@ -391,10 +391,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when DefaultWorkflowPermissions differs", func() {
 			It("should return false for different values", func() {
 				expected := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions: github.Ptr("read"),
+					DefaultWorkflowPermissions: new("read"),
 				}
 				current := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions: github.Ptr("write"),
+					DefaultWorkflowPermissions: new("write"),
 				}
 				result := EqualDefaultWorkflowPermissions(expected, current)
 				Expect(result).To(BeFalse())
@@ -402,7 +402,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 			It("should return false when one is nil", func() {
 				expected := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions: github.Ptr("read"),
+					DefaultWorkflowPermissions: new("read"),
 				}
 				current := &github.DefaultWorkflowPermissionOrganization{
 					DefaultWorkflowPermissions: nil,
@@ -415,10 +415,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when CanApprovePullRequestReviews differs", func() {
 			It("should return false for different values", func() {
 				expected := &github.DefaultWorkflowPermissionOrganization{
-					CanApprovePullRequestReviews: github.Ptr(true),
+					CanApprovePullRequestReviews: new(true),
 				}
 				current := &github.DefaultWorkflowPermissionOrganization{
-					CanApprovePullRequestReviews: github.Ptr(false),
+					CanApprovePullRequestReviews: new(false),
 				}
 				result := EqualDefaultWorkflowPermissions(expected, current)
 				Expect(result).To(BeFalse())
@@ -426,7 +426,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 			It("should return false when one is nil", func() {
 				expected := &github.DefaultWorkflowPermissionOrganization{
-					CanApprovePullRequestReviews: github.Ptr(true),
+					CanApprovePullRequestReviews: new(true),
 				}
 				current := &github.DefaultWorkflowPermissionOrganization{
 					CanApprovePullRequestReviews: nil,
@@ -439,12 +439,12 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when both fields differ", func() {
 			It("should return false", func() {
 				expected := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions:   github.Ptr("read"),
-					CanApprovePullRequestReviews: github.Ptr(true),
+					DefaultWorkflowPermissions:   new("read"),
+					CanApprovePullRequestReviews: new(true),
 				}
 				current := &github.DefaultWorkflowPermissionOrganization{
-					DefaultWorkflowPermissions:   github.Ptr("write"),
-					CanApprovePullRequestReviews: github.Ptr(false),
+					DefaultWorkflowPermissions:   new("write"),
+					CanApprovePullRequestReviews: new(false),
 				}
 				result := EqualDefaultWorkflowPermissions(expected, current)
 				Expect(result).To(BeFalse())
@@ -457,14 +457,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true for identical runner groups", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     nil,
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     nil,
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -474,14 +474,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true when RestrictedToWorkflows is false and SelectedWorkflows differ", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/deploy.yaml@refs/heads/main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Name:                  new("test-group"),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     []string{"different/workflow@refs/heads/main"},
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -491,14 +491,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true when RestrictedToWorkflows is true and SelectedWorkflows are identical", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@refs/heads/main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Name:                  new("test-group"),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@refs/heads/main"},
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -508,14 +508,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true when RestrictedToWorkflows is true and SelectedWorkflows are in different order", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/a.yaml@main", "org/repo/.github/workflows/b.yaml@main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Name:                  new("test-group"),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/b.yaml@main", "org/repo/.github/workflows/a.yaml@main"},
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -525,14 +525,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true when RestrictedToWorkflows is nil in k8s and false in GitHub", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
+					Visibility:            new("all"),
 					RestrictedToWorkflows: nil,
 					SelectedWorkflows:     nil,
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     nil,
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -544,13 +544,13 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("different-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Name:                  new("different-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
 				Expect(result).To(BeFalse())
@@ -561,13 +561,13 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Name:                  new("test-group"),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(false),
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
 				Expect(result).To(BeFalse())
@@ -576,13 +576,13 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when one visibility is nil", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
+					Name:                  new("test-group"),
 					Visibility:            nil,
-					RestrictedToWorkflows: github.Ptr(false),
+					RestrictedToWorkflows: new(false),
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
 				Expect(result).To(BeFalse())
@@ -593,14 +593,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when values are different", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -610,13 +610,13 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when one is nil", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
 					RestrictedToWorkflows: nil,
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
@@ -629,14 +629,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when workflows are different", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/deploy.yaml@main"},
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -646,14 +646,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when number of workflows differs", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main", "org/repo/.github/workflows/deploy.yaml@main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -663,14 +663,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when one has nil workflows and other has workflows", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     nil,
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -680,14 +680,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true when both have empty workflows", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("test-group"),
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Name:                  new("test-group"),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{},
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -699,14 +699,14 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false", func() {
 				k8sGroup := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 				ghGroup := &github.RunnerGroup{
-					Name:                  github.Ptr("different-group"),
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Name:                  new("different-group"),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/deploy.yaml@main"},
 				}
 				result := EqualRunnerGroup(k8sGroup, ghGroup)
@@ -720,17 +720,17 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should create request without selected repositories", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     nil,
 				}
 				repos := []v1alpha1.Repository{}
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
-				Expect(result.Visibility).To(Equal(github.Ptr("all")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(false)))
+				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Visibility).To(Equal(new("all")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(BeNil())
 				Expect(result.SelectedRepositoryIDs).To(BeNil())
 			})
@@ -738,7 +738,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should not include repositories even if they reference the runner group", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "test-group",
-					Visibility: github.Ptr("all"),
+					Visibility: new("all"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -747,7 +747,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(123)),
+							ID: new(int64(123)),
 						},
 					},
 				}
@@ -762,17 +762,17 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should create request without selected repositories", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     nil,
 				}
 				repos := []v1alpha1.Repository{}
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
-				Expect(result.Visibility).To(Equal(github.Ptr("private")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(false)))
+				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Visibility).To(Equal(new("private")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(BeNil())
 				Expect(result.SelectedRepositoryIDs).To(BeNil())
 			})
@@ -782,8 +782,8 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should include repositories that reference the runner group with ID", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(false),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -792,7 +792,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(123)),
+							ID: new(int64(123)),
 						},
 					},
 					{
@@ -801,15 +801,15 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(456)),
+							ID: new(int64(456)),
 						},
 					},
 				}
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
-				Expect(result.Visibility).To(Equal(github.Ptr("selected")))
+				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Visibility).To(Equal(new("selected")))
 				Expect(result.SelectedRepositoryIDs).To(HaveLen(2))
 				Expect(result.SelectedRepositoryIDs).To(ContainElements(int64(123), int64(456)))
 			})
@@ -817,7 +817,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should exclude repositories without ID", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -826,7 +826,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(123)),
+							ID: new(int64(123)),
 						},
 					},
 					{
@@ -849,7 +849,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should exclude repositories that don't reference the runner group", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -858,7 +858,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(123)),
+							ID: new(int64(123)),
 						},
 					},
 					{
@@ -867,7 +867,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"other-group"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(456)),
+							ID: new(int64(456)),
 						},
 					},
 					{
@@ -876,7 +876,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: nil,
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(789)),
+							ID: new(int64(789)),
 						},
 					},
 				}
@@ -890,7 +890,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return empty slice when no repositories match", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -899,7 +899,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"other-group"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(123)),
+							ID: new(int64(123)),
 						},
 					},
 				}
@@ -913,7 +913,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should initialize empty slice when no repos provided", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "test-group",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{}
 
@@ -928,24 +928,24 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should include selected workflows", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@refs/heads/main"},
 				}
 				repos := []v1alpha1.Repository{}
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@refs/heads/main"}))
 			})
 
 			It("should include multiple selected workflows", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows: []string{
 						"org/repo/.github/workflows/ci.yaml@refs/heads/main",
 						"org/repo/.github/workflows/deploy.yaml@refs/tags/v1.0.0",
@@ -955,7 +955,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(HaveLen(2))
 				Expect(result.SelectedWorkflows).To(ContainElements(
 					"org/repo/.github/workflows/ci.yaml@refs/heads/main",
@@ -968,15 +968,15 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should not include selected workflows", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@refs/heads/main"},
 				}
 				repos := []v1alpha1.Repository{}
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(false)))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@refs/heads/main"}))
 			})
 		})
@@ -985,7 +985,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should pass nil RestrictedToWorkflows", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
+					Visibility:            new("all"),
 					RestrictedToWorkflows: nil,
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@refs/heads/main"},
 				}
@@ -1002,8 +1002,8 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should handle selected visibility with workflows and matching repos", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "production-runners",
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows: []string{
 						"org/repo1/.github/workflows/deploy.yaml@refs/heads/main",
 					},
@@ -1015,7 +1015,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"production-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(100)),
+							ID: new(int64(100)),
 						},
 					},
 					{
@@ -1024,7 +1024,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"production-runners", "staging-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(200)),
+							ID: new(int64(200)),
 						},
 					},
 					{
@@ -1042,16 +1042,16 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"staging-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(400)),
+							ID: new(int64(400)),
 						},
 					},
 				}
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(github.Ptr("production-runners")))
-				Expect(result.Visibility).To(Equal(github.Ptr("selected")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+				Expect(result.Name).To(Equal(new("production-runners")))
+				Expect(result.Visibility).To(Equal(new("selected")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{
 					"org/repo1/.github/workflows/deploy.yaml@refs/heads/main",
 				}))
@@ -1067,7 +1067,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(github.Ptr("minimal-group")))
+				Expect(result.Name).To(Equal(new("minimal-group")))
 				Expect(result.Visibility).To(BeNil())
 				Expect(result.RestrictedToWorkflows).To(BeNil())
 				Expect(result.SelectedWorkflows).To(BeNil())
@@ -1081,7 +1081,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return nil for 'all' visibility", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "all-runners",
-					Visibility: github.Ptr("all"),
+					Visibility: new("all"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -1090,7 +1090,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"all-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(100)),
+							ID: new(int64(100)),
 						},
 					},
 				}
@@ -1103,7 +1103,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return nil for 'private' visibility", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "private-runners",
-					Visibility: github.Ptr("private"),
+					Visibility: new("private"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -1112,7 +1112,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"private-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(100)),
+							ID: new(int64(100)),
 						},
 					},
 				}
@@ -1134,7 +1134,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"no-visibility"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(100)),
+							ID: new(int64(100)),
 						},
 					},
 				}
@@ -1149,7 +1149,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return empty slice when no repos match", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "selected-runners",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -1158,7 +1158,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"other-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(100)),
+							ID: new(int64(100)),
 						},
 					},
 				}
@@ -1171,7 +1171,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return IDs of matching repos", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "selected-runners",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -1180,7 +1180,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(100)),
+							ID: new(int64(100)),
 						},
 					},
 					{
@@ -1189,7 +1189,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(200)),
+							ID: new(int64(200)),
 						},
 					},
 				}
@@ -1203,7 +1203,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should skip repos without IDs (not yet reconciled)", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "selected-runners",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -1212,7 +1212,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(100)),
+							ID: new(int64(100)),
 						},
 					},
 					{
@@ -1230,7 +1230,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(300)),
+							ID: new(int64(300)),
 						},
 					},
 				}
@@ -1245,7 +1245,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should handle repos with multiple runner groups", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "production-runners",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{
 					{
@@ -1254,7 +1254,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"production-runners", "staging-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(100)),
+							ID: new(int64(100)),
 						},
 					},
 					{
@@ -1263,7 +1263,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"staging-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(200)),
+							ID: new(int64(200)),
 						},
 					},
 					{
@@ -1272,7 +1272,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 							AvailableActionsRunnerGroups: []string{"production-runners"},
 						},
 						Status: v1alpha1.RepositoryStatus{
-							ID: github.Ptr(int64(300)),
+							ID: new(int64(300)),
 						},
 					},
 				}
@@ -1287,7 +1287,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return empty slice when repos list is empty", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:       "selected-runners",
-					Visibility: github.Ptr("selected"),
+					Visibility: new("selected"),
 				}
 				repos := []v1alpha1.Repository{}
 
@@ -1303,8 +1303,8 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should map all fields correctly", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows: []string{
 						"org/repo/.github/workflows/ci.yaml@refs/heads/main",
 						"org/repo/.github/workflows/deploy.yaml@refs/heads/main",
@@ -1313,9 +1313,9 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
-				Expect(result.Visibility).To(Equal(github.Ptr("selected")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Visibility).To(Equal(new("selected")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(HaveLen(2))
 				Expect(result.SelectedWorkflows).To(ContainElements(
 					"org/repo/.github/workflows/ci.yaml@refs/heads/main",
@@ -1326,32 +1326,32 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should map with visibility 'all'", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "all-runners",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     nil,
 				}
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("all-runners")))
-				Expect(result.Visibility).To(Equal(github.Ptr("all")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(false)))
+				Expect(result.Name).To(Equal(new("all-runners")))
+				Expect(result.Visibility).To(Equal(new("all")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(BeNil())
 			})
 
 			It("should map with visibility 'private'", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "private-runners",
-					Visibility:            github.Ptr("private"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("private"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("private-runners")))
-				Expect(result.Visibility).To(Equal(github.Ptr("private")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+				Expect(result.Name).To(Equal(new("private-runners")))
+				Expect(result.Visibility).To(Equal(new("private")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@main"}))
 			})
 		})
@@ -1361,30 +1361,30 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
 					Visibility:            nil,
-					RestrictedToWorkflows: github.Ptr(true),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
+				Expect(result.Name).To(Equal(new("test-group")))
 				Expect(result.Visibility).To(BeNil())
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@main"}))
 			})
 
 			It("should handle nil RestrictedToWorkflows", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("all"),
+					Visibility:            new("all"),
 					RestrictedToWorkflows: nil,
 					SelectedWorkflows:     []string{"org/repo/.github/workflows/ci.yaml@main"},
 				}
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
-				Expect(result.Visibility).To(Equal(github.Ptr("all")))
+				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Visibility).To(Equal(new("all")))
 				Expect(result.RestrictedToWorkflows).To(BeNil())
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@main"}))
 			})
@@ -1392,32 +1392,32 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should handle nil SelectedWorkflows", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(false),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(false),
 					SelectedWorkflows:     nil,
 				}
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
-				Expect(result.Visibility).To(Equal(github.Ptr("selected")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(false)))
+				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Visibility).To(Equal(new("selected")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(BeNil())
 			})
 
 			It("should handle empty SelectedWorkflows slice", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "test-group",
-					Visibility:            github.Ptr("selected"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("selected"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows:     []string{},
 				}
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("test-group")))
-				Expect(result.Visibility).To(Equal(github.Ptr("selected")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Visibility).To(Equal(new("selected")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(BeEmpty())
 			})
 		})
@@ -1433,7 +1433,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("minimal-group")))
+				Expect(result.Name).To(Equal(new("minimal-group")))
 				Expect(result.Visibility).To(BeNil())
 				Expect(result.RestrictedToWorkflows).To(BeNil())
 				Expect(result.SelectedWorkflows).To(BeNil())
@@ -1444,8 +1444,8 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should preserve workflow restrictions when enabled", func() {
 				group := v1alpha1.RunnerGroup{
 					Name:                  "restricted-group",
-					Visibility:            github.Ptr("all"),
-					RestrictedToWorkflows: github.Ptr(true),
+					Visibility:            new("all"),
+					RestrictedToWorkflows: new(true),
 					SelectedWorkflows: []string{
 						"org/repo1/.github/workflows/ci.yaml@refs/heads/main",
 						"org/repo2/.github/workflows/deploy.yaml@refs/tags/v1.0.0",
@@ -1455,9 +1455,9 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(github.Ptr("restricted-group")))
-				Expect(result.Visibility).To(Equal(github.Ptr("all")))
-				Expect(result.RestrictedToWorkflows).To(Equal(github.Ptr(true)))
+				Expect(result.Name).To(Equal(new("restricted-group")))
+				Expect(result.Visibility).To(Equal(new("all")))
+				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(HaveLen(3))
 				Expect(result.SelectedWorkflows).To(ContainElements(
 					"org/repo1/.github/workflows/ci.yaml@refs/heads/main",
@@ -1493,8 +1493,8 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when expected has more items", func() {
 				expectedIDs := []int64{100, 200, 300}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
-					{ID: github.Ptr(int64(200))},
+					{ID: new(int64(100))},
+					{ID: new(int64(200))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1505,9 +1505,9 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when current has more items", func() {
 				expectedIDs := []int64{100, 200}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
-					{ID: github.Ptr(int64(200))},
-					{ID: github.Ptr(int64(300))},
+					{ID: new(int64(100))},
+					{ID: new(int64(200))},
+					{ID: new(int64(300))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1518,7 +1518,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when expected is empty but current is not", func() {
 				expectedIDs := []int64{}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
+					{ID: new(int64(100))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1540,9 +1540,9 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true when all IDs match", func() {
 				expectedIDs := []int64{100, 200, 300}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
-					{ID: github.Ptr(int64(200))},
-					{ID: github.Ptr(int64(300))},
+					{ID: new(int64(100))},
+					{ID: new(int64(200))},
+					{ID: new(int64(300))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1553,9 +1553,9 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true when all IDs match regardless of order", func() {
 				expectedIDs := []int64{300, 100, 200}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
-					{ID: github.Ptr(int64(200))},
-					{ID: github.Ptr(int64(300))},
+					{ID: new(int64(100))},
+					{ID: new(int64(200))},
+					{ID: new(int64(300))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1566,9 +1566,9 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when some IDs differ", func() {
 				expectedIDs := []int64{100, 200, 300}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
-					{ID: github.Ptr(int64(200))},
-					{ID: github.Ptr(int64(400))},
+					{ID: new(int64(100))},
+					{ID: new(int64(200))},
+					{ID: new(int64(400))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1579,9 +1579,9 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when all IDs are different", func() {
 				expectedIDs := []int64{100, 200, 300}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(400))},
-					{ID: github.Ptr(int64(500))},
-					{ID: github.Ptr(int64(600))},
+					{ID: new(int64(400))},
+					{ID: new(int64(500))},
+					{ID: new(int64(600))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1594,7 +1594,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true when single ID matches", func() {
 				expectedIDs := []int64{100}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
+					{ID: new(int64(100))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1605,7 +1605,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return false when single ID differs", func() {
 				expectedIDs := []int64{100}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(200))},
+					{ID: new(int64(200))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1618,8 +1618,8 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should handle duplicates in expected list", func() {
 				expectedIDs := []int64{100, 100, 200}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
-					{ID: github.Ptr(int64(200))},
+					{ID: new(int64(100))},
+					{ID: new(int64(200))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1633,9 +1633,9 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should handle large repository IDs", func() {
 				expectedIDs := []int64{9223372036854775807, 1000000000000, 999999999999}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(9223372036854775807))},
-					{ID: github.Ptr(int64(1000000000000))},
-					{ID: github.Ptr(int64(999999999999))},
+					{ID: new(int64(9223372036854775807))},
+					{ID: new(int64(1000000000000))},
+					{ID: new(int64(999999999999))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1648,10 +1648,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should handle mixed matching and non-matching IDs", func() {
 				expectedIDs := []int64{100, 200, 300, 400}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
-					{ID: github.Ptr(int64(200))},
-					{ID: github.Ptr(int64(300))},
-					{ID: github.Ptr(int64(400))},
+					{ID: new(int64(100))},
+					{ID: new(int64(200))},
+					{ID: new(int64(300))},
+					{ID: new(int64(400))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)
@@ -1662,16 +1662,16 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 			It("should return true for matching unordered large list", func() {
 				expectedIDs := []int64{10, 20, 30, 40, 50, 60, 70, 80, 90, 100}
 				currentRepos := []*github.Repository{
-					{ID: github.Ptr(int64(100))},
-					{ID: github.Ptr(int64(90))},
-					{ID: github.Ptr(int64(80))},
-					{ID: github.Ptr(int64(70))},
-					{ID: github.Ptr(int64(60))},
-					{ID: github.Ptr(int64(50))},
-					{ID: github.Ptr(int64(40))},
-					{ID: github.Ptr(int64(30))},
-					{ID: github.Ptr(int64(20))},
-					{ID: github.Ptr(int64(10))},
+					{ID: new(int64(100))},
+					{ID: new(int64(90))},
+					{ID: new(int64(80))},
+					{ID: new(int64(70))},
+					{ID: new(int64(60))},
+					{ID: new(int64(50))},
+					{ID: new(int64(40))},
+					{ID: new(int64(30))},
+					{ID: new(int64(20))},
+					{ID: new(int64(10))},
 				}
 
 				result := EqualRepositoryIDs(expectedIDs, currentRepos)

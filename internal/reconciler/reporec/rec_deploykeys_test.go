@@ -129,24 +129,24 @@ var _ = Describe("ReconcileDeployKeys", func() {
 				{
 					Title:    "foo",
 					Key:      "random-foo-key",
-					ReadOnly: github.Ptr(false),
+					ReadOnly: new(false),
 				}, {
 					Title:    "bar",
 					Key:      "random-bar-key",
-					ReadOnly: github.Ptr(false),
+					ReadOnly: new(false),
 				},
 			}
 			currentDeployKeys = []*github.Key{
 				{
-					ID:       github.Ptr(int64(12345)),
-					Title:    github.Ptr("foo"),
-					Key:      github.Ptr("random-foo-key"),
-					ReadOnly: github.Ptr(false),
+					ID:       new(int64(12345)),
+					Title:    new("foo"),
+					Key:      new("random-foo-key"),
+					ReadOnly: new(false),
 				}, {
-					ID:       github.Ptr(int64(23456)),
-					Title:    github.Ptr("bar"),
-					Key:      github.Ptr("random-bar-key"),
-					ReadOnly: github.Ptr(false),
+					ID:       new(int64(23456)),
+					Title:    new("bar"),
+					Key:      new("random-bar-key"),
+					ReadOnly: new(false),
 				},
 			}
 		})
@@ -164,11 +164,11 @@ var _ = Describe("ReconcileDeployKeys", func() {
 				{
 					Title:    "foo",
 					Key:      "random-foo-key",
-					ReadOnly: github.Ptr(false),
+					ReadOnly: new(false),
 				}, {
 					Title:    "bar",
 					Key:      "random-bar-key",
-					ReadOnly: github.Ptr(false),
+					ReadOnly: new(false),
 				},
 			}
 			currentDeployKeys = []*github.Key{}
@@ -181,14 +181,14 @@ var _ = Describe("ReconcileDeployKeys", func() {
 			Expect(appliedDeployKeys).To(HaveLen(2))
 			Expect(appliedDeployKeys).To(ConsistOf(
 				And(
-					HaveField("Title", Equal(github.Ptr("foo"))),
-					HaveField("Key", Equal(github.Ptr("random-foo-key"))),
-					HaveField("ReadOnly", Equal(github.Ptr(false))),
+					HaveField("Title", Equal(new("foo"))),
+					HaveField("Key", Equal(new("random-foo-key"))),
+					HaveField("ReadOnly", Equal(new(false))),
 				),
 				And(
-					HaveField("Title", Equal(github.Ptr("bar"))),
-					HaveField("Key", Equal(github.Ptr("random-bar-key"))),
-					HaveField("ReadOnly", Equal(github.Ptr(false))),
+					HaveField("Title", Equal(new("bar"))),
+					HaveField("Key", Equal(new("random-bar-key"))),
+					HaveField("ReadOnly", Equal(new(false))),
 				),
 			))
 		})
@@ -200,24 +200,24 @@ var _ = Describe("ReconcileDeployKeys", func() {
 				{
 					Title:    "foo",
 					Key:      "random-foo-key",
-					ReadOnly: github.Ptr(false),
+					ReadOnly: new(false),
 				}, {
 					Title:    "bar",
 					Key:      "random-bar-key",
-					ReadOnly: github.Ptr(false),
+					ReadOnly: new(false),
 				},
 			}
 			currentDeployKeys = []*github.Key{
 				{
-					ID:       github.Ptr(int64(12345)),
-					Title:    github.Ptr("fooz"),
-					Key:      github.Ptr("random-fooz-key"),
-					ReadOnly: github.Ptr(false),
+					ID:       new(int64(12345)),
+					Title:    new("fooz"),
+					Key:      new("random-fooz-key"),
+					ReadOnly: new(false),
 				}, {
-					ID:       github.Ptr(int64(23456)),
-					Title:    github.Ptr("bar"),
-					Key:      github.Ptr("random-bar-key"),
-					ReadOnly: github.Ptr(false),
+					ID:       new(int64(23456)),
+					Title:    new("bar"),
+					Key:      new("random-bar-key"),
+					ReadOnly: new(false),
 				},
 			}
 		})
@@ -240,15 +240,15 @@ var _ = Describe("ReconcileDeployKeys", func() {
 		BeforeEach(func() {
 			currentDeployKeys = []*github.Key{
 				{
-					ID:       github.Ptr(int64(12345)),
-					Title:    github.Ptr("fooz"),
-					Key:      github.Ptr("random-fooz-key"),
-					ReadOnly: github.Ptr(false),
+					ID:       new(int64(12345)),
+					Title:    new("fooz"),
+					Key:      new("random-fooz-key"),
+					ReadOnly: new(false),
 				}, {
-					ID:       github.Ptr(int64(23456)),
-					Title:    github.Ptr("bar"),
-					Key:      github.Ptr("random-bar-key"),
-					ReadOnly: github.Ptr(false),
+					ID:       new(int64(23456)),
+					Title:    new("bar"),
+					Key:      new("random-bar-key"),
+					ReadOnly: new(false),
 				},
 			}
 		})
@@ -284,11 +284,11 @@ var _ = Describe("ReconcileDeployKeys", func() {
 				{
 					Title:    "foo",
 					Key:      "random-foo-key",
-					ReadOnly: github.Ptr(false),
+					ReadOnly: new(false),
 				}, {
 					Title:    "bar",
 					Key:      "random-bar-key",
-					ReadOnly: github.Ptr(false),
+					ReadOnly: new(false),
 				},
 			}
 			currentDeployKeys = []*github.Key{}
@@ -308,10 +308,10 @@ var _ = Describe("ReconcileDeployKeys", func() {
 			}
 			currentDeployKeys = []*github.Key{
 				{
-					ID:       github.Ptr(int64(12345)),
-					Title:    github.Ptr("fooz"),
-					Key:      github.Ptr("random-fooz-key"),
-					ReadOnly: github.Ptr(false),
+					ID:       new(int64(12345)),
+					Title:    new("fooz"),
+					Key:      new("random-fooz-key"),
+					ReadOnly: new(false),
 				},
 			}
 		})
@@ -357,10 +357,10 @@ var _ = Describe("ReconcileDeployKeys", func() {
 			}
 			currentDeployKeys = []*github.Key{
 				{
-					ID:       github.Ptr(int64(12345)),
-					Title:    github.Ptr("readonly-key"),
-					Key:      github.Ptr("ssh-rsa AAAAB3Nza..."),
-					ReadOnly: github.Ptr(true), // GitHub's default
+					ID:       new(int64(12345)),
+					Title:    new("readonly-key"),
+					Key:      new("ssh-rsa AAAAB3Nza..."),
+					ReadOnly: new(true), // GitHub's default
 				},
 			}
 		})
@@ -383,10 +383,10 @@ var _ = Describe("ReconcileDeployKeys", func() {
 			}
 			currentDeployKeys = []*github.Key{
 				{
-					ID:       github.Ptr(int64(12345)),
-					Title:    github.Ptr("readonly-key"),
-					Key:      github.Ptr("ssh-rsa AAAAB3Nza..."),
-					ReadOnly: github.Ptr(false), // differs from default
+					ID:       new(int64(12345)),
+					Title:    new("readonly-key"),
+					Key:      new("ssh-rsa AAAAB3Nza..."),
+					ReadOnly: new(false), // differs from default
 				},
 			}
 		})

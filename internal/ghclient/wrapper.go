@@ -486,7 +486,7 @@ func (g *GitHubClientWrapper) GetActionsRetentionForOrg(ctx context.Context, org
 	return result, _handleErrorResponse(response, err)
 }
 func (g *GitHubClientWrapper) SetActionsRetentionForOrg(ctx context.Context, org string, retentionInDays int) error {
-	response, err := g.client.Actions.UpdateArtifactAndLogRetentionPeriodInOrganization(ctx, org, github.ArtifactPeriodOpt{Days: github.Ptr(retentionInDays)})
+	response, err := g.client.Actions.UpdateArtifactAndLogRetentionPeriodInOrganization(ctx, org, github.ArtifactPeriodOpt{Days: new(retentionInDays)})
 	defer _closeBody(response)
 	return _handleErrorResponse(response, err)
 }

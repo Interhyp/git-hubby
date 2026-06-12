@@ -152,10 +152,10 @@ var _ = Describe("TeamController", func() {
 					return &github.Team{
 						Name:                github.Ptr(teamName),
 						Slug:                github.Ptr(teamName),
-						Description:         github.Ptr(""),
-						Privacy:             github.Ptr("closed"),
-						Permission:          github.Ptr("pull"),
-						NotificationSetting: github.Ptr("notifications_disabled"),
+						Description:         new(""),
+						Privacy:             new("closed"),
+						Permission:          new("pull"),
+						NotificationSetting: new("notifications_disabled"),
 					}, nil
 				}
 
@@ -181,21 +181,21 @@ var _ = Describe("TeamController", func() {
 					return &github.Team{
 						Name:                github.Ptr(teamName),
 						Slug:                github.Ptr(teamName),
-						Description:         github.Ptr(""),
-						Privacy:             github.Ptr("closed"),
-						Permission:          github.Ptr("pull"),
-						NotificationSetting: github.Ptr("notifications_disabled"),
+						Description:         new(""),
+						Privacy:             new("closed"),
+						Permission:          new("pull"),
+						NotificationSetting: new("notifications_disabled"),
 					}, nil
 				}
 				mockClient.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
 					return []*github.User{
-						{Login: github.Ptr("new-member_memberSuffix")},
-						{Login: github.Ptr("existing-member_memberSuffix")},
+						{Login: new("new-member_memberSuffix")},
+						{Login: new("existing-member_memberSuffix")},
 					}, nil
 				}
 				mockClient.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 					return []*github.User{
-						{Login: github.Ptr("existing-member_memberSuffix")},
+						{Login: new("existing-member_memberSuffix")},
 					}, nil
 				}
 

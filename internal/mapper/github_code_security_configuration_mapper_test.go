@@ -13,12 +13,12 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:             "test-config",
 				Description:      "Test description",
-				AdvancedSecurity: github.Ptr("enabled"),
+				AdvancedSecurity: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:             "test-config",
 				Description:      "Test description",
-				AdvancedSecurity: github.Ptr("enabled"),
+				AdvancedSecurity: new("enabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -29,26 +29,26 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                          "test-config",
 				Description:                   "Test description",
-				AdvancedSecurity:              github.Ptr("enabled"),
-				DependencyGraph:               github.Ptr("enabled"),
-				DependabotAlerts:              github.Ptr("enabled"),
-				SecretScanning:                github.Ptr("enabled"),
-				SecretScanningPushProtection:  github.Ptr("enabled"),
-				PrivateVulnerabilityReporting: github.Ptr("enabled"),
-				Enforcement:                   github.Ptr("active"),
-				CodeSecurity:                  github.Ptr("enabled"),
+				AdvancedSecurity:              new("enabled"),
+				DependencyGraph:               new("enabled"),
+				DependabotAlerts:              new("enabled"),
+				SecretScanning:                new("enabled"),
+				SecretScanningPushProtection:  new("enabled"),
+				PrivateVulnerabilityReporting: new("enabled"),
+				Enforcement:                   new("active"),
+				CodeSecurity:                  new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                          "test-config",
 				Description:                   "Test description",
-				AdvancedSecurity:              github.Ptr("enabled"),
-				DependencyGraph:               github.Ptr("enabled"),
-				DependabotAlerts:              github.Ptr("enabled"),
-				SecretScanning:                github.Ptr("enabled"),
-				SecretScanningPushProtection:  github.Ptr("enabled"),
-				PrivateVulnerabilityReporting: github.Ptr("enabled"),
-				Enforcement:                   github.Ptr("active"),
-				CodeSecurity:                  github.Ptr("enabled"),
+				AdvancedSecurity:              new("enabled"),
+				DependencyGraph:               new("enabled"),
+				DependabotAlerts:              new("enabled"),
+				SecretScanning:                new("enabled"),
+				SecretScanningPushProtection:  new("enabled"),
+				PrivateVulnerabilityReporting: new("enabled"),
+				Enforcement:                   new("active"),
+				CodeSecurity:                  new("enabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -88,11 +88,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different advanced security", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:             "test-config",
-				AdvancedSecurity: github.Ptr("enabled"),
+				AdvancedSecurity: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:             "test-config",
-				AdvancedSecurity: github.Ptr("disabled"),
+				AdvancedSecurity: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -102,11 +102,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different dependency graph", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:            "test-config",
-				DependencyGraph: github.Ptr("enabled"),
+				DependencyGraph: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:            "test-config",
-				DependencyGraph: github.Ptr("disabled"),
+				DependencyGraph: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -116,11 +116,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different dependency graph autosubmit action", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                            "test-config",
-				DependencyGraphAutosubmitAction: github.Ptr("enabled"),
+				DependencyGraphAutosubmitAction: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                            "test-config",
-				DependencyGraphAutosubmitAction: github.Ptr("disabled"),
+				DependencyGraphAutosubmitAction: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -131,13 +131,13 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				DependencyGraphAutosubmitActionOptions: &github.DependencyGraphAutosubmitActionOptions{
-					LabeledRunners: github.Ptr(true),
+					LabeledRunners: new(true),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				DependencyGraphAutosubmitActionOptions: &github.DependencyGraphAutosubmitActionOptions{
-					LabeledRunners: github.Ptr(false),
+					LabeledRunners: new(false),
 				},
 			}
 
@@ -149,7 +149,7 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				DependencyGraphAutosubmitActionOptions: &github.DependencyGraphAutosubmitActionOptions{
-					LabeledRunners: github.Ptr(true),
+					LabeledRunners: new(true),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
@@ -163,11 +163,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different dependabot alerts", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:             "test-config",
-				DependabotAlerts: github.Ptr("enabled"),
+				DependabotAlerts: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:             "test-config",
-				DependabotAlerts: github.Ptr("disabled"),
+				DependabotAlerts: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -177,11 +177,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different dependabot security updates", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                      "test-config",
-				DependabotSecurityUpdates: github.Ptr("enabled"),
+				DependabotSecurityUpdates: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                      "test-config",
-				DependabotSecurityUpdates: github.Ptr("disabled"),
+				DependabotSecurityUpdates: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -191,11 +191,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different code scanning default setup", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                     "test-config",
-				CodeScanningDefaultSetup: github.Ptr("enabled"),
+				CodeScanningDefaultSetup: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                     "test-config",
-				CodeScanningDefaultSetup: github.Ptr("disabled"),
+				CodeScanningDefaultSetup: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -207,14 +207,14 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 				Name: "test-config",
 				CodeScanningDefaultSetupOptions: &github.CodeScanningDefaultSetupOptions{
 					RunnerType:  "labeled",
-					RunnerLabel: github.Ptr("runner-1"),
+					RunnerLabel: new("runner-1"),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				CodeScanningDefaultSetupOptions: &github.CodeScanningDefaultSetupOptions{
 					RunnerType:  "labeled",
-					RunnerLabel: github.Ptr("runner-2"),
+					RunnerLabel: new("runner-2"),
 				},
 			}
 
@@ -240,11 +240,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different code scanning delegated alert dismissal", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                                "test-config",
-				CodeScanningDelegatedAlertDismissal: github.Ptr("enabled"),
+				CodeScanningDelegatedAlertDismissal: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                                "test-config",
-				CodeScanningDelegatedAlertDismissal: github.Ptr("disabled"),
+				CodeScanningDelegatedAlertDismissal: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -255,13 +255,13 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				CodeScanningOptions: &github.CodeScanningOptions{
-					AllowAdvanced: github.Ptr(true),
+					AllowAdvanced: new(true),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				CodeScanningOptions: &github.CodeScanningOptions{
-					AllowAdvanced: github.Ptr(false),
+					AllowAdvanced: new(false),
 				},
 			}
 
@@ -273,7 +273,7 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				CodeScanningOptions: &github.CodeScanningOptions{
-					AllowAdvanced: github.Ptr(true),
+					AllowAdvanced: new(true),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
@@ -287,11 +287,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different code security", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:         "test-config",
-				CodeSecurity: github.Ptr("enabled"),
+				CodeSecurity: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:         "test-config",
-				CodeSecurity: github.Ptr("disabled"),
+				CodeSecurity: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -301,11 +301,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different secret scanning", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:           "test-config",
-				SecretScanning: github.Ptr("enabled"),
+				SecretScanning: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:           "test-config",
-				SecretScanning: github.Ptr("disabled"),
+				SecretScanning: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -315,11 +315,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different secret scanning push protection", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                         "test-config",
-				SecretScanningPushProtection: github.Ptr("enabled"),
+				SecretScanningPushProtection: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                         "test-config",
-				SecretScanningPushProtection: github.Ptr("disabled"),
+				SecretScanningPushProtection: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -329,11 +329,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different secret scanning validity checks", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                         "test-config",
-				SecretScanningValidityChecks: github.Ptr("enabled"),
+				SecretScanningValidityChecks: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                         "test-config",
-				SecretScanningValidityChecks: github.Ptr("disabled"),
+				SecretScanningValidityChecks: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -343,11 +343,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different secret scanning non provider patterns", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                              "test-config",
-				SecretScanningNonProviderPatterns: github.Ptr("enabled"),
+				SecretScanningNonProviderPatterns: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                              "test-config",
-				SecretScanningNonProviderPatterns: github.Ptr("disabled"),
+				SecretScanningNonProviderPatterns: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -357,11 +357,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different secret scanning generic secrets", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                         "test-config",
-				SecretScanningGenericSecrets: github.Ptr("enabled"),
+				SecretScanningGenericSecrets: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                         "test-config",
-				SecretScanningGenericSecrets: github.Ptr("disabled"),
+				SecretScanningGenericSecrets: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -371,11 +371,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different secret scanning delegated alert dismissal", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                                  "test-config",
-				SecretScanningDelegatedAlertDismissal: github.Ptr("enabled"),
+				SecretScanningDelegatedAlertDismissal: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                                  "test-config",
-				SecretScanningDelegatedAlertDismissal: github.Ptr("disabled"),
+				SecretScanningDelegatedAlertDismissal: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -385,11 +385,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different secret protection", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:             "test-config",
-				SecretProtection: github.Ptr("enabled"),
+				SecretProtection: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:             "test-config",
-				SecretProtection: github.Ptr("disabled"),
+				SecretProtection: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -399,11 +399,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different private vulnerability reporting", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:                          "test-config",
-				PrivateVulnerabilityReporting: github.Ptr("enabled"),
+				PrivateVulnerabilityReporting: new("enabled"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:                          "test-config",
-				PrivateVulnerabilityReporting: github.Ptr("disabled"),
+				PrivateVulnerabilityReporting: new("disabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -413,11 +413,11 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		It("should return true for different enforcement", func() {
 			first := &github.CodeSecurityConfiguration{
 				Name:        "test-config",
-				Enforcement: github.Ptr("active"),
+				Enforcement: new("active"),
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name:        "test-config",
-				Enforcement: github.Ptr("inactive"),
+				Enforcement: new("inactive"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
@@ -473,14 +473,14 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 				Name: "test-config",
 				CodeScanningDefaultSetupOptions: &github.CodeScanningDefaultSetupOptions{
 					RunnerType:  "labeled",
-					RunnerLabel: github.Ptr("my-runner"),
+					RunnerLabel: new("my-runner"),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				CodeScanningDefaultSetupOptions: &github.CodeScanningDefaultSetupOptions{
 					RunnerType:  "labeled",
-					RunnerLabel: github.Ptr("my-runner"),
+					RunnerLabel: new("my-runner"),
 				},
 			}
 
@@ -493,14 +493,14 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 				Name: "test-config",
 				CodeScanningDefaultSetupOptions: &github.CodeScanningDefaultSetupOptions{
 					RunnerType:  "labeled",
-					RunnerLabel: github.Ptr("my-runner"),
+					RunnerLabel: new("my-runner"),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
 				Name: "test-config",
 				CodeScanningDefaultSetupOptions: &github.CodeScanningDefaultSetupOptions{
 					RunnerType:  "unlabeled",
-					RunnerLabel: github.Ptr("my-runner"),
+					RunnerLabel: new("my-runner"),
 				},
 			}
 

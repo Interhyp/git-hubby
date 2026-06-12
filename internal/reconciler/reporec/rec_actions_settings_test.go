@@ -44,10 +44,10 @@ var _ = Describe("ReconcileActionsSettings", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		// Default values
-		accessLevelForExternalWorkflows = github.Ptr("none")
-		orgActionsEnabled = github.Ptr("all")
+		accessLevelForExternalWorkflows = new("none")
+		orgActionsEnabled = new("all")
 		currentAccessLevel = &github.RepositoryActionsAccessLevel{
-			AccessLevel: github.Ptr("none"),
+			AccessLevel: new("none"),
 		}
 
 		// Reset flags and errors
@@ -91,14 +91,14 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:                            "test-repo",
-				Archived:                        github.Ptr(false),
+				Archived:                        new(false),
 				AccessLevelForExternalWorkflows: accessLevelForExternalWorkflows,
 				OrganizationRef: v1alpha1.OrganizationRef{
 					Name: "test-org",
 				},
 			},
 			Status: v1alpha1.RepositoryStatus{
-				ID: github.Ptr(int64(123456)),
+				ID: new(int64(123456)),
 			},
 		}
 
@@ -114,7 +114,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 				Resource: GitHubRepoIdentifier{
 					Owner: "test-org",
 					Name:  "test-repo",
-					ID:    github.Ptr(int64(123456)),
+					ID:    new(int64(123456)),
 				},
 			},
 			Kubernetes: reconciler.Kubernetes[*v1alpha1.Repository]{
@@ -128,7 +128,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 	Context("when actions are disabled for the organization", func() {
 		BeforeEach(func() {
-			orgActionsEnabled = github.Ptr("none")
+			orgActionsEnabled = new("none")
 		})
 
 		It("should skip reconciliation and not call GitHub API", func() {
@@ -150,26 +150,26 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 	Context("when updating access level for external workflows", func() {
 		BeforeEach(func() {
-			accessLevelForExternalWorkflows = github.Ptr("organization")
-			orgActionsEnabled = github.Ptr("all")
+			accessLevelForExternalWorkflows = new("organization")
+			orgActionsEnabled = new("all")
 			currentAccessLevel = &github.RepositoryActionsAccessLevel{
-				AccessLevel: github.Ptr("none"),
+				AccessLevel: new("none"),
 			}
 		})
 
 		It("should update the access level", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(setAccessLevelCalled).To(BeTrue())
-			Expect(setAccessLevelWithValue).To(Equal(github.Ptr("organization")))
+			Expect(setAccessLevelWithValue).To(Equal(new("organization")))
 		})
 	})
 
 	Context("when access level is already at desired state", func() {
 		BeforeEach(func() {
-			accessLevelForExternalWorkflows = github.Ptr("user")
-			orgActionsEnabled = github.Ptr("all")
+			accessLevelForExternalWorkflows = new("user")
+			orgActionsEnabled = new("all")
 			currentAccessLevel = &github.RepositoryActionsAccessLevel{
-				AccessLevel: github.Ptr("user"),
+				AccessLevel: new("user"),
 			}
 		})
 
@@ -182,82 +182,82 @@ var _ = Describe("ReconcileActionsSettings", func() {
 	Context("when access level is nil in spec", func() {
 		BeforeEach(func() {
 			accessLevelForExternalWorkflows = nil
-			orgActionsEnabled = github.Ptr("all")
+			orgActionsEnabled = new("all")
 			currentAccessLevel = &github.RepositoryActionsAccessLevel{
-				AccessLevel: github.Ptr("user"),
+				AccessLevel: new("user"),
 			}
 		})
 
 		It("should set access level to default 'none'", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(setAccessLevelCalled).To(BeTrue())
-			Expect(setAccessLevelWithValue).To(Equal(github.Ptr("none")))
+			Expect(setAccessLevelWithValue).To(Equal(new("none")))
 		})
 	})
 
 	Context("access level value variations", func() {
 		BeforeEach(func() {
-			orgActionsEnabled = github.Ptr("all")
+			orgActionsEnabled = new("all")
 			currentAccessLevel = &github.RepositoryActionsAccessLevel{
-				AccessLevel: github.Ptr("none"),
+				AccessLevel: new("none"),
 			}
 		})
 
 		Context("setting access level to 'none'", func() {
 			BeforeEach(func() {
-				accessLevelForExternalWorkflows = github.Ptr("none")
+				accessLevelForExternalWorkflows = new("none")
 				currentAccessLevel = &github.RepositoryActionsAccessLevel{
-					AccessLevel: github.Ptr("organization"),
+					AccessLevel: new("organization"),
 				}
 			})
 
 			It("should set access level to none", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(setAccessLevelCalled).To(BeTrue())
-				Expect(setAccessLevelWithValue).To(Equal(github.Ptr("none")))
+				Expect(setAccessLevelWithValue).To(Equal(new("none")))
 			})
 		})
 
 		Context("setting access level to 'organization'", func() {
 			BeforeEach(func() {
-				accessLevelForExternalWorkflows = github.Ptr("organization")
+				accessLevelForExternalWorkflows = new("organization")
 			})
 
 			It("should set access level to organization", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(setAccessLevelCalled).To(BeTrue())
-				Expect(setAccessLevelWithValue).To(Equal(github.Ptr("organization")))
+				Expect(setAccessLevelWithValue).To(Equal(new("organization")))
 			})
 		})
 
 		Context("setting access level to 'enterprise'", func() {
 			BeforeEach(func() {
-				accessLevelForExternalWorkflows = github.Ptr("enterprise")
+				accessLevelForExternalWorkflows = new("enterprise")
 			})
 
 			It("should set access level to enterprise", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(setAccessLevelCalled).To(BeTrue())
-				Expect(setAccessLevelWithValue).To(Equal(github.Ptr("enterprise")))
+				Expect(setAccessLevelWithValue).To(Equal(new("enterprise")))
 			})
 		})
 
 		Context("setting access level to 'user'", func() {
 			BeforeEach(func() {
-				accessLevelForExternalWorkflows = github.Ptr("user")
+				accessLevelForExternalWorkflows = new("user")
 			})
 
 			It("should set access level to user", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(setAccessLevelCalled).To(BeTrue())
-				Expect(setAccessLevelWithValue).To(Equal(github.Ptr("user")))
+				Expect(setAccessLevelWithValue).To(Equal(new("user")))
 			})
 		})
 	})
 
 	Context("error handling", func() {
 		BeforeEach(func() {
-			orgActionsEnabled = github.Ptr("all")
+			orgActionsEnabled = new("all")
 		})
 
 		Context("when GetAccessLevelForExternalWorkflowsForRepo fails", func() {
@@ -273,9 +273,9 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 		Context("when SetAccessLevelForExternalWorkflowsForRepo fails", func() {
 			BeforeEach(func() {
-				accessLevelForExternalWorkflows = github.Ptr("organization")
+				accessLevelForExternalWorkflows = new("organization")
 				currentAccessLevel = &github.RepositoryActionsAccessLevel{
-					AccessLevel: github.Ptr("none"),
+					AccessLevel: new("none"),
 				}
 				setAccessLevelError = errors.New("API error: failed to set access level")
 			})
@@ -299,14 +299,14 @@ var _ = Describe("ReconcileActionsSettings", func() {
 					},
 					Spec: v1alpha1.RepositorySpec{
 						Name:                            "test-repo",
-						Archived:                        github.Ptr(false),
-						AccessLevelForExternalWorkflows: github.Ptr("none"),
+						Archived:                        new(false),
+						AccessLevelForExternalWorkflows: new("none"),
 						OrganizationRef: v1alpha1.OrganizationRef{
 							Name: "test-org",
 						},
 					},
 					Status: v1alpha1.RepositoryStatus{
-						ID: github.Ptr(int64(123456)),
+						ID: new(int64(123456)),
 					},
 				}
 
@@ -323,7 +323,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 						Resource: GitHubRepoIdentifier{
 							Owner: "test-org",
 							Name:  "test-repo",
-							ID:    github.Ptr(int64(123456)),
+							ID:    new(int64(123456)),
 						},
 					},
 					Kubernetes: reconciler.Kubernetes[*v1alpha1.Repository]{
@@ -341,12 +341,12 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 	Context("edge cases", func() {
 		BeforeEach(func() {
-			orgActionsEnabled = github.Ptr("all")
+			orgActionsEnabled = new("all")
 		})
 
 		Context("when current access level is nil", func() {
 			BeforeEach(func() {
-				accessLevelForExternalWorkflows = github.Ptr("organization")
+				accessLevelForExternalWorkflows = new("organization")
 				currentAccessLevel = &github.RepositoryActionsAccessLevel{
 					AccessLevel: nil,
 				}
@@ -355,7 +355,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			It("should update access level", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(setAccessLevelCalled).To(BeTrue())
-				Expect(setAccessLevelWithValue).To(Equal(github.Ptr("organization")))
+				Expect(setAccessLevelWithValue).To(Equal(new("organization")))
 			})
 		})
 
@@ -370,7 +370,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			It("should set default access level 'none'", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(setAccessLevelCalled).To(BeTrue())
-				Expect(setAccessLevelWithValue).To(Equal(github.Ptr("none")))
+				Expect(setAccessLevelWithValue).To(Equal(new("none")))
 			})
 		})
 	})

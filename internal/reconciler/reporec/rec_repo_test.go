@@ -50,14 +50,14 @@ var _ = Describe("ReconcileRepository", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:                "test-repo",
-				Archived:            github.Ptr(false),
+				Archived:            new(false),
 				Visibility:          "internal",
-				HasIssues:           github.Ptr(true),
-				HasProjects:         github.Ptr(false),
-				HasWiki:             github.Ptr(false),
-				HasDownloads:        github.Ptr(false),
-				IsTemplate:          github.Ptr(false),
-				DeleteBranchOnMerge: github.Ptr(true),
+				HasIssues:           new(true),
+				HasProjects:         new(false),
+				HasWiki:             new(false),
+				HasDownloads:        new(false),
+				IsTemplate:          new(false),
+				DeleteBranchOnMerge: new(true),
 				MergeCommitMessage:  "PR_TITLE",
 				MergeCommitTitle:    "MERGE_MESSAGE",
 				OrganizationRef: v1alpha1.OrganizationRef{
@@ -73,25 +73,25 @@ var _ = Describe("ReconcileRepository", func() {
 
 		// Default: current GitHub repo matches desired state
 		currentGHRepo = &github.Repository{
-			Name:                github.Ptr("test-repo"),
-			Visibility:          github.Ptr("internal"),
-			Archived:            github.Ptr(false),
+			Name:                new("test-repo"),
+			Visibility:          new("internal"),
+			Archived:            new(false),
 			HasIssues:           repo.Spec.HasIssues,
-			HasProjects:         github.Ptr(false),
-			HasWiki:             github.Ptr(false),
-			HasDownloads:        github.Ptr(false),
-			IsTemplate:          github.Ptr(false),
-			AutoInit:            github.Ptr(true),
-			AllowSquashMerge:    github.Ptr(false),
-			AllowRebaseMerge:    github.Ptr(false),
-			AllowMergeCommit:    github.Ptr(false),
+			HasProjects:         new(false),
+			HasWiki:             new(false),
+			HasDownloads:        new(false),
+			IsTemplate:          new(false),
+			AutoInit:            new(true),
+			AllowSquashMerge:    new(false),
+			AllowRebaseMerge:    new(false),
+			AllowMergeCommit:    new(false),
 			DeleteBranchOnMerge: repo.Spec.DeleteBranchOnMerge,
-			MergeCommitTitle:    github.Ptr("MERGE_MESSAGE"),
-			MergeCommitMessage:  github.Ptr("PR_TITLE"),
-			Homepage:            github.Ptr(""),
-			Description:         github.Ptr(""),
-			ID:                  github.Ptr(int64(12345)),
-			DefaultBranch:       github.Ptr(repo.Spec.DefaultBranch),
+			MergeCommitTitle:    new("MERGE_MESSAGE"),
+			MergeCommitMessage:  new("PR_TITLE"),
+			Homepage:            new(""),
+			Description:         new(""),
+			ID:                  new(int64(12345)),
+			DefaultBranch:       new(repo.Spec.DefaultBranch),
 		}
 
 		// Set default mock functions (can be overridden in nested BeforeEach)
@@ -105,7 +105,7 @@ var _ = Describe("ReconcileRepository", func() {
 			// Return the edited repo with the same ID
 			result := *repository
 			if result.ID == nil {
-				result.ID = github.Ptr(int64(12345))
+				result.ID = new(int64(12345))
 			}
 			return &result, nil
 		}
@@ -115,7 +115,7 @@ var _ = Describe("ReconcileRepository", func() {
 			createdRepo = repository
 			// Return the created repo with an ID
 			result := *repository
-			result.ID = github.Ptr(int64(12345))
+			result.ID = new(int64(12345))
 			return &result, nil
 		}
 	})
@@ -163,10 +163,10 @@ var _ = Describe("ReconcileRepository", func() {
 	Context("when repository name differs", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("old-name"),
-				Visibility: github.Ptr("internal"),
-				Archived:   github.Ptr(false),
-				ID:         github.Ptr(int64(12345)),
+				Name:       new("old-name"),
+				Visibility: new("internal"),
+				Archived:   new(false),
+				ID:         new(int64(12345)),
 			}
 		})
 
@@ -181,10 +181,10 @@ var _ = Describe("ReconcileRepository", func() {
 	Context("when repository archived status differs", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("test-repo"),
-				Visibility: github.Ptr("internal"),
-				Archived:   github.Ptr(true),
-				ID:         github.Ptr(int64(12345)),
+				Name:       new("test-repo"),
+				Visibility: new("internal"),
+				Archived:   new(true),
+				ID:         new(int64(12345)),
 			}
 		})
 
@@ -199,10 +199,10 @@ var _ = Describe("ReconcileRepository", func() {
 	Context("when repository visibility differs", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("test-repo"),
-				Visibility: github.Ptr("public"),
-				Archived:   github.Ptr(false),
-				ID:         github.Ptr(int64(12345)),
+				Name:       new("test-repo"),
+				Visibility: new("public"),
+				Archived:   new(false),
+				ID:         new(int64(12345)),
 			}
 		})
 
@@ -217,10 +217,10 @@ var _ = Describe("ReconcileRepository", func() {
 	Context("when multiple fields differ", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("old-name"),
-				Visibility: github.Ptr("public"),
-				Archived:   github.Ptr(true),
-				ID:         github.Ptr(int64(12345)),
+				Name:       new("old-name"),
+				Visibility: new("public"),
+				Archived:   new(true),
+				ID:         new(int64(12345)),
 			}
 		})
 
@@ -388,10 +388,10 @@ var _ = Describe("ReconcileRepository", func() {
 	Context("when EditRepository fails", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("old-name"),
-				Visibility: github.Ptr("internal"),
-				Archived:   github.Ptr(false),
-				ID:         github.Ptr(int64(12345)),
+				Name:       new("old-name"),
+				Visibility: new("internal"),
+				Archived:   new(false),
+				ID:         new(int64(12345)),
 			}
 			mockClient.EditRepositoryFunc = func(ctx context.Context, owner, name string, repository *github.Repository) (*github.Repository, error) {
 				return nil, errors.New("failed to edit repository")
@@ -407,9 +407,9 @@ var _ = Describe("ReconcileRepository", func() {
 	Context("when GitHub returns repository with nil ID", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("test-repo"),
-				Visibility: github.Ptr("internal"),
-				Archived:   github.Ptr(false),
+				Name:       new("test-repo"),
+				Visibility: new("internal"),
+				Archived:   new(false),
 				ID:         nil,
 			}
 		})
@@ -435,12 +435,12 @@ var _ = Describe("ReconcileRepository", func() {
 
 	Context("when repository spec has archived=true", func() {
 		BeforeEach(func() {
-			repo.Spec.Archived = github.Ptr(true)
+			repo.Spec.Archived = new(true)
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("test-repo"),
-				Visibility: github.Ptr("internal"),
-				Archived:   github.Ptr(false),
-				ID:         github.Ptr(int64(12345)),
+				Name:       new("test-repo"),
+				Visibility: new("internal"),
+				Archived:   new(false),
+				ID:         new(int64(12345)),
 			}
 		})
 
@@ -468,27 +468,27 @@ var _ = Describe("ReconcileRepository", func() {
 
 	Context("when repository is already archived on GitHub", func() {
 		BeforeEach(func() {
-			repo.Spec.Archived = github.Ptr(true)
+			repo.Spec.Archived = new(true)
 			currentGHRepo = &github.Repository{
-				Name:                github.Ptr("test-repo"),
-				Visibility:          github.Ptr("internal"),
-				Archived:            github.Ptr(true),
-				ID:                  github.Ptr(int64(12345)),
+				Name:                new("test-repo"),
+				Visibility:          new("internal"),
+				Archived:            new(true),
+				ID:                  new(int64(12345)),
 				HasIssues:           repo.Spec.HasIssues,
-				HasProjects:         github.Ptr(false),
-				HasWiki:             github.Ptr(false),
-				HasDownloads:        github.Ptr(false),
-				IsTemplate:          github.Ptr(false),
-				AutoInit:            github.Ptr(true),
-				AllowSquashMerge:    github.Ptr(false),
-				AllowRebaseMerge:    github.Ptr(false),
-				AllowMergeCommit:    github.Ptr(false),
+				HasProjects:         new(false),
+				HasWiki:             new(false),
+				HasDownloads:        new(false),
+				IsTemplate:          new(false),
+				AutoInit:            new(true),
+				AllowSquashMerge:    new(false),
+				AllowRebaseMerge:    new(false),
+				AllowMergeCommit:    new(false),
 				DeleteBranchOnMerge: repo.Spec.DeleteBranchOnMerge,
-				MergeCommitTitle:    github.Ptr("MERGE_MESSAGE"),
-				MergeCommitMessage:  github.Ptr("PR_TITLE"),
-				Homepage:            github.Ptr(""),
-				Description:         github.Ptr(""),
-				DefaultBranch:       github.Ptr(repo.Spec.DefaultBranch),
+				MergeCommitTitle:    new("MERGE_MESSAGE"),
+				MergeCommitMessage:  new("PR_TITLE"),
+				Homepage:            new(""),
+				Description:         new(""),
+				DefaultBranch:       new(repo.Spec.DefaultBranch),
 			}
 		})
 
@@ -510,16 +510,16 @@ var _ = Describe("ReconcileRepository", func() {
 	Context("when repository tries to unarchive an archived repo", func() {
 		BeforeEach(func() {
 			// Spec wants to unarchive (archived=false), but repo IS archived on GitHub
-			repo.Spec.Archived = github.Ptr(false)
+			repo.Spec.Archived = new(false)
 			repo.Spec.About = v1alpha1.About{
 				Description: "New description",
 			}
 			currentGHRepo = &github.Repository{
-				Name:        github.Ptr("test-repo"),
-				Visibility:  github.Ptr("internal"),
-				Archived:    github.Ptr(true),
-				Description: github.Ptr("Old description"),
-				ID:          github.Ptr(int64(12345)),
+				Name:        new("test-repo"),
+				Visibility:  new("internal"),
+				Archived:    new(true),
+				Description: new("Old description"),
+				ID:          new(int64(12345)),
 			}
 		})
 
@@ -531,12 +531,12 @@ var _ = Describe("ReconcileRepository", func() {
 
 	Context("when repository is not archived", func() {
 		BeforeEach(func() {
-			repo.Spec.Archived = github.Ptr(false)
+			repo.Spec.Archived = new(false)
 			currentGHRepo = &github.Repository{
-				Name:       github.Ptr("test-repo"),
-				Visibility: github.Ptr("internal"),
-				Archived:   github.Ptr(false),
-				ID:         github.Ptr(int64(12345)),
+				Name:       new("test-repo"),
+				Visibility: new("internal"),
+				Archived:   new(false),
+				ID:         new(int64(12345)),
 			}
 		})
 
@@ -560,25 +560,25 @@ var _ = Describe("ReconcileRepository", func() {
 
 			// GitHub repo matches the expected defaults
 			currentGHRepo = &github.Repository{
-				Name:                github.Ptr("test-repo"),
-				Visibility:          github.Ptr("internal"),
-				Archived:            github.Ptr(false), // default
-				HasIssues:           github.Ptr(true),  // default
-				HasProjects:         github.Ptr(false), // default
-				HasWiki:             github.Ptr(false), // default
-				HasDownloads:        github.Ptr(false), // default
-				IsTemplate:          github.Ptr(false), // default
-				AutoInit:            github.Ptr(true),
-				AllowSquashMerge:    github.Ptr(false),
-				AllowRebaseMerge:    github.Ptr(false),
-				AllowMergeCommit:    github.Ptr(false),
-				DeleteBranchOnMerge: github.Ptr(true), // default
-				MergeCommitTitle:    github.Ptr("MERGE_MESSAGE"),
-				MergeCommitMessage:  github.Ptr("PR_TITLE"),
-				Homepage:            github.Ptr(""),
-				Description:         github.Ptr(""),
-				ID:                  github.Ptr(int64(12345)),
-				DefaultBranch:       github.Ptr(repo.Spec.DefaultBranch),
+				Name:                new("test-repo"),
+				Visibility:          new("internal"),
+				Archived:            new(false), // default
+				HasIssues:           new(true),  // default
+				HasProjects:         new(false), // default
+				HasWiki:             new(false), // default
+				HasDownloads:        new(false), // default
+				IsTemplate:          new(false), // default
+				AutoInit:            new(true),
+				AllowSquashMerge:    new(false),
+				AllowRebaseMerge:    new(false),
+				AllowMergeCommit:    new(false),
+				DeleteBranchOnMerge: new(true), // default
+				MergeCommitTitle:    new("MERGE_MESSAGE"),
+				MergeCommitMessage:  new("PR_TITLE"),
+				Homepage:            new(""),
+				Description:         new(""),
+				ID:                  new(int64(12345)),
+				DefaultBranch:       new(repo.Spec.DefaultBranch),
 			}
 		})
 
@@ -603,25 +603,25 @@ var _ = Describe("ReconcileRepository", func() {
 
 			// GitHub repo has different values than defaults
 			currentGHRepo = &github.Repository{
-				Name:                github.Ptr("test-repo"),
-				Visibility:          github.Ptr("internal"),
-				Archived:            github.Ptr(false),
-				HasIssues:           github.Ptr(false), // differs from default (true)
-				HasProjects:         github.Ptr(false),
-				HasWiki:             github.Ptr(false),
-				HasDownloads:        github.Ptr(false),
-				IsTemplate:          github.Ptr(false),
-				AutoInit:            github.Ptr(true),
-				AllowSquashMerge:    github.Ptr(false),
-				AllowRebaseMerge:    github.Ptr(false),
-				AllowMergeCommit:    github.Ptr(false),
-				DeleteBranchOnMerge: github.Ptr(false), // differs from default (true)
-				MergeCommitTitle:    github.Ptr("MERGE_MESSAGE"),
-				MergeCommitMessage:  github.Ptr("PR_TITLE"),
-				Homepage:            github.Ptr(""),
-				Description:         github.Ptr(""),
-				ID:                  github.Ptr(int64(12345)),
-				DefaultBranch:       github.Ptr(repo.Spec.DefaultBranch),
+				Name:                new("test-repo"),
+				Visibility:          new("internal"),
+				Archived:            new(false),
+				HasIssues:           new(false), // differs from default (true)
+				HasProjects:         new(false),
+				HasWiki:             new(false),
+				HasDownloads:        new(false),
+				IsTemplate:          new(false),
+				AutoInit:            new(true),
+				AllowSquashMerge:    new(false),
+				AllowRebaseMerge:    new(false),
+				AllowMergeCommit:    new(false),
+				DeleteBranchOnMerge: new(false), // differs from default (true)
+				MergeCommitTitle:    new("MERGE_MESSAGE"),
+				MergeCommitMessage:  new("PR_TITLE"),
+				Homepage:            new(""),
+				Description:         new(""),
+				ID:                  new(int64(12345)),
+				DefaultBranch:       new(repo.Spec.DefaultBranch),
 			}
 		})
 
@@ -699,7 +699,7 @@ var _ = Describe("getRepo", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:     "test-repo",
-				Archived: github.Ptr(false),
+				Archived: new(false),
 				OrganizationRef: v1alpha1.OrganizationRef{
 					Name: "test-org",
 				},
@@ -734,10 +734,10 @@ var _ = Describe("getRepo", func() {
 			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, name string) (*github.Repository, error) {
 				getRepoCalled = true
 				return &github.Repository{
-					Name:       github.Ptr("test-repo"),
-					Visibility: github.Ptr("internal"),
-					Archived:   github.Ptr(false),
-					ID:         github.Ptr(int64(12345)),
+					Name:       new("test-repo"),
+					Visibility: new("internal"),
+					Archived:   new(false),
+					ID:         new(int64(12345)),
 				}, nil
 			}
 
@@ -779,7 +779,7 @@ var _ = Describe("getRepo", func() {
 					Name:       repository.Name,
 					Visibility: repository.Visibility,
 					Archived:   repository.Archived,
-					ID:         github.Ptr(int64(67890)),
+					ID:         new(int64(67890)),
 				}, nil
 			}
 
@@ -872,7 +872,7 @@ var _ = Describe("updateRepo", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:     "test-repo",
-				Archived: github.Ptr(false),
+				Archived: new(false),
 				OrganizationRef: v1alpha1.OrganizationRef{
 					Name: "test-org",
 				},
@@ -904,7 +904,7 @@ var _ = Describe("updateRepo", func() {
 		BeforeEach(func() {
 			mockClient.EditRepositoryFunc = func(ctx context.Context, owner, name string, repository *github.Repository) (*github.Repository, error) {
 				result := *repository
-				result.ID = github.Ptr(int64(99999))
+				result.ID = new(int64(99999))
 				return &result, nil
 			}
 
@@ -964,7 +964,7 @@ var _ = Describe("updateID", func() {
 			},
 			Spec: v1alpha1.RepositorySpec{
 				Name:     "test-repo",
-				Archived: github.Ptr(false),
+				Archived: new(false),
 				OrganizationRef: v1alpha1.OrganizationRef{
 					Name: "test-org",
 				},
@@ -995,8 +995,8 @@ var _ = Describe("updateID", func() {
 	Context("when updating with valid repository", func() {
 		BeforeEach(func() {
 			ghRepo = &github.Repository{
-				Name: github.Ptr("test-repo"),
-				ID:   github.Ptr(int64(54321)),
+				Name: new("test-repo"),
+				ID:   new(int64(54321)),
 			}
 
 			err = rec.updateID(ctx, ghRepo)
@@ -1037,7 +1037,7 @@ var _ = Describe("updateID", func() {
 	Context("when repository ID is nil", func() {
 		BeforeEach(func() {
 			ghRepo = &github.Repository{
-				Name: github.Ptr("test-repo"),
+				Name: new("test-repo"),
 				ID:   nil,
 			}
 

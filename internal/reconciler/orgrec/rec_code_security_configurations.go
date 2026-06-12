@@ -36,6 +36,11 @@ func (o *GitHubOrgReconciler) reconcileCodeSecurityConfigurations(ctx context.Co
 		return err
 	}
 
+	if !o.Kubernetes.Resource.HasEnterpriseFeatures() {
+		log.V(1).Info("Skipping code security configurations reconciliation for free plan")
+		return nil
+	}
+
 	type attachable struct {
 		k8sName  string
 		scope    *string
@@ -261,12 +266,12 @@ func (o *GitHubOrgReconciler) getDesiredAttachmentsForScope(ctx context.Context,
 			}
 			doInclude := false
 			switch attachmentScope {
-			case "public":
-				if repo.GetVisibility() == "public" {
+			case githubv1alpha1.VisibilityPublic:
+				if repo.GetVisibility() == githubv1alpha1.VisibilityPublic {
 					doInclude = true
 				}
 			case "private_or_internal":
-				if repo.GetVisibility() == "private" || repo.GetVisibility() == "internal" {
+				if repo.GetVisibility() == githubv1alpha1.VisibilityPrivate || repo.GetVisibility() == githubv1alpha1.VisibilityInternal {
 					doInclude = true
 				}
 			case "all":

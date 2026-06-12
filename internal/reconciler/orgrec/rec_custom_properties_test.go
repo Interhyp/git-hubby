@@ -121,9 +121,9 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "environment",
 					ValueType:        "single_select",
-					Required:         github.Ptr(true),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("dev")},
-					Description:      github.Ptr("Environment type"),
+					Required:         new(true),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("dev")},
+					Description:      new("Environment type"),
 					AllowedValues:    []string{"dev", "staging", "prod"},
 					ValuesEditableBy: "org_actors",
 				},
@@ -148,15 +148,15 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "team",
 					ValueType:        "string",
-					Required:         github.Ptr(false),
-					Description:      github.Ptr("Team name"),
+					Required:         new(false),
+					Description:      new("Team name"),
 					ValuesEditableBy: "org_and_repo_actors",
 				},
 				{
 					PropertyName:     "environment",
 					ValueType:        "single_select",
-					Required:         github.Ptr(true),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("dev")},
+					Required:         new(true),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("dev")},
 					AllowedValues:    []string{"dev", "staging", "prod"},
 					ValuesEditableBy: "org_actors",
 				},
@@ -185,13 +185,13 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("environment"),
+						PropertyName:     new("environment"),
 						ValueType:        github.PropertyValueTypeSingleSelect,
-						Required:         github.Ptr(true),
+						Required:         new(true),
 						DefaultValue:     "dev",
-						Description:      github.Ptr("Old description"),
+						Description:      new("Old description"),
 						AllowedValues:    []string{"dev", "prod"},
-						ValuesEditableBy: github.Ptr("org_actors"),
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
@@ -202,9 +202,9 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "environment",
 					ValueType:        "single_select",
-					Required:         github.Ptr(true),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("staging")},
-					Description:      github.Ptr("Updated environment description"),
+					Required:         new(true),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("staging")},
+					Description:      new("Updated environment description"),
 					AllowedValues:    []string{"dev", "staging", "prod"},
 					ValuesEditableBy: "org_actors",
 				},
@@ -225,13 +225,13 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("environment"),
+						PropertyName:     new("environment"),
 						ValueType:        github.PropertyValueTypeSingleSelect,
-						Required:         github.Ptr(true),
+						Required:         new(true),
 						DefaultValue:     "dev",
-						Description:      github.Ptr("Environment type"),
+						Description:      new("Environment type"),
 						AllowedValues:    []string{"dev", "staging", "prod"},
-						ValuesEditableBy: github.Ptr("org_actors"),
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
@@ -241,9 +241,9 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "environment",
 					ValueType:        "single_select",
-					Required:         github.Ptr(true),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("dev")},
-					Description:      github.Ptr("Environment type"),
+					Required:         new(true),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("dev")},
+					Description:      new("Environment type"),
 					AllowedValues:    []string{"dev", "staging", "prod"},
 					ValuesEditableBy: "org_actors",
 				},
@@ -263,19 +263,19 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("environment"),
+						PropertyName:     new("environment"),
 						ValueType:        github.PropertyValueTypeSingleSelect,
-						Required:         github.Ptr(true),
+						Required:         new(true),
 						DefaultValue:     "dev",
 						AllowedValues:    []string{"dev", "prod"},
-						ValuesEditableBy: github.Ptr("org_actors"),
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 					{
-						PropertyName:     github.Ptr("team"),
+						PropertyName:     new("team"),
 						ValueType:        github.PropertyValueTypeString,
-						Required:         github.Ptr(false),
-						ValuesEditableBy: github.Ptr("org_actors"),
+						Required:         new(false),
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
@@ -286,8 +286,8 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "environment",
 					ValueType:        "single_select",
-					Required:         github.Ptr(true),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("dev")},
+					Required:         new(true),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("dev")},
 					AllowedValues:    []string{"dev", "prod"},
 					ValuesEditableBy: "org_actors",
 				},
@@ -308,9 +308,9 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "tags",
 					ValueType:        "multi_select",
-					Required:         github.Ptr(true),
+					Required:         new(true),
 					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Values: []string{"backend", "api"}},
-					Description:      github.Ptr("Repository tags"),
+					Description:      new("Repository tags"),
 					AllowedValues:    []string{"frontend", "backend", "api", "database"},
 					ValuesEditableBy: "org_actors",
 				},
@@ -337,9 +337,9 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "is_production",
 					ValueType:        "true_false",
-					Required:         github.Ptr(true),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("false")},
-					Description:      github.Ptr("Is production repository"),
+					Required:         new(true),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("false")},
+					Description:      new("Is production repository"),
 					ValuesEditableBy: "org_actors",
 				},
 			}
@@ -364,8 +364,8 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "optional_tag",
 					ValueType:        "string",
-					Required:         github.Ptr(false),
-					Description:      github.Ptr("Optional tag"),
+					Required:         new(false),
+					Description:      new("Optional tag"),
 					ValuesEditableBy: "org_and_repo_actors",
 				},
 			}
@@ -439,10 +439,10 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("broken"),
+						PropertyName:     new("broken"),
 						ValueType:        github.PropertyValueTypeMultiSelect,
 						DefaultValue:     "not-a-slice", // Invalid type for multi_select
-						ValuesEditableBy: github.Ptr("org_actors"),
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
@@ -471,17 +471,17 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("org_property"),
+						PropertyName:     new("org_property"),
 						ValueType:        github.PropertyValueTypeString,
-						Required:         github.Ptr(false), // Must match default
-						ValuesEditableBy: github.Ptr("org_actors"),
+						Required:         new(false), // Must match default
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 					{
-						PropertyName:     github.Ptr("repo_property"),
+						PropertyName:     new("repo_property"),
 						ValueType:        github.PropertyValueTypeString,
-						ValuesEditableBy: github.Ptr("org_actors"),
-						SourceType:       github.Ptr("repository"), // This should be filtered out
+						ValuesEditableBy: new("org_actors"),
+						SourceType:       new("repository"), // This should be filtered out
 					},
 				}, nil
 			}
@@ -490,7 +490,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "org_property",
 					ValueType:        "string",
-					Required:         github.Ptr(false), // Must be explicit
+					Required:         new(false), // Must be explicit
 					ValuesEditableBy: "org_actors",
 				},
 			}
@@ -508,12 +508,12 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("environment"),
+						PropertyName:     new("environment"),
 						ValueType:        github.PropertyValueTypeSingleSelect,
-						Required:         github.Ptr(true),
+						Required:         new(true),
 						DefaultValue:     "dev",
 						AllowedValues:    []string{"prod", "dev", "staging"}, // Different order
-						ValuesEditableBy: github.Ptr("org_actors"),
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
@@ -523,8 +523,8 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "environment",
 					ValueType:        "single_select",
-					Required:         github.Ptr(true),
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("dev")},
+					Required:         new(true),
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("dev")},
 					AllowedValues:    []string{"dev", "staging", "prod"}, // Different order
 					ValuesEditableBy: "org_actors",
 				},
@@ -543,9 +543,9 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("team"),
+						PropertyName:     new("team"),
 						ValueType:        github.PropertyValueTypeString,
-						ValuesEditableBy: github.Ptr("org_actors"),
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
@@ -572,10 +572,10 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("team"),
+						PropertyName:     new("team"),
 						ValueType:        github.PropertyValueTypeString,
-						Required:         github.Ptr(false),
-						ValuesEditableBy: github.Ptr("org_actors"),
+						Required:         new(false),
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
@@ -585,8 +585,8 @@ var _ = Describe("ReconcileCustomProperties", func() {
 				{
 					PropertyName:     "team",
 					ValueType:        "string",
-					Required:         github.Ptr(true), // Changed to required
-					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: github.Ptr("default-team")},
+					Required:         new(true), // Changed to required
+					DefaultValue:     &v1alpha1.OrgCustomPropertyDefaultValue{Value: new("default-team")},
 					ValuesEditableBy: "org_actors",
 				},
 			}
@@ -630,10 +630,10 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			getCurrentProps = func(_ context.Context, _ string) ([]*github.CustomProperty, error) {
 				return []*github.CustomProperty{
 					{
-						PropertyName:     github.Ptr("existing_property"),
+						PropertyName:     new("existing_property"),
 						ValueType:        github.PropertyValueTypeString,
-						Required:         github.Ptr(false), // GitHub has default
-						ValuesEditableBy: github.Ptr("org_actors"),
+						Required:         new(false), // GitHub has default
+						ValuesEditableBy: new("org_actors"),
 						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
@@ -732,12 +732,12 @@ var _ = Describe("getGitHubOrgCustomPropertiesByPropertyName", func() {
 		BeforeEach(func() {
 			allProps = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("prop1"),
+					PropertyName: new("prop1"),
 					ValueType:    github.PropertyValueTypeString,
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
-					PropertyName: github.Ptr("prop2"),
+					PropertyName: new("prop2"),
 					ValueType:    github.PropertyValueTypeString,
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
@@ -756,14 +756,14 @@ var _ = Describe("getGitHubOrgCustomPropertiesByPropertyName", func() {
 		BeforeEach(func() {
 			allProps = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("org_prop"),
+					PropertyName: new("org_prop"),
 					ValueType:    github.PropertyValueTypeString,
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
-					PropertyName: github.Ptr("repo_prop"),
+					PropertyName: new("repo_prop"),
 					ValueType:    github.PropertyValueTypeString,
-					SourceType:   github.Ptr("repository"),
+					SourceType:   new("repository"),
 				},
 			}
 		})
@@ -780,12 +780,12 @@ var _ = Describe("getGitHubOrgCustomPropertiesByPropertyName", func() {
 		BeforeEach(func() {
 			allProps = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr(""),
+					PropertyName: new(""),
 					ValueType:    github.PropertyValueTypeString,
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
-					PropertyName: github.Ptr("valid_prop"),
+					PropertyName: new("valid_prop"),
 					ValueType:    github.PropertyValueTypeString,
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
@@ -835,11 +835,11 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 		It("should return all properties", func() {
 			input := []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("prop1"),
+					PropertyName: new("prop1"),
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
-					PropertyName: github.Ptr("prop2"),
+					PropertyName: new("prop2"),
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 			}
@@ -852,12 +852,12 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 		It("should return empty slice", func() {
 			input := []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("prop1"),
-					SourceType:   github.Ptr("repository"),
+					PropertyName: new("prop1"),
+					SourceType:   new("repository"),
 				},
 				{
-					PropertyName: github.Ptr("prop2"),
-					SourceType:   github.Ptr("repository"),
+					PropertyName: new("prop2"),
+					SourceType:   new("repository"),
 				},
 			}
 			result := retainOnlyOrgProperties(input)
@@ -869,15 +869,15 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 		It("should only return organization-sourced properties", func() {
 			input := []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("org1"),
+					PropertyName: new("org1"),
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
-					PropertyName: github.Ptr("repo1"),
-					SourceType:   github.Ptr("repository"),
+					PropertyName: new("repo1"),
+					SourceType:   new("repository"),
 				},
 				{
-					PropertyName: github.Ptr("org2"),
+					PropertyName: new("org2"),
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 			}
@@ -892,11 +892,11 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 		It("should not include properties with nil source type", func() {
 			input := []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("org1"),
+					PropertyName: new("org1"),
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
-					PropertyName: github.Ptr("unknown"),
+					PropertyName: new("unknown"),
 					SourceType:   nil,
 				},
 			}
@@ -910,12 +910,12 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 		It("should not include properties with unexpected source type", func() {
 			input := []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr("org1"),
+					PropertyName: new("org1"),
 					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
-					PropertyName: github.Ptr("unknown"),
-					SourceType:   github.Ptr("unknown_source"),
+					PropertyName: new("unknown"),
+					SourceType:   new("unknown_source"),
 				},
 			}
 			result := retainOnlyOrgProperties(input)

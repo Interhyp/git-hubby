@@ -63,9 +63,9 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 			// GetAllOrgRoles returns available roles
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("all_repo_read"), ID: github.Ptr(int64(1))},
-					{Name: github.Ptr("all_repo_write"), ID: github.Ptr(int64(2))},
-					{Name: github.Ptr("custom_role"), ID: github.Ptr(int64(3))},
+					{Name: new("all_repo_read"), ID: new(int64(1))},
+					{Name: new("all_repo_write"), ID: new(int64(2))},
+					{Name: new("custom_role"), ID: new(int64(3))},
 				}, nil
 			}
 
@@ -77,7 +77,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -114,7 +114,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 		BeforeEach(func() {
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("all_repo_write"), ID: github.Ptr(int64(2))},
+					{Name: new("all_repo_write"), ID: new(int64(2))},
 				}, nil
 			}
 
@@ -126,7 +126,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -170,10 +170,10 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("all_repo_read"), ID: github.Ptr(int64(1))},
-					{Name: github.Ptr("all_repo_write"), ID: github.Ptr(int64(2))},
-					{Name: github.Ptr("custom_role_1"), ID: github.Ptr(int64(3))},
-					{Name: github.Ptr("custom_role_2"), ID: github.Ptr(int64(4))},
+					{Name: new("all_repo_read"), ID: new(int64(1))},
+					{Name: new("all_repo_write"), ID: new(int64(2))},
+					{Name: new("custom_role_1"), ID: new(int64(3))},
+					{Name: new("custom_role_2"), ID: new(int64(4))},
 				}, nil
 			}
 
@@ -186,7 +186,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 				Team: reconciler.GitHubTeamIdentifier{
 
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -225,9 +225,9 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("custom_role_1"), ID: github.Ptr(int64(1))},
-					{Name: github.Ptr("custom_role_2"), ID: github.Ptr(int64(2))},
-					{Name: github.Ptr("custom_role_3"), ID: github.Ptr(int64(3))},
+					{Name: new("custom_role_1"), ID: new(int64(1))},
+					{Name: new("custom_role_2"), ID: new(int64(2))},
+					{Name: new("custom_role_3"), ID: new(int64(3))},
 				}, nil
 			}
 
@@ -245,7 +245,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 				Team: reconciler.GitHubTeamIdentifier{
 
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -284,7 +284,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("custom_role_1"), ID: github.Ptr(int64(1))},
+					{Name: new("custom_role_1"), ID: new(int64(1))},
 				}, nil
 			}
 
@@ -296,7 +296,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 				Team: reconciler.GitHubTeamIdentifier{
 
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -340,8 +340,8 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 			// Setup for org1
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("all_repo_read"), ID: github.Ptr(int64(1))},
-					{Name: github.Ptr("all_repo_write"), ID: github.Ptr(int64(2))},
+					{Name: new("all_repo_read"), ID: new(int64(1))},
+					{Name: new("all_repo_write"), ID: new(int64(2))},
 				}, nil
 			}
 			mockClient1.GetAllTeamsAssignedToOrgRoleFunc = func(ctx context.Context, org string, role string) ([]string, error) {
@@ -351,8 +351,8 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 			// Setup for org2
 			mockClient2.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("all_repo_read"), ID: github.Ptr(int64(10))},
-					{Name: github.Ptr("all_repo_write"), ID: github.Ptr(int64(20))},
+					{Name: new("all_repo_read"), ID: new(int64(10))},
+					{Name: new("all_repo_write"), ID: new(int64(20))},
 				}, nil
 			}
 			mockClient2.GetAllTeamsAssignedToOrgRoleFunc = func(ctx context.Context, org string, role string) ([]string, error) {
@@ -362,7 +362,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -420,7 +420,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 				Team: reconciler.GitHubTeamIdentifier{
 
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -449,7 +449,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 		BeforeEach(func() {
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("all_repo_read"), ID: github.Ptr(int64(1))},
+					{Name: new("all_repo_read"), ID: new(int64(1))},
 				}, nil
 			}
 
@@ -461,7 +461,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 				Team: reconciler.GitHubTeamIdentifier{
 
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -492,7 +492,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("all_repo_write"), ID: github.Ptr(int64(1))},
+					{Name: new("all_repo_write"), ID: new(int64(1))},
 				}, nil
 			}
 
@@ -508,7 +508,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 				Team: reconciler.GitHubTeamIdentifier{
 
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -539,7 +539,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("custom_role"), ID: github.Ptr(int64(1))},
+					{Name: new("custom_role"), ID: new(int64(1))},
 				}, nil
 			}
 
@@ -556,7 +556,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 				Team: reconciler.GitHubTeamIdentifier{
 
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -585,9 +585,9 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 		BeforeEach(func() {
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("all_repo_read"), ID: github.Ptr(int64(1))},
-					{Name: nil, ID: github.Ptr(int64(2))}, // nil name should be skipped
-					{Name: github.Ptr("all_repo_write"), ID: github.Ptr(int64(3))},
+					{Name: new("all_repo_read"), ID: new(int64(1))},
+					{Name: nil, ID: new(int64(2))}, // nil name should be skipped
+					{Name: new("all_repo_write"), ID: new(int64(3))},
 					nil, // nil role should be skipped
 				}, nil
 			}
@@ -600,7 +600,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 				Team: reconciler.GitHubTeamIdentifier{
 
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
@@ -639,7 +639,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 
 			mockClient1.GetAllOrgRolesFunc = func(ctx context.Context, org string) ([]*github.CustomOrgRole, error) {
 				return []*github.CustomOrgRole{
-					{Name: github.Ptr("some_role"), ID: github.Ptr(int64(1))},
+					{Name: new("some_role"), ID: new(int64(1))},
 				}, nil
 			}
 
@@ -650,7 +650,7 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 			rec = &GitHubTeamReconciler{
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
-					Slug: github.Ptr("test-team"),
+					Slug: new("test-team"),
 					Organizations: reconciler.ReferencedOrganizations{
 						Current: []reconciler.GitHub[string]{
 							{
