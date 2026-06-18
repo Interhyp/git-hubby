@@ -279,14 +279,23 @@ type OrganizationSpec struct {
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
-	// Name is the GitHub organization name (also known as the organization login).
-	// This is the unique identifier for the organization on GitHub.
+	// Login is the GitHub organization login (the unique, immutable identifier on GitHub).
+	// This field is optional for backwards compatibility. If not specified, the Name field
+	// will be used as both login and display name.
+	// It is recommended to explicitly set this field to clearly separate login from display name.
 	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=100
-	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$`
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Type=string
-	Name string `json:"name"`
+	// +kubebuilder:validation:MaxLength=39
+	// +optional
+	Login string `json:"login,omitempty"`
+
+	// Name is the organization's display name shown on the GitHub profile.
+	// If Login is not specified, this field will also be used as the organization login
+	// for backwards compatibility.
+	// At least one of Login or Name must be specified.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Name string `json:"name,omitempty"`
 
 	// GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.
 	// This is used to authenticate API requests to GitHub. You can find this ID in your GitHub App's
@@ -319,6 +328,18 @@ type OrganizationSpec struct {
 	// Description is a human-readable description of the organization.
 	// This appears on the organization's GitHub profile page.
 	Description string `json:"description"`
+
+	// Location is the organization's location (e.g., "Munich, Germany").
+	// This appears on the organization's GitHub profile page.
+	// +kubebuilder:validation:MaxLength=100
+	// +optional
+	Location string `json:"location,omitempty"`
+
+	// Website is the organization's website URL.
+	// This appears on the organization's GitHub profile page as a clickable link.
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Website string `json:"website,omitempty"`
 
 	// Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).
 	// Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped.

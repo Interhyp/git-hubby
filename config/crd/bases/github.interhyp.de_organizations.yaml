@@ -325,13 +325,29 @@ spec:
                 format: int64
                 minimum: 1
                 type: integer
+              location:
+                description: |-
+                  Location is the organization's location (e.g., "Munich, Germany").
+                  This appears on the organization's GitHub profile page.
+                maxLength: 100
+                type: string
+              login:
+                description: |-
+                  Login is the GitHub organization login (the unique, immutable identifier on GitHub).
+                  This field is optional for backwards compatibility. If not specified, the Name field
+                  will be used as both login and display name.
+                  It is recommended to explicitly set this field to clearly separate login from display name.
+                maxLength: 39
+                minLength: 1
+                type: string
               name:
                 description: |-
-                  Name is the GitHub organization name (also known as the organization login).
-                  This is the unique identifier for the organization on GitHub.
-                maxLength: 100
+                  Name is the organization's display name shown on the GitHub profile.
+                  If Login is not specified, this field will also be used as the organization login
+                  for backwards compatibility.
+                  At least one of Login or Name must be specified.
+                maxLength: 255
                 minLength: 1
-                pattern: ^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$
                 type: string
               plan:
                 default: enterprise
@@ -365,12 +381,17 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              website:
+                description: |-
+                  Website is the organization's website URL.
+                  This appears on the organization's GitHub profile page as a clickable link.
+                maxLength: 255
+                type: string
             required:
             - actionsSettings
             - codeSecurityConfigurations
             - description
             - githubAppInstallationId
-            - name
             type: object
           status:
             description: status defines the observed state of Organization

@@ -11,8 +11,8 @@ import (
 var _ = Describe("GitHub Org Mapper", func() {
 
 	Describe("OrgToGithubOrg", func() {
-		Context("when converting an organization with all fields set", func() {
-			It("should successfully convert to GitHub organization", func() {
+		Context("when converting an organization with only name field (legacy mode)", func() {
+			It("should use name as both login and display name", func() {
 				org := &v1alpha1.Organization{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-org",
@@ -28,6 +28,47 @@ var _ = Describe("GitHub Org Mapper", func() {
 				Expect(githubOrg).NotTo(BeNil())
 				Expect(githubOrg.Name).To(Equal(new("my-org")))
 				Expect(githubOrg.Description).To(Equal(new("This is a test organization")))
+			})
+		})
+
+		Context("when converting an organization with both login and name", func() {
+			It("should use name as display name", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-org",
+					},
+					Spec: v1alpha1.OrganizationSpec{
+						Login:       "my-org-login",
+						Name:        "My Organization Display Name",
+						Description: "Test description",
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg).NotTo(BeNil())
+				Expect(githubOrg.Name).To(Equal(new("My Organization Display Name")))
+				Expect(githubOrg.Description).To(Equal(new("Test description")))
+			})
+		})
+
+		Context("when converting an organization with only login field", func() {
+			It("should use login as display name", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-org",
+					},
+					Spec: v1alpha1.OrganizationSpec{
+						Login:       "my-org-login",
+						Description: "Test description",
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg).NotTo(BeNil())
+				Expect(githubOrg.Name).To(Equal(new("my-org-login")))
+				Expect(githubOrg.Description).To(Equal(new("Test description")))
 			})
 		})
 
@@ -51,19 +92,82 @@ var _ = Describe("GitHub Org Mapper", func() {
 			})
 		})
 
-		Context("when converting an organization with long description", func() {
-			It("should preserve the full description", func() {
-				longDesc := "This is a very long description that contains multiple sentences. " +
-					"It describes the organization's purpose, mission, and values. " +
-					"Organizations can have descriptions up to a certain character limit."
-
+		Context("when converting an organization with Location set", func() {
+			It("should set Location in GitHub organization", func() {
 				org := &v1alpha1.Organization{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-org",
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:        "my-org",
-						Description: longDesc,
+						Location:    "Munich, Germany",
+						Description: "Test description",
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg).NotTo(BeNil())
+				Expect(githubOrg.Location).To(Equal(new("Munich, Germany")))
+			})
+		})
+
+		Context("when converting an organization with Website set", func() {
+			It("should set Blog in GitHub organization", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-org",
+					},
+					Spec: v1alpha1.OrganizationSpec{
+						Name:        "my-org",
+						Website:     "https://example.com",
+						Description: "Test description",
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg).NotTo(BeNil())
+				Expect(githubOrg.Blog).To(Equal(new("https://example.com")))
+			})
+		})
+
+		Context("when converting an organization with all fields set", func() {
+			It("should set all fields correctly", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-org",
+					},
+					Spec: v1alpha1.OrganizationSpec{
+						Login:       "my-org-login",
+						Name:        "My Org Display Name",
+						Location:    "Munich, Germany",
+						Website:     "https://example.com",
+						Description: "Test description",
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg).NotTo(BeNil())
+				Expect(githubOrg.Name).To(Equal(new("My Org Display Name")))
+				Expect(githubOrg.Location).To(Equal(new("Munich, Germany")))
+				Expect(githubOrg.Blog).To(Equal(new("https://example.com")))
+				Expect(githubOrg.Description).To(Equal(new("Test description")))
+			})
+		})
+
+		Context("when converting an organization with empty optional fields", func() {
+			It("should not set Location and Blog when empty", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-org",
+					},
+					Spec: v1alpha1.OrganizationSpec{
+						Name:        "my-org",
+						Location:    "",
+						Website:     "",
+						Description: "Test description",
 					},
 				}
 
@@ -71,28 +175,8 @@ var _ = Describe("GitHub Org Mapper", func() {
 
 				Expect(githubOrg).NotTo(BeNil())
 				Expect(githubOrg.Name).To(Equal(new("my-org")))
-				Expect(githubOrg.Description).To(Equal(new(longDesc)))
-			})
-		})
-
-		Context("when converting an organization with special characters in description", func() {
-			It("should preserve special characters", func() {
-				specialDesc := "Org with special chars: @#$%^&*()_+-=[]{}|;:',.<>?/~`"
-
-				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
-					Spec: v1alpha1.OrganizationSpec{
-						Name:        "my-org",
-						Description: specialDesc,
-					},
-				}
-
-				githubOrg := OrgToGithubOrg(org)
-
-				Expect(githubOrg).NotTo(BeNil())
-				Expect(githubOrg.Description).To(Equal(new(specialDesc)))
+				Expect(githubOrg.Location).To(BeNil())
+				Expect(githubOrg.Blog).To(BeNil())
 			})
 		})
 	})
@@ -112,9 +196,10 @@ var _ = Describe("GitHub Org Mapper", func() {
 			}
 		})
 
-		Context("when organizations match exactly", func() {
+		Context("when organizations match exactly (legacy mode)", func() {
 			It("should return false", func() {
 				githubOrg := github.Organization{
+					Login:       new("my-org"),
 					Name:        new("my-org"),
 					Description: new("Test organization"),
 				}
@@ -125,10 +210,25 @@ var _ = Describe("GitHub Org Mapper", func() {
 			})
 		})
 
-		Context("when name differs", func() {
+		Context("when login differs", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
-					Name:        new("different-org"),
+					Login:       new("different-org"),
+					Name:        new("my-org"),
+					Description: new("Test organization"),
+				}
+
+				differs := OrgDiffers(org, githubOrg)
+
+				Expect(differs).To(BeTrue())
+			})
+		})
+
+		Context("when display name differs", func() {
+			It("should return true", func() {
+				githubOrg := github.Organization{
+					Login:       new("my-org"),
+					Name:        new("Different Name"),
 					Description: new("Test organization"),
 				}
 
@@ -141,6 +241,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when description differs", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
+					Login:       new("my-org"),
 					Name:        new("my-org"),
 					Description: new("Different description"),
 				}
@@ -151,23 +252,11 @@ var _ = Describe("GitHub Org Mapper", func() {
 			})
 		})
 
-		Context("when both name and description differ", func() {
+		Context("when GitHub organization has nil login", func() {
 			It("should return true", func() {
 				githubOrg := github.Organization{
-					Name:        new("different-org"),
-					Description: new("Different description"),
-				}
-
-				differs := OrgDiffers(org, githubOrg)
-
-				Expect(differs).To(BeTrue())
-			})
-		})
-
-		Context("when GitHub organization has nil name", func() {
-			It("should return true", func() {
-				githubOrg := github.Organization{
-					Name:        nil,
+					Login:       nil,
+					Name:        new("my-org"),
 					Description: new("Test organization"),
 				}
 
@@ -177,25 +266,42 @@ var _ = Describe("GitHub Org Mapper", func() {
 			})
 		})
 
-		Context("when GitHub organization has nil description", func() {
-			It("should return true", func() {
+		Context("when Location differs", func() {
+			It("should return true when K8s has Location but GitHub does not", func() {
+				org.Spec.Location = "Munich, Germany"
 				githubOrg := github.Organization{
+					Login:       new("my-org"),
 					Name:        new("my-org"),
-					Description: nil,
+					Description: new("Test organization"),
+					Location:    nil,
 				}
 
 				differs := OrgDiffers(org, githubOrg)
 
 				Expect(differs).To(BeTrue())
 			})
-		})
 
-		Context("when both organizations have empty descriptions", func() {
-			It("should return false", func() {
-				org.Spec.Description = ""
+			It("should return true when Location values differ", func() {
+				org.Spec.Location = "Munich, Germany"
 				githubOrg := github.Organization{
+					Login:       new("my-org"),
 					Name:        new("my-org"),
-					Description: new(""),
+					Description: new("Test organization"),
+					Location:    new("Berlin, Germany"),
+				}
+
+				differs := OrgDiffers(org, githubOrg)
+
+				Expect(differs).To(BeTrue())
+			})
+
+			It("should return false when Location values match", func() {
+				org.Spec.Location = "Munich, Germany"
+				githubOrg := github.Organization{
+					Login:       new("my-org"),
+					Name:        new("my-org"),
+					Description: new("Test organization"),
+					Location:    new("Munich, Germany"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -204,12 +310,71 @@ var _ = Describe("GitHub Org Mapper", func() {
 			})
 		})
 
-		Context("when K8s description is empty but GitHub has description", func() {
-			It("should return true", func() {
-				org.Spec.Description = ""
+		Context("when Website differs", func() {
+			It("should return true when K8s has Website but GitHub does not", func() {
+				org.Spec.Website = "https://example.com"
 				githubOrg := github.Organization{
+					Login:       new("my-org"),
 					Name:        new("my-org"),
-					Description: new("Some description"),
+					Description: new("Test organization"),
+					Blog:        nil,
+				}
+
+				differs := OrgDiffers(org, githubOrg)
+
+				Expect(differs).To(BeTrue())
+			})
+
+			It("should return false when Website values match", func() {
+				org.Spec.Website = "https://example.com"
+				githubOrg := github.Organization{
+					Login:       new("my-org"),
+					Name:        new("my-org"),
+					Description: new("Test organization"),
+					Blog:        new("https://example.com"),
+				}
+
+				differs := OrgDiffers(org, githubOrg)
+
+				Expect(differs).To(BeFalse())
+			})
+		})
+
+		Context("when using explicit login and name", func() {
+			BeforeEach(func() {
+				org.Spec.Login = "my-org-login"
+				org.Spec.Name = "My Organization Display Name"
+			})
+
+			It("should compare login and display name separately", func() {
+				githubOrg := github.Organization{
+					Login:       new("my-org-login"),
+					Name:        new("My Organization Display Name"),
+					Description: new("Test organization"),
+				}
+
+				differs := OrgDiffers(org, githubOrg)
+
+				Expect(differs).To(BeFalse())
+			})
+
+			It("should return true when login matches but display name differs", func() {
+				githubOrg := github.Organization{
+					Login:       new("my-org-login"),
+					Name:        new("Different Display Name"),
+					Description: new("Test organization"),
+				}
+
+				differs := OrgDiffers(org, githubOrg)
+
+				Expect(differs).To(BeTrue())
+			})
+
+			It("should return true when display name matches but login differs", func() {
+				githubOrg := github.Organization{
+					Login:       new("different-login"),
+					Name:        new("My Organization Display Name"),
+					Description: new("Test organization"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
@@ -218,40 +383,137 @@ var _ = Describe("GitHub Org Mapper", func() {
 			})
 		})
 
-		Context("when K8s has description but GitHub description is empty", func() {
-			It("should return true", func() {
+		Context("when all fields match", func() {
+			It("should return false", func() {
+				org.Spec.Login = "my-org-login"
+				org.Spec.Name = "My Org Display Name"
+				org.Spec.Location = "Munich, Germany"
+				org.Spec.Website = "https://example.com"
 				githubOrg := github.Organization{
-					Name:        new("my-org"),
-					Description: new(""),
+					Login:       new("my-org-login"),
+					Name:        new("My Org Display Name"),
+					Description: new("Test organization"),
+					Location:    new("Munich, Germany"),
+					Blog:        new("https://example.com"),
 				}
 
 				differs := OrgDiffers(org, githubOrg)
 
-				Expect(differs).To(BeTrue())
+				Expect(differs).To(BeFalse())
+			})
+		})
+	})
+
+	Describe("Organization Helper Methods", func() {
+		Describe("GetLogin", func() {
+			It("should return Login when explicitly set", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{
+						Login: "my-login",
+						Name:  "My Display Name",
+					},
+				}
+
+				Expect(org.GetLogin()).To(Equal("my-login"))
+			})
+
+			It("should return Name when Login is not set (legacy mode)", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+					},
+				}
+
+				Expect(org.GetLogin()).To(Equal("my-org"))
+			})
+
+			It("should return empty string when nil", func() {
+				var org *v1alpha1.Organization
+				Expect(org.GetLogin()).To(Equal(""))
 			})
 		})
 
-		Context("when checking whitespace differences", func() {
-			It("should detect trailing whitespace differences", func() {
-				githubOrg := github.Organization{
-					Name:        new("my-org"),
-					Description: new("Test organization "),
+		Describe("GetDisplayName", func() {
+			It("should return Name when both Login and Name are set", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{
+						Login: "my-login",
+						Name:  "My Display Name",
+					},
 				}
 
-				differs := OrgDiffers(org, githubOrg)
-
-				Expect(differs).To(BeTrue())
+				Expect(org.GetDisplayName()).To(Equal("My Display Name"))
 			})
 
-			It("should detect leading whitespace differences", func() {
-				githubOrg := github.Organization{
-					Name:        new("my-org"),
-					Description: new(" Test organization"),
+			It("should return Login when only Login is set", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{
+						Login: "my-login",
+					},
 				}
 
-				differs := OrgDiffers(org, githubOrg)
+				Expect(org.GetDisplayName()).To(Equal("my-login"))
+			})
 
-				Expect(differs).To(BeTrue())
+			It("should return Name when only Name is set (legacy mode)", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+					},
+				}
+
+				Expect(org.GetDisplayName()).To(Equal("my-org"))
+			})
+
+			It("should return empty string when nil", func() {
+				var org *v1alpha1.Organization
+				Expect(org.GetDisplayName()).To(Equal(""))
+			})
+		})
+
+		Describe("IsUsingLegacyNameField", func() {
+			It("should return true when only Name is set", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+					},
+				}
+
+				Expect(org.IsUsingLegacyNameField()).To(BeTrue())
+			})
+
+			It("should return false when Login is set", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{
+						Login: "my-login",
+						Name:  "My Display Name",
+					},
+				}
+
+				Expect(org.IsUsingLegacyNameField()).To(BeFalse())
+			})
+
+			It("should return false when only Login is set", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{
+						Login: "my-login",
+					},
+				}
+
+				Expect(org.IsUsingLegacyNameField()).To(BeFalse())
+			})
+
+			It("should return false when nil", func() {
+				var org *v1alpha1.Organization
+				Expect(org.IsUsingLegacyNameField()).To(BeFalse())
+			})
+
+			It("should return false when both are empty", func() {
+				org := &v1alpha1.Organization{
+					Spec: v1alpha1.OrganizationSpec{},
+				}
+
+				Expect(org.IsUsingLegacyNameField()).To(BeFalse())
 			})
 		})
 	})

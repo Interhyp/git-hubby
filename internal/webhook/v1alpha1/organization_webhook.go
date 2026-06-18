@@ -78,8 +78,16 @@ func (v *OrganizationCustomValidator) ValidateUpdate(_ context.Context, _ *githu
 func validateOrganization(organization *githubv1alpha1.Organization) error {
 	var allErrs field.ErrorList
 
+	// Validate that at least one of login or name is set
+	if organization.Spec.Login == "" && organization.Spec.Name == "" {
+		allErrs = append(allErrs, field.Required(
+			field.NewPath("spec"),
+			"either 'login' or 'name' must be specified",
+		))
+	}
+
 	customPropertiesField := field.NewPath("spec").Child("customProperties")
-	allErrs = validateCustomProperties(organization.Spec.CustomProperties, customPropertiesField)
+	allErrs = append(allErrs, validateCustomProperties(organization.Spec.CustomProperties, customPropertiesField)...)
 
 	allErrs = append(allErrs, validatePlanFeatureCombinations(organization)...)
 
