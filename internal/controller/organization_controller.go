@@ -21,21 +21,21 @@ import (
 	"errors"
 	"time"
 
+	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/ratelimit"
 	"github.com/Interhyp/git-hubby/internal/reconciler/orgrec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // OrganizationCtl reconciles a Organization object
@@ -44,6 +44,9 @@ type OrganizationCtl struct {
 	Scheme                 *runtime.Scheme
 	ReconcilerFactory      *reconcilerfactory.Factory
 	SuccessRequeueInterval time.Duration
+	// LegacySecretName is the credential secret name used for Organizations that still
+	// reference the deprecated GitHubAppInstallationId field.
+	LegacySecretName string
 }
 
 // +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=organizations,verbs=get;list;watch;create;update;patch;delete
@@ -54,13 +57,6 @@ type OrganizationCtl struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Organization object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.23.3/pkg/reconcile
 func (r *OrganizationCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
@@ -113,7 +109,11 @@ func (r *OrganizationCtl) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&githubv1alpha1.Organization{}).
+		// Apply the generation/annotation predicate only to the primary Organization resource,
+		// not to the secondary watches (CSC, RulesetPreset) so each can use its own filter.
+		For(&githubv1alpha1.Organization{},
+			builder.WithPredicates(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.AnnotationChangedPredicate{})),
+		).
 		Watches( // changes of csc should trigger reconciliation of orgs using it
 			&githubv1alpha1.CodeSecurityConfiguration{},
 			handler.EnqueueRequestsFromMapFunc(r.findOrganizationsForCodeSecurityConfiguration),
@@ -122,7 +122,10 @@ func (r *OrganizationCtl) SetupWithManager(mgr ctrl.Manager) error {
 			&githubv1alpha1.RulesetPreset{},
 			handler.EnqueueRequestsFromMapFunc(r.findOrganizationsForRulesetPreset),
 		).
-		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.AnnotationChangedPredicate{})).
+		// NOTE: credential secrets are fetched directly (non-cached) on each reconciliation;
+		// no Secret watch is registered so the credentials namespace does not need to be
+		// added to the manager's cache, avoiding RBAC errors in unrelated namespaces.
+		// A pod restart is required to pick up rotated credentials.
 		WithOptions(controller.Options{
 			UsePriorityQueue: new(true),
 			RateLimiter: workqueue.NewTypedMaxOfRateLimiter(

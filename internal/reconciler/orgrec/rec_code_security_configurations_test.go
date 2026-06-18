@@ -53,7 +53,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    testOrg,
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 
@@ -674,7 +674,7 @@ var _ = Describe("UnsetObsoleteDefaults", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    testOrg,
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 
@@ -831,7 +831,7 @@ var _ = Describe("ResolveBypassReviewerNames", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    testOrg,
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 
@@ -1034,7 +1034,7 @@ var _ = Describe("AttachToRepos", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    testOrg,
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 

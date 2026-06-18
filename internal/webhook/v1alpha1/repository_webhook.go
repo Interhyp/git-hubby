@@ -21,6 +21,7 @@ import (
 	baseerrors "errors"
 	"fmt"
 
+	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/google/go-github/v86/github"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -29,8 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
-	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 )
 
 // nolint:unused
@@ -38,17 +37,19 @@ import (
 var repositorylog = logf.Log.WithName("repository-resource")
 
 // SetupRepositoryWebhookWithManager registers the webhook for Repository in the manager.
-func SetupRepositoryWebhookWithManager(mgr ctrl.Manager, clientManager GitHubClientManager) error {
+func SetupRepositoryWebhookWithManager(mgr ctrl.Manager, clientManager GitHubClientManager, legacySecretName string) error {
 	return ctrl.NewWebhookManagedBy(mgr, &githubv1alpha1.Repository{}).
 		WithValidator(&RepositoryCustomValidator{
 			K8sClient:           mgr.GetClient(),
 			GitHubClientManager: clientManager,
+			LegacySecretName:    legacySecretName,
 		}).
 		Complete()
 }
 
+// GitHubClientManager is the interface the repository webhook uses to obtain a GitHub client.
 type GitHubClientManager interface {
-	GetClient(ctx context.Context, orgName string, appInstallationID int64) (ghclient.GitHubClient, error)
+	GetClient(ctx context.Context, cacheKey string, app githubv1alpha1.GitHubAppConfig) (ghclient.GitHubClient, error)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -64,6 +65,9 @@ type RepositoryCustomValidator struct {
 	// TODO fugly: find a way to validate without doing either k8s or github api calls
 	K8sClient           client.Client
 	GitHubClientManager GitHubClientManager
+	// LegacySecretName is the credential secret name used when the Organization uses the
+	// deprecated GitHubAppInstallationId field instead of the new GitHubAppConfig.
+	LegacySecretName string
 }
 
 var _ admission.Validator[*githubv1alpha1.Repository] = &RepositoryCustomValidator{}
@@ -107,7 +111,13 @@ func (v *RepositoryCustomValidator) validateRepository(ctx context.Context, repo
 	if err := v.K8sClient.Get(ctx, client.ObjectKey{Name: repo.Spec.OrganizationRef.Name, Namespace: repo.Namespace}, &org); err != nil {
 		return fmt.Errorf("failed to fetch organization during validation of repository %s: %w", repo.Name, err)
 	}
-	githubClient, err := v.GitHubClientManager.GetClient(ctx, org.GetLogin(), org.Spec.GitHubAppInstallationId)
+
+	appConfig, err := org.ResolveGitHubAppConfig(v.LegacySecretName)
+	if err != nil {
+		return fmt.Errorf("failed to resolve GitHub App config for organization %s during validation of repository %s: %w", org.GetLogin(), repo.Name, err)
+	}
+
+	githubClient, err := v.GitHubClientManager.GetClient(ctx, org.GetLogin(), *appConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create GitHub client for organization %s during validation of repository %s: %w", org.GetLogin(), repo.Name, err)
 	}

@@ -100,7 +100,7 @@ var _ = Describe("Factory", func() {
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    defaultOrgName,
 					Description:             "Test Organization",
-					GitHubAppInstallationId: defaultAppID,
+					GitHubAppInstallationId: &defaultAppID,
 				},
 			}
 		})
@@ -153,7 +153,7 @@ var _ = Describe("Factory", func() {
 			It("should call GetGitHubClientAndCheckRateLimit with correct parameters", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(mockClientMgr.lastOrgName).To(Equal(defaultOrgName))
-				Expect(mockClientMgr.lastAppID).To(Equal(defaultAppID))
+				Expect(mockClientMgr.lastAppConfig.InstallationId).To(Equal(defaultAppID))
 				Expect(mockClientMgr.lastRateLimit).To(Equal(orgRateLimitThreshold))
 			})
 		})
@@ -228,7 +228,7 @@ var _ = Describe("Factory", func() {
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    defaultOrgName,
 					Description:             "Test Organization",
-					GitHubAppInstallationId: defaultAppID,
+					GitHubAppInstallationId: &defaultAppID,
 				},
 			}
 
@@ -296,7 +296,7 @@ var _ = Describe("Factory", func() {
 			It("should call GetGitHubClientAndCheckRateLimit with correct parameters", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(mockClientMgr.lastOrgName).To(Equal(defaultOrgName))
-				Expect(mockClientMgr.lastAppID).To(Equal(defaultAppID))
+				Expect(mockClientMgr.lastAppConfig.InstallationId).To(Equal(defaultAppID))
 				Expect(mockClientMgr.lastRateLimit).To(Equal(repoRateLimitThreshold))
 			})
 		})
@@ -405,7 +405,7 @@ var _ = Describe("Factory", func() {
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    "org1",
 					Description:             "Test Organization 1",
-					GitHubAppInstallationId: 11111,
+					GitHubAppInstallationId: new(int64(11111)),
 				},
 			}
 
@@ -417,7 +417,7 @@ var _ = Describe("Factory", func() {
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    "org2",
 					Description:             "Test Organization 2",
-					GitHubAppInstallationId: 22222,
+					GitHubAppInstallationId: new(int64(22222)),
 				},
 			}
 
@@ -688,7 +688,7 @@ var _ = Describe("Factory", func() {
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    orgRef,
 					Description:             "Test Organization",
-					GitHubAppInstallationId: defaultAppID,
+					GitHubAppInstallationId: &defaultAppID,
 				},
 			}
 		})
@@ -711,7 +711,7 @@ var _ = Describe("Factory", func() {
 			It("should return organization with correct spec", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Spec.Name).To(Equal(orgRef))
-				Expect(result.Spec.GitHubAppInstallationId).To(Equal(defaultAppID))
+				Expect(*result.Spec.GitHubAppInstallationId).To(Equal(defaultAppID))
 			})
 		})
 
@@ -750,7 +750,7 @@ var _ = Describe("Factory", func() {
 				},
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    "org1",
-					GitHubAppInstallationId: 11111,
+					GitHubAppInstallationId: new(int64(11111)),
 				},
 			}
 
@@ -761,7 +761,7 @@ var _ = Describe("Factory", func() {
 				},
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    "org2",
-					GitHubAppInstallationId: 22222,
+					GitHubAppInstallationId: new(int64(22222)),
 				},
 			}
 
@@ -904,7 +904,7 @@ var _ = Describe("Factory", func() {
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
-						GitHubAppInstallationId: defaultAppID,
+						GitHubAppInstallationId: &defaultAppID,
 					},
 				}
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
@@ -960,7 +960,7 @@ var _ = Describe("Factory", func() {
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
-						GitHubAppInstallationId: defaultAppID,
+						GitHubAppInstallationId: &defaultAppID,
 					},
 				}
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
@@ -1030,7 +1030,7 @@ var _ = Describe("Factory", func() {
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
-						GitHubAppInstallationId: defaultAppID,
+						GitHubAppInstallationId: &defaultAppID,
 					},
 				}
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
@@ -1094,7 +1094,7 @@ var _ = Describe("Factory", func() {
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
-						GitHubAppInstallationId: defaultAppID,
+						GitHubAppInstallationId: &defaultAppID,
 					},
 				}
 			})
@@ -1566,7 +1566,7 @@ var _ = Describe("Factory", func() {
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
-						GitHubAppInstallationId: defaultAppID,
+						GitHubAppInstallationId: &defaultAppID,
 						RulesetPresetList: []v1.LocalObjectReference{
 							{Name: "integration-ruleset"},
 						},
@@ -1629,7 +1629,7 @@ var _ = Describe("Factory", func() {
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
-						GitHubAppInstallationId: defaultAppID,
+						GitHubAppInstallationId: &defaultAppID,
 					},
 				}
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
@@ -1745,7 +1745,7 @@ var _ = Describe("Factory", func() {
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
-						GitHubAppInstallationId: defaultAppID,
+						GitHubAppInstallationId: &defaultAppID,
 					},
 				}
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
@@ -1813,33 +1813,14 @@ type mockGitHubClientManager struct {
 	genericErr      error
 	callCount       int
 	lastOrgName     string
-	lastAppID       int64
+	lastAppConfig   v1alpha1.GitHubAppConfig
 	lastRateLimit   int
 }
 
-func (m *mockGitHubClientManager) GetClient(_ context.Context, orgName string, appInstallationID int64) (ghclient.GitHubClient, error) {
+func (m *mockGitHubClientManager) GetGitHubClientAndCheckRateLimit(_ context.Context, orgName string, app v1alpha1.GitHubAppConfig, rateLimitMinimum int) (ghclient.GitHubClient, error) {
 	m.callCount++
 	m.lastOrgName = orgName
-	m.lastAppID = appInstallationID
-
-	if m.shouldFail {
-		return nil, m.genericErr
-	}
-
-	// Return org-specific client if configured
-	if m.clientByOrg != nil {
-		if ghClient, ok := m.clientByOrg[orgName]; ok {
-			return ghClient, nil
-		}
-	}
-
-	return m.client, nil
-}
-
-func (m *mockGitHubClientManager) GetGitHubClientAndCheckRateLimit(_ context.Context, orgName string, appInstallationID int64, rateLimitMinimum int) (ghclient.GitHubClient, error) {
-	m.callCount++
-	m.lastOrgName = orgName
-	m.lastAppID = appInstallationID
+	m.lastAppConfig = app
 	m.lastRateLimit = rateLimitMinimum
 
 	if m.shouldFailLimit {

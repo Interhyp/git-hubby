@@ -20,6 +20,9 @@ type Factory struct {
 	ClientManager    reconciler.GitHubClientManager
 	K8sClient        client.Client
 	SpreadingManager reconciler.SpreadManager
+	// LegacySecretName is the name of the credential secret used for Organizations that
+	// still rely on the deprecated GitHubAppInstallationId field without a GitHubAppConfig.
+	LegacySecretName string
 }
 
 const (
@@ -58,7 +61,13 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 		return nil, requiresSpreadErr
 	}
 
-	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), org.Spec.GitHubAppInstallationId, orgRateLimitThreshold)
+	appConfig, err := org.ResolveGitHubAppConfig(f.LegacySecretName)
+	if err != nil {
+		logPkg.FromContext(ctx).Error(err, "unable to resolve GitHub App config for Organization")
+		return nil, err
+	}
+
+	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), *appConfig, orgRateLimitThreshold)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +115,13 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 		return nil, err
 	}
 
-	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), org.Spec.GitHubAppInstallationId, repoRateLimitThreshold)
+	appConfig, err := org.ResolveGitHubAppConfig(f.LegacySecretName)
+	if err != nil {
+		log.Error(err, "unable to resolve GitHub App config for Organization", "organization", org.GetLogin())
+		return nil, err
+	}
+
+	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), *appConfig, repoRateLimitThreshold)
 	if err != nil {
 		return nil, err
 	}
@@ -284,9 +299,14 @@ func buildGitHubOrgsSlice(ctx context.Context, f *Factory, team v1alpha1.Team, r
 	}
 	var githubOrgs []reconciler.GitHub[string]
 	for _, org := range orgs {
-		ghRepo, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), org.Spec.GitHubAppInstallationId, teamRateLimitThreshold)
+		appConfig, err := org.ResolveGitHubAppConfig(f.LegacySecretName)
 		if err != nil {
-			log.Error(err, "unable to get github client for installationId", "organization", org.GetLogin(), "installationId", org.Spec.GitHubAppInstallationId)
+			log.Error(err, "unable to resolve GitHub App config for Organization", "organization", org.GetLogin())
+			return nil, err
+		}
+		ghRepo, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), *appConfig, teamRateLimitThreshold)
+		if err != nil {
+			log.Error(err, "unable to get github client for installationId", "organization", org.GetLogin(), "installationId", appConfig.InstallationId)
 			return nil, err
 		}
 

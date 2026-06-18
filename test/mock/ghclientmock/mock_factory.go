@@ -6,6 +6,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/google/go-github/v86/github"
 )
@@ -20,14 +21,14 @@ func NewGitHubMockClientFactory(mockClient *MockGitHubClientWrapper) *GitHubMock
 	}
 }
 
-func (m *GitHubMockClientFactory) GetClient(_ context.Context, _ string, _ int64) (ghclient.GitHubClient, error) {
+func (m *GitHubMockClientFactory) GetClient(_ context.Context, _ string, _ v1alpha1.GitHubAppConfig) (ghclient.GitHubClient, error) {
 	if m.mockClient == nil {
 		return nil, errors.New("mock GitHub client not set")
 	}
 	return m.mockClient, nil
 }
 
-func (m *GitHubMockClientFactory) GetGitHubClientAndCheckRateLimit(_ context.Context, _ string, _ int64, _ int) (ghclient.GitHubClient, error) {
+func (m *GitHubMockClientFactory) GetGitHubClientAndCheckRateLimit(_ context.Context, _ string, _ v1alpha1.GitHubAppConfig, _ int) (ghclient.GitHubClient, error) {
 	if m.mockClient == nil {
 		return nil, errors.New("mock GitHub client not set")
 	}
