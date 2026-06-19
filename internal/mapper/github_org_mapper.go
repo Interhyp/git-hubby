@@ -6,17 +6,44 @@ import (
 )
 
 func OrgToGithubOrg(organization *v1alpha1.Organization) *github.Organization {
-	return &github.Organization{
-		Name:        &organization.Spec.Name,
+	displayName := organization.GetDisplayName()
+	login := organization.GetLogin()
+	ghOrg := &github.Organization{
+		Login:       &login,
+		Name:        &displayName,
 		Description: &organization.Spec.Description,
 	}
+
+	if organization.Spec.Location != "" {
+		ghOrg.Location = &organization.Spec.Location
+	}
+	if organization.Spec.Website != "" {
+		ghOrg.Blog = &organization.Spec.Website
+	}
+
+	return ghOrg
 }
 
 func OrgDiffers(org *v1alpha1.Organization, githubOrg github.Organization) bool {
-	if org.Spec.Name != githubOrg.GetName() {
+	expectedLogin := org.GetLogin()
+	if expectedLogin != githubOrg.GetLogin() {
 		return true
 	}
+
+	expectedDisplayName := org.GetDisplayName()
+	if expectedDisplayName != githubOrg.GetName() {
+		return true
+	}
+
 	if org.Spec.Description != githubOrg.GetDescription() {
+		return true
+	}
+
+	if org.Spec.Location != githubOrg.GetLocation() {
+		return true
+	}
+
+	if org.Spec.Website != githubOrg.GetBlog() {
 		return true
 	}
 

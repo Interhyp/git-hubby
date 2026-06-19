@@ -29,8 +29,15 @@ import (
 // rulesets, code security settings, and Actions permissions.
 // See: https://docs.github.com/en/rest/orgs/orgs
 type OrganizationSpecApplyConfiguration struct {
-	// Name is the GitHub organization name (also known as the organization login).
-	// This is the unique identifier for the organization on GitHub.
+	// Login is the GitHub organization login (the unique, immutable identifier on GitHub).
+	// This field is optional for backwards compatibility. If not specified, the Name field
+	// will be used as both login and display name.
+	// It is recommended to explicitly set this field to clearly separate login from display name.
+	Login *string `json:"login,omitempty"`
+	// Name is the organization's display name shown on the GitHub profile.
+	// If Login is not specified, this field will also be used as the organization login
+	// for backwards compatibility.
+	// At least one of Login or Name must be specified.
 	Name *string `json:"name,omitempty"`
 	// GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.
 	// This is used to authenticate API requests to GitHub. You can find this ID in your GitHub App's
@@ -55,6 +62,12 @@ type OrganizationSpecApplyConfiguration struct {
 	// Description is a human-readable description of the organization.
 	// This appears on the organization's GitHub profile page.
 	Description *string `json:"description,omitempty"`
+	// Location is the organization's location (e.g., "Munich, Germany").
+	// This appears on the organization's GitHub profile page.
+	Location *string `json:"location,omitempty"`
+	// Website is the organization's website URL.
+	// This appears on the organization's GitHub profile page as a clickable link.
+	Website *string `json:"website,omitempty"`
 	// Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).
 	// Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped.
 	Plan *string `json:"plan,omitempty"`
@@ -64,6 +77,14 @@ type OrganizationSpecApplyConfiguration struct {
 // apply.
 func OrganizationSpec() *OrganizationSpecApplyConfiguration {
 	return &OrganizationSpecApplyConfiguration{}
+}
+
+// WithLogin sets the Login field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Login field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithLogin(value string) *OrganizationSpecApplyConfiguration {
+	b.Login = &value
+	return b
 }
 
 // WithName sets the Name field in the declarative configuration to the given value
@@ -131,6 +152,22 @@ func (b *OrganizationSpecApplyConfiguration) WithRulesetPresetList(values ...v1.
 // If called multiple times, the Description field is set to the value of the last call.
 func (b *OrganizationSpecApplyConfiguration) WithDescription(value string) *OrganizationSpecApplyConfiguration {
 	b.Description = &value
+	return b
+}
+
+// WithLocation sets the Location field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Location field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithLocation(value string) *OrganizationSpecApplyConfiguration {
+	b.Location = &value
+	return b
+}
+
+// WithWebsite sets the Website field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Website field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithWebsite(value string) *OrganizationSpecApplyConfiguration {
+	b.Website = &value
 	return b
 }
 

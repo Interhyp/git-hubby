@@ -98,3 +98,41 @@ func (o *OrgCustomPropertyDefaultValue) GetValues() []string {
 	}
 	return o.Values
 }
+
+// GetLogin returns the effective login for this organization.
+// If Login is explicitly set, it returns Login. Otherwise, it returns Name.
+func (o *Organization) GetLogin() string {
+	if o == nil {
+		return ""
+	}
+	if o.Spec.Login != "" {
+		return o.Spec.Login
+	}
+	return o.Spec.Name
+}
+
+// GetDisplayName returns the effective display name for this organization.
+// If both Login and Name are set, Name is the display name.
+// If only Login is set, Login is used as display name.
+// If only Name is set, Name is used as both login and display name.
+func (o *Organization) GetDisplayName() string {
+	if o == nil {
+		return ""
+	}
+	if o.Spec.Login != "" && o.Spec.Name != "" {
+		return o.Spec.Name
+	}
+	if o.Spec.Login != "" && o.Spec.Name == "" {
+		return o.Spec.Login
+	}
+	return o.Spec.Name
+}
+
+// IsUsingLegacyNameField returns true if only the Name field is set (backwards compatibility mode).
+// This is used to generate deprecation warnings.
+func (o *Organization) IsUsingLegacyNameField() bool {
+	if o == nil {
+		return false
+	}
+	return o.Spec.Login == "" && o.Spec.Name != ""
+}

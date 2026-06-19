@@ -6,7 +6,11 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: sample-org
 spec:
+  login: sample-org
+  name: "Sample Organization"
   description: "GitHub Sample Organization"
+  location: "Munich, Germany"
+  website: "https://example.com"
   githubAppCredentials:
     secretRef:
       name: sample-org-app-credentials

@@ -31,13 +31,22 @@ const (
 // CreateForOrg creates a reconciler.ReconciliationExecutor for a v1alpha1.Organization
 // If both the returned Executor and the error are nil, the Organization K8s resource was not found and no reconciliation is necessary.
 func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.NamespacedName) (*reconciler.ReconciliationExecutor[*v1alpha1.Organization], error) {
+	log := logPkg.FromContext(ctx)
+
 	var org v1alpha1.Organization
 	if err := f.K8sClient.Get(ctx, namespacedOrgName, &org); err != nil {
 		notFoundIgnored := client.IgnoreNotFound(err)
 		if notFoundIgnored != nil {
-			logPkg.FromContext(ctx).Error(notFoundIgnored, "unable to fetch Organization")
+			log.Error(notFoundIgnored, "unable to fetch Organization")
 		}
 		return nil, notFoundIgnored
+	}
+
+	// Log deprecation warning if using legacy name-only mode
+	if org.IsUsingLegacyNameField() {
+		log.Info("DEPRECATED: Organization uses 'name' field without explicit 'login' field. Consider setting 'login' to separate login from display name",
+			"organization", org.Name,
+			"effectiveLogin", org.GetLogin())
 	}
 
 	subResourceGenerations, err := f.fetchSubResourceGenerationsForOrg(ctx, org)
@@ -49,7 +58,7 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 		return nil, requiresSpreadErr
 	}
 
-	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.Spec.Name, org.Spec.GitHubAppInstallationId, orgRateLimitThreshold)
+	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), org.Spec.GitHubAppInstallationId, orgRateLimitThreshold)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +71,7 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 			},
 			GitHub: reconciler.GitHub[string]{
 				Client:   ghClient,
-				Resource: org.Spec.Name,
+				Resource: org.GetLogin(),
 			},
 		},
 	}, nil
@@ -97,7 +106,7 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 		return nil, err
 	}
 
-	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.Spec.Name, org.Spec.GitHubAppInstallationId, repoRateLimitThreshold)
+	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), org.Spec.GitHubAppInstallationId, repoRateLimitThreshold)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +120,7 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 			GitHub: reconciler.GitHub[reporec.GitHubRepoIdentifier]{
 				Client: ghClient,
 				Resource: reporec.GitHubRepoIdentifier{
-					Owner: org.Spec.Name,
+					Owner: org.GetLogin(),
 					Name:  repo.Spec.Name,
 				},
 			},
@@ -275,15 +284,15 @@ func buildGitHubOrgsSlice(ctx context.Context, f *Factory, team v1alpha1.Team, r
 	}
 	var githubOrgs []reconciler.GitHub[string]
 	for _, org := range orgs {
-		ghRepo, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.Spec.Name, org.Spec.GitHubAppInstallationId, teamRateLimitThreshold)
+		ghRepo, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), org.Spec.GitHubAppInstallationId, teamRateLimitThreshold)
 		if err != nil {
-			log.Error(err, "unable to get github client for installationId", "organization", org.Spec.Name, "installationId", org.Spec.GitHubAppInstallationId)
+			log.Error(err, "unable to get github client for installationId", "organization", org.GetLogin(), "installationId", org.Spec.GitHubAppInstallationId)
 			return nil, err
 		}
 
 		githubOrgs = append(githubOrgs, reconciler.GitHub[string]{
 			Client:   ghRepo,
-			Resource: org.Spec.Name,
+			Resource: org.GetLogin(),
 		})
 	}
 

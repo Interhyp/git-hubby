@@ -107,13 +107,13 @@ func (v *RepositoryCustomValidator) validateRepository(ctx context.Context, repo
 	if err := v.K8sClient.Get(ctx, client.ObjectKey{Name: repo.Spec.OrganizationRef.Name, Namespace: repo.Namespace}, &org); err != nil {
 		return fmt.Errorf("failed to fetch organization during validation of repository %s: %w", repo.Name, err)
 	}
-	githubClient, err := v.GitHubClientManager.GetClient(ctx, org.Spec.Name, org.Spec.GitHubAppInstallationId)
+	githubClient, err := v.GitHubClientManager.GetClient(ctx, org.GetLogin(), org.Spec.GitHubAppInstallationId)
 	if err != nil {
-		return fmt.Errorf("failed to create GitHub client for organization %s during validation of repository %s: %w", org.Spec.Name, repo.Name, err)
+		return fmt.Errorf("failed to create GitHub client for organization %s during validation of repository %s: %w", org.GetLogin(), repo.Name, err)
 	}
-	customPropertyDefinitions, err := githubClient.GetAllCustomPropertiesForOrganization(ctx, org.Spec.Name)
+	customPropertyDefinitions, err := githubClient.GetAllCustomPropertiesForOrganization(ctx, org.GetLogin())
 	if err != nil {
-		return fmt.Errorf("failed to fetch custom properties for GitHub organization %s during validation of repository %s: %w", org.Spec.Name, repo.Name, err)
+		return fmt.Errorf("failed to fetch custom properties for GitHub organization %s during validation of repository %s: %w", org.GetLogin(), repo.Name, err)
 	}
 	// TODO end of external requests
 

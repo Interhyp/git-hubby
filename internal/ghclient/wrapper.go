@@ -208,9 +208,18 @@ func (g *GitHubClientWrapper) GetOrganizationRuleset(ctx context.Context, org st
 	return ruleset, _handleErrorResponse(response, err)
 }
 
-func (g *GitHubClientWrapper) GetAllOrganizationRulesets(ctx context.Context, org string, _ bool) ([]*github.RepositoryRuleset, error) {
+func (g *GitHubClientWrapper) GetAllOrganizationRulesets(ctx context.Context, org string, includeParents bool) ([]*github.RepositoryRuleset, error) {
 	rulesets, response, err := g.client.Organizations.GetAllRepositoryRulesets(ctx, org, nil)
 	defer _closeBody(response)
+	if !includeParents {
+		var filteredRulesets []*github.RepositoryRuleset
+		for _, ruleset := range rulesets {
+			if ruleset.SourceType != nil && *ruleset.SourceType == github.RulesetSourceTypeOrganization {
+				filteredRulesets = append(filteredRulesets, ruleset)
+			}
+		}
+		rulesets = filteredRulesets
+	}
 	return rulesets, _handleErrorResponse(response, err)
 }
 

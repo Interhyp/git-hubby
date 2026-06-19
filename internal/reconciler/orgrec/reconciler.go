@@ -42,7 +42,7 @@ func (o *GitHubOrgReconciler) GetAdditionalLogFields() []any {
 
 func (o *GitHubOrgReconciler) GetAdditionalLabels() labels.Set {
 	return labels.Set{
-		"git-hubby.interhyp.de/organization": o.Kubernetes.Resource.Spec.Name,
+		"git-hubby.interhyp.de/organization": o.Kubernetes.Resource.GetLogin(),
 	}
 }
 

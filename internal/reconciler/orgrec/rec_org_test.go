@@ -438,6 +438,81 @@ var _ = Describe("ReconcileOrganization", func() {
 		})
 	})
 
+	Context("when Location needs to be updated", func() {
+		BeforeEach(func() {
+			org.Spec.Location = "Munich, Germany"
+			currentGHOrg = &github.Organization{
+				Name:        new("test-org"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
+				Location:    nil,
+			}
+		})
+
+		It("should trigger update to set Location", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(editOrgCalled).To(BeTrue())
+			Expect(editedOrg.GetLocation()).To(Equal("Munich, Germany"))
+		})
+	})
+
+	Context("when Website needs to be updated", func() {
+		BeforeEach(func() {
+			org.Spec.Website = "https://example.com"
+			currentGHOrg = &github.Organization{
+				Name:        new("test-org"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
+				Blog:        nil,
+			}
+		})
+
+		It("should trigger update to set Website (Blog)", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(editOrgCalled).To(BeTrue())
+			Expect(editedOrg.GetBlog()).To(Equal("https://example.com"))
+		})
+	})
+
+	Context("when display name needs to be updated (using login and name)", func() {
+		BeforeEach(func() {
+			org.Spec.Login = "test-org"
+			org.Spec.Name = "My Organization Display Name"
+			currentGHOrg = &github.Organization{
+				Name:        new("test-org"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
+			}
+		})
+
+		It("should trigger update to set display name", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(editOrgCalled).To(BeTrue())
+			Expect(editedOrg.GetName()).To(Equal("My Organization Display Name"))
+		})
+	})
+
+	Context("when all new profile fields match", func() {
+		BeforeEach(func() {
+			org.Spec.Login = "test-org"
+			org.Spec.Name = "My Organization"
+			org.Spec.Location = "Munich, Germany"
+			org.Spec.Website = "https://example.com"
+			currentGHOrg = &github.Organization{
+				Name:        new("My Organization"),
+				Description: new("Test Organization"),
+				Login:       new("test-org"),
+				Location:    new("Munich, Germany"),
+				Blog:        new("https://example.com"),
+			}
+		})
+
+		It("should not trigger update", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(editOrgCalled).To(BeFalse())
+		})
+	})
+
 	Context("when only whitespace changes in description", func() {
 		BeforeEach(func() {
 			org.Spec.Description = "Test  Organization"
@@ -515,11 +590,9 @@ var _ = Describe("ReconcileOrganization", func() {
 				Name:        new("test-org"),
 				Description: new("Test Organization"),
 				Login:       new("test-org"),
-				// Additional fields that aren't in our spec
-				Company:  new("Test Company"),
-				Blog:     new("https://example.com"),
-				Location: new("Test Location"),
-				Email:    new("test@example.com"),
+				// Additional fields that aren't in our spec (Company and Email are truly unmanaged)
+				Company: new("Test Company"),
+				Email:   new("test@example.com"),
 			}
 		})
 
