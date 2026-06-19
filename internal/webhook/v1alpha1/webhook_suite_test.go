@@ -115,7 +115,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	mockClient := ghclientmock.NewMockGitHubClientWrapper()
-	err = SetupRepositoryWebhookWithManager(mgr, ghclientmock.NewGitHubMockClientFactory(mockClient))
+	err = SetupRepositoryWebhookWithManager(mgr, ghclientmock.NewGitHubMockClientFactory(mockClient), "test-credentials")
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:webhook

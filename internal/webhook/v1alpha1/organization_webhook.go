@@ -90,6 +90,7 @@ func validateOrganization(organization *githubv1alpha1.Organization) error {
 	allErrs = append(allErrs, validateCustomProperties(organization.Spec.CustomProperties, customPropertiesField)...)
 
 	allErrs = append(allErrs, validatePlanFeatureCombinations(organization)...)
+	allErrs = append(allErrs, validateGitHubAppConfig(organization)...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -97,6 +98,17 @@ func validateOrganization(organization *githubv1alpha1.Organization) error {
 	return errors.NewInvalid(
 		organization.GroupVersionKind().GroupKind(),
 		organization.Name, allErrs)
+}
+
+// validateGitHubAppConfig ensures that at least one of githubAppConfig or githubAppInstallationId is set.
+func validateGitHubAppConfig(organization *githubv1alpha1.Organization) field.ErrorList {
+	if organization.Spec.GitHubAppConfig != nil || organization.Spec.GitHubAppInstallationId != nil {
+		return nil
+	}
+	specPath := field.NewPath("spec")
+	return field.ErrorList{
+		field.Required(specPath, "at least one of githubAppConfig or githubAppInstallationId must be set"),
+	}
 }
 
 func validatePlanFeatureCombinations(organization *githubv1alpha1.Organization) field.ErrorList {

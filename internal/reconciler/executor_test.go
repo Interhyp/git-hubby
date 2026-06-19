@@ -101,7 +101,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -147,7 +147,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -194,7 +194,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -233,7 +233,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "my-github-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -275,7 +275,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "new-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -319,7 +319,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -363,7 +363,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "my-org-with-dashes",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -402,7 +402,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -458,7 +458,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -502,7 +502,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 				Status: githubv1alpha1.OrganizationStatus{
 					Conditions: []metav1.Condition{},
@@ -575,7 +575,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 				Status: githubv1alpha1.OrganizationStatus{
 					Conditions: []metav1.Condition{},
@@ -656,7 +656,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 				Status: githubv1alpha1.OrganizationStatus{
 					Conditions: []metav1.Condition{},
@@ -730,7 +730,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 				Status: githubv1alpha1.OrganizationStatus{
 					Conditions: []metav1.Condition{},
@@ -790,7 +790,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 				Status: githubv1alpha1.OrganizationStatus{
 					Conditions: []metav1.Condition{},
@@ -831,7 +831,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 				Status: githubv1alpha1.OrganizationStatus{
 					Conditions: []metav1.Condition{},
@@ -901,7 +901,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 
@@ -952,7 +952,7 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
-					GitHubAppInstallationId: 12345,
+					GitHubAppInstallationId: new(int64(12345)),
 				},
 			}
 

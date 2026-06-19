@@ -58,7 +58,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 
@@ -685,7 +685,7 @@ var _ = Describe("getGitHubOrgCustomPropertiesByPropertyName", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 

@@ -38,6 +38,8 @@ var _ = Describe("Organization Webhook", func() {
 		validator OrganizationCustomValidator
 	)
 
+	installationID := int64(12345)
+
 	BeforeEach(func() {
 		ctx = context.Background()
 		obj = &githubv1alpha1.Organization{
@@ -47,7 +49,7 @@ var _ = Describe("Organization Webhook", func() {
 			},
 			Spec: githubv1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: &installationID,
 				CustomProperties:        []githubv1alpha1.OrgCustomProperty{},
 			},
 		}
@@ -58,7 +60,7 @@ var _ = Describe("Organization Webhook", func() {
 			},
 			Spec: githubv1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: &installationID,
 				CustomProperties:        []githubv1alpha1.OrgCustomProperty{},
 			},
 		}
@@ -968,6 +970,60 @@ var _ = Describe("Organization Webhook", func() {
 			var statusErr *errors.StatusError
 			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
 			Expect(statusErr.Error()).To(ContainSubstring("rulesetPresets"))
+		})
+	})
+
+	Context("When validating GitHub App config", func() {
+		It("Should reject when neither githubAppConfig nor githubAppInstallationId is set", func() {
+			obj.Spec.GitHubAppInstallationId = nil
+			obj.Spec.GitHubAppConfig = nil
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).To(ContainSubstring("githubAppConfig"))
+		})
+
+		It("Should allow when only githubAppInstallationId is set", func() {
+			installID := int64(99999)
+			obj.Spec.GitHubAppInstallationId = &installID
+			obj.Spec.GitHubAppConfig = nil
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should allow when only githubAppConfig is set", func() {
+			obj.Spec.GitHubAppInstallationId = nil
+			obj.Spec.GitHubAppConfig = &githubv1alpha1.GitHubAppConfig{
+				InstallationId:        42,
+				CredentialsSecretName: "my-app-secret",
+			}
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should allow when both githubAppConfig and githubAppInstallationId are set", func() {
+			installID := int64(12345)
+			obj.Spec.GitHubAppInstallationId = &installID
+			obj.Spec.GitHubAppConfig = &githubv1alpha1.GitHubAppConfig{
+				InstallationId:        42,
+				CredentialsSecretName: "my-app-secret",
+			}
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should reject on update when neither githubAppConfig nor githubAppInstallationId is set", func() {
+			obj.Spec.GitHubAppInstallationId = nil
+			obj.Spec.GitHubAppConfig = nil
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).To(ContainSubstring("githubAppConfig"))
 		})
 	})
 })

@@ -60,7 +60,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 
@@ -188,7 +188,7 @@ var _ = Describe("ReconcilePermissions", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				ActionsSettings:         actionsSettings,
 			},
 		}
@@ -367,7 +367,7 @@ var _ = Describe("ReconcileRetention", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				ActionsSettings:         actionsSettings,
 			},
 		}
@@ -533,7 +533,7 @@ var _ = Describe("ReconcileAllowedActions", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				ActionsSettings:         actionsSettings,
 			},
 		}
@@ -804,7 +804,7 @@ var _ = Describe("ReconcileDefaultWorkflowPermissions", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				ActionsSettings:         actionsSettings,
 			},
 		}
@@ -975,7 +975,7 @@ var _ = Describe("ReconcileSelfHostedRunnerSettings", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				ActionsSettings:         actionsSettings,
 			},
 		}
@@ -1155,7 +1155,7 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				ActionsSettings: v1alpha1.ActionsSettings{
 					EnabledRepositories: new("all"),
 				},
@@ -1771,7 +1771,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				ActionsSettings:         actionsSettings,
 			},
 		}
@@ -2783,7 +2783,7 @@ var _ = Describe("ReconcilePermissions with selected repositories", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				ActionsSettings:         actionsSettings,
 			},
 		}

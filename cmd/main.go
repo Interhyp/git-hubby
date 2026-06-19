@@ -342,6 +342,11 @@ func main() {
 		setupLog.Error(err, "Invalid WATCH_NAMESPACE configuration")
 		os.Exit(1)
 	}
+	// Also ensure the credentials namespace is watched so Secret events can be received.
+	// This is needed for the Secret watch in the Organization controller.
+	if _, alreadyWatched := cacheOpts.DefaultNamespaces[appCredentialsSecretNamespace]; !alreadyWatched {
+		cacheOpts.DefaultNamespaces[appCredentialsSecretNamespace] = cache.Config{}
+	}
 	mgrOptions.Cache = cacheOpts
 	setupLog.Info("Watching namespace(s)", "namespaces", watchNamespace)
 
@@ -360,20 +365,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	fetchGitHubAppSecret := func(ctx context.Context) (*v1.Secret, error) {
+	// fetchSecret is a generic closure that fetches any secret by name from the credentials namespace.
+	fetchSecret := func(ctx context.Context, secretName string) (*v1.Secret, error) {
 		log := ctrl.LoggerFrom(ctx)
-		var appCredentialsSecret v1.Secret
-		secretName := client.ObjectKey{
-			Name:      appCredentialsSecretName,
+		var secret v1.Secret
+		secretKey := client.ObjectKey{
+			Name:      secretName,
 			Namespace: appCredentialsSecretNamespace,
 		}
-		if fetchErr := directClient.Get(ctx, secretName, &appCredentialsSecret); fetchErr != nil {
-			log.Error(fetchErr, "Failed to fetch GitHub App credentials secret")
+		if fetchErr := directClient.Get(ctx, secretKey, &secret); fetchErr != nil {
+			log.Error(fetchErr, "Failed to fetch secret", "secretName", secretName)
 			return nil, fetchErr
 		}
-		return &appCredentialsSecret, nil
+		return &secret, nil
 	}
-	clientManager, err := ghclient.NewGitHubCachingClientFactory(ghclient.DefaultClientConfig(), fetchGitHubAppSecret)
+	clientManager, err := ghclient.NewGitHubCachingClientFactory(ghclient.DefaultClientConfig(), fetchSecret)
 	if err != nil {
 		setupLog.Error(err, "failed to create GitHub client factory")
 		os.Exit(1)
@@ -389,6 +395,7 @@ func main() {
 		ClientManager:    clientManager,
 		SpreadingManager: spreadingManager,
 		K8sClient:        mgr.GetClient(),
+		LegacySecretName: appCredentialsSecretName,
 	}
 
 	webhooksEnabled := os.Getenv("ENABLE_WEBHOOKS") != "false"
@@ -404,6 +411,8 @@ func main() {
 		ReconcilerFactory:      reconcilerFactory,
 		GithubRateLimiter:      globalLimiter,
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
+		LegacySecretName:       appCredentialsSecretName,
+		ClientFactory:          clientManager,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
 		os.Exit(1)
@@ -432,7 +441,9 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Organization")
 			os.Exit(1)
 		}
-		if err := webhookv1alpha1.SetupRepositoryWebhookWithManager(mgr, clientManager); err != nil {
+		if err := webhookv1alpha1.SetupRepositoryWebhookWithManager(
+			mgr, clientManager, appCredentialsSecretName,
+		); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
 			os.Exit(1)
 		}
