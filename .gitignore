@@ -68,3 +68,6 @@ build-output/
 
 node_modules/
 
+# MkDocs generated site
+site/
+

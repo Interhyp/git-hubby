@@ -297,7 +297,7 @@ $(CRD_REF_DOCS): $(LOCALBIN)
 
 .PHONY: crd-docs
 crd-docs: crd-ref-docs generate
-	$(CRD_REF_DOCS) --source-path ./api/v1alpha1 --config ./crd-ref-docs.config.yaml --output-path=./docs/techdocs/crds.md --renderer=markdown
+	$(CRD_REF_DOCS) --source-path ./api/v1alpha1 --config ./crd-ref-docs.config.yaml --output-path=./docs/crds.md --renderer=markdown
 
 # Add the Grafana plugin
 

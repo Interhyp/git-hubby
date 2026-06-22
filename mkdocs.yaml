@@ -1,10 +1,55 @@
 site_name: git-hubby
+site_description: Kubernetes operator for declarative GitHub configuration
+site_url: https://interhyp.github.io/git-hubby/
 
-docs_dir: docs/techdocs/
+repo_name: Interhyp/git-hubby
+repo_url: https://github.com/Interhyp/git-hubby
+edit_uri: edit/main/docs/
 
-repo_url: ${REPO_BROWSE_URL} #inserted by "Create service techdocs" pipeline
-edit_uri: docs/techdocs/
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+    - search.suggest
 
-plugins:
-  - techdocs-core
-  - mkdocs-nav-weight
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Organization: configuration/organization.md
+      - Repository: configuration/repository.md
+  - Architecture: architecture.md
+  - API Reference: crds.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true

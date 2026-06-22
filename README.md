@@ -2,9 +2,11 @@
 
 A Kubernetes operator for managing GitHub organizations and repositories as code using Custom Resource Definitions (CRDs).
 
+> **Documentation**: For detailed configuration guides and examples, visit the [full documentation](https://interhyp.github.io/git-hubby/).
+
 ## Overview
 
-**git-hubby** is a Kubebuilder v4-based Kubernetes operator that enables declarative management of GitHub resources. It synchronizes GitHub organizations and repositories with their desired state defined in Kubernetes custom resources, including advanced features like rulesets, webhooks, and custom properties.
+**git-hubby** is a [Kubebuilder](https://kubebuilder.io/)-based Kubernetes operator that enables declarative management of GitHub resources. It synchronizes GitHub organizations and repositories with their desired state defined in Kubernetes custom resources, including advanced features like rulesets, webhooks, and custom properties.
 
 ### Key Features
 
@@ -17,6 +19,7 @@ A Kubernetes operator for managing GitHub organizations and repositories as code
 - **Webhook Validation**: Comprehensive validation of resource specifications
 - **Status Tracking**: Detailed status conditions for monitoring reconciliation state with sub-resource generation tracking
 - **Parallel Reconciliation**: Concurrent execution of independent reconciliation tasks for improved performance
+- **High Availability**: Safe multi-replica deployment with zero-downtime rolling updates ([details](https://interhyp.github.io/git-hubby/techdocs/high-availability/))
 
 ### Managed Resources
 
@@ -24,6 +27,8 @@ A Kubernetes operator for managing GitHub organizations and repositories as code
 - **Repository** (`github.interhyp.de/v1alpha1`): GitHub repositories with webhooks, rulesets, and configurations
 - **RulesetPreset** (`github.interhyp.de/v1alpha1`): Reusable ruleset templates for organizations and repositories
 - **WebhookPreset** (`github.interhyp.de/v1alpha1`): Reusable webhook configurations for repositories
+- **Team** (`github.interhyp.de/v1alpha1`): GitHub team management with IDP group sync
+- **CodeSecurityConfiguration** (`github.interhyp.de/v1alpha1`): Security settings like dependency and secret scanning
 
 ## Getting Started
 
@@ -138,10 +143,14 @@ To prevent API rate limit exhaustion during pod restarts (e.g., rolling deployme
 
 ### Parallel Reconciliation
 
-Reconciliation logic is organized into sequential groups, with tasks within each group executing concurrently:
+Reconciliation logic is organized into sequential groups, with tasks within each group executing concurrently. For example:
 
 - **Group 1**: Independent tasks that can run in parallel (e.g., org settings, custom properties, rulesets)
 - **Group 2**: Dependent tasks that require Group 1 completion
+- **Additional groups**: Can be added as needed based on dependencies
+
+Common patterns:
+
 - **Timeout Protection**: Each reconciliation task has a 5-minute timeout
 - **Error Handling**: All errors collected and reported; execution stops at first failed group
 
@@ -158,16 +167,25 @@ Reconciliation logic is organized into sequential groups, with tasks within each
 - **Organizations**: Only deleted when no `Repository` references remain (enforced via finalizer)
 - **Repositories**: Archived instead of hard-deleted
 
+## Documentation
+
+For detailed configuration and usage information, see the [full documentation](https://interhyp.github.io/git-hubby/):
+
+- [Organization Configuration](https://interhyp.github.io/git-hubby/configuration/organization/) - Custom properties, Actions settings, rulesets
+- [Repository Configuration](https://interhyp.github.io/git-hubby/configuration/repository/) - Teams, webhooks, deploy keys
+
 ## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding conventions, testing, and how to submit changes.
 
 ## Resources
 
+- [Full Documentation](https://interhyp.github.io/git-hubby/)
+- [Helm Chart Repository](https://github.com/Interhyp/git-hubby-helm)
 - [Kubebuilder Documentation](https://book.kubebuilder.io/)
 - [Controller Runtime](https://github.com/kubernetes-sigs/controller-runtime)
 - [GitHub API Documentation](https://docs.github.com/en/rest)
 
 ---
 
-Built with ❤️ using [Kubebuilder](https://kubebuilder.io/) 
+Built with ❤️ using [Kubebuilder](https://kubebuilder.io/)
