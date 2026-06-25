@@ -8,6 +8,7 @@ layout:
 - go.kubebuilder.io/v4
 namespaced: true
 plugins:
+  autoupdate.kubebuilder.io/v1-alpha: {}
   grafana.kubebuilder.io/v1-alpha: {}
 projectName: git-hubby
 repo: github.com/Interhyp/git-hubby
