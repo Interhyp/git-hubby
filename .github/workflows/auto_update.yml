@@ -28,7 +28,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
-        persist-credentials: false
+        persist-credentials: true
 
     # Configure Git to create commits with the GitHub Actions bot.
     - name: Configure Git
