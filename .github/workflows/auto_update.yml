@@ -9,8 +9,8 @@ permissions: {}
 
 on:
   workflow_dispatch:
-#  schedule:
-#    - cron: "0 0 * * 2" # Every Tuesday at 00:00 UTC
+  schedule:
+    - cron: "0 0 * * 2" # Every Tuesday at 00:00 UTC
 
 jobs:
   auto-update:
@@ -18,31 +18,35 @@ jobs:
       contents: write  # Create and push the update branch
       issues: write    # Create GitHub Issue with PR link
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # Checkout the repository.
     steps:
+    - name: Generate GitHub App token
+      id: app-token
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ secrets.KUBEBUILDER_UPDATE_APP_ID }}
+        private-key: ${{ secrets.KUBEBUILDER_UPDATE_PRIVATE_KEY }}
+        owner: Interhyp
+        repositories: git-hubby
+
     - name: Checkout repository
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ steps.app-token.outputs.token }}
         fetch-depth: 0
         persist-credentials: true
 
-    # Configure Git to create commits with the GitHub Actions bot.
     - name: Configure Git
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config commit.gpgsign false
 
-    # Set up Go environment.
     - name: Set up Go
       uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
       with:
         go-version: stable
 
-    # Install Kubebuilder.
     - name: Install Kubebuilder
       run: |
         curl -L -o kubebuilder "https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)"
@@ -50,9 +54,10 @@ jobs:
         sudo mv kubebuilder /usr/local/bin/
         kubebuilder version
 
-    # Run the Kubebuilder alpha update command.
     # More info: https://kubebuilder.io/reference/commands/alpha_update
     - name: Run kubebuilder alpha update
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
       # Executes the update command with specified flags.
       # --force: Completes the merge even if conflicts occur, leaving conflict markers.
       # --push: Automatically pushes the resulting output branch to the 'origin' remote.
