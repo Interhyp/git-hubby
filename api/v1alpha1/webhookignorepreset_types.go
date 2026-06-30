@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 /*
 Copyright 2025.
 
@@ -14,10 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+>>>>>>> tmp-original-30-06-26-04-09
 package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -95,5 +99,8 @@ type WebhookIgnorePresetList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&WebhookIgnorePreset{}, &WebhookIgnorePresetList{})
+	SchemeBuilder.Register(func(s *runtime.Scheme) error {
+		s.AddKnownTypes(SchemeGroupVersion, &WebhookIgnorePreset{}, &WebhookIgnorePresetList{})
+		return nil
+	})
 }

@@ -186,6 +186,9 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for development
 - [Controller Runtime](https://github.com/kubernetes-sigs/controller-runtime)
 - [GitHub API Documentation](https://docs.github.com/en/rest)
 
+<<<<<<< HEAD
+=======
 ---
 
 Built with ❤️ using [Kubebuilder](https://kubebuilder.io/)
+>>>>>>> tmp-original-30-06-26-04-09
