@@ -1,3 +1,18 @@
+<<<<<<< HEAD
+package controller
+
+import (
+	. "github.com/onsi/ginkgo/v2"
+)
+
+var _ = Describe("Repository Controller", func() {
+	Context("When reconciling a resource", func() {
+
+		It("should successfully reconcile the resource", func() {
+
+			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
+			// Example: If you expect a certain status condition after reconciliation, verify it here.
+=======
 /*
 Copyright 2025.
 
@@ -225,6 +240,7 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 			err = testEnv.Client.Get(testEnv.Context, namespacedName, &updatedRepo)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(*updatedRepo.Status.ID).To(Equal(int64(99999)))
+>>>>>>> tmp-original-30-06-26-04-09
 		})
 	})
 })

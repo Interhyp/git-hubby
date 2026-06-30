@@ -1,19 +1,3 @@
-/*
-Copyright 2026.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package main
 
 import (
@@ -266,7 +250,7 @@ func main() {
 
 	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
 	// More info:
-	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.23.3/pkg/metrics/server
+	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.24.1/pkg/metrics/server
 	// - https://book.kubebuilder.io/reference/metrics.html
 	metricsServerOptions := metricsserver.Options{
 		BindAddress:   metricsAddr,
@@ -278,7 +262,7 @@ func main() {
 		// FilterProvider is used to protect the metrics endpoint with authn/authz.
 		// These configurations ensure that only authorized users and service accounts
 		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
-		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.23.3/pkg/metrics/filters#WithAuthenticationAndAuthorization
+		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.24.1/pkg/metrics/filters#WithAuthenticationAndAuthorization
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
@@ -351,6 +335,20 @@ func main() {
 		os.Exit(1)
 	}
 
+<<<<<<< HEAD
+	if err := (&controller.OrganizationReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "Failed to create controller", "controller", "organization")
+		os.Exit(1)
+	}
+	if err := (&controller.RepositoryReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "Failed to create controller", "controller", "repository")
+=======
 	// Create a direct (non-cached) client for reading secrets outside the watched namespaces.
 	// The manager's cached client only sees resources in WATCH_NAMESPACE, but the credentials
 	// secret may live in a different namespace (APP_CREDENTIALS_SECRET_NAMESPACE).
@@ -377,6 +375,7 @@ func main() {
 	clientManager, err := ghclient.NewGitHubCachingClientFactory(ghclient.DefaultClientConfig(), fetchSecret)
 	if err != nil {
 		setupLog.Error(err, "failed to create GitHub client factory")
+>>>>>>> tmp-original-30-06-26-04-09
 		os.Exit(1)
 	}
 	spreadingManager := spreading.NewDefaultManager()
@@ -408,7 +407,11 @@ func main() {
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
 		LegacySecretName:       appCredentialsSecretName,
 	}).SetupWithManager(mgr); err != nil {
+<<<<<<< HEAD
+		setupLog.Error(err, "Failed to create controller", "controller", "team")
+=======
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
+>>>>>>> tmp-original-30-06-26-04-09
 		os.Exit(1)
 	}
 	if err := (&controller.RepositoryCtl{
