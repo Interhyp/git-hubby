@@ -51,7 +51,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 				RulesetPresetList:       []corev1.LocalObjectReference{},
 			},
 		}
@@ -1018,7 +1018,7 @@ var _ = Describe("Helper Functions", func() {
 			},
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 

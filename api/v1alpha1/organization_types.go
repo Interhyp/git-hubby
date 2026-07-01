@@ -22,12 +22,32 @@ import (
 )
 
 // GitHubAppCredentials defines the GitHub App credentials configuration for authenticating with the GitHub API.
+//
+// Deprecated: Use GitHubAppConfig instead, which allows per-organization credential secrets.
 type GitHubAppCredentials struct {
 	// SecretRef is a reference to a Kubernetes Secret containing GitHub App credentials.
 	// The secret must contain the following keys:
 	// - app-id: The GitHub App ID
 	// - private-key: The GitHub App private key in PEM format
 	SecretRef v1.LocalObjectReference `json:"secretRef"`
+}
+
+// GitHubAppConfig defines the GitHub App configuration for an organization, referencing the
+// Kubernetes Secret that holds the app credentials by name. The secret must reside in the
+// namespace configured via the APP_CREDENTIALS_SECRET_NAMESPACE environment variable.
+type GitHubAppConfig struct {
+	// InstallationId is the numeric ID of the GitHub App installation for this organization.
+	// You can find this ID in your GitHub App's installation settings or via the GitHub API.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	InstallationId int64 `json:"installationId"`
+
+	// CredentialsSecretName is the name of the Kubernetes Secret containing the GitHub App credentials.
+	// The secret must contain the keys `app-id` and `private-key` and must reside in the namespace
+	// configured via the APP_CREDENTIALS_SECRET_NAMESPACE environment variable.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	CredentialsSecretName string `json:"credentialsSecretName"`
 }
 
 // OrgCustomPropertyDefaultValue defines the default value for an organization custom property.
@@ -298,11 +318,21 @@ type OrganizationSpec struct {
 	Name string `json:"name,omitempty"`
 
 	// GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.
-	// This is used to authenticate API requests to GitHub. You can find this ID in your GitHub App's
-	// installation settings or via the GitHub API.
-	// +kubebuilder:validation:Required
+	// This field is deprecated. Use GitHubAppConfig instead, which also allows specifying which
+	// credential secret to use. When only this field is set, the operator falls back to the
+	// secret name configured via --app-credentials-secret-name.
+	// At least one of GitHubAppInstallationId or GitHubAppConfig must be set.
+	// If both are set, GitHubAppConfig takes precedence.
 	// +kubebuilder:validation:Minimum=1
-	GitHubAppInstallationId int64 `json:"githubAppInstallationId"`
+	// +optional
+	GitHubAppInstallationId *int64 `json:"githubAppInstallationId,omitempty"`
+
+	// GitHubAppConfig specifies the GitHub App installation and credentials secret to use for
+	// authenticating API requests on behalf of this organization.
+	// At least one of GitHubAppConfig or GitHubAppInstallationId must be set.
+	// If both are set, GitHubAppConfig takes precedence.
+	// +optional
+	GitHubAppConfig *GitHubAppConfig `json:"githubAppConfig,omitempty"`
 
 	// CustomProperties defines custom metadata properties that can be assigned to repositories in the organization.
 	// These properties allow you to categorize and add structured metadata to your repositories.

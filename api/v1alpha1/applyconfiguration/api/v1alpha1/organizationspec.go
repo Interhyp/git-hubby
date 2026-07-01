@@ -40,9 +40,17 @@ type OrganizationSpecApplyConfiguration struct {
 	// At least one of Login or Name must be specified.
 	Name *string `json:"name,omitempty"`
 	// GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.
-	// This is used to authenticate API requests to GitHub. You can find this ID in your GitHub App's
-	// installation settings or via the GitHub API.
+	// This field is deprecated. Use GitHubAppConfig instead, which also allows specifying which
+	// credential secret to use. When only this field is set, the operator falls back to the
+	// secret name configured via --app-credentials-secret-name.
+	// At least one of GitHubAppInstallationId or GitHubAppConfig must be set.
+	// If both are set, GitHubAppConfig takes precedence.
 	GitHubAppInstallationId *int64 `json:"githubAppInstallationId,omitempty"`
+	// GitHubAppConfig specifies the GitHub App installation and credentials secret to use for
+	// authenticating API requests on behalf of this organization.
+	// At least one of GitHubAppConfig or GitHubAppInstallationId must be set.
+	// If both are set, GitHubAppConfig takes precedence.
+	GitHubAppConfig *GitHubAppConfigApplyConfiguration `json:"githubAppConfig,omitempty"`
 	// CustomProperties defines custom metadata properties that can be assigned to repositories in the organization.
 	// These properties allow you to categorize and add structured metadata to your repositories.
 	// See: https://docs.github.com/en/rest/orgs/custom-properties
@@ -100,6 +108,14 @@ func (b *OrganizationSpecApplyConfiguration) WithName(value string) *Organizatio
 // If called multiple times, the GitHubAppInstallationId field is set to the value of the last call.
 func (b *OrganizationSpecApplyConfiguration) WithGitHubAppInstallationId(value int64) *OrganizationSpecApplyConfiguration {
 	b.GitHubAppInstallationId = &value
+	return b
+}
+
+// WithGitHubAppConfig sets the GitHubAppConfig field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GitHubAppConfig field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithGitHubAppConfig(value *GitHubAppConfigApplyConfiguration) *OrganizationSpecApplyConfiguration {
+	b.GitHubAppConfig = value
 	return b
 }
 

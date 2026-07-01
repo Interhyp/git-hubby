@@ -58,6 +58,7 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 			ClientManager:    ghclientmock.NewGitHubMockClientFactory(mockClient),
 			K8sClient:        testEnv.Client,
 			SpreadingManager: &mock.NoOpSpreadManager{},
+			LegacySecretName: secretName,
 		}
 		testEnv.CreateTestNamespace(namespaceName)
 		testEnv.CreateSecret(namespaceName, secretName)

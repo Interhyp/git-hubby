@@ -278,7 +278,7 @@ var _ = Describe("ReconcileRepository", func() {
 					},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    "test-org",
-						GitHubAppInstallationId: 123,
+						GitHubAppInstallationId: new(int64(123)),
 					},
 				}
 			})

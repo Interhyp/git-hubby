@@ -67,6 +67,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.DependencyGraphAutosubmitActionOptionsApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("DeployKey"):
 		return &apiv1alpha1.DeployKeyApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("GitHubAppConfig"):
+		return &apiv1alpha1.GitHubAppConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MergeStrategy"):
 		return &apiv1alpha1.MergeStrategyApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Organization"):

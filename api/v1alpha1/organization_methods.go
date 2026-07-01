@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"fmt"
+
 	"github.com/Interhyp/git-hubby/internal/conditions"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -135,4 +137,25 @@ func (o *Organization) IsUsingLegacyNameField() bool {
 		return false
 	}
 	return o.Spec.Login == "" && o.Spec.Name != ""
+}
+
+// ResolveGitHubAppConfig resolves the effective GitHubAppConfig for this Organization.
+// If GitHubAppConfig is set, it is returned directly (it takes precedence).
+// Otherwise, if the deprecated GitHubAppInstallationId field is set, a GitHubAppConfig is
+// synthesised using the provided legacySecretName as the credentials secret.
+// Returns an error if neither field is set.
+func (in *Organization) ResolveGitHubAppConfig(legacySecretName string) (*GitHubAppConfig, error) {
+	if in == nil {
+		return nil, fmt.Errorf("organization is nil")
+	}
+	if in.Spec.GitHubAppConfig != nil {
+		return in.Spec.GitHubAppConfig, nil
+	}
+	if in.Spec.GitHubAppInstallationId != nil {
+		return &GitHubAppConfig{
+			InstallationId:        *in.Spec.GitHubAppInstallationId,
+			CredentialsSecretName: legacySecretName,
+		}, nil
+	}
+	return nil, fmt.Errorf("organization %s/%s has neither githubAppConfig nor githubAppInstallationId set", in.Namespace, in.Name)
 }
