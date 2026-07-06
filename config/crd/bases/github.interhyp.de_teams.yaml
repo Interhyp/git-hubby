@@ -69,7 +69,7 @@ spec:
                   GitHub automatically generates a "slug" from this name for use in URLs and APIs.
                 maxLength: 100
                 minLength: 1
-                pattern: ^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$
+                pattern: ^[a-zA-Z0-9][a-zA-Z0-9_.\-/ ]{0,99}[a-zA-Z0-9]$|^[a-zA-Z0-9]$
                 type: string
               notificationSetting:
                 default: notifications_disabled

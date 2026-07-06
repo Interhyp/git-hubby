@@ -1203,7 +1203,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `name` _string_ | Name is the display name of the team in GitHub.<br />GitHub automatically generates a "slug" from this name for use in URLs and APIs. |  | MaxLength: 100 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9][a-zA-Z0-9_.-]\{0,99\}$` <br />Required: \{\} <br />Type: string <br /> |
+| `name` _string_ | Name is the display name of the team in GitHub.<br />GitHub automatically generates a "slug" from this name for use in URLs and APIs. |  | MaxLength: 100 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9][a-zA-Z0-9_.\-/ ]\{0,99\}[a-zA-Z0-9]$\|^[a-zA-Z0-9]$` <br />Required: \{\} <br />Type: string <br /> |
 | `members` _string array_ | Members is a list of GitHub usernames to add to the team.<br />This field is mutually exclusive with IDPGroup.<br />When set, team membership is managed manually through this list.<br />Members not in this list will be removed from the team. |  | MaxItems: 100 <br /> |
 | `idpGroup` _string_ | IDPGroup is the name of the Identity Provider group to synchronize with this team.<br />This field is mutually exclusive with Members.<br />When set, team membership is automatically synchronized from the IDP group.<br />See: https://docs.github.com/en/organizations/organizing-members-into-teams/synchronizing-a-team-with-an-identity-provider-group |  | MaxLength: 100 <br />Pattern: `^[a-zA-Z0-9][a-zA-Z0-9_.-]\{0,99\}$` <br />Type: string <br /> |
 | `description` _string_ | Description provides additional information about the team's purpose.<br />This appears on the team's page in GitHub. |  | MaxLength: 1000 <br />Optional: \{\} <br />Type: string <br /> |
