@@ -37,7 +37,7 @@ type TeamSpec struct {
 	// GitHub automatically generates a "slug" from this name for use in URLs and APIs.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=100
-	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$`
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9][a-zA-Z0-9_.\-/ ]{0,99}[a-zA-Z0-9]$|^[a-zA-Z0-9]$`
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Type=string
 	Name string `json:"name"`
