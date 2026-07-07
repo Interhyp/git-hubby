@@ -119,7 +119,7 @@ This allows different organizations to use different GitHub Apps, enabling multi
 
 The legacy `spec.githubAppInstallationId` field is still supported for backward compatibility; it falls back to the default credentials secret configured via `--app-credentials-secret-name`. If both fields are set, `githubAppConfig` takes precedence.
 
-See the [README](../../README.md#github-app-credentials) for details on creating the credentials Secret.
+See the [README](https://github.com/Interhyp/git-hubby#github-app-credentials) for details on creating the credentials Secret.
 
 ### Custom Properties
 

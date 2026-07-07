@@ -78,6 +78,24 @@ jobs:
           fi
           echo "Generated code is up to date."
 
+  docs-build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install mkdocs-material
+
+      - name: Build documentation
+        run: mkdocs build --strict
+
   test-e2e:
     name: Test E2E
     runs-on: ubuntu-latest
