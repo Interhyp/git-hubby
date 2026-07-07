@@ -22,7 +22,9 @@ spec:
   website: "https://engineering.acme-corp.com"
 
   # --- Authentication ---
-  githubAppInstallationId: 12345678         # From GitHub App settings
+  githubAppConfig:
+    installationId: 12345678            # From GitHub App installation settings
+    credentialsSecretName: acme-corp-app-credentials  # Secret in credentials namespace
   plan: enterprise                          # enterprise | team | free
 
   # --- Custom Properties ---
@@ -101,6 +103,23 @@ spec:
 ```
 
 ## Key Concepts
+
+### Authentication
+
+Each `Organization` resource must specify how the operator authenticates with GitHub. Use `spec.githubAppConfig` (recommended) to select both the installation ID and the credentials secret:
+
+```yaml
+spec:
+  githubAppConfig:
+    installationId: 12345678
+    credentialsSecretName: acme-corp-app-credentials   # Secret in credentials namespace
+```
+
+This allows different organizations to use different GitHub Apps, enabling multi-tenant setups.
+
+The legacy `spec.githubAppInstallationId` field is still supported for backward compatibility; it falls back to the default credentials secret configured via `--app-credentials-secret-name`. If both fields are set, `githubAppConfig` takes precedence.
+
+See the [README](../../README.md#github-app-credentials) for details on creating the credentials Secret.
 
 ### Custom Properties
 

@@ -317,11 +317,39 @@ spec:
                   Description is a human-readable description of the organization.
                   This appears on the organization's GitHub profile page.
                 type: string
+              githubAppConfig:
+                description: |-
+                  GitHubAppConfig specifies the GitHub App installation and credentials secret to use for
+                  authenticating API requests on behalf of this organization.
+                  At least one of GitHubAppConfig or GitHubAppInstallationId must be set.
+                  If both are set, GitHubAppConfig takes precedence.
+                properties:
+                  credentialsSecretName:
+                    description: |-
+                      CredentialsSecretName is the name of the Kubernetes Secret containing the GitHub App credentials.
+                      The secret must contain the keys `app-id` and `private-key` and must reside in the namespace
+                      configured via the APP_CREDENTIALS_SECRET_NAMESPACE environment variable.
+                    minLength: 1
+                    type: string
+                  installationId:
+                    description: |-
+                      InstallationId is the numeric ID of the GitHub App installation for this organization.
+                      You can find this ID in your GitHub App's installation settings or via the GitHub API.
+                    format: int64
+                    minimum: 1
+                    type: integer
+                required:
+                - credentialsSecretName
+                - installationId
+                type: object
               githubAppInstallationId:
                 description: |-
                   GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.
-                  This is used to authenticate API requests to GitHub. You can find this ID in your GitHub App's
-                  installation settings or via the GitHub API.
+                  This field is deprecated. Use GitHubAppConfig instead, which also allows specifying which
+                  credential secret to use. When only this field is set, the operator falls back to the
+                  secret name configured via --app-credentials-secret-name.
+                  At least one of GitHubAppInstallationId or GitHubAppConfig must be set.
+                  If both are set, GitHubAppConfig takes precedence.
                 format: int64
                 minimum: 1
                 type: integer
@@ -391,7 +419,6 @@ spec:
             - actionsSettings
             - codeSecurityConfigurations
             - description
-            - githubAppInstallationId
             type: object
           status:
             description: status defines the observed state of Organization

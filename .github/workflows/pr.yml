@@ -1,0 +1,136 @@
+name: PR Checks
+# Jobs in this workflow are enforced as required status checks via branch protection on main.
+# This file is intentionally separate from ci.yml so these jobs only ever trigger on
+# pull_request events — preventing the double-run / skipped-status-check race that occurs
+# when a force-push fires both a 'push' event and a 'pull_request: synchronize' event
+# within the same workflow file.
+
+on:
+  pull_request:
+    # 'edited' is included so commitlint re-runs when PR title changes (used as squash commit message)
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+
+jobs:
+  commitlint:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - name: Install commitlint
+        run: npm ci
+
+      - name: Lint commits
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+  helm-chart-reminder:
+    name: Helm Chart Update Reminder
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check for Helm-relevant changes
+        id: changes
+        run: |
+          # Restrict to *.go so the workflow files themselves don't self-match
+          # (the grep patterns appear verbatim in this YAML and would otherwise trigger false positives)
+          GO_DIFF="$(git diff origin/${{ github.base_ref }}...HEAD -- '*.go')"
+
+          echo "=== Changed .go files ==="
+          git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.go'
+          echo "=== All changed files ==="
+          git diff --name-only origin/${{ github.base_ref }}...HEAD
+
+          REASONS=""
+
+          RBAC_FILES="$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.go' \
+            | while read -r f; do
+                if git diff origin/${{ github.base_ref }}...HEAD -- "$f" | grep -qE '^\+.*\+kubebuilder:rbac'; then
+                  echo "$f"
+                fi
+              done)"
+          if [[ -n "$RBAC_FILES" ]]; then
+            echo "=== Files with new +kubebuilder:rbac markers ==="
+            echo "$RBAC_FILES"
+            FILE_LIST="$(echo "$RBAC_FILES" | sed 's/^/  - \`/' | sed 's/$/\`/')"
+            REASONS="${REASONS}\n- RBAC markers (\`+kubebuilder:rbac\`) were added or modified → update RBAC template\n${FILE_LIST}"
+          fi
+
+          WEBHOOK_FILES="$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.go' \
+            | while read -r f; do
+                if git diff origin/${{ github.base_ref }}...HEAD -- "$f" | grep -qE '^\+.*\+kubebuilder:webhook'; then
+                  echo "$f"
+                fi
+              done)"
+          if [[ -n "$WEBHOOK_FILES" ]]; then
+            echo "=== Files with new +kubebuilder:webhook markers ==="
+            echo "$WEBHOOK_FILES"
+            FILE_LIST="$(echo "$WEBHOOK_FILES" | sed 's/^/  - \`/' | sed 's/$/\`/')"
+            REASONS="${REASONS}\n- Webhook markers (\`+kubebuilder:webhook\`) were added or modified → update webhook configuration template\n${FILE_LIST}"
+          fi
+
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q 'config/manager/manager.yaml'; then
+            echo "=== config/manager/manager.yaml was modified ==="
+            REASONS="${REASONS}\n- \`config/manager/manager.yaml\` was modified → update deployment template (env vars, args, ports, volumes)"
+          fi
+
+          if [[ -n "$REASONS" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            # Use delimiter for multiline output
+            echo "reasons<<EOF" >> "$GITHUB_OUTPUT"
+            echo -e "$REASONS" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Helm-relevant changes detected"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment on PR about Helm chart changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          COMMENT_MARKER="<!-- helm-chart-reminder -->"
+          echo "=== Looking up existing reminder comment ==="
+          EXISTING_ID=$(gh api \
+            "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            --jq '[.[] | select(.body | contains("'"$COMMENT_MARKER"'"))] | first | .id // empty')
+          echo "EXISTING_ID=${EXISTING_ID}"
+          echo "changed=${{ steps.changes.outputs.changed }}"
+          if [[ "${{ steps.changes.outputs.changed }}" == "true" ]]; then
+            if [[ -z "$EXISTING_ID" ]]; then
+              echo "=== Posting reminder comment ==="
+              gh pr comment ${{ github.event.pull_request.number }} --body "${COMMENT_MARKER}
+          ⚠️ **Helm Chart Update Required**
+
+          This PR contains changes that likely require a matching update in [git-hubby-helm](https://github.com/Interhyp/git-hubby-helm):
+
+          ${{ steps.changes.outputs.reasons }}
+
+          After merging, run \`make manifests\` and compare the generated output in \`config/\` with the corresponding Helm chart templates."
+            else
+              echo "=== Reminder comment already exists, skipping ==="
+            fi
+          else
+            if [[ -n "$EXISTING_ID" ]]; then
+              echo "=== Deleting stale reminder comment ==="
+              gh api -X DELETE "repos/${{ github.repository }}/issues/comments/${EXISTING_ID}"
+            else
+              echo "=== No reminder comment to delete ==="
+            fi
+          fi

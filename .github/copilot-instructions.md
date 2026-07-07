@@ -16,7 +16,11 @@ These instructions help AI agents work productively in this **Kubebuilder v4**-b
   - [internal/reconciler/orgrec](internal/reconciler/orgrec) for organizations - manages org settings, custom properties, rulesets, code security configurations, and actions settings
   - [internal/reconciler/reporec](internal/reconciler/reporec) for repositories - manages repo settings, webhooks, and rulesets
   - [internal/reconciler/teamrec](internal/reconciler/teamrec) for teams - manages team creation, membership, and multi-organization support
-- GitHub integration via a cached client factory using GitHub App credentials from a Kubernetes Secret; see [internal/ghclient/factory.go](internal/ghclient/factory.go), [internal/ghclient/wrapper.go](internal/ghclient/wrapper.go), [internal/ghclient/interface.go](internal/ghclient/interface.go).
+- GitHub integration via a cached client factory that supports **multiple GitHub Apps** — each organization can reference its own credentials secret via `spec.githubAppConfig`; see [internal/ghclient/factory.go](internal/ghclient/factory.go), [internal/ghclient/wrapper.go](internal/ghclient/wrapper.go), [internal/ghclient/interface.go](internal/ghclient/interface.go).
+  - `CachingGitHubClientFactory` caches credentials per secret name and clients per organization (`cacheKey`); rate-limit state is shared per GitHub App ID.
+  - `SecretProviderFunc` now takes a `secretName string` parameter so any secret in the credentials namespace can be fetched on demand.
+  - `GetClient(ctx, cacheKey, app v1alpha1.GitHubAppConfig)` and `GetGitHubClientAndCheckRateLimit(...)` accept a `GitHubAppConfig` struct (containing `InstallationId` and `CredentialsSecretName`).
+  - When `spec.githubAppConfig` is set on an `Organization`, it takes precedence; otherwise the operator falls back to `spec.githubAppInstallationId` (deprecated) combined with the default secret name from `--app-credentials-secret-name`.
 - Status conditions are set consistently via helpers; see [internal/conditions/conditions.go](internal/conditions/conditions.go). Finalizers gate deletion; see reconciler files.
 - **Validation-only webhooks** enforce spec rules (e.g., organization custom properties, repository references); see [internal/webhook/v1alpha1/organization_webhook.go](internal/webhook/v1alpha1/organization_webhook.go) and [internal/webhook/v1alpha1/repository_webhook.go](internal/webhook/v1alpha1/repository_webhook.go). **Mutating webhooks have been removed**; labels are now applied in reconcilers. **Note**: Team CRD has no webhook currently.
 
@@ -164,7 +168,12 @@ Controllers implement continuous drift detection:
 
 ## Configuration & Secrets
 - The manager reads flags for secret location and TLS; see [cmd/main.go](cmd/main.go) for `--app-credentials-secret-namespace` (default `github-controller`) and `--app-credentials-secret-name` (default `git-hubby-app-credentials`).
-- Required secret keys: `app-id`, `private-key` (PEM RSA); parsed in [internal/ghclient/factory.go](internal/ghclient/factory.go). The GitHub App Installation ID is provided per-organization via `Organization.Spec.GitHubAppInstallationId`.
+- Required secret keys: `app-id`, `private-key` (PEM RSA); parsed in [internal/ghclient/factory.go](internal/ghclient/factory.go).
+- **Multiple GitHub Apps**: Each `Organization` CR can reference a different credentials Secret via `spec.githubAppConfig.credentialsSecretName`. All referenced secrets must reside in the namespace set by `--app-credentials-secret-namespace`. The operator fetches credentials lazily on first use and caches them per secret name.
+  - `spec.githubAppConfig` (preferred): specify both `installationId` and `credentialsSecretName`.
+  - `spec.githubAppInstallationId` (deprecated): uses the default secret from `--app-credentials-secret-name`; still supported for backward compatibility.
+  - If both are set, `githubAppConfig` takes precedence.
+- **Secret rotation**: Updating a credentials Secret does **not** automatically invalidate the in-memory client cache. A pod restart is required to pick up rotated credentials.
 - Metrics and webhook TLS can be configured via flags; HTTP/2 is disabled by default for security.
 - **Log level**: Configurable via `LOG_LEVEL` environment variable (accepts `debug`, `info`, `warn`, `error`; case-insensitive). Overrides the `--zap-log-level` CLI flag. Can also be set in `.env` file.
 

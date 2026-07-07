@@ -105,8 +105,11 @@ var _ = Describe("Repository Webhook", func() {
 				Namespace: "default",
 			},
 			Spec: githubv1alpha1.OrganizationSpec{
-				Name:                    "test-org",
-				GitHubAppInstallationId: 12345,
+				Name: "test-org",
+				GitHubAppConfig: &githubv1alpha1.GitHubAppConfig{
+					InstallationId:        12345,
+					CredentialsSecretName: "test-credentials",
+				},
 			},
 		}
 
@@ -148,6 +151,7 @@ var _ = Describe("Repository Webhook", func() {
 		validator = RepositoryCustomValidator{
 			K8sClient:           mockK8s,
 			GitHubClientManager: ghclientmock.NewGitHubMockClientFactory(mockClient),
+			LegacySecretName:    "test-credentials",
 		}
 
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")

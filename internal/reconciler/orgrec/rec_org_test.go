@@ -48,7 +48,7 @@ var _ = Describe("ReconcileOrganization", func() {
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				Description:             "Test Organization",
-				GitHubAppInstallationId: 12345,
+				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 

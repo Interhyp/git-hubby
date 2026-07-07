@@ -53,6 +53,7 @@ var _ = Describe("TeamController", func() {
 			ClientManager:    ghclientmock.NewGitHubMockClientFactory(mockClient),
 			K8sClient:        testEnv.Client,
 			SpreadingManager: &mock.NoOpSpreadManager{},
+			LegacySecretName: "test-credentials",
 		}
 		testEnv.CreateTestNamespace(namespaceName)
 		_ = testEnv.SetupOrganizationTest(nil, namespaceName, orgName)

@@ -452,6 +452,25 @@ _Appears in:_
 | `readOnly` _boolean_ | ReadOnly determines the access level for this deploy key.<br />- true: Key can only read from the repository (cannot push)<br />- false: Key can read and write to the repository (can push commits) | true | Type: boolean <br /> |
 
 
+#### GitHubAppConfig
+
+
+
+GitHubAppConfig defines the GitHub App configuration for an organization, referencing the
+Kubernetes Secret that holds the app credentials by name. The secret must reside in the
+namespace configured via the APP_CREDENTIALS_SECRET_NAMESPACE environment variable.
+
+
+
+_Appears in:_
+- [OrganizationSpec](#organizationspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `installationId` _integer_ | InstallationId is the numeric ID of the GitHub App installation for this organization.<br />You can find this ID in your GitHub App's installation settings or via the GitHub API. |  | Minimum: 1 <br />Required: \{\} <br /> |
+| `credentialsSecretName` _string_ | CredentialsSecretName is the name of the Kubernetes Secret containing the GitHub App credentials.<br />The secret must contain the keys `app-id` and `private-key` and must reside in the namespace<br />configured via the APP_CREDENTIALS_SECRET_NAMESPACE environment variable. |  | MinLength: 1 <br />Required: \{\} <br /> |
+
+
 
 
 #### MergeStrategy
@@ -594,7 +613,8 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `login` _string_ | Login is the GitHub organization login (the unique, immutable identifier on GitHub).<br />This field is optional for backwards compatibility. If not specified, the Name field<br />will be used as both login and display name.<br />It is recommended to explicitly set this field to clearly separate login from display name. |  | MaxLength: 39 <br />MinLength: 1 <br />Optional: \{\} <br /> |
 | `name` _string_ | Name is the organization's display name shown on the GitHub profile.<br />If Login is not specified, this field will also be used as the organization login<br />for backwards compatibility.<br />At least one of Login or Name must be specified. |  | MaxLength: 255 <br />MinLength: 1 <br />Optional: \{\} <br /> |
-| `githubAppInstallationId` _integer_ | GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.<br />This is used to authenticate API requests to GitHub. You can find this ID in your GitHub App's<br />installation settings or via the GitHub API. |  | Minimum: 1 <br />Required: \{\} <br /> |
+| `githubAppInstallationId` _integer_ | GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.<br />This field is deprecated. Use GitHubAppConfig instead, which also allows specifying which<br />credential secret to use. When only this field is set, the operator falls back to the<br />secret name configured via --app-credentials-secret-name.<br />At least one of GitHubAppInstallationId or GitHubAppConfig must be set.<br />If both are set, GitHubAppConfig takes precedence. |  | Minimum: 1 <br />Optional: \{\} <br /> |
+| `githubAppConfig` _[GitHubAppConfig](#githubappconfig)_ | GitHubAppConfig specifies the GitHub App installation and credentials secret to use for<br />authenticating API requests on behalf of this organization.<br />At least one of GitHubAppConfig or GitHubAppInstallationId must be set.<br />If both are set, GitHubAppConfig takes precedence. |  | Optional: \{\} <br /> |
 | `customProperties` _[OrgCustomProperty](#orgcustomproperty) array_ | CustomProperties defines custom metadata properties that can be assigned to repositories in the organization.<br />These properties allow you to categorize and add structured metadata to your repositories.<br />See: https://docs.github.com/en/rest/orgs/custom-properties |  | MaxItems: 100 <br /> |
 | `actionsSettings` _[ActionsSettings](#actionssettings)_ | ActionsSettings configures GitHub Actions permissions and behavior for the organization.<br />This includes which repositories can use Actions, which actions are allowed, and runner group configurations.<br />See: https://docs.github.com/en/rest/actions/permissions |  |  |
 | `codeSecurityConfigurations` _[AttachableCodeSecurityConfigurationRef](#attachablecodesecurityconfigurationref) array_ | CodeSecurityConfigurations lists code security configurations to create and optionally attach to repositories.<br />Each configuration defines security features like dependency scanning, secret scanning, and code scanning.<br />See: https://docs.github.com/en/rest/code-security/configurations |  |  |

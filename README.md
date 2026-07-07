@@ -11,7 +11,7 @@ A Kubernetes operator for managing GitHub organizations and repositories as code
 ### Key Features
 
 - **Declarative GitHub Management**: Define organizations and repositories as Kubernetes resources
-- **GitHub App Integration**: Secure authentication using GitHub App credentials
+- **Multiple GitHub Apps**: Each organization can reference its own GitHub App credentials secret, enabling multi-tenant and multi-app setups
 - **Multi-Plan Support**: Works with GitHub `free`, `team`, and `enterprise` plans — plan-gated features are automatically skipped when not available
 - **Advanced Features**: Manage repository rulesets, webhooks, organization custom properties, and code security configurations
 - **Rate Limit Awareness**: Built-in GitHub API rate limit handling with intelligent backoff
@@ -91,13 +91,17 @@ The log output format can be configured via:
 
 ### GitHub App Credentials
 
-The operator requires a Kubernetes Secret with GitHub App credentials:
+The operator authenticates with GitHub using GitHub App credentials stored in Kubernetes Secrets. Each organization can reference its own credentials secret, enabling multiple GitHub Apps across organizations.
+
+#### Secret Format
+
+Create one or more Secrets, each containing credentials for a GitHub App:
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: git-hubby-app-credentials
+  name: git-hubby-app-credentials    # default secret name
   namespace: github-controller
 type: Opaque
 stringData:
@@ -108,11 +112,52 @@ stringData:
     -----END RSA PRIVATE KEY-----
 ```
 
-**Secret location** is configurable via flags:
+All credential secrets must reside in the same namespace, configured via:
 - `--app-credentials-secret-namespace` (default: `github-controller`)
+
+The default secret name is configured via:
 - `--app-credentials-secret-name` (default: `git-hubby-app-credentials`)
 
-**GitHub App Installation ID** is provided per-organization in the `Organization` resource spec.
+#### Per-Organization App Configuration (recommended)
+
+Use `spec.githubAppConfig` on the `Organization` resource to specify both the installation ID and which credentials secret to use:
+
+```yaml
+spec:
+  githubAppConfig:
+    installationId: 12345678
+    credentialsSecretName: my-org-app-credentials  # references a Secret in the credentials namespace
+```
+
+This is the preferred approach and supports multiple GitHub Apps across different organizations.
+
+#### Legacy: Single App via Installation ID (deprecated)
+
+The older `spec.githubAppInstallationId` field is still supported for backward compatibility. When set alone, it uses the default credentials secret configured via `--app-credentials-secret-name`:
+
+```yaml
+spec:
+  githubAppInstallationId: 12345678   # deprecated; use githubAppConfig instead
+```
+
+If both `githubAppConfig` and `githubAppInstallationId` are set, `githubAppConfig` takes precedence.
+
+#### Secret Rotation
+
+Updating a credentials Secret in Kubernetes does **not** automatically invalidate the operator's in-memory client cache. To force the operator to pick up rotated credentials, restart the operator pod.
+
+For automated rotation workflows, we recommend [Stakater Reloader](https://github.com/stakater/Reloader). Add the reload annotation to the operator `Deployment` and list the Secret(s) that should trigger a restart:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-hubby-controller-manager
+  annotations:
+    secret.reloader.stakater.com/reload: "git-hubby-app-credentials,my-org-app-credentials"
+```
+
+When Reloader detects a change in any of the listed Secrets, it rolls the Deployment, causing the operator to restart and re-fetch fresh credentials.
 
 ## Architecture Highlights
 

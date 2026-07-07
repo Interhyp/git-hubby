@@ -3,13 +3,9 @@ name: CI
 
 on:
   push:
-  pull_request:
-    # 'edited' is included so commitlint re-runs when PR title changes (used as squash commit message)
-    types: [opened, edited, synchronize, reopened]
 
 permissions:
   contents: read
-  pull-requests: write
 
 
 jobs:
@@ -82,27 +78,6 @@ jobs:
           fi
           echo "Generated code is up to date."
 
-  commitlint:
-    name: Validate Commit Messages
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-
-      - name: Install commitlint
-        run: npm ci
-
-      - name: Lint commits
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
-
   test-e2e:
     name: Test E2E
     runs-on: ubuntu-latest
@@ -129,55 +104,3 @@ jobs:
         run: |
           go mod tidy
           make test-e2e
-
-  helm-chart-reminder:
-    name: Helm Chart Update Reminder
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Check for Helm-relevant changes
-        id: changes
-        run: |
-          DIFF="$(git diff origin/${{ github.base_ref }}...HEAD)"
-          REASONS=""
-          if echo "$DIFF" | grep -qE '^\+.*\+kubebuilder:rbac'; then
-            REASONS="${REASONS}\n- RBAC markers (\`+kubebuilder:rbac\`) were added or modified → update RBAC template"
-          fi
-          if echo "$DIFF" | grep -qE '^\+.*\+kubebuilder:webhook'; then
-            REASONS="${REASONS}\n- Webhook markers (\`+kubebuilder:webhook\`) were added or modified → update webhook configuration template"
-          fi
-          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q 'config/manager/manager.yaml'; then
-            REASONS="${REASONS}\n- \`config/manager/manager.yaml\` was modified → update deployment template (env vars, args, ports, volumes)"
-          fi
-          if [[ -n "$REASONS" ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            # Use delimiter for multiline output
-            echo "reasons<<EOF" >> "$GITHUB_OUTPUT"
-            echo -e "$REASONS" >> "$GITHUB_OUTPUT"
-            echo "EOF" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Comment on PR about Helm chart changes
-        if: steps.changes.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          COMMENT_MARKER="<!-- helm-chart-reminder -->"
-          EXISTING=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '[.comments[].body | select(contains("'"$COMMENT_MARKER"'"))] | length')
-          if [[ "$EXISTING" == "0" ]]; then
-            gh pr comment ${{ github.event.pull_request.number }} --body "${COMMENT_MARKER}
-          ⚠️ **Helm Chart Update Required**
-
-          This PR contains changes that likely require a matching update in [git-hubby-helm](https://github.com/Interhyp/git-hubby-helm):
-
-          ${{ steps.changes.outputs.reasons }}
-
-          After merging, run \`make manifests\` and compare the generated output in \`config/\` with the corresponding Helm chart templates."
-          fi

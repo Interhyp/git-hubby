@@ -159,6 +159,10 @@ func (te *TestEnvironment) SetupOrganizationTest(_ *testing.T, namespace, orgNam
 		Spec: githubv1alpha1.OrganizationSpec{
 			Name:        orgName,
 			Description: "Test organization for unit tests",
+			GitHubAppConfig: &githubv1alpha1.GitHubAppConfig{
+				InstallationId:        12345,
+				CredentialsSecretName: "test-credentials",
+			},
 		},
 	}
 
