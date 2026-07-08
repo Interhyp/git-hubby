@@ -27,6 +27,9 @@ spec:
     credentialsSecretName: acme-corp-app-credentials  # Secret in credentials namespace
   plan: enterprise                          # enterprise | team | free
 
+  # --- Team Members ---
+  memberSuffix: "@acme-corp.com"            # Appended to usernames in Team.spec.members; overridden by GITHUB_MEMBER_SUFFIX env var
+
   # --- Custom Properties ---
   # Define metadata fields that repositories must/can set
   customProperties:
@@ -198,6 +201,19 @@ Some features require specific GitHub plans:
 | Code security configurations | `enterprise` |
 | Internal repository visibility | `enterprise` |
 | Runner groups | `team` or `enterprise` |
+
+## Team Member Suffix
+
+When GitHub usernames in your enterprise follow a naming convention (e.g. `john.doe@acme-corp.com`), set `spec.memberSuffix` so you can write plain usernames in `Team.spec.members` without repeating the suffix everywhere:
+
+```yaml
+spec:
+  memberSuffix: "@acme-corp.com"
+```
+
+With this set, a team member listed as `john.doe` in `Team.spec.members` will be looked up and added on GitHub as `john.doe@acme-corp.com`.
+
+The global `GITHUB_MEMBER_SUFFIX` environment variable takes precedence over this field if set. For multi-organization setups where different orgs use different naming conventions, `spec.memberSuffix` is the preferred approach since the env var applies uniformly to all organizations.
 
 ## Related Resources
 
