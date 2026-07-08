@@ -49,17 +49,11 @@ type RepositoryCtl struct {
 // the user.
 //
 // For more details, check Reconcile and its Result here:
-<<<<<<< HEAD
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.24.1/pkg/reconcile
-func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
-=======
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.23.3/pkg/reconcile
 func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
->>>>>>> tmp-original-30-06-26-04-09
 
 	rec, err := r.ReconcilerFactory.CreateForRepo(ctx, req.NamespacedName)
 	if err != nil {

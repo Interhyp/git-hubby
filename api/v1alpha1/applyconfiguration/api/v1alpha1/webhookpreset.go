@@ -18,8 +18,11 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apiv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	internal "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/internal"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
+	managedfields "k8s.io/apimachinery/pkg/util/managedfields"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
@@ -46,6 +49,47 @@ func WebhookPreset(name, namespace string) *WebhookPresetApplyConfiguration {
 	b.WithKind("WebhookPreset")
 	b.WithAPIVersion("github.interhyp.de/v1alpha1")
 	return b
+}
+
+// ExtractWebhookPresetFrom extracts the applied configuration owned by fieldManager from
+// webhookPreset for the specified subresource. Pass an empty string for subresource to extract
+// the main resource. Common subresources include "status", "scale", etc.
+// webhookPreset must be a unmodified WebhookPreset API object that was retrieved from the Kubernetes API.
+// ExtractWebhookPresetFrom provides a way to perform a extract/modify-in-place/apply workflow.
+// Note that an extracted apply configuration will contain fewer fields than what the fieldManager previously
+// applied if another fieldManager has updated or force applied any of the previously applied fields.
+func ExtractWebhookPresetFrom(webhookPreset *apiv1alpha1.WebhookPreset, fieldManager string, subresource string) (*WebhookPresetApplyConfiguration, error) {
+	b := &WebhookPresetApplyConfiguration{}
+	err := managedfields.ExtractInto(webhookPreset, internal.Parser().Type("com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPreset"), fieldManager, b, subresource)
+	if err != nil {
+		return nil, err
+	}
+	b.WithName(webhookPreset.Name)
+	b.WithNamespace(webhookPreset.Namespace)
+
+	b.WithKind("WebhookPreset")
+	b.WithAPIVersion("github.interhyp.de/v1alpha1")
+	return b, nil
+}
+
+// ExtractWebhookPreset extracts the applied configuration owned by fieldManager from
+// webhookPreset. If no managedFields are found in webhookPreset for fieldManager, a
+// WebhookPresetApplyConfiguration is returned with only the Name, Namespace (if applicable),
+// APIVersion and Kind populated. It is possible that no managed fields were found for because other
+// field managers have taken ownership of all the fields previously owned by fieldManager, or because
+// the fieldManager never owned fields any fields.
+// webhookPreset must be a unmodified WebhookPreset API object that was retrieved from the Kubernetes API.
+// ExtractWebhookPreset provides a way to perform a extract/modify-in-place/apply workflow.
+// Note that an extracted apply configuration will contain fewer fields than what the fieldManager previously
+// applied if another fieldManager has updated or force applied any of the previously applied fields.
+func ExtractWebhookPreset(webhookPreset *apiv1alpha1.WebhookPreset, fieldManager string) (*WebhookPresetApplyConfiguration, error) {
+	return ExtractWebhookPresetFrom(webhookPreset, fieldManager, "")
+}
+
+// ExtractWebhookPresetStatus extracts the applied configuration owned by fieldManager from
+// webhookPreset for the status subresource.
+func ExtractWebhookPresetStatus(webhookPreset *apiv1alpha1.WebhookPreset, fieldManager string) (*WebhookPresetApplyConfiguration, error) {
+	return ExtractWebhookPresetFrom(webhookPreset, fieldManager, "status")
 }
 
 func (b WebhookPresetApplyConfiguration) IsApplyConfiguration() {}
