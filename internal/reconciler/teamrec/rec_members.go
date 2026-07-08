@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -14,6 +16,22 @@ func (t *GitHubTeamReconciler) reconcileTeamMembers(ctx context.Context) error {
 	if t.Kubernetes.Resource.IsIDPTeam() {
 		return nil // IDP teams manage members via the identity provider
 	}
+
+	envMemberSuffix := os.Getenv("GITHUB_MEMBER_SUFFIX")
+	k8sOrgs := make(map[string]githubv1alpha1.Organization)
+	if envMemberSuffix == "" {
+		// need to fetch orgs to check for org specific memberSuffixes later
+		for _, orgRef := range t.Kubernetes.Resource.Spec.OrganizationRefs {
+			var org githubv1alpha1.Organization
+			if err := t.Kubernetes.Client.Get(ctx, client.ObjectKey{Name: orgRef.Name, Namespace: t.Kubernetes.Resource.Namespace}, &org); err != nil {
+				log.Error(err, "unable to fetch Organization for Team", "organization", orgRef)
+				return err
+			}
+			// index by GitHub login for easier mapping
+			k8sOrgs[org.GetLogin()] = org
+		}
+	}
+
 	for _, githubOrg := range t.Team.Organizations.Current {
 		log = log.WithValues("organization", githubOrg.Resource)
 
@@ -32,8 +50,12 @@ func (t *GitHubTeamReconciler) reconcileTeamMembers(ctx context.Context) error {
 			}
 		}
 
+		memberSuffix := envMemberSuffix
+		if org, ok := k8sOrgs[githubOrg.Resource]; ok {
+			memberSuffix = org.Spec.MemberSuffix
+		}
+
 		for _, memberRef := range t.Kubernetes.Resource.Spec.Members {
-			memberSuffix := os.Getenv("GITHUB_MEMBER_SUFFIX")
 			memberRef += memberSuffix
 			log := log.WithValues("member", memberRef)
 			log.V(1).Info("Processing member")

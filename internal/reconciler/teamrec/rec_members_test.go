@@ -26,6 +26,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		rec         *GitHubTeamReconciler
 		scheme      *runtime.Scheme
 		team        *v1alpha1.Team
+		org1        *v1alpha1.Organization
 		err         error
 	)
 
@@ -52,9 +53,21 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			},
 		}
 
+		// org1 uses legacy mode (no Login): GetLogin() returns Spec.Name == "org1",
+		// which matches githubOrg.Resource set by the factory.
+		org1 = &v1alpha1.Organization{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "org1",
+				Namespace: "default",
+			},
+			Spec: v1alpha1.OrganizationSpec{
+				Name: "org1",
+			},
+		}
+
 		k8sClient = fake.NewClientBuilder().
 			WithScheme(scheme).
-			WithObjects(team).
+			WithObjects(team, org1).
 			WithStatusSubresource(team).
 			Build()
 
@@ -551,12 +564,244 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		})
 	})
 
+	Context("when org has MemberSuffix set and env var is not set", func() {
+		BeforeEach(func() {
+			// Rebuild k8sClient with org1 having a MemberSuffix configured
+			orgWithSuffix := &v1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "org1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.OrganizationSpec{
+					Name:         "org1",
+					MemberSuffix: "@example.com",
+				},
+			}
+			k8sClient = fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(team, orgWithSuffix).
+				WithStatusSubresource(team).
+				Build()
+
+			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
+				return []*github.User{}, nil
+			}
+
+			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
+				return []*github.User{
+					{Login: new("user1@example.com")},
+					{Login: new("user2@example.com")},
+				}, nil
+			}
+
+			rec = &GitHubTeamReconciler{
+				Team: reconciler.GitHubTeamIdentifier{
+					Name: "test-team",
+					Slug: new("test-team"),
+					Organizations: reconciler.ReferencedOrganizations{
+						Current: []reconciler.GitHub[string]{
+							{
+								Client:   mockClient1,
+								Resource: "org1",
+							},
+						},
+					},
+				},
+				Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
+					Client:   k8sClient,
+					Resource: team,
+				},
+			}
+
+			err = rec.reconcileTeamMembers(ctx)
+		})
+
+		It("should append org MemberSuffix to member names", func() {
+			Expect(err).NotTo(HaveOccurred())
+			addedUsernames := []string{}
+			for _, call := range mockClient1.GetTeamMemberCalls() {
+				if call.Method == "AddTeamMember" {
+					addedUsernames = append(addedUsernames, call.Username)
+				}
+			}
+			Expect(addedUsernames).To(ConsistOf("user1@example.com", "user2@example.com"))
+		})
+	})
+
+	Context("when org has MemberSuffix set but env var takes precedence", func() {
+		BeforeEach(func() {
+			os.Setenv("GITHUB_MEMBER_SUFFIX", "_env")
+
+			// org1 has a different suffix; env var should win
+			orgWithSuffix := &v1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "org1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.OrganizationSpec{
+					Name:         "org1",
+					MemberSuffix: "@example.com",
+				},
+			}
+			k8sClient = fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(team, orgWithSuffix).
+				WithStatusSubresource(team).
+				Build()
+
+			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
+				return []*github.User{}, nil
+			}
+
+			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
+				return []*github.User{
+					{Login: new("user1_env")},
+					{Login: new("user2_env")},
+				}, nil
+			}
+
+			rec = &GitHubTeamReconciler{
+				Team: reconciler.GitHubTeamIdentifier{
+					Name: "test-team",
+					Slug: new("test-team"),
+					Organizations: reconciler.ReferencedOrganizations{
+						Current: []reconciler.GitHub[string]{
+							{
+								Client:   mockClient1,
+								Resource: "org1",
+							},
+						},
+					},
+				},
+				Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
+					Client:   k8sClient,
+					Resource: team,
+				},
+			}
+
+			err = rec.reconcileTeamMembers(ctx)
+		})
+
+		AfterEach(func() {
+			os.Unsetenv("GITHUB_MEMBER_SUFFIX")
+		})
+
+		It("should use env var suffix, not org MemberSuffix", func() {
+			Expect(err).NotTo(HaveOccurred())
+			addedUsernames := []string{}
+			for _, call := range mockClient1.GetTeamMemberCalls() {
+				if call.Method == "AddTeamMember" {
+					addedUsernames = append(addedUsernames, call.Username)
+				}
+			}
+			Expect(addedUsernames).To(ConsistOf("user1_env", "user2_env"))
+		})
+	})
+
+	Context("when orgs have different MemberSuffixes in multi-org scenario", func() {
+		BeforeEach(func() {
+			team.Spec.OrganizationRefs = []v1alpha1.OrganizationRef{
+				{Name: "org1"},
+				{Name: "org2"},
+			}
+
+			orgWithSuffix1 := &v1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{Name: "org1", Namespace: "default"},
+				Spec:       v1alpha1.OrganizationSpec{Name: "org1", MemberSuffix: "_suffix1"},
+			}
+			orgWithSuffix2 := &v1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{Name: "org2", Namespace: "default"},
+				Spec:       v1alpha1.OrganizationSpec{Name: "org2", MemberSuffix: "_suffix2"},
+			}
+			k8sClient = fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(team, orgWithSuffix1, orgWithSuffix2).
+				WithStatusSubresource(team).
+				Build()
+
+			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
+				return []*github.User{}, nil
+			}
+			mockClient1.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
+				return []*github.User{
+					{Login: new("user1_suffix1")},
+					{Login: new("user2_suffix1")},
+				}, nil
+			}
+
+			mockClient2.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
+				return []*github.User{}, nil
+			}
+			mockClient2.ListMembersFunc = func(ctx context.Context, org string) ([]*github.User, error) {
+				return []*github.User{
+					{Login: new("user1_suffix2")},
+					{Login: new("user2_suffix2")},
+				}, nil
+			}
+
+			rec = &GitHubTeamReconciler{
+				Team: reconciler.GitHubTeamIdentifier{
+					Name: "test-team",
+					Slug: new("test-team"),
+					Organizations: reconciler.ReferencedOrganizations{
+						Current: []reconciler.GitHub[string]{
+							{Client: mockClient1, Resource: "org1"},
+							{Client: mockClient2, Resource: "org2"},
+						},
+					},
+				},
+				Kubernetes: reconciler.Kubernetes[*v1alpha1.Team]{
+					Client:   k8sClient,
+					Resource: team,
+				},
+			}
+
+			err = rec.reconcileTeamMembers(ctx)
+		})
+
+		It("should apply each org's own suffix independently", func() {
+			Expect(err).NotTo(HaveOccurred())
+
+			org1Added := []string{}
+			for _, call := range mockClient1.GetTeamMemberCalls() {
+				if call.Method == "AddTeamMember" {
+					org1Added = append(org1Added, call.Username)
+				}
+			}
+			Expect(org1Added).To(ConsistOf("user1_suffix1", "user2_suffix1"))
+
+			org2Added := []string{}
+			for _, call := range mockClient2.GetTeamMemberCalls() {
+				if call.Method == "AddTeamMember" {
+					org2Added = append(org2Added, call.Username)
+				}
+			}
+			Expect(org2Added).To(ConsistOf("user1_suffix2", "user2_suffix2"))
+		})
+	})
+
 	Context("when reconciling team in multiple organizations", func() {
 		BeforeEach(func() {
 			team.Spec.OrganizationRefs = []v1alpha1.OrganizationRef{
 				{Name: "org1"},
 				{Name: "org2"},
 			}
+
+			org2 := &v1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "org2",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.OrganizationSpec{
+					Name: "org2",
+				},
+			}
+			// Rebuild client to include org2 alongside org1
+			k8sClient = fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(team, org1, org2).
+				WithStatusSubresource(team).
+				Build()
 
 			mockClient1.GetAllTeamMembersFunc = func(ctx context.Context, org string, slug string) ([]*github.User, error) {
 				return []*github.User{

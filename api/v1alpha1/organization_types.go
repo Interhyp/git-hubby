@@ -365,6 +365,14 @@ type OrganizationSpec struct {
 	// +optional
 	Location string `json:"location,omitempty"`
 
+	// MemberSuffix defines a suffix appended to each team member username before matching/adding them on GitHub.
+	// Useful when GitHub usernames follow a naming convention (e.g. enterprise suffix).
+	// Is ignored if environment variable GITHUB_MEMBER_SUFFIX is set.
+	// +kubebuilder:validation:MaxLength=100
+	// +optional
+	// +kubebuilder:default=""
+	MemberSuffix string `json:"memberSuffix,omitempty"`
+
 	// Website is the organization's website URL.
 	// This appears on the organization's GitHub profile page as a clickable link.
 	// +kubebuilder:validation:MaxLength=255

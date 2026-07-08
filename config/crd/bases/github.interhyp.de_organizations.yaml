@@ -368,6 +368,14 @@ spec:
                 maxLength: 39
                 minLength: 1
                 type: string
+              memberSuffix:
+                default: ""
+                description: |-
+                  MemberSuffix defines a suffix appended to each team member username before matching/adding them on GitHub.
+                  Useful when GitHub usernames follow a naming convention (e.g. enterprise suffix).
+                  Is ignored if environment variable GITHUB_MEMBER_SUFFIX is set.
+                maxLength: 100
+                type: string
               name:
                 description: |-
                   Name is the organization's display name shown on the GitHub profile.

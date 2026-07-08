@@ -73,6 +73,10 @@ type OrganizationSpecApplyConfiguration struct {
 	// Location is the organization's location (e.g., "Munich, Germany").
 	// This appears on the organization's GitHub profile page.
 	Location *string `json:"location,omitempty"`
+	// MemberSuffix defines a suffix appended to each team member username before matching/adding them on GitHub.
+	// Useful when GitHub usernames follow a naming convention (e.g. enterprise suffix).
+	// Is ignored if environment variable GITHUB_MEMBER_SUFFIX is set.
+	MemberSuffix *string `json:"memberSuffix,omitempty"`
 	// Website is the organization's website URL.
 	// This appears on the organization's GitHub profile page as a clickable link.
 	Website *string `json:"website,omitempty"`
@@ -176,6 +180,14 @@ func (b *OrganizationSpecApplyConfiguration) WithDescription(value string) *Orga
 // If called multiple times, the Location field is set to the value of the last call.
 func (b *OrganizationSpecApplyConfiguration) WithLocation(value string) *OrganizationSpecApplyConfiguration {
 	b.Location = &value
+	return b
+}
+
+// WithMemberSuffix sets the MemberSuffix field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MemberSuffix field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithMemberSuffix(value string) *OrganizationSpecApplyConfiguration {
+	b.MemberSuffix = &value
 	return b
 }
 

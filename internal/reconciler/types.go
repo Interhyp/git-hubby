@@ -47,10 +47,6 @@ type ReferencedOrganizations struct {
 	Current  []GitHub[string]
 	Previous []GitHub[string]
 }
-type GitHubOrgs struct {
-	Current  []*GitHub[GitHubTeamIdentifier]
-	Previous []*GitHub[GitHubTeamIdentifier]
-}
 
 type Kubernetes[T ReconcilableResource] struct {
 	Client   client.Client
