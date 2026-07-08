@@ -335,20 +335,6 @@ func main() {
 		os.Exit(1)
 	}
 
-<<<<<<< HEAD
-	if err := (&controller.OrganizationReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "Failed to create controller", "controller", "organization")
-		os.Exit(1)
-	}
-	if err := (&controller.RepositoryReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "Failed to create controller", "controller", "repository")
-=======
 	// Create a direct (non-cached) client for reading secrets outside the watched namespaces.
 	// The manager's cached client only sees resources in WATCH_NAMESPACE, but the credentials
 	// secret may live in a different namespace (APP_CREDENTIALS_SECRET_NAMESPACE).
@@ -375,7 +361,6 @@ func main() {
 	clientManager, err := ghclient.NewGitHubCachingClientFactory(ghclient.DefaultClientConfig(), fetchSecret)
 	if err != nil {
 		setupLog.Error(err, "failed to create GitHub client factory")
->>>>>>> tmp-original-30-06-26-04-09
 		os.Exit(1)
 	}
 	spreadingManager := spreading.NewDefaultManager()
@@ -407,11 +392,7 @@ func main() {
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
 		LegacySecretName:       appCredentialsSecretName,
 	}).SetupWithManager(mgr); err != nil {
-<<<<<<< HEAD
-		setupLog.Error(err, "Failed to create controller", "controller", "team")
-=======
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
->>>>>>> tmp-original-30-06-26-04-09
 		os.Exit(1)
 	}
 	if err := (&controller.RepositoryCtl{

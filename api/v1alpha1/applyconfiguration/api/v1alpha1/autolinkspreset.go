@@ -18,8 +18,11 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apiv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	internal "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/internal"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
+	managedfields "k8s.io/apimachinery/pkg/util/managedfields"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
@@ -46,6 +49,47 @@ func AutolinksPreset(name, namespace string) *AutolinksPresetApplyConfiguration 
 	b.WithKind("AutolinksPreset")
 	b.WithAPIVersion("github.interhyp.de/v1alpha1")
 	return b
+}
+
+// ExtractAutolinksPresetFrom extracts the applied configuration owned by fieldManager from
+// autolinksPreset for the specified subresource. Pass an empty string for subresource to extract
+// the main resource. Common subresources include "status", "scale", etc.
+// autolinksPreset must be a unmodified AutolinksPreset API object that was retrieved from the Kubernetes API.
+// ExtractAutolinksPresetFrom provides a way to perform a extract/modify-in-place/apply workflow.
+// Note that an extracted apply configuration will contain fewer fields than what the fieldManager previously
+// applied if another fieldManager has updated or force applied any of the previously applied fields.
+func ExtractAutolinksPresetFrom(autolinksPreset *apiv1alpha1.AutolinksPreset, fieldManager string, subresource string) (*AutolinksPresetApplyConfiguration, error) {
+	b := &AutolinksPresetApplyConfiguration{}
+	err := managedfields.ExtractInto(autolinksPreset, internal.Parser().Type("com.github.Interhyp.git-hubby.api.v1alpha1.AutolinksPreset"), fieldManager, b, subresource)
+	if err != nil {
+		return nil, err
+	}
+	b.WithName(autolinksPreset.Name)
+	b.WithNamespace(autolinksPreset.Namespace)
+
+	b.WithKind("AutolinksPreset")
+	b.WithAPIVersion("github.interhyp.de/v1alpha1")
+	return b, nil
+}
+
+// ExtractAutolinksPreset extracts the applied configuration owned by fieldManager from
+// autolinksPreset. If no managedFields are found in autolinksPreset for fieldManager, a
+// AutolinksPresetApplyConfiguration is returned with only the Name, Namespace (if applicable),
+// APIVersion and Kind populated. It is possible that no managed fields were found for because other
+// field managers have taken ownership of all the fields previously owned by fieldManager, or because
+// the fieldManager never owned fields any fields.
+// autolinksPreset must be a unmodified AutolinksPreset API object that was retrieved from the Kubernetes API.
+// ExtractAutolinksPreset provides a way to perform a extract/modify-in-place/apply workflow.
+// Note that an extracted apply configuration will contain fewer fields than what the fieldManager previously
+// applied if another fieldManager has updated or force applied any of the previously applied fields.
+func ExtractAutolinksPreset(autolinksPreset *apiv1alpha1.AutolinksPreset, fieldManager string) (*AutolinksPresetApplyConfiguration, error) {
+	return ExtractAutolinksPresetFrom(autolinksPreset, fieldManager, "")
+}
+
+// ExtractAutolinksPresetStatus extracts the applied configuration owned by fieldManager from
+// autolinksPreset for the status subresource.
+func ExtractAutolinksPresetStatus(autolinksPreset *apiv1alpha1.AutolinksPreset, fieldManager string) (*AutolinksPresetApplyConfiguration, error) {
+	return ExtractAutolinksPresetFrom(autolinksPreset, fieldManager, "status")
 }
 
 func (b AutolinksPresetApplyConfiguration) IsApplyConfiguration() {}

@@ -18,8 +18,11 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apiv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	internal "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/internal"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
+	managedfields "k8s.io/apimachinery/pkg/util/managedfields"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
@@ -46,6 +49,47 @@ func CodeSecurityConfiguration(name, namespace string) *CodeSecurityConfiguratio
 	b.WithKind("CodeSecurityConfiguration")
 	b.WithAPIVersion("github.interhyp.de/v1alpha1")
 	return b
+}
+
+// ExtractCodeSecurityConfigurationFrom extracts the applied configuration owned by fieldManager from
+// codeSecurityConfiguration for the specified subresource. Pass an empty string for subresource to extract
+// the main resource. Common subresources include "status", "scale", etc.
+// codeSecurityConfiguration must be a unmodified CodeSecurityConfiguration API object that was retrieved from the Kubernetes API.
+// ExtractCodeSecurityConfigurationFrom provides a way to perform a extract/modify-in-place/apply workflow.
+// Note that an extracted apply configuration will contain fewer fields than what the fieldManager previously
+// applied if another fieldManager has updated or force applied any of the previously applied fields.
+func ExtractCodeSecurityConfigurationFrom(codeSecurityConfiguration *apiv1alpha1.CodeSecurityConfiguration, fieldManager string, subresource string) (*CodeSecurityConfigurationApplyConfiguration, error) {
+	b := &CodeSecurityConfigurationApplyConfiguration{}
+	err := managedfields.ExtractInto(codeSecurityConfiguration, internal.Parser().Type("com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfiguration"), fieldManager, b, subresource)
+	if err != nil {
+		return nil, err
+	}
+	b.WithName(codeSecurityConfiguration.Name)
+	b.WithNamespace(codeSecurityConfiguration.Namespace)
+
+	b.WithKind("CodeSecurityConfiguration")
+	b.WithAPIVersion("github.interhyp.de/v1alpha1")
+	return b, nil
+}
+
+// ExtractCodeSecurityConfiguration extracts the applied configuration owned by fieldManager from
+// codeSecurityConfiguration. If no managedFields are found in codeSecurityConfiguration for fieldManager, a
+// CodeSecurityConfigurationApplyConfiguration is returned with only the Name, Namespace (if applicable),
+// APIVersion and Kind populated. It is possible that no managed fields were found for because other
+// field managers have taken ownership of all the fields previously owned by fieldManager, or because
+// the fieldManager never owned fields any fields.
+// codeSecurityConfiguration must be a unmodified CodeSecurityConfiguration API object that was retrieved from the Kubernetes API.
+// ExtractCodeSecurityConfiguration provides a way to perform a extract/modify-in-place/apply workflow.
+// Note that an extracted apply configuration will contain fewer fields than what the fieldManager previously
+// applied if another fieldManager has updated or force applied any of the previously applied fields.
+func ExtractCodeSecurityConfiguration(codeSecurityConfiguration *apiv1alpha1.CodeSecurityConfiguration, fieldManager string) (*CodeSecurityConfigurationApplyConfiguration, error) {
+	return ExtractCodeSecurityConfigurationFrom(codeSecurityConfiguration, fieldManager, "")
+}
+
+// ExtractCodeSecurityConfigurationStatus extracts the applied configuration owned by fieldManager from
+// codeSecurityConfiguration for the status subresource.
+func ExtractCodeSecurityConfigurationStatus(codeSecurityConfiguration *apiv1alpha1.CodeSecurityConfiguration, fieldManager string) (*CodeSecurityConfigurationApplyConfiguration, error) {
+	return ExtractCodeSecurityConfigurationFrom(codeSecurityConfiguration, fieldManager, "status")
 }
 
 func (b CodeSecurityConfigurationApplyConfiguration) IsApplyConfiguration() {}

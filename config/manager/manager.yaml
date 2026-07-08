@@ -75,20 +75,10 @@ spec:
         name: manager
         env:
         - name: WATCH_NAMESPACE
-<<<<<<< HEAD
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        ports:
-        - containerPort: 8081
-          name: health
-          protocol: TCP
-=======
           value: github-configuration
         - name: APP_CREDENTIALS_SECRET_NAMESPACE
           value: git-hubby-system
         ports: []
->>>>>>> tmp-original-30-06-26-04-09
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
