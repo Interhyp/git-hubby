@@ -38,6 +38,1304 @@ func Parser() *typed.Parser {
 var parserOnce sync.Once
 var parser *typed.Parser
 var schemaYAML = typed.YAMLObject(`types:
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.About
+  map:
+    fields:
+    - name: description
+      type:
+        scalar: string
+    - name: topics
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.Topic
+          elementRelationship: atomic
+    - name: website
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.ActionsSettings
+  map:
+    fields:
+    - name: allowedActions
+      type:
+        scalar: string
+    - name: artifactAndLogRetentionDays
+      type:
+        scalar: numeric
+      default: 400
+    - name: canApprovePullRequestReviews
+      type:
+        scalar: boolean
+      default: false
+    - name: defaultWorkflowPermissions
+      type:
+        scalar: string
+      default: read
+    - name: enabledRepositories
+      type:
+        scalar: string
+      default: none
+    - name: runnerGroups
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RunnerGroup
+          elementRelationship: atomic
+    - name: selectedAllowedActions
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.SelectedAllowedActions
+    - name: shaPinningRequired
+      type:
+        scalar: boolean
+      default: false
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.AttachableCodeSecurityConfigurationRef
+  map:
+    fields:
+    - name: attachmentScope
+      type:
+        scalar: string
+    - name: name
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.Autolink
+  map:
+    fields:
+    - name: isAlphanumeric
+      type:
+        scalar: boolean
+      default: false
+    - name: keyPrefix
+      type:
+        scalar: string
+    - name: urlTemplate
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.AutolinksPreset
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.AutolinksPresetSpec
+    - name: status
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.AutolinksPresetStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.AutolinksPresetSpec
+  map:
+    fields:
+    - name: autolinks
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.Autolink
+          elementRelationship: atomic
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.AutolinksPresetStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.BypassReviewer
+  map:
+    fields:
+    - name: reviewerId
+      type:
+        scalar: numeric
+    - name: reviewerName
+      type:
+        scalar: string
+    - name: reviewerType
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.CodeScanningDefaultSetupOptions
+  map:
+    fields:
+    - name: runnerLabel
+      type:
+        scalar: string
+    - name: runnerType
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.CodeScanningOptions
+  map:
+    fields:
+    - name: allowAdvanced
+      type:
+        scalar: boolean
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfiguration
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfigurationSpec
+    - name: status
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfigurationStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfigurationRef
+  map:
+    fields:
+    - name: name
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfigurationSpec
+  map:
+    fields:
+    - name: advancedSecurity
+      type:
+        scalar: string
+    - name: codeScanningDefaultSetup
+      type:
+        scalar: string
+    - name: codeScanningDefaultSetupOptions
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeScanningDefaultSetupOptions
+    - name: codeSecurity
+      type:
+        scalar: string
+    - name: code_scanning_delegated_alert_dismissal
+      type:
+        scalar: string
+    - name: code_scanning_options
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeScanningOptions
+    - name: defaultForNewRepos
+      type:
+        scalar: string
+    - name: dependabotAlerts
+      type:
+        scalar: string
+    - name: dependabotSecurityUpdates
+      type:
+        scalar: string
+    - name: dependencyGraph
+      type:
+        scalar: string
+    - name: dependencyGraphAutosubmitAction
+      type:
+        scalar: string
+    - name: dependencyGraphAutosubmitActionOptions
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.DependencyGraphAutosubmitActionOptions
+    - name: description
+      type:
+        scalar: string
+    - name: enforcement
+      type:
+        scalar: string
+    - name: name
+      type:
+        scalar: string
+    - name: privateVulnerabilityReporting
+      type:
+        scalar: string
+    - name: secretProtection
+      type:
+        scalar: string
+    - name: secretScanning
+      type:
+        scalar: string
+    - name: secretScanningDelegatedAlertDismissal
+      type:
+        scalar: string
+    - name: secretScanningDelegatedBypass
+      type:
+        scalar: string
+    - name: secretScanningDelegatedBypassOptions
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.SecretScanningDelegatedBypassOptions
+    - name: secretScanningGenericSecrets
+      type:
+        scalar: string
+    - name: secretScanningNonProviderPatterns
+      type:
+        scalar: string
+    - name: secretScanningPushProtection
+      type:
+        scalar: string
+    - name: secretScanningValidityChecks
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfigurationStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.CopilotCodeReviewRule
+  map:
+    fields:
+    - name: reviewDraftPullRequests
+      type:
+        scalar: boolean
+      default: true
+    - name: reviewOnPush
+      type:
+        scalar: boolean
+      default: true
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.CustomPropertyValue
+  map:
+    fields:
+    - name: propertyName
+      type:
+        scalar: string
+    - name: value
+      type:
+        scalar: string
+    - name: values
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.DependencyGraphAutosubmitActionOptions
+  map:
+    fields:
+    - name: labeledRunners
+      type:
+        scalar: boolean
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.DeployKey
+  map:
+    fields:
+    - name: key
+      type:
+        scalar: string
+    - name: readOnly
+      type:
+        scalar: boolean
+      default: true
+    - name: title
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.GitHubAppConfig
+  map:
+    fields:
+    - name: credentialsSecretName
+      type:
+        scalar: string
+    - name: installationId
+      type:
+        scalar: numeric
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.MergeStrategy
+  map:
+    fields:
+    - name: type
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.OrgCustomProperty
+  map:
+    fields:
+    - name: allowedValues
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: defaultValue
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrgCustomPropertyDefaultValue
+    - name: description
+      type:
+        scalar: string
+    - name: propertyName
+      type:
+        scalar: string
+    - name: required
+      type:
+        scalar: boolean
+      default: false
+    - name: valueType
+      type:
+        scalar: string
+    - name: valuesEditableBy
+      type:
+        scalar: string
+      default: org_actors
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.OrgCustomPropertyDefaultValue
+  map:
+    fields:
+    - name: value
+      type:
+        scalar: string
+    - name: values
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.Organization
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationSpec
+    - name: status
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationRef
+  map:
+    fields:
+    - name: name
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationSpec
+  map:
+    fields:
+    - name: actionsSettings
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.ActionsSettings
+    - name: codeSecurityConfigurations
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.AttachableCodeSecurityConfigurationRef
+          elementRelationship: atomic
+    - name: customProperties
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrgCustomProperty
+          elementRelationship: atomic
+    - name: description
+      type:
+        scalar: string
+    - name: githubAppConfig
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.GitHubAppConfig
+    - name: githubAppInstallationId
+      type:
+        scalar: numeric
+    - name: location
+      type:
+        scalar: string
+    - name: login
+      type:
+        scalar: string
+    - name: memberSuffix
+      type:
+        scalar: string
+      default: ""
+    - name: name
+      type:
+        scalar: string
+    - name: plan
+      type:
+        scalar: string
+      default: enterprise
+    - name: rulesetPresets
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.api.core.v1.LocalObjectReference
+          elementRelationship: atomic
+    - name: website
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+    - name: observedSubResourceGenerations
+      type:
+        map:
+          elementType:
+            scalar: numeric
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.PatternRule
+  map:
+    fields:
+    - name: negate
+      type:
+        scalar: boolean
+      default: false
+    - name: operator
+      type:
+        scalar: string
+    - name: pattern
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.PullRequestRule
+  map:
+    fields:
+    - name: allowedMergeMethods
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: dismissStaleReviewsOnPush
+      type:
+        scalar: boolean
+      default: false
+    - name: requireCodeOwnerReviews
+      type:
+        scalar: boolean
+      default: false
+    - name: requireLastPushApproval
+      type:
+        scalar: boolean
+      default: false
+    - name: requiredApprovingReviewCount
+      type:
+        scalar: numeric
+    - name: requiredReviewThreadResolution
+      type:
+        scalar: boolean
+      default: false
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RefNameCondition
+  map:
+    fields:
+    - name: exclude
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: include
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.Repository
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositorySpec
+    - name: status
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryNameCondition
+  map:
+    fields:
+    - name: exclude
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: include
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: protected
+      type:
+        scalar: boolean
+      default: false
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryPropertyCondition
+  map:
+    fields:
+    - name: exclude
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryPropertyTarget
+          elementRelationship: atomic
+    - name: include
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryPropertyTarget
+          elementRelationship: atomic
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryPropertyTarget
+  map:
+    fields:
+    - name: name
+      type:
+        scalar: string
+    - name: propertyValues
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: source
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositorySpec
+  map:
+    fields:
+    - name: about
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.About
+    - name: accessLevelForExternalWorkflows
+      type:
+        scalar: string
+      default: none
+    - name: actionsEnabled
+      type:
+        scalar: boolean
+      default: true
+    - name: allowedMergeStrategies
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.MergeStrategy
+          elementRelationship: atomic
+      default:
+      - type: merge
+      - type: rebase
+    - name: archived
+      type:
+        scalar: boolean
+      default: false
+    - name: attachedCodeSecurityConfiguration
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfigurationRef
+    - name: autolinksPresets
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.api.core.v1.LocalObjectReference
+          elementRelationship: atomic
+    - name: availableActionsRunnerGroups
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: customProperties
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CustomPropertyValue
+          elementRelationship: atomic
+    - name: defaultBranch
+      type:
+        scalar: string
+      default: main
+    - name: deleteBranchOnMerge
+      type:
+        scalar: boolean
+      default: true
+    - name: deployKeys
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.DeployKey
+          elementRelationship: atomic
+    - name: hasDownloads
+      type:
+        scalar: boolean
+      default: false
+    - name: hasIssues
+      type:
+        scalar: boolean
+      default: true
+    - name: hasProjects
+      type:
+        scalar: boolean
+      default: false
+    - name: hasWiki
+      type:
+        scalar: boolean
+      default: false
+    - name: isTemplate
+      type:
+        scalar: boolean
+      default: false
+    - name: mergeCommitMessage
+      type:
+        scalar: string
+      default: PR_TITLE
+    - name: mergeCommitTitle
+      type:
+        scalar: string
+      default: MERGE_MESSAGE
+    - name: name
+      type:
+        scalar: string
+    - name: organizationRef
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationRef
+    - name: rulesetPresets
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.api.core.v1.LocalObjectReference
+          elementRelationship: atomic
+    - name: visibility
+      type:
+        scalar: string
+      default: private
+    - name: webhookIgnorePresets
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.api.core.v1.LocalObjectReference
+          elementRelationship: atomic
+    - name: webhookPresets
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.api.core.v1.LocalObjectReference
+          elementRelationship: atomic
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+    - name: id
+      type:
+        scalar: numeric
+    - name: observedSubResourceGenerations
+      type:
+        map:
+          elementType:
+            scalar: numeric
+    - name: webhooks
+      type:
+        map:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RequiredStatusChecks
+  map:
+    fields:
+    - name: checks
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.StatusCheck
+          elementRelationship: atomic
+    - name: strictPolicy
+      type:
+        scalar: boolean
+      default: false
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RuleWorkflow
+  map:
+    fields:
+    - name: path
+      type:
+        scalar: string
+    - name: ref
+      type:
+        scalar: string
+    - name: repositoryName
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetBypassActor
+  map:
+    fields:
+    - name: actorId
+      type:
+        scalar: numeric
+    - name: actorSlug
+      type:
+        scalar: string
+    - name: actorType
+      type:
+        scalar: string
+    - name: bypassMode
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetConditions
+  map:
+    fields:
+    - name: refName
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RefNameCondition
+    - name: repositoryName
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryNameCondition
+    - name: repositoryProperty
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryPropertyCondition
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetEnforcement
+  scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPreset
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetSpec
+    - name: status
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetSpec
+  map:
+    fields:
+    - name: bypassActors
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetBypassActor
+          elementRelationship: atomic
+    - name: conditions
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetConditions
+    - name: enforcement
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetEnforcement
+    - name: name
+      type:
+        scalar: string
+    - name: rules
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetRules
+    - name: target
+      type:
+        scalar: string
+      default: branch
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetRules
+  map:
+    fields:
+    - name: branchNamePattern
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.PatternRule
+    - name: commitAuthorEmailPattern
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.PatternRule
+    - name: commitMessagePattern
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.PatternRule
+    - name: committerEmailPattern
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.PatternRule
+    - name: copilotReview
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CopilotCodeReviewRule
+    - name: creation
+      type:
+        scalar: boolean
+      default: false
+    - name: deletion
+      type:
+        scalar: boolean
+      default: false
+    - name: nonFastForward
+      type:
+        scalar: boolean
+      default: false
+    - name: pullRequest
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.PullRequestRule
+    - name: requiredLinearHistory
+      type:
+        scalar: boolean
+      default: false
+    - name: requiredSignatures
+      type:
+        scalar: boolean
+      default: false
+    - name: requiredStatusChecks
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RequiredStatusChecks
+    - name: tagNamePattern
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.PatternRule
+    - name: update
+      type:
+        scalar: boolean
+      default: false
+    - name: workflows
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WorkflowsRule
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RunnerGroup
+  map:
+    fields:
+    - name: name
+      type:
+        scalar: string
+    - name: restrictedToWorkflows
+      type:
+        scalar: boolean
+      default: false
+    - name: selectedWorkflows
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: visibility
+      type:
+        scalar: string
+      default: all
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.SecretScanningDelegatedBypassOptions
+  map:
+    fields:
+    - name: reviewers
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.BypassReviewer
+          elementRelationship: atomic
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.SelectedAllowedActions
+  map:
+    fields:
+    - name: githubOwnedAllowed
+      type:
+        scalar: boolean
+      default: false
+    - name: patternsAllowed
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+      default: []
+    - name: verifiedAllowed
+      type:
+        scalar: boolean
+      default: false
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.StatusCheck
+  map:
+    fields:
+    - name: appSlug
+      type:
+        scalar: string
+    - name: context
+      type:
+        scalar: string
+    - name: integrationId
+      type:
+        scalar: numeric
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.Team
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.TeamSpec
+    - name: status
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.TeamStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.TeamSpec
+  map:
+    fields:
+    - name: description
+      type:
+        scalar: string
+    - name: idpGroup
+      type:
+        scalar: string
+    - name: members
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: name
+      type:
+        scalar: string
+    - name: notificationSetting
+      type:
+        scalar: string
+      default: notifications_disabled
+    - name: organizationRefs
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationRef
+          elementRelationship: atomic
+    - name: organizationRoles
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: associative
+    - name: permission
+      type:
+        scalar: string
+      default: pull
+    - name: privacy
+      type:
+        scalar: string
+      default: closed
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.TeamStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+    - name: previousOrganizationRefs
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationRef
+          elementRelationship: atomic
+    - name: slug
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.Topic
+  map:
+    fields:
+    - name: name
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePreset
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetSpec
+    - name: status
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetSpec
+  map:
+    fields:
+    - name: ignoreURLRegex
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPreset
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    - name: spec
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSpec
+    - name: status
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSecretSpec
+  map:
+    fields:
+    - name: key
+      type:
+        scalar: string
+    - name: name
+      type:
+        scalar: string
+    - name: namespace
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSpec
+  map:
+    fields:
+    - name: active
+      type:
+        scalar: boolean
+      default: true
+    - name: contentType
+      type:
+        scalar: string
+    - name: events
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+    - name: payloadUrl
+      type:
+        scalar: string
+    - name: secret
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSecretSpec
+    - name: secretValue
+      type:
+        scalar: string
+    - name: sslVerify
+      type:
+        scalar: boolean
+      default: true
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookStatus
+  map:
+    fields:
+    - name: secretHash
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WorkflowsRule
+  map:
+    fields:
+    - name: doNotEnforceOnCreate
+      type:
+        scalar: boolean
+      default: false
+    - name: workflows
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RuleWorkflow
+          elementRelationship: atomic
+- name: io.k8s.api.core.v1.LocalObjectReference
+  map:
+    fields:
+    - name: name
+      type:
+        scalar: string
+      default: ""
+    elementRelationship: atomic
+- name: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+  map:
+    fields:
+    - name: lastTransitionTime
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+    - name: message
+      type:
+        scalar: string
+    - name: observedGeneration
+      type:
+        scalar: numeric
+    - name: reason
+      type:
+        scalar: string
+    - name: status
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ConditionStatus
+    - name: type
+      type:
+        scalar: string
+- name: io.k8s.apimachinery.pkg.apis.meta.v1.ConditionStatus
+  scalar: string
+- name: io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1
+  map:
+    elementType:
+      scalar: untyped
+      list:
+        elementType:
+          namedType: __untyped_atomic_
+        elementRelationship: atomic
+      map:
+        elementType:
+          namedType: __untyped_deduced_
+        elementRelationship: separable
+- name: io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: fieldsType
+      type:
+        scalar: string
+    - name: fieldsV1
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1
+    - name: manager
+      type:
+        scalar: string
+    - name: operation
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsOperationType
+    - name: subresource
+      type:
+        scalar: string
+    - name: time
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+- name: io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsOperationType
+  scalar: string
+- name: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+  map:
+    fields:
+    - name: annotations
+      type:
+        map:
+          elementType:
+            scalar: string
+    - name: creationTimestamp
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+    - name: deletionGracePeriodSeconds
+      type:
+        scalar: numeric
+    - name: deletionTimestamp
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+    - name: finalizers
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: associative
+    - name: generateName
+      type:
+        scalar: string
+    - name: generation
+      type:
+        scalar: numeric
+    - name: labels
+      type:
+        map:
+          elementType:
+            scalar: string
+    - name: managedFields
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry
+          elementRelationship: atomic
+    - name: name
+      type:
+        scalar: string
+    - name: namespace
+      type:
+        scalar: string
+    - name: ownerReferences
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference
+          elementRelationship: associative
+          keys:
+          - uid
+    - name: resourceVersion
+      type:
+        scalar: string
+    - name: selfLink
+      type:
+        scalar: string
+    - name: uid
+      type:
+        namedType: io.k8s.apimachinery.pkg.types.UID
+- name: io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: blockOwnerDeletion
+      type:
+        scalar: boolean
+    - name: controller
+      type:
+        scalar: boolean
+    - name: kind
+      type:
+        scalar: string
+    - name: name
+      type:
+        scalar: string
+    - name: uid
+      type:
+        namedType: io.k8s.apimachinery.pkg.types.UID
+    elementRelationship: atomic
+- name: io.k8s.apimachinery.pkg.apis.meta.v1.Time
+  scalar: untyped
+- name: io.k8s.apimachinery.pkg.types.UID
+  scalar: string
 - name: __untyped_atomic_
   scalar: untyped
   list:

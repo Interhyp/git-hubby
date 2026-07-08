@@ -18,8 +18,11 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apiv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	internal "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/internal"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
+	managedfields "k8s.io/apimachinery/pkg/util/managedfields"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
@@ -46,6 +49,47 @@ func Repository(name, namespace string) *RepositoryApplyConfiguration {
 	b.WithKind("Repository")
 	b.WithAPIVersion("github.interhyp.de/v1alpha1")
 	return b
+}
+
+// ExtractRepositoryFrom extracts the applied configuration owned by fieldManager from
+// repository for the specified subresource. Pass an empty string for subresource to extract
+// the main resource. Common subresources include "status", "scale", etc.
+// repository must be a unmodified Repository API object that was retrieved from the Kubernetes API.
+// ExtractRepositoryFrom provides a way to perform a extract/modify-in-place/apply workflow.
+// Note that an extracted apply configuration will contain fewer fields than what the fieldManager previously
+// applied if another fieldManager has updated or force applied any of the previously applied fields.
+func ExtractRepositoryFrom(repository *apiv1alpha1.Repository, fieldManager string, subresource string) (*RepositoryApplyConfiguration, error) {
+	b := &RepositoryApplyConfiguration{}
+	err := managedfields.ExtractInto(repository, internal.Parser().Type("com.github.Interhyp.git-hubby.api.v1alpha1.Repository"), fieldManager, b, subresource)
+	if err != nil {
+		return nil, err
+	}
+	b.WithName(repository.Name)
+	b.WithNamespace(repository.Namespace)
+
+	b.WithKind("Repository")
+	b.WithAPIVersion("github.interhyp.de/v1alpha1")
+	return b, nil
+}
+
+// ExtractRepository extracts the applied configuration owned by fieldManager from
+// repository. If no managedFields are found in repository for fieldManager, a
+// RepositoryApplyConfiguration is returned with only the Name, Namespace (if applicable),
+// APIVersion and Kind populated. It is possible that no managed fields were found for because other
+// field managers have taken ownership of all the fields previously owned by fieldManager, or because
+// the fieldManager never owned fields any fields.
+// repository must be a unmodified Repository API object that was retrieved from the Kubernetes API.
+// ExtractRepository provides a way to perform a extract/modify-in-place/apply workflow.
+// Note that an extracted apply configuration will contain fewer fields than what the fieldManager previously
+// applied if another fieldManager has updated or force applied any of the previously applied fields.
+func ExtractRepository(repository *apiv1alpha1.Repository, fieldManager string) (*RepositoryApplyConfiguration, error) {
+	return ExtractRepositoryFrom(repository, fieldManager, "")
+}
+
+// ExtractRepositoryStatus extracts the applied configuration owned by fieldManager from
+// repository for the status subresource.
+func ExtractRepositoryStatus(repository *apiv1alpha1.Repository, fieldManager string) (*RepositoryApplyConfiguration, error) {
+	return ExtractRepositoryFrom(repository, fieldManager, "status")
 }
 
 func (b RepositoryApplyConfiguration) IsApplyConfiguration() {}
