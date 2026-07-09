@@ -74,5 +74,5 @@ jobs:
           --push \
           --restore-path .github/workflows \
           --open-gh-issue \
-          --merge-message "chore: update kubebuilder scaffold" \
-          --conflict-message "chore: update with conflicts - review needed"
+          --merge-message "fix: update kubebuilder scaffold" \
+          --conflict-message "fix: update with conflicts - review needed"
