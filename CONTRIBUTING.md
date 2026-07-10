@@ -64,9 +64,9 @@ Thank you for your interest in contributing to git-hubby! This guide covers ever
 
 7. **Run in a minimal setup**:
    ```bash
-   make deploy-local IMG="Your Image"
+   make deploy DEPLOY_KUSTOMIZE_DIR=config/local IMG=<YOUR IMAGE> APP_ID=<YOUR APP ID> PRIVATE_KEY="$(cat /path/to/key.pem)"
    ```
-   Then apply your `.config/local/secrets.yaml`. This deploys the operator in a minimal setup (without cert manager) to your cluster.
+   This deploys the operator without cert-manager or webhooks, and creates the GitHub App credentials secret directly from the provided arguments.
 
 ## Development Workflow
 
@@ -86,7 +86,8 @@ Run `make help` for the full list. The most important targets are:
 | `make generate` | Regenerate deepcopy and apply-configuration code |
 | `make manifests` | Regenerate CRDs and RBAC from kubebuilder markers |
 | `make install` | Install CRDs into the current cluster |
-| `make deploy IMG=<image>` | Deploy the operator to the current cluster |
+| `make deploy IMG=<image>` | Deploy the operator to the current cluster (uses `config/default`) |
+| `make deploy IMG=<image> DEPLOY_KUSTOMIZE_DIR=config/local APP_ID=<id> PRIVATE_KEY=<key>` | Deploy without cert-manager/webhooks with inline credentials |
 | `make undeploy` | Remove the operator from the current cluster |
 | `make uninstall` | Remove CRDs from the current cluster |
 

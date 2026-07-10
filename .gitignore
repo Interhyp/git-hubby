@@ -71,3 +71,4 @@ node_modules/
 # MkDocs generated site
 site/
 
+./config/local/secrets.yaml
