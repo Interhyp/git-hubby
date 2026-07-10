@@ -159,6 +159,15 @@ func getDefaultValueAsCPV(definition *github.CustomProperty) (*github.CustomProp
 			PropertyName: definition.GetPropertyName(),
 			Value:        val,
 		}, nil
+	case github.PropertyValueTypeTrueFalse:
+		val, ok := definition.DefaultValueBool()
+		if !ok {
+			return nil, fmt.Errorf("failed to convert default values for required custom property %s to bool: %+v", definition.GetPropertyName(), definition.DefaultValue)
+		}
+		return &github.CustomPropertyValue{
+			PropertyName: definition.GetPropertyName(),
+			Value:        fmt.Sprintf("%t", val),
+		}, nil
 	default:
 		val, ok := definition.DefaultValueString()
 		if !ok {
