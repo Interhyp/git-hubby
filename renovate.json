@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [":semanticCommitTypeAll(fix)"],
   "packageRules": [
     {
       "matchPackageNames": ["k8s.io/**", "sigs.k8s.io/**", "github.com/onsi/**"],

@@ -577,6 +577,58 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 				Expect(result[0].Value).To(ConsistOf("option1", "option2"))
 			})
 
+			It("should use default value 'true' for required true_false property", func() {
+				definitions := []*github.CustomProperty{
+					{
+						PropertyName: new("required-bool-true"),
+						ValueType:    github.PropertyValueTypeTrueFalse,
+						Required:     new(true),
+						DefaultValue: "true",
+					},
+				}
+				raw := []v1alpha1.CustomPropertyValue{}
+
+				result, err := ToGitHubCustomPropertyValues(raw, definitions)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).To(HaveLen(1))
+				Expect(result[0].PropertyName).To(Equal("required-bool-true"))
+				Expect(result[0].Value).To(Equal("true"))
+			})
+
+			It("should use default value 'false' for required true_false property", func() {
+				definitions := []*github.CustomProperty{
+					{
+						PropertyName: new("required-bool-false"),
+						ValueType:    github.PropertyValueTypeTrueFalse,
+						Required:     new(true),
+						DefaultValue: "false",
+					},
+				}
+				raw := []v1alpha1.CustomPropertyValue{}
+
+				result, err := ToGitHubCustomPropertyValues(raw, definitions)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).To(HaveLen(1))
+				Expect(result[0].PropertyName).To(Equal("required-bool-false"))
+				Expect(result[0].Value).To(Equal("false"))
+			})
+
+			It("should return error for required true_false property with non-boolean default value", func() {
+				definitions := []*github.CustomProperty{
+					{
+						PropertyName: new("required-bool-invalid"),
+						ValueType:    github.PropertyValueTypeTrueFalse,
+						Required:     new(true),
+						DefaultValue: "not-a-bool",
+					},
+				}
+				raw := []v1alpha1.CustomPropertyValue{}
+
+				result, err := ToGitHubCustomPropertyValues(raw, definitions)
+				Expect(err).To(HaveOccurred())
+				Expect(result).To(BeEmpty())
+			})
+
 			It("should set nil for optional property not in raw input", func() {
 				definitions := []*github.CustomProperty{
 					{
