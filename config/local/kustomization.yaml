@@ -1,0 +1,33 @@
+# Adds namespace to all resources.
+namespace: git-hubby-system
+
+# Value of this field is prepended to the
+# names of all resources, e.g. a deployment named
+# "wordpress" becomes "alices-wordpress".
+# Note that it should also match with the prefix (text before '-') of the namespace
+# field above.
+namePrefix: git-hubby-
+
+resources:
+- ../crd
+- ../rbac
+- ../manager
+- ../network-policy
+- metrics_service.yaml
+- controller_manager_envs_configmap.yaml
+- secrets.yaml
+
+patches:
+- path: manager_metrics_patch.yaml
+  target:
+    kind: Deployment
+
+# Align WATCH_NAMESPACE with the kustomize deployment namespace.
+- path: manager_watch_namespace_patch.yaml
+  target:
+    kind: Deployment
+
+# Local deployments disable webhook registration to avoid cert-manager dependency.
+- path: manager_disable_webhooks_patch.yaml
+  target:
+    kind: Deployment

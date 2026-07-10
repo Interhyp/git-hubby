@@ -1,6 +1,7 @@
 [tools]
 go = "1.26.3"
 kubebuilder = "4.14.0"
+make = "4.4.1"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"] # use .node-version

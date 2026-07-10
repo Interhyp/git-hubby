@@ -1,0 +1,17 @@
+# Overrides WATCH_NAMESPACE to match the kustomize deployment namespace.
+# The base manager manifest uses "github-configuration" (the production value),
+# but kustomize's global namespace transformer moves the manager Role/RoleBinding
+# into git-hubby-system. This patch aligns WATCH_NAMESPACE so the controller
+# has RBAC permissions in the namespace it watches.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        env:
+        - name: WATCH_NAMESPACE
+          value: git-hubby-system

@@ -62,6 +62,12 @@ Thank you for your interest in contributing to git-hubby! This guide covers ever
    ```
    This runs the operator against your current kubectl context with webhooks disabled.
 
+7. **Run in a minimal setup**:
+   ```bash
+   make deploy-local IMG="Your Image"
+   ```
+   Then apply your `.config/local/secrets.yaml`. This deploys the operator in a minimal setup (without cert manager) to your cluster.
+
 ## Development Workflow
 
 ### Essential Make Targets
