@@ -1,6 +1,6 @@
 [tools]
 go = "1.26.5"
-kubebuilder = "4.14.0"
+kubebuilder = "4.15.0"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"] # use .node-version
