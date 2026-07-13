@@ -5,6 +5,13 @@
     {
       "matchPackageNames": ["k8s.io/**", "sigs.k8s.io/**", "github.com/onsi/**"],
       "enabled": false
+    },
+    {
+      "matchManagers": [
+        "github-actions",
+        "node"
+      ],
+      "semanticCommitType": "ci"
     }
   ]
 }
