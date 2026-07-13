@@ -1,6 +1,6 @@
 [tools]
-go = "1.26.3"
-kubebuilder = "4.14.0"
+go = "1.26.5"
+kubebuilder = "4.15.0"
 make = "4.4.1"
 
 [settings]
