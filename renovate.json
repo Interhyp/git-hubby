@@ -9,7 +9,8 @@
     {
       "matchManagers": [
         "github-actions",
-        "node"
+        "node",
+        "mise"
       ],
       "semanticCommitType": "ci"
     }
