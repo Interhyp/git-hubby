@@ -68,16 +68,18 @@ spec:
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
-        envFrom:
-          - configMapRef:
-              name: controller-manager-envs
-        image: ghcr.io/organization/controller:latest
+#        envFrom:
+#          - configMapRef:
+#              name: controller-manager-envs
+        image: ghcr.io/interhyp/git-hubby:latest
         name: manager
         env:
         - name: WATCH_NAMESPACE
-          value: github-configuration
+          value: git-hubby-system
         - name: APP_CREDENTIALS_SECRET_NAMESPACE
           value: git-hubby-system
+        - name: ENABLE_WEBHOOKS
+          value: "false"
         ports: []
         securityContext:
           readOnlyRootFilesystem: true
