@@ -9,10 +9,16 @@
     {
       "matchManagers": [
         "github-actions",
-        "node",
+        "npm",
         "mise"
       ],
       "semanticCommitType": "ci"
+    },
+    {
+      "matchManagers": [
+        "devcontainer"
+      ],
+      "semanticCommitType": "chore"
     }
   ]
 }
