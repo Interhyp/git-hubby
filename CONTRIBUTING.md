@@ -62,6 +62,13 @@ Thank you for your interest in contributing to git-hubby! This guide covers ever
    ```
    This runs the operator against your current kubectl context with webhooks disabled.
 
+7. **Run in a minimal setup**:
+   ```bash
+   make deploy
+   ```
+   This deploys the operator without cert-manager or webhooks, and creates the GitHub App credentials secret directly from the provided arguments.
+   After that you can apply your secret and organization resources and test your changes.
+
 ## Development Workflow
 
 ### Essential Make Targets
