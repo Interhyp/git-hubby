@@ -10,7 +10,7 @@ import (
 	ac "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/conditions"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v89/github"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"

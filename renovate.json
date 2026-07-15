@@ -20,5 +20,9 @@
       ],
       "semanticCommitType": "chore"
     }
+  ],
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
   ]
 }

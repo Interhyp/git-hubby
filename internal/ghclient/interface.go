@@ -3,7 +3,7 @@ package ghclient
 import (
 	"context"
 
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v89/github"
 )
 
 // GitHubClient defines the interface for GitHub operations used by reconcilers

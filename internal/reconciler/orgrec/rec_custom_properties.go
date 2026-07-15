@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Interhyp/git-hubby/internal/mapper"
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v89/github"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 

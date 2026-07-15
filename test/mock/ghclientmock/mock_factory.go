@@ -8,7 +8,7 @@ import (
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v89/github"
 )
 
 type GitHubMockClientFactory struct {
