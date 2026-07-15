@@ -953,4 +953,249 @@ var _ = Describe("ResolveNamesToIDsInRuleset", func() {
 			Expect(mockClient.EnterpriseAppsCalls).To(HaveLen(1))
 		})
 	})
+
+	Context("when resolving required reviewer slugs", func() {
+		BeforeEach(func() {
+			mockClient.GetGitHubAppsInstallationsFunc = func(ctx context.Context, org string) ([]*github.Installation, error) {
+				return []*github.Installation{}, nil
+			}
+		})
+
+		Context("when there is no pull request rule", func() {
+			It("should succeed without calling GetTeamBySlug", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(mockClient.TeamCalls).To(BeEmpty())
+			})
+		})
+
+		Context("when pull request rule has no required reviewers", func() {
+			BeforeEach(func() {
+				rulesetInput.Spec.Rules.PullRequest = &v1alpha1.PullRequestRule{}
+			})
+
+			It("should succeed without calling GetTeamBySlug", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(mockClient.TeamCalls).To(BeEmpty())
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers).To(BeEmpty())
+			})
+		})
+
+		Context("when reviewer already has an ID set", func() {
+			BeforeEach(func() {
+				rulesetInput.Spec.Rules.PullRequest = &v1alpha1.PullRequestRule{
+					RequiredReviewers: []v1alpha1.RequiredPullRequestReviewer{
+						{
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								ID:   new(int64(42)),
+								Type: "Team",
+							},
+						},
+					},
+				}
+			})
+
+			It("should preserve the existing ID without calling GetTeamBySlug", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(mockClient.TeamCalls).To(BeEmpty())
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[0].Reviewer.ID).To(Equal(new(int64(42))))
+			})
+		})
+
+		Context("when reviewer has neither ID nor slug", func() {
+			BeforeEach(func() {
+				rulesetInput.Spec.Rules.PullRequest = &v1alpha1.PullRequestRule{
+					RequiredReviewers: []v1alpha1.RequiredPullRequestReviewer{
+						{
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								Type: "Team",
+							},
+						},
+					},
+				}
+			})
+
+			It("should leave the ID as nil without error", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(mockClient.TeamCalls).To(BeEmpty())
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[0].Reviewer.ID).To(BeNil())
+			})
+		})
+
+		Context("when reviewer has a Team slug", func() {
+			BeforeEach(func() {
+				rulesetInput.Spec.Rules.PullRequest = &v1alpha1.PullRequestRule{
+					RequiredReviewers: []v1alpha1.RequiredPullRequestReviewer{
+						{
+							MinimumApprovals: 1,
+							FilePatterns:     []string{"*.go"},
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								Slug: new("platform-team"),
+								Type: "Team",
+							},
+						},
+					},
+				}
+
+				mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
+					Expect(org).To(Equal(orgName))
+					Expect(slug).To(Equal("platform-team"))
+					return &github.Team{
+						ID:   new(int64(99)),
+						Slug: new("platform-team"),
+					}, nil
+				}
+			})
+
+			It("should resolve the slug to an ID", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers).To(HaveLen(1))
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[0].Reviewer.ID).To(Equal(new(int64(99))))
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[0].Reviewer.Type).To(Equal("Team"))
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[0].MinimumApprovals).To(Equal(1))
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[0].FilePatterns).To(Equal([]string{"*.go"}))
+			})
+
+			It("should call GetTeamBySlug once with the correct org and slug", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(mockClient.TeamCalls).To(HaveLen(1))
+				Expect(mockClient.TeamCalls[0].Method).To(Equal("GetTeamBySlug"))
+				Expect(mockClient.TeamCalls[0].Org).To(Equal(orgName))
+				Expect(mockClient.TeamCalls[0].Slug).To(Equal("platform-team"))
+			})
+		})
+
+		Context("when GetTeamBySlug returns an error for a reviewer slug", func() {
+			BeforeEach(func() {
+				rulesetInput.Spec.Rules.PullRequest = &v1alpha1.PullRequestRule{
+					RequiredReviewers: []v1alpha1.RequiredPullRequestReviewer{
+						{
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								Slug: new("nonexistent-team"),
+								Type: "Team",
+							},
+						},
+					},
+				}
+
+				mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
+					return nil, errors.New("team not found")
+				}
+			})
+
+			It("should return an error containing the slug and the underlying error", func() {
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("nonexistent-team"))
+				Expect(err.Error()).To(ContainSubstring("team not found"))
+			})
+		})
+
+		Context("when reviewer has an unsupported type with a slug", func() {
+			BeforeEach(func() {
+				rulesetInput.Spec.Rules.PullRequest = &v1alpha1.PullRequestRule{
+					RequiredReviewers: []v1alpha1.RequiredPullRequestReviewer{
+						{
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								Slug: new("some-slug"),
+								Type: "UnknownType",
+							},
+						},
+					},
+				}
+			})
+
+			It("should return an unsupported type error", func() {
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("unsupported required reviewer type"))
+				Expect(err.Error()).To(ContainSubstring("UnknownType"))
+			})
+		})
+
+		Context("when multiple reviewers have mixed ID and slug", func() {
+			BeforeEach(func() {
+				rulesetInput.Spec.Rules.PullRequest = &v1alpha1.PullRequestRule{
+					RequiredReviewers: []v1alpha1.RequiredPullRequestReviewer{
+						{
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								ID:   new(int64(10)),
+								Type: "Team",
+							},
+						},
+						{
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								Slug: new("backend-team"),
+								Type: "Team",
+							},
+						},
+						{
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								Slug: new("security-team"),
+								Type: "Team",
+							},
+						},
+					},
+				}
+
+				mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
+					switch slug {
+					case "backend-team":
+						return &github.Team{ID: new(int64(20)), Slug: new("backend-team")}, nil
+					case "security-team":
+						return &github.Team{ID: new(int64(30)), Slug: new("security-team")}, nil
+					}
+					return nil, errors.New("team not found")
+				}
+			})
+
+			It("should resolve all slugs and preserve existing IDs", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers).To(HaveLen(3))
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[0].Reviewer.ID).To(Equal(new(int64(10))))
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[1].Reviewer.ID).To(Equal(new(int64(20))))
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[2].Reviewer.ID).To(Equal(new(int64(30))))
+			})
+
+			It("should call GetTeamBySlug only for the slug-based reviewers", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(mockClient.TeamCalls).To(HaveLen(2))
+			})
+		})
+
+		Context("when bypass actors and required reviewer slugs both need resolution", func() {
+			BeforeEach(func() {
+				rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
+					{
+						ActorSlug:  new("platform-team"),
+						ActorType:  "Team",
+						BypassMode: "always",
+					},
+				}
+				rulesetInput.Spec.Rules.PullRequest = &v1alpha1.PullRequestRule{
+					RequiredReviewers: []v1alpha1.RequiredPullRequestReviewer{
+						{
+							Reviewer: v1alpha1.PullRequestReviewerEntity{
+								Slug: new("security-team"),
+								Type: "Team",
+							},
+						},
+					},
+				}
+
+				mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
+					switch slug {
+					case "platform-team":
+						return &github.Team{ID: new(int64(11)), Slug: new("platform-team")}, nil
+					case "security-team":
+						return &github.Team{ID: new(int64(22)), Slug: new("security-team")}, nil
+					}
+					return nil, errors.New("team not found")
+				}
+			})
+
+			It("should resolve both bypass actor and reviewer slugs independently", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Spec.BypassActors[0].ActorID).To(Equal(new(int64(11))))
+				Expect(result.Spec.Rules.PullRequest.RequiredReviewers[0].Reviewer.ID).To(Equal(new(int64(22))))
+			})
+		})
+	})
 })

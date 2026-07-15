@@ -495,6 +495,18 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: pattern
       type:
         scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.PullRequestReviewerEntity
+  map:
+    fields:
+    - name: id
+      type:
+        scalar: numeric
+    - name: slug
+      type:
+        scalar: string
+    - name: type
+      type:
+        scalar: string
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.PullRequestRule
   map:
     fields:
@@ -523,6 +535,12 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         scalar: boolean
       default: false
+    - name: requiredReviewers
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RequiredPullRequestReviewer
+          elementRelationship: atomic
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RefNameCondition
   map:
     fields:
@@ -747,6 +765,24 @@ var schemaYAML = typed.YAMLObject(`types:
         map:
           elementType:
             namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RequiredPullRequestReviewer
+  map:
+    fields:
+    - name: filePatterns
+      type:
+        list:
+          elementType:
+            scalar: string
+          elementRelationship: atomic
+      default:
+      - '*'
+    - name: minimumApprovals
+      type:
+        scalar: numeric
+      default: 0
+    - name: reviewer
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.PullRequestReviewerEntity
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RequiredStatusChecks
   map:
     fields:

@@ -133,6 +133,7 @@ func mapRules(rules *githubv1alpha1.RulesetRules, ruleset *github.RepositoryRule
 			RequireLastPushApproval:        utils.WithDefault(rules.PullRequest.RequireLastPushApproval, false),
 			RequiredApprovingReviewCount:   rules.PullRequest.RequiredApprovingReviewCount,
 			RequiredReviewThreadResolution: utils.WithDefault(rules.PullRequest.RequiredReviewThreadResolution, false),
+			RequiredReviewers:              mapRequiredReviewers(rules.PullRequest.RequiredReviewers),
 		}
 	}
 
@@ -183,6 +184,23 @@ func mapRules(rules *githubv1alpha1.RulesetRules, ruleset *github.RepositoryRule
 	mapPatternRules(rules, githubRules)
 
 	ruleset.Rules = githubRules
+}
+
+func mapRequiredReviewers(reviewers []githubv1alpha1.RequiredPullRequestReviewer) []*github.RulesetRequiredReviewer {
+	result := make([]*github.RulesetRequiredReviewer, len(reviewers))
+	for i, reviewer := range reviewers {
+		result[i] = &github.RulesetRequiredReviewer{
+			MinimumApprovals: new(reviewer.MinimumApprovals),
+			FilePatterns:     reviewer.FilePatterns,
+			Reviewer: &github.RulesetReviewer{
+				// slugs have been resolved to id prior to mapping
+				ID: reviewer.Reviewer.ID,
+				// type conversion validated by enum validation of api field
+				Type: new(github.RulesetReviewerType(reviewer.Reviewer.Type)),
+			},
+		}
+	}
+	return result
 }
 
 func mapMergeMethods(mergeMethods []string) []github.PullRequestMergeMethod {
@@ -591,6 +609,57 @@ func pullRequestRulesDiffer(presetPR *githubv1alpha1.PullRequestRule, githubPR *
 	}
 	if utils.WithDefault(presetPR.RequiredReviewThreadResolution, false) != githubPR.RequiredReviewThreadResolution {
 		return true
+	}
+	if requiredReviewersDiffer(presetPR.RequiredReviewers, githubPR.RequiredReviewers) {
+		return true
+	}
+
+	return false
+}
+
+// requiredReviewersDiffer compares required reviewer lists between preset and GitHub pull request rule.
+// Reviewers are matched by ID+type key; file patterns and minimum approvals are compared per entry.
+func requiredReviewersDiffer(presetReviewers []githubv1alpha1.RequiredPullRequestReviewer, githubReviewers []*github.RulesetRequiredReviewer) bool {
+	if len(presetReviewers) != len(githubReviewers) {
+		return true
+	}
+
+	type reviewerKey struct {
+		id  int64
+		typ string
+	}
+
+	presetMap := make(map[reviewerKey]githubv1alpha1.RequiredPullRequestReviewer)
+	for _, r := range presetReviewers {
+		id := int64(0)
+		if r.Reviewer.ID != nil {
+			id = *r.Reviewer.ID
+		}
+		presetMap[reviewerKey{id: id, typ: r.Reviewer.Type}] = r
+	}
+
+	for _, ghReviewer := range githubReviewers {
+		if ghReviewer.Reviewer == nil {
+			return true
+		}
+		id := int64(0)
+		if ghReviewer.Reviewer.ID != nil {
+			id = *ghReviewer.Reviewer.ID
+		}
+		typ := ""
+		if ghReviewer.Reviewer.Type != nil {
+			typ = string(*ghReviewer.Reviewer.Type)
+		}
+		presetReviewer, exists := presetMap[reviewerKey{id: id, typ: typ}]
+		if !exists {
+			return true
+		}
+		if presetReviewer.MinimumApprovals != utils.WithDefault(ghReviewer.MinimumApprovals, 0) {
+			return true
+		}
+		if !stringSlicesEqual(presetReviewer.FilePatterns, ghReviewer.FilePatterns) {
+			return true
+		}
 	}
 
 	return false

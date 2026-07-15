@@ -85,6 +85,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.OrgCustomPropertyDefaultValueApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("PatternRule"):
 		return &apiv1alpha1.PatternRuleApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("PullRequestReviewerEntity"):
+		return &apiv1alpha1.PullRequestReviewerEntityApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("PullRequestRule"):
 		return &apiv1alpha1.PullRequestRuleApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RefNameCondition"):
@@ -101,6 +103,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.RepositorySpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RepositoryStatus"):
 		return &apiv1alpha1.RepositoryStatusApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RequiredPullRequestReviewer"):
+		return &apiv1alpha1.RequiredPullRequestReviewerApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RequiredStatusChecks"):
 		return &apiv1alpha1.RequiredStatusChecksApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RulesetBypassActor"):

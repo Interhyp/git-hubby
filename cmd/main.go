@@ -148,9 +148,9 @@ func buildLoggerOpts(flagOpts *zap.Options, format logFormat) []zap.Opts {
 
 	switch format {
 	case logFormatECS:
-		ecsConfigOpt := func(config *zapcore.EncoderConfig) {
-			if config != nil {
-				*config = ecszap.ECSCompatibleEncoderConfig(*config)
+		ecsConfigOpt := func(encConf *zapcore.EncoderConfig) {
+			if encConf != nil {
+				*encConf = ecszap.ECSCompatibleEncoderConfig(*encConf)
 			}
 		}
 		logOpts = append(logOpts,
@@ -358,7 +358,11 @@ func main() {
 		}
 		return &secret, nil
 	}
-	clientManager, err := ghclient.NewGitHubCachingClientFactory(ghclient.DefaultClientConfig(), fetchSecret)
+	clientManager, err := ghclient.NewGitHubCachingClientFactory(
+		ghclient.DefaultClientConfig(),
+		fetchSecret,
+		appCredentialsSecretName,
+	)
 	if err != nil {
 		setupLog.Error(err, "failed to create GitHub client factory")
 		os.Exit(1)

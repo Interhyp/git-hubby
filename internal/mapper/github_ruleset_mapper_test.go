@@ -1877,6 +1877,279 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		})
 	})
 
+	Context("RulesetPresetToGithubRuleset with required reviewers", func() {
+		basePreset := func(reviewers []githubv1alpha1.RequiredPullRequestReviewer) githubv1alpha1.RulesetPreset {
+			return githubv1alpha1.RulesetPreset{
+				Spec: githubv1alpha1.RulesetPresetSpec{
+					Name:        "pr-reviewers-ruleset",
+					Enforcement: githubv1alpha1.RulesetEnforcementActive,
+					Target:      TargetTypeBranch,
+					Conditions: &githubv1alpha1.RulesetConditions{
+						RefName: &githubv1alpha1.RefNameCondition{
+							Include: []string{"main"},
+						},
+					},
+					Rules: githubv1alpha1.RulesetRules{
+						PullRequest: &githubv1alpha1.PullRequestRule{
+							RequiredReviewers: reviewers,
+						},
+					},
+				},
+			}
+		}
+
+		It("should map nil required reviewers to empty slice", func() {
+			preset := basePreset(nil)
+			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ruleset.Rules.PullRequest).NotTo(BeNil())
+			Expect(ruleset.Rules.PullRequest.RequiredReviewers).To(BeEmpty())
+		})
+
+		It("should map a single required reviewer with ID", func() {
+			teamID := int64(42)
+			preset := basePreset([]githubv1alpha1.RequiredPullRequestReviewer{
+				{
+					MinimumApprovals: 1,
+					FilePatterns:     []string{"*.go", "*.yaml"},
+					Reviewer: githubv1alpha1.PullRequestReviewerEntity{
+						ID:   &teamID,
+						Type: "Team",
+					},
+				},
+			})
+			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ruleset.Rules.PullRequest.RequiredReviewers).To(HaveLen(1))
+
+			r := ruleset.Rules.PullRequest.RequiredReviewers[0]
+			Expect(r.MinimumApprovals).To(Equal(new(1)))
+			Expect(r.FilePatterns).To(ConsistOf("*.go", "*.yaml"))
+			Expect(r.Reviewer).NotTo(BeNil())
+			Expect(*r.Reviewer.ID).To(Equal(int64(42)))
+			Expect(string(*r.Reviewer.Type)).To(Equal("Team"))
+		})
+
+		It("should map minimum approvals of zero", func() {
+			teamID := int64(10)
+			preset := basePreset([]githubv1alpha1.RequiredPullRequestReviewer{
+				{
+					MinimumApprovals: 0,
+					Reviewer: githubv1alpha1.PullRequestReviewerEntity{
+						ID:   &teamID,
+						Type: "Team",
+					},
+				},
+			})
+			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			Expect(err).NotTo(HaveOccurred())
+			r := ruleset.Rules.PullRequest.RequiredReviewers[0]
+			Expect(r.MinimumApprovals).To(Equal(new(0)))
+		})
+
+		It("should map nil file patterns to nil slice", func() {
+			teamID := int64(10)
+			preset := basePreset([]githubv1alpha1.RequiredPullRequestReviewer{
+				{
+					FilePatterns: nil,
+					Reviewer: githubv1alpha1.PullRequestReviewerEntity{
+						ID:   &teamID,
+						Type: "Team",
+					},
+				},
+			})
+			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			Expect(err).NotTo(HaveOccurred())
+			r := ruleset.Rules.PullRequest.RequiredReviewers[0]
+			Expect(r.FilePatterns).To(BeNil())
+		})
+
+		It("should map multiple required reviewers", func() {
+			teamID1 := int64(10)
+			teamID2 := int64(20)
+			preset := basePreset([]githubv1alpha1.RequiredPullRequestReviewer{
+				{
+					MinimumApprovals: 2,
+					FilePatterns:     []string{"src/**"},
+					Reviewer:         githubv1alpha1.PullRequestReviewerEntity{ID: &teamID1, Type: "Team"},
+				},
+				{
+					MinimumApprovals: 1,
+					FilePatterns:     []string{"docs/**"},
+					Reviewer:         githubv1alpha1.PullRequestReviewerEntity{ID: &teamID2, Type: "Team"},
+				},
+			})
+			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ruleset.Rules.PullRequest.RequiredReviewers).To(HaveLen(2))
+
+			ids := []int64{
+				*ruleset.Rules.PullRequest.RequiredReviewers[0].Reviewer.ID,
+				*ruleset.Rules.PullRequest.RequiredReviewers[1].Reviewer.ID,
+			}
+			Expect(ids).To(ConsistOf(int64(10), int64(20)))
+		})
+
+		It("should use resolved ID (not slug) for the reviewer", func() {
+			resolvedID := int64(99)
+			preset := basePreset([]githubv1alpha1.RequiredPullRequestReviewer{
+				{
+					Reviewer: githubv1alpha1.PullRequestReviewerEntity{
+						ID:   &resolvedID,
+						Type: "Team",
+					},
+				},
+			})
+			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(*ruleset.Rules.PullRequest.RequiredReviewers[0].Reviewer.ID).To(Equal(int64(99)))
+		})
+	})
+
+	Context("RulesetsDiffer with required reviewers", func() {
+		teamReviewerType := github.RulesetReviewerType("Team")
+
+		basePresetWithReviewers := func(reviewers []githubv1alpha1.RequiredPullRequestReviewer) githubv1alpha1.RulesetPreset {
+			return githubv1alpha1.RulesetPreset{
+				Spec: githubv1alpha1.RulesetPresetSpec{
+					Name:        "test",
+					Enforcement: githubv1alpha1.RulesetEnforcementActive,
+					Target:      TargetTypeBranch,
+					Conditions: &githubv1alpha1.RulesetConditions{
+						RefName: &githubv1alpha1.RefNameCondition{Include: []string{"main"}},
+					},
+					Rules: githubv1alpha1.RulesetRules{
+						PullRequest: &githubv1alpha1.PullRequestRule{
+							RequiredReviewers: reviewers,
+						},
+					},
+				},
+			}
+		}
+
+		baseGithubWithReviewers := func(reviewers []*github.RulesetRequiredReviewer) github.RepositoryRuleset {
+			return github.RepositoryRuleset{
+				Name:        "test",
+				Enforcement: github.RulesetEnforcementActive,
+				Target:      github.Ptr(github.RulesetTargetBranch),
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
+				},
+				Rules: &github.RepositoryRulesetRules{
+					PullRequest: &github.PullRequestRuleParameters{
+						RequiredReviewers: reviewers,
+					},
+				},
+			}
+		}
+
+		It("should return false when both have no required reviewers", func() {
+			preset := basePresetWithReviewers(nil)
+			ghRuleset := baseGithubWithReviewers(nil)
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+		})
+
+		It("should return false when required reviewers match", func() {
+			teamID := int64(42)
+			minApprovals := 1
+			preset := basePresetWithReviewers([]githubv1alpha1.RequiredPullRequestReviewer{
+				{
+					MinimumApprovals: 1,
+					FilePatterns:     []string{"*.go"},
+					Reviewer:         githubv1alpha1.PullRequestReviewerEntity{ID: &teamID, Type: "Team"},
+				},
+			})
+			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
+				{
+					MinimumApprovals: &minApprovals,
+					FilePatterns:     []string{"*.go"},
+					Reviewer:         &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType},
+				},
+			})
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+		})
+
+		It("should return true when reviewer count differs", func() {
+			teamID := int64(42)
+			minApprovals := 1
+			preset := basePresetWithReviewers([]githubv1alpha1.RequiredPullRequestReviewer{
+				{Reviewer: githubv1alpha1.PullRequestReviewerEntity{ID: &teamID, Type: "Team"}},
+			})
+			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
+				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
+				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: github.Ptr(int64(99)), Type: &teamReviewerType}},
+			})
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+		})
+
+		It("should return true when reviewer ID differs", func() {
+			teamID := int64(42)
+			differentID := int64(99)
+			minApprovals := 1
+			preset := basePresetWithReviewers([]githubv1alpha1.RequiredPullRequestReviewer{
+				{Reviewer: githubv1alpha1.PullRequestReviewerEntity{ID: &teamID, Type: "Team"}},
+			})
+			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
+				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &differentID, Type: &teamReviewerType}},
+			})
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+		})
+
+		It("should return true when minimum approvals differ", func() {
+			teamID := int64(42)
+			minApprovals := 2
+			preset := basePresetWithReviewers([]githubv1alpha1.RequiredPullRequestReviewer{
+				{MinimumApprovals: 1, Reviewer: githubv1alpha1.PullRequestReviewerEntity{ID: &teamID, Type: "Team"}},
+			})
+			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
+				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
+			})
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+		})
+
+		It("should return true when file patterns differ", func() {
+			teamID := int64(42)
+			minApprovals := 0
+			preset := basePresetWithReviewers([]githubv1alpha1.RequiredPullRequestReviewer{
+				{FilePatterns: []string{"*.go"}, Reviewer: githubv1alpha1.PullRequestReviewerEntity{ID: &teamID, Type: "Team"}},
+			})
+			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
+				{MinimumApprovals: &minApprovals, FilePatterns: []string{"*.yaml"}, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
+			})
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+		})
+
+		It("should return false when minimum approvals is nil on GitHub side and 0 in preset", func() {
+			teamID := int64(42)
+			preset := basePresetWithReviewers([]githubv1alpha1.RequiredPullRequestReviewer{
+				{MinimumApprovals: 0, Reviewer: githubv1alpha1.PullRequestReviewerEntity{ID: &teamID, Type: "Team"}},
+			})
+			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
+				{MinimumApprovals: nil, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
+			})
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+		})
+
+		It("should return true when preset has reviewers but GitHub has none", func() {
+			teamID := int64(42)
+			preset := basePresetWithReviewers([]githubv1alpha1.RequiredPullRequestReviewer{
+				{Reviewer: githubv1alpha1.PullRequestReviewerEntity{ID: &teamID, Type: "Team"}},
+			})
+			ghRuleset := baseGithubWithReviewers(nil)
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+		})
+
+		It("should return true when GitHub has reviewers but preset has none", func() {
+			teamID := int64(42)
+			minApprovals := 0
+			preset := basePresetWithReviewers(nil)
+			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
+				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
+			})
+			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+		})
+	})
+
 	Context("RulesetPresetToGithubRuleset with workflows", func() {
 		It("should map workflows rule correctly", func() {
 			preset := githubv1alpha1.RulesetPreset{

@@ -34,6 +34,39 @@ func ResolveNamesToIDsInRuleset(ctx context.Context, githubClient ghclient.GitHu
 
 	rs = resolveStatusCheckAppSlugs(orgName, installations, rs)
 
+	rs, err = resolveRequiredReviewerSlugs(ctx, githubClient, orgName, rs)
+	if err != nil {
+		return rs, err
+	}
+
+	return rs, nil
+}
+
+// resolveRequiredReviewerSlugs resolves slugs in pull request required reviewer entries to their numeric IDs.
+func resolveRequiredReviewerSlugs(ctx context.Context, githubClient ghclient.GitHubClient, orgName string, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+	if rs.Spec.Rules.PullRequest == nil {
+		return rs, nil
+	}
+	updated := make([]v1alpha1.RequiredPullRequestReviewer, len(rs.Spec.Rules.PullRequest.RequiredReviewers))
+	for i, reviewer := range rs.Spec.Rules.PullRequest.RequiredReviewers {
+		if reviewer.Reviewer.ID == nil && reviewer.Reviewer.Slug != nil {
+			reviewerType := github.RulesetReviewerType(reviewer.Reviewer.Type)
+			var resolver slugResolverFunc
+			switch reviewerType {
+			case github.RulesetReviewerTypeTeam:
+				resolver = teamSlugResolver(ctx, githubClient, orgName)
+			default:
+				return rs, fmt.Errorf("unsupported required reviewer type %q for slug resolution", reviewer.Reviewer.Type)
+			}
+			id, err := resolver(*reviewer.Reviewer.Slug)
+			if err != nil {
+				return rs, fmt.Errorf("failed to resolve required reviewer slug %q to ID: %w", *reviewer.Reviewer.Slug, err)
+			}
+			reviewer.Reviewer.ID = id
+		}
+		updated[i] = reviewer
+	}
+	rs.Spec.Rules.PullRequest.RequiredReviewers = updated
 	return rs, nil
 }
 

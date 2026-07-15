@@ -44,6 +44,9 @@ type PullRequestRuleApplyConfiguration struct {
 	// RequiredReviewThreadResolution requires all review comment threads to be resolved before merging.
 	// This ensures all feedback is addressed.
 	RequiredReviewThreadResolution *bool `json:"requiredReviewThreadResolution,omitempty"`
+	// RequiredReviewers forces pull request approval by the configured reviewers
+	// on all pull requests changing files that match the configured file patterns.
+	RequiredReviewers []RequiredPullRequestReviewerApplyConfiguration `json:"requiredReviewers,omitempty"`
 }
 
 // PullRequestRuleApplyConfiguration constructs a declarative configuration of the PullRequestRule type for use with
@@ -99,5 +102,18 @@ func (b *PullRequestRuleApplyConfiguration) WithRequiredApprovingReviewCount(val
 // If called multiple times, the RequiredReviewThreadResolution field is set to the value of the last call.
 func (b *PullRequestRuleApplyConfiguration) WithRequiredReviewThreadResolution(value bool) *PullRequestRuleApplyConfiguration {
 	b.RequiredReviewThreadResolution = &value
+	return b
+}
+
+// WithRequiredReviewers adds the given value to the RequiredReviewers field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the RequiredReviewers field.
+func (b *PullRequestRuleApplyConfiguration) WithRequiredReviewers(values ...*RequiredPullRequestReviewerApplyConfiguration) *PullRequestRuleApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithRequiredReviewers")
+		}
+		b.RequiredReviewers = append(b.RequiredReviewers, *values[i])
+	}
 	return b
 }
