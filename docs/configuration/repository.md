@@ -203,6 +203,14 @@ rulesets:
     rules:
       pullRequest:
         requiredApprovingReviewCount: 2
+        # requiredReviewers requires ENABLE_REQUIRED_REVIEWERS_RULES=true (GitHub beta feature)
+        requiredReviewers:
+          - minimumApprovals: 1
+            filePatterns:
+              - "src/**"
+            reviewer:
+              slug: security-team   # resolved to ID at reconciliation time
+              type: Team
       requiredStatusChecks:
         requiredStatusChecks:
           - context: "ci/build"
@@ -210,6 +218,13 @@ rulesets:
       deletion: true           # Prevent branch deletion
       nonFastForward: true     # Prevent force-push
 ```
+
+> **Note**: The `requiredReviewers` field in pull-request rules uses a GitHub API feature that is
+> currently in **beta**. Reconciliation of this field is disabled by default and must be explicitly
+> opted in by setting the environment variable `ENABLE_REQUIRED_REVIEWERS_RULES=true` on the
+> controller manager. When the flag is not set, any `requiredReviewers` entries defined in the spec
+> are ignored and will not be applied to or compared against GitHub.
+> See [Feature Flags](../architecture.md#feature-flags) for all available flags.
 
 ### Deploy Keys
 

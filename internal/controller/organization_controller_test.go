@@ -37,7 +37,6 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 			ClientManager:    ghclientmock.NewGitHubMockClientFactory(mockClient),
 			K8sClient:        testEnv.Client,
 			SpreadingManager: &mock.NoOpSpreadManager{},
-			LegacySecretName: secretName,
 		}
 		// Create test namespace and secret
 		testEnv.CreateTestNamespace(namespaceName)

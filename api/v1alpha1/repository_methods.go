@@ -6,48 +6,48 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (in *Repository) GetConditions() *[]metav1.Condition {
-	if in == nil {
+func (r *Repository) GetConditions() *[]metav1.Condition {
+	if r == nil {
 		return nil
 	}
-	return &in.Status.Conditions
+	return &r.Status.Conditions
 }
 
-func (in *Repository) GetTypeRepresentation() string {
+func (r *Repository) GetTypeRepresentation() string {
 	return "Repository"
 }
 
-func (in *Repository) IsHealthy() bool {
-	if in == nil {
+func (r *Repository) IsHealthy() bool {
+	if r == nil {
 		return false
 	}
-	readyCondition := meta.FindStatusCondition(in.Status.Conditions, "Ready")
+	readyCondition := meta.FindStatusCondition(r.Status.Conditions, "Ready")
 	return readyCondition != nil && readyCondition.Status == metav1.ConditionTrue
 }
 
-func (in *Repository) GetObservedGeneration() int64 {
-	if in == nil {
+func (r *Repository) GetObservedGeneration() int64 {
+	if r == nil {
 		return 0
 	}
-	readyCondition := meta.FindStatusCondition(in.Status.Conditions, string(conditions.TypeReady))
+	readyCondition := meta.FindStatusCondition(r.Status.Conditions, string(conditions.TypeReady))
 	if readyCondition == nil {
 		return 0
 	}
 	return readyCondition.ObservedGeneration
 }
 
-func (in *Repository) GetObservedSubResourceGenerations() map[string]int64 {
-	if in == nil {
+func (r *Repository) GetObservedSubResourceGenerations() map[string]int64 {
+	if r == nil {
 		return nil
 	}
-	return in.Status.ObservedSubResourceGenerations
+	return r.Status.ObservedSubResourceGenerations
 }
 
-func (in *Repository) SetObservedSubResourceGeneration(new map[string]int64) {
-	if in == nil {
+func (r *Repository) SetObservedSubResourceGeneration(new map[string]int64) {
+	if r == nil {
 		return
 	}
-	in.Status.ObservedSubResourceGenerations = new
+	r.Status.ObservedSubResourceGenerations = new
 }
 
 func (c *CustomPropertyValue) GetValue() *string {

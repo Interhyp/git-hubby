@@ -24,67 +24,67 @@ const (
 	VisibilityInternal = "internal"
 )
 
-func (in *Organization) GetTypeRepresentation() string {
+func (o *Organization) GetTypeRepresentation() string {
 	return "Organization"
 }
 
-func (in *Organization) GetConditions() *[]metav1.Condition {
-	if in == nil {
+func (o *Organization) GetConditions() *[]metav1.Condition {
+	if o == nil {
 		return nil
 	}
-	return &in.Status.Conditions
+	return &o.Status.Conditions
 }
 
-func (in *Organization) IsHealthy() bool {
-	if in == nil {
+func (o *Organization) IsHealthy() bool {
+	if o == nil {
 		return false
 	}
-	readyCondition := meta.FindStatusCondition(in.Status.Conditions, string(conditions.TypeReady))
+	readyCondition := meta.FindStatusCondition(o.Status.Conditions, string(conditions.TypeReady))
 	return readyCondition != nil && readyCondition.Status == metav1.ConditionTrue
 }
 
-func (in *Organization) GetObservedGeneration() int64 {
-	if in == nil {
+func (o *Organization) GetObservedGeneration() int64 {
+	if o == nil {
 		return 0
 	}
-	readyCondition := meta.FindStatusCondition(in.Status.Conditions, string(conditions.TypeReady))
+	readyCondition := meta.FindStatusCondition(o.Status.Conditions, string(conditions.TypeReady))
 	if readyCondition == nil {
 		return 0
 	}
 	return readyCondition.ObservedGeneration
 }
 
-func (in *Organization) GetObservedSubResourceGenerations() map[string]int64 {
-	if in == nil {
+func (o *Organization) GetObservedSubResourceGenerations() map[string]int64 {
+	if o == nil {
 		return nil
 	}
-	return in.Status.ObservedSubResourceGenerations
+	return o.Status.ObservedSubResourceGenerations
 }
 
-func (in *Organization) GetPlan() string {
-	if in == nil {
+func (o *Organization) GetPlan() string {
+	if o == nil {
 		return ""
 	}
-	if in.Spec.Plan == "" {
+	if o.Spec.Plan == "" {
 		return PlanEnterprise
 	}
-	return in.Spec.Plan
+	return o.Spec.Plan
 }
 
 // HasEnterpriseFeatures returns true if the organization has enterprise-level features.
 // Returns false for free plan, true for enterprise and other plans.
-func (in *Organization) HasEnterpriseFeatures() bool {
-	if in == nil {
+func (o *Organization) HasEnterpriseFeatures() bool {
+	if o == nil {
 		return false
 	}
-	return in.GetPlan() != PlanFree
+	return o.GetPlan() != PlanFree
 }
 
-func (in *Organization) SetObservedSubResourceGeneration(new map[string]int64) {
-	if in == nil {
+func (o *Organization) SetObservedSubResourceGeneration(new map[string]int64) {
+	if o == nil {
 		return
 	}
-	in.Status.ObservedSubResourceGenerations = new
+	o.Status.ObservedSubResourceGenerations = new
 }
 
 func (o *OrgCustomPropertyDefaultValue) GetValue() *string {
@@ -139,23 +139,32 @@ func (o *Organization) IsUsingLegacyNameField() bool {
 	return o.Spec.Login == "" && o.Spec.Name != ""
 }
 
-// ResolveGitHubAppConfig resolves the effective GitHubAppConfig for this Organization.
-// If GitHubAppConfig is set, it is returned directly (it takes precedence).
-// Otherwise, if the deprecated GitHubAppInstallationId field is set, a GitHubAppConfig is
-// synthesised using the provided legacySecretName as the credentials secret.
+// GetGitHubAppInstallationID returns the effective GitHub App installation ID for this Organization.
+// spec.githubAppConfig takes precedence over the deprecated spec.githubAppInstallationId field.
 // Returns an error if neither field is set.
-func (in *Organization) ResolveGitHubAppConfig(legacySecretName string) (*GitHubAppConfig, error) {
-	if in == nil {
-		return nil, fmt.Errorf("organization is nil")
+func (o *Organization) GetGitHubAppInstallationID() (int64, error) {
+	if o == nil {
+		return 0, fmt.Errorf("organization is nil")
 	}
-	if in.Spec.GitHubAppConfig != nil {
-		return in.Spec.GitHubAppConfig, nil
+	if o.Spec.GitHubAppConfig != nil {
+		return o.Spec.GitHubAppConfig.InstallationId, nil
 	}
-	if in.Spec.GitHubAppInstallationId != nil {
-		return &GitHubAppConfig{
-			InstallationId:        *in.Spec.GitHubAppInstallationId,
-			CredentialsSecretName: legacySecretName,
-		}, nil
+	if o.Spec.GitHubAppInstallationId != nil {
+		return *o.Spec.GitHubAppInstallationId, nil
 	}
-	return nil, fmt.Errorf("organization %s/%s has neither githubAppConfig nor githubAppInstallationId set", in.Namespace, in.Name)
+	return 0, fmt.Errorf("organization %s/%s has neither githubAppConfig nor githubAppInstallationId set", o.Namespace, o.Name)
+}
+
+// GetGitHubAppCredentialsSecretName returns the credentials secret name for this Organization,
+// or an empty string when using the deprecated spec.githubAppInstallationId field.
+// An empty return value means the GitHub client manager should fall back to its configured
+// legacy secret name.
+func (o *Organization) GetGitHubAppCredentialsSecretName() string {
+	if o == nil {
+		return ""
+	}
+	if o.Spec.GitHubAppConfig != nil {
+		return o.Spec.GitHubAppConfig.CredentialsSecretName
+	}
+	return ""
 }

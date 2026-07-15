@@ -20,13 +20,3 @@ func WithEmptyDefault[T any](value []T) []T {
 	}
 	return value
 }
-
-func BoolPtrDiffer(a, b *bool) bool {
-	if a == nil && b == nil {
-		return false
-	}
-	if a == nil || b == nil {
-		return true
-	}
-	return *a != *b
-}

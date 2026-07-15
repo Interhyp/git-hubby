@@ -3,7 +3,6 @@ package reconciler
 import (
 	"context"
 
-	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/conditions"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
@@ -17,7 +16,7 @@ import (
 const FieldOwner = client.FieldOwner("git-hubby")
 
 type GitHubClientManager interface {
-	GetGitHubClientAndCheckRateLimit(ctx context.Context, cacheKey string, app v1alpha1.GitHubAppConfig, rateLimitMinimum int) (ghclient.GitHubClient, error)
+	GetGitHubClientAndCheckRateLimit(ctx context.Context, cacheKey string, app ghclient.AppConfig, rateLimitMinimum int) (ghclient.GitHubClient, error)
 }
 
 type SpreadManager interface {

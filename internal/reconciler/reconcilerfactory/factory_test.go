@@ -153,7 +153,7 @@ var _ = Describe("Factory", func() {
 			It("should call GetGitHubClientAndCheckRateLimit with correct parameters", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(mockClientMgr.lastOrgName).To(Equal(defaultOrgName))
-				Expect(mockClientMgr.lastAppConfig.InstallationId).To(Equal(defaultAppID))
+				Expect(mockClientMgr.lastAppConfig.InstallationID).To(Equal(defaultAppID))
 				Expect(mockClientMgr.lastRateLimit).To(Equal(orgRateLimitThreshold))
 			})
 		})
@@ -296,7 +296,7 @@ var _ = Describe("Factory", func() {
 			It("should call GetGitHubClientAndCheckRateLimit with correct parameters", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(mockClientMgr.lastOrgName).To(Equal(defaultOrgName))
-				Expect(mockClientMgr.lastAppConfig.InstallationId).To(Equal(defaultAppID))
+				Expect(mockClientMgr.lastAppConfig.InstallationID).To(Equal(defaultAppID))
 				Expect(mockClientMgr.lastRateLimit).To(Equal(repoRateLimitThreshold))
 			})
 		})
@@ -1813,11 +1813,11 @@ type mockGitHubClientManager struct {
 	genericErr      error
 	callCount       int
 	lastOrgName     string
-	lastAppConfig   v1alpha1.GitHubAppConfig
+	lastAppConfig   ghclient.AppConfig
 	lastRateLimit   int
 }
 
-func (m *mockGitHubClientManager) GetGitHubClientAndCheckRateLimit(_ context.Context, orgName string, app v1alpha1.GitHubAppConfig, rateLimitMinimum int) (ghclient.GitHubClient, error) {
+func (m *mockGitHubClientManager) GetGitHubClientAndCheckRateLimit(_ context.Context, orgName string, app ghclient.AppConfig, rateLimitMinimum int) (ghclient.GitHubClient, error) {
 	m.callCount++
 	m.lastOrgName = orgName
 	m.lastAppConfig = app

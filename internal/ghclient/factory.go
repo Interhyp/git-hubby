@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/PuerkitoBio/rehttp"
 	"github.com/gofri/go-github-pagination/githubpagination"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit"
@@ -39,6 +38,14 @@ type ClientConfig struct {
 	RetryBaseDelay time.Duration
 	// Maximum delay between retries
 	RetryMaxDelay time.Duration
+}
+
+// AppConfig identifies a GitHub App installation for client creation and caching.
+// CredentialsSecretName may be left empty, in which case the factory falls back to its
+// configured legacySecretName.
+type AppConfig struct {
+	InstallationID        int64
+	CredentialsSecretName string
 }
 
 type RateLimitedError struct {
@@ -79,12 +86,13 @@ type ClientInfo struct {
 // Credentials are cached per secret name and clients are cached per organization (cacheKey).
 // Rate limit state is shared per GitHub App ID so all installations of the same App share a quota bucket.
 type CachingGitHubClientFactory struct {
-	mu              sync.RWMutex
-	clients         map[string]*ClientInfo
-	config          *ClientConfig
-	secretProvider  SecretProviderFunc
-	credentials     map[string]*AppCredentials
-	rateLimitStates map[int64]*github_primary_ratelimit.RateLimitState
+	mu               sync.RWMutex
+	clients          map[string]*ClientInfo
+	config           *ClientConfig
+	secretProvider   SecretProviderFunc
+	credentials      map[string]*AppCredentials
+	rateLimitStates  map[int64]*github_primary_ratelimit.RateLimitState
+	legacySecretName string
 }
 
 // AppCredentials holds parsed GitHub App credentials
@@ -99,30 +107,36 @@ type SecretProviderFunc = func(ctx context.Context, secretName string) (*v1.Secr
 
 // NewGitHubCachingClientFactory creates a new client cache with the given configuration. The necessary GitHub App
 // credentials are fetched lazily via the given SecretProviderFunc upon first client creation for each secret.
-func NewGitHubCachingClientFactory(config *ClientConfig, providerFunc SecretProviderFunc) (*CachingGitHubClientFactory, error) {
+// legacySecretName is the fallback credentials secret name used for Organizations that still rely on the
+// deprecated GitHubAppInstallationId field rather than the new GitHubAppConfig.
+func NewGitHubCachingClientFactory(config *ClientConfig, providerFunc SecretProviderFunc, legacySecretName string) (*CachingGitHubClientFactory, error) {
 	if config == nil {
 		config = DefaultClientConfig()
 	}
 
 	manager := &CachingGitHubClientFactory{
-		clients:         make(map[string]*ClientInfo),
-		credentials:     make(map[string]*AppCredentials),
-		rateLimitStates: make(map[int64]*github_primary_ratelimit.RateLimitState),
-		config:          config,
-		secretProvider:  providerFunc,
+		clients:          make(map[string]*ClientInfo),
+		credentials:      make(map[string]*AppCredentials),
+		rateLimitStates:  make(map[int64]*github_primary_ratelimit.RateLimitState),
+		config:           config,
+		secretProvider:   providerFunc,
+		legacySecretName: legacySecretName,
 	}
 	return manager, nil
 }
 
-// GetClient retrieves or creates a GitHub client for the given organization (cacheKey).
+// GetClient retrieves or creates a GitHub client for the given cacheKey and AppConfig.
+// If app.CredentialsSecretName is empty the factory falls back to its legacySecretName.
 // If a cached client exists for the cacheKey with matching credentials, it is returned directly.
 // If the credentials secret changed, the old client is evicted and a new one is created.
-func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey string, app v1alpha1.GitHubAppConfig) (GitHubClient, error) {
-	log := logf.FromContext(ctx,
-		"function", "GetClient",
-	)
+func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey string, app AppConfig) (GitHubClient, error) {
+	secretName := app.CredentialsSecretName
+	if secretName == "" {
+		secretName = m.legacySecretName
+	}
+	log := logf.FromContext(ctx, "function", "GetClient")
 
-	if c := m.getCachedClient(cacheKey, app.CredentialsSecretName); c != nil {
+	if c := m.getCachedClient(cacheKey, secretName); c != nil {
 		return c, nil
 	}
 
@@ -132,7 +146,7 @@ func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey str
 
 	// Double-check after acquiring write lock
 	if info, exists := m.clients[cacheKey]; exists {
-		if info.SecretName == app.CredentialsSecretName {
+		if info.SecretName == secretName {
 			return info.Client, nil
 		}
 		// Credentials secret changed – evict the stale client
@@ -142,7 +156,7 @@ func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey str
 
 	log.Info("Creating new GitHub client")
 
-	ghClient, err := m.createClient(ctx, app)
+	ghClient, err := m.createClient(ctx, app.InstallationID, secretName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GitHub client for key %s: %w", cacheKey, err)
 	}
@@ -152,17 +166,17 @@ func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey str
 
 	m.clients[cacheKey] = &ClientInfo{
 		Client:         wrappedClient,
-		InstallationID: app.InstallationId,
+		InstallationID: app.InstallationID,
 		CacheKey:       cacheKey,
-		SecretName:     app.CredentialsSecretName,
+		SecretName:     secretName,
 	}
 
-	log.Info("Successfully created and cached GitHub client", "installationID", app.InstallationId)
+	log.Info("Successfully created and cached GitHub client", "installationID", app.InstallationID)
 	return wrappedClient, nil
 }
 
 // GetGitHubClientAndCheckRateLimit retrieves a GitHub client and verifies the remaining rate limit.
-func (m *CachingGitHubClientFactory) GetGitHubClientAndCheckRateLimit(ctx context.Context, cacheKey string, app v1alpha1.GitHubAppConfig, rateLimitMinimum int) (GitHubClient, error) {
+func (m *CachingGitHubClientFactory) GetGitHubClientAndCheckRateLimit(ctx context.Context, cacheKey string, app AppConfig, rateLimitMinimum int) (GitHubClient, error) {
 	ghClient, err := m.GetClient(ctx, cacheKey, app)
 	if err != nil {
 		return nil, err
@@ -194,16 +208,16 @@ func (m *CachingGitHubClientFactory) getCachedClient(cacheKey string, secretName
 }
 
 // createClient creates a new GitHub client with proper middleware setup
-func (m *CachingGitHubClientFactory) createClient(ctx context.Context, app v1alpha1.GitHubAppConfig) (*github.Client, error) {
+func (m *CachingGitHubClientFactory) createClient(ctx context.Context, installationID int64, secretName string) (*github.Client, error) {
 	log := logf.FromContext(ctx)
 	log.Info("Creating GitHub client with middleware stack")
 
-	creds, ok := m.credentials[app.CredentialsSecretName]
+	creds, ok := m.credentials[secretName]
 	if !ok {
 		// Fetch and parse the secret on first use
-		secret, err := m.secretProvider(ctx, app.CredentialsSecretName)
+		secret, err := m.secretProvider(ctx, secretName)
 		if err != nil {
-			log.Error(err, "failed to get GitHub app credentials secret", "secretName", app.CredentialsSecretName)
+			log.Error(err, "failed to get GitHub app credentials secret", "secretName", secretName)
 			return nil, err
 		}
 		if secret == nil {
@@ -214,11 +228,11 @@ func (m *CachingGitHubClientFactory) createClient(ctx context.Context, app v1alp
 			log.Error(err, "failed to prepare GitHub app credentials")
 			return nil, err
 		}
-		m.credentials[app.CredentialsSecretName] = parsedCreds
+		m.credentials[secretName] = parsedCreds
 		creds = parsedCreds
 	}
 
-	ghClient, err := m.buildClientWithMiddleware(app.InstallationId, creds)
+	ghClient, err := m.buildClientWithMiddleware(installationID, creds)
 	if err != nil {
 		log.Error(err, "failed to create GitHub client")
 		return nil, err

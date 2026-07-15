@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	"github.com/Interhyp/git-hubby/internal/config"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 	"github.com/Interhyp/git-hubby/test/mock"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
@@ -37,11 +37,12 @@ var _ = Describe("TeamController", func() {
 			ClientManager:    ghclientmock.NewGitHubMockClientFactory(mockClient),
 			K8sClient:        testEnv.Client,
 			SpreadingManager: &mock.NoOpSpreadManager{},
-			LegacySecretName: "test-credentials",
+			Config: config.Config{
+				GitHubMemberSuffix: "_memberSuffix",
+			},
 		}
 		testEnv.CreateTestNamespace(namespaceName)
 		_ = testEnv.SetupOrganizationTest(nil, namespaceName, orgName)
-		_ = os.Setenv("GITHUB_MEMBER_SUFFIX", "_memberSuffix")
 	})
 
 	AfterEach(func() {

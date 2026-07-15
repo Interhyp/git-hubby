@@ -3,9 +3,10 @@ package reconcilerfactory
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
+	"github.com/Interhyp/git-hubby/internal/config"
+	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/internal/reconciler/orgrec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
@@ -20,9 +21,7 @@ type Factory struct {
 	ClientManager    reconciler.GitHubClientManager
 	K8sClient        client.Client
 	SpreadingManager reconciler.SpreadManager
-	// LegacySecretName is the name of the credential secret used for Organizations that
-	// still rely on the deprecated GitHubAppInstallationId field without a GitHubAppConfig.
-	LegacySecretName string
+	Config           config.Config
 }
 
 const (
@@ -61,13 +60,13 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 		return nil, requiresSpreadErr
 	}
 
-	appConfig, err := org.ResolveGitHubAppConfig(f.LegacySecretName)
+	appConfig, err := orgAppConfig(&org)
 	if err != nil {
 		logPkg.FromContext(ctx).Error(err, "unable to resolve GitHub App config for Organization")
 		return nil, err
 	}
 
-	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), *appConfig, orgRateLimitThreshold)
+	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), appConfig, orgRateLimitThreshold)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +81,7 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 				Client:   ghClient,
 				Resource: org.GetLogin(),
 			},
+			Features: f.Config.Features,
 		},
 	}, nil
 }
@@ -115,13 +115,13 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 		return nil, err
 	}
 
-	appConfig, err := org.ResolveGitHubAppConfig(f.LegacySecretName)
+	appConfig, err := orgAppConfig(&org)
 	if err != nil {
 		log.Error(err, "unable to resolve GitHub App config for Organization", "organization", org.GetLogin())
 		return nil, err
 	}
 
-	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), *appConfig, repoRateLimitThreshold)
+	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), appConfig, repoRateLimitThreshold)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,8 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 					Name:  repo.Spec.Name,
 				},
 			},
-			FinalizeMode: reconciler.RepositoryFinalizerMode(os.Getenv("REPOSITORY_FINALIZER_MODE")),
+			FinalizeMode: reconciler.RepositoryFinalizerMode(f.Config.RepositoryFinalizerMode),
+			Features:     f.Config.Features,
 		},
 	}, nil
 }
@@ -190,6 +191,7 @@ func (f *Factory) CreateForTeam(ctx context.Context, teamName types.NamespacedNa
 				Client:   f.K8sClient,
 				Resource: &team,
 			},
+			MemberSuffix: f.Config.GitHubMemberSuffix,
 		},
 	}, nil
 }
@@ -299,14 +301,14 @@ func buildGitHubOrgsSlice(ctx context.Context, f *Factory, team v1alpha1.Team, r
 	}
 	var githubOrgs []reconciler.GitHub[string]
 	for _, org := range orgs {
-		appConfig, err := org.ResolveGitHubAppConfig(f.LegacySecretName)
+		appConfig, err := orgAppConfig(&org)
 		if err != nil {
 			log.Error(err, "unable to resolve GitHub App config for Organization", "organization", org.GetLogin())
 			return nil, err
 		}
-		ghRepo, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), *appConfig, teamRateLimitThreshold)
+		ghRepo, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), appConfig, teamRateLimitThreshold)
 		if err != nil {
-			log.Error(err, "unable to get github client for installationId", "organization", org.GetLogin(), "installationId", appConfig.InstallationId)
+			log.Error(err, "unable to get github client for installationId", "organization", org.GetLogin(), "installationId", appConfig.InstallationID)
 			return nil, err
 		}
 
@@ -317,4 +319,18 @@ func buildGitHubOrgsSlice(ctx context.Context, f *Factory, team v1alpha1.Team, r
 	}
 
 	return githubOrgs, nil
+}
+
+// orgAppConfig extracts the minimal AppConfig needed by the GitHub client manager from an Organization.
+// CredentialsSecretName is left empty for legacy orgs (those using the deprecated GitHubAppInstallationId
+// field); the client manager will substitute its own legacySecretName in that case.
+func orgAppConfig(org *v1alpha1.Organization) (ghclient.AppConfig, error) {
+	installationID, err := org.GetGitHubAppInstallationID()
+	if err != nil {
+		return ghclient.AppConfig{}, err
+	}
+	return ghclient.AppConfig{
+		InstallationID:        installationID,
+		CredentialsSecretName: org.GetGitHubAppCredentialsSecretName(),
+	}, nil
 }

@@ -4,13 +4,20 @@ import (
 	"context"
 	"hash/fnv"
 	"math/rand/v2"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+const (
+	// DefaultSpreadPeriodMinutes is the default spread-period window in minutes.
+	// Matches the envDefault in internal/config.Config.SpreadPeriodMinutes.
+	DefaultSpreadPeriodMinutes = 5
+	// DefaultSpreadIntervalMinutes is the default spread-interval window in minutes.
+	// Matches the envDefault in internal/config.Config.SpreadIntervalMinutes.
+	DefaultSpreadIntervalMinutes = 180
 )
 
 // SpreadableResource defines the interface for resources that support startup spreading
@@ -45,6 +52,17 @@ type Manager struct {
 	Config Config
 }
 
+// Option is a functional option for configuring a spreading Manager.
+type Option func(*Config)
+
+// WithEnabled overrides the Enabled field of the default manager config.
+// Pass spreading.WithEnabled(features.EnableStartupSpreading) from cmd/main.go.
+func WithEnabled(enabled bool) Option {
+	return func(c *Config) {
+		c.Enabled = enabled
+	}
+}
+
 // NewManager creates a new spreading manager
 func NewManager(config Config) *Manager {
 	return &Manager{
@@ -52,14 +70,35 @@ func NewManager(config Config) *Manager {
 	}
 }
 
-// NewDefaultManager creates a manager with default configuration from environment variables
-func NewDefaultManager() *Manager {
+// WithSpreadPeriod overrides the SpreadPeriod field of the default manager config.
+// Pass spreading.WithSpreadPeriod(cfg.SpreadPeriodMinutes) from cmd/main.go.
+func WithSpreadPeriod(minutes int) Option {
+	return func(c *Config) {
+		c.SpreadPeriod = time.Duration(minutes) * time.Minute
+	}
+}
+
+// WithSpreadInterval overrides the SpreadInterval field of the default manager config.
+// Pass spreading.WithSpreadInterval(cfg.SpreadIntervalMinutes) from cmd/main.go.
+func WithSpreadInterval(minutes int) Option {
+	return func(c *Config) {
+		c.SpreadInterval = time.Duration(minutes) * time.Minute
+	}
+}
+
+// NewDefaultManager creates a manager with default configuration from environment variables.
+// The Enabled flag and numeric tuning values are not read from env here; pass the relevant
+// With* opts from cmd/main.go so that configuration ownership stays in internal/config.
+func NewDefaultManager(opts ...Option) *Manager {
 	config := Config{
 		SpreadSeed:     uuid.New().String(),
 		StartTime:      time.Now(),
-		Enabled:        getBoolEnv("ENABLE_STARTUP_SPREADING", true),
-		SpreadPeriod:   getDurationEnv("STARTUP_SPREAD_PERIOD_MINUTES", 5) * time.Minute,
-		SpreadInterval: getDurationEnv("SPREAD_INTERVAL_MINUTES", 180) * time.Minute,
+		Enabled:        true,
+		SpreadPeriod:   DefaultSpreadPeriodMinutes * time.Minute,
+		SpreadInterval: DefaultSpreadIntervalMinutes * time.Minute,
+	}
+	for _, opt := range opts {
+		opt(&config)
 	}
 	return &Manager{Config: config}
 }
@@ -167,30 +206,4 @@ func hashString(s string) int {
 	h := fnv.New32a()
 	_, _ = h.Write([]byte(s))
 	return int(h.Sum32())
-}
-
-// getBoolEnv reads a boolean from environment variable with a default
-func getBoolEnv(key string, defaultValue bool) bool {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	parsed, err := strconv.ParseBool(value)
-	if err != nil {
-		return defaultValue
-	}
-	return parsed
-}
-
-// getDurationEnv reads a duration in minutes from environment variable with a default
-func getDurationEnv(key string, defaultMinutes int) time.Duration {
-	value := os.Getenv(key)
-	if value == "" {
-		return time.Duration(defaultMinutes)
-	}
-	parsed, err := strconv.Atoi(value)
-	if err != nil {
-		return time.Duration(defaultMinutes)
-	}
-	return time.Duration(parsed)
 }

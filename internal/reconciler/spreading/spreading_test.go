@@ -2,7 +2,6 @@ package spreading
 
 import (
 	"context"
-	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -74,30 +73,19 @@ var _ = Describe("Spreading", func() {
 				Expect(manager.Config.StartTime).NotTo(BeZero())
 			})
 
-			It("should respect ENABLE_STARTUP_SPREADING=false", func() {
-				_ = os.Setenv("ENABLE_STARTUP_SPREADING", "false")
-				defer func() { _ = os.Unsetenv("ENABLE_STARTUP_SPREADING") }()
-
-				manager := NewDefaultManager()
+			It("should disable spreading when WithEnabled(false) is passed", func() {
+				manager := NewDefaultManager(WithEnabled(false))
 
 				Expect(manager.Config.Enabled).To(BeFalse())
 			})
 
-			It("should respect STARTUP_SPREAD_PERIOD_MINUTES", func() {
-				_ = os.Setenv("STARTUP_SPREAD_PERIOD_MINUTES", "10")
-				defer func() { _ = os.Unsetenv("STARTUP_SPREAD_PERIOD_MINUTES") }()
-
-				manager := NewDefaultManager()
-
+			It("should set SpreadPeriod when WithSpreadPeriod is passed", func() {
+				manager := NewDefaultManager(WithSpreadPeriod(10))
 				Expect(manager.Config.SpreadPeriod).To(Equal(10 * time.Minute))
 			})
 
-			It("should respect SPREAD_INTERVAL_MINUTES", func() {
-				_ = os.Setenv("SPREAD_INTERVAL_MINUTES", "120")
-				defer func() { _ = os.Unsetenv("SPREAD_INTERVAL_MINUTES") }()
-
-				manager := NewDefaultManager()
-
+			It("should set SpreadInterval when WithSpreadInterval is passed", func() {
+				manager := NewDefaultManager(WithSpreadInterval(120))
 				Expect(manager.Config.SpreadInterval).To(Equal(120 * time.Minute))
 			})
 		})
@@ -591,55 +579,32 @@ var _ = Describe("Spreading", func() {
 			})
 		})
 
-		Describe("getBoolEnv", func() {
-			AfterEach(func() {
-				_ = os.Unsetenv("TEST_BOOL")
+		Describe("WithEnabled option", func() {
+			It("should enable the manager when passed true", func() {
+				m := NewDefaultManager(WithEnabled(true))
+				Expect(m.Config.Enabled).To(BeTrue())
 			})
 
-			It("should return default when env var is not set", func() {
-				result := getBoolEnv("TEST_BOOL", true)
-				Expect(result).To(BeTrue())
+			It("should disable the manager when passed false", func() {
+				m := NewDefaultManager(WithEnabled(false))
+				Expect(m.Config.Enabled).To(BeFalse())
 			})
 
-			It("should parse 'true' correctly", func() {
-				_ = os.Setenv("TEST_BOOL", "true")
-				result := getBoolEnv("TEST_BOOL", false)
-				Expect(result).To(BeTrue())
-			})
-
-			It("should parse 'false' correctly", func() {
-				_ = os.Setenv("TEST_BOOL", "false")
-				result := getBoolEnv("TEST_BOOL", true)
-				Expect(result).To(BeFalse())
-			})
-
-			It("should return default on invalid value", func() {
-				_ = os.Setenv("TEST_BOOL", "invalid")
-				result := getBoolEnv("TEST_BOOL", true)
-				Expect(result).To(BeTrue())
+			It("default manager is enabled when no option is passed", func() {
+				m := NewDefaultManager()
+				Expect(m.Config.Enabled).To(BeTrue())
 			})
 		})
 
-		Describe("getDurationEnv", func() {
-			AfterEach(func() {
-				_ = os.Unsetenv("TEST_DURATION")
+		Describe("WithSpreadPeriod and WithSpreadInterval defaults", func() {
+			It("default manager uses DefaultSpreadPeriodMinutes", func() {
+				m := NewDefaultManager()
+				Expect(m.Config.SpreadPeriod).To(Equal(DefaultSpreadPeriodMinutes * time.Minute))
 			})
 
-			It("should return default when env var is not set", func() {
-				result := getDurationEnv("TEST_DURATION", 10)
-				Expect(result).To(Equal(time.Duration(10)))
-			})
-
-			It("should parse valid duration correctly", func() {
-				_ = os.Setenv("TEST_DURATION", "20")
-				result := getDurationEnv("TEST_DURATION", 10)
-				Expect(result).To(Equal(time.Duration(20)))
-			})
-
-			It("should return default on invalid value", func() {
-				_ = os.Setenv("TEST_DURATION", "invalid")
-				result := getDurationEnv("TEST_DURATION", 10)
-				Expect(result).To(Equal(time.Duration(10)))
+			It("default manager uses DefaultSpreadIntervalMinutes", func() {
+				m := NewDefaultManager()
+				Expect(m.Config.SpreadInterval).To(Equal(DefaultSpreadIntervalMinutes * time.Minute))
 			})
 		})
 	})

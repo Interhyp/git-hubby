@@ -42,7 +42,6 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 			ClientManager:    ghclientmock.NewGitHubMockClientFactory(mockClient),
 			K8sClient:        testEnv.Client,
 			SpreadingManager: &mock.NoOpSpreadManager{},
-			LegacySecretName: secretName,
 		}
 		testEnv.CreateTestNamespace(namespaceName)
 		testEnv.CreateSecret(namespaceName, secretName)
@@ -118,6 +117,8 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 		)
 
 		BeforeEach(func() {
+			// Enable archive mode for deletion tests via the factory field.
+			factory.Config.RepositoryFinalizerMode = "archive"
 			namespacedName = types.NamespacedName{
 				Name:      repoName,
 				Namespace: namespaceName,

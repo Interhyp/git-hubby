@@ -9,6 +9,7 @@ import (
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	ac "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/conditions"
+	"github.com/Interhyp/git-hubby/internal/config"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/google/go-github/v89/github"
 	"k8s.io/apimachinery/pkg/labels"
@@ -34,6 +35,7 @@ type GitHubRepoReconciler struct {
 	GitHub       reconciler.GitHub[GitHubRepoIdentifier]
 	Kubernetes   reconciler.Kubernetes[*githubv1alpha1.Repository]
 	FinalizeMode reconciler.RepositoryFinalizerMode
+	Features     config.Features
 }
 
 func (r *GitHubRepoReconciler) K8s() reconciler.Kubernetes[*githubv1alpha1.Repository] {

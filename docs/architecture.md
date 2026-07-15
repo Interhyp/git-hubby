@@ -31,13 +31,14 @@ To prevent API rate limit exhaustion during pod restarts (e.g., rolling deployme
 
 ### Configuration
 
-Control via environment variables:
+Control spreading behaviour via environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ENABLE_STARTUP_SPREADING` | `true` | Enable/disable spreading |
-| `STARTUP_SPREAD_PERIOD_MINUTES` | `5` | Window after startup for spreading |
-| `SPREAD_INTERVAL_MINUTES` | `180` | Time window for distribution |
+| `STARTUP_SPREAD_PERIOD_MINUTES` | `5` | Window in minutes after startup during which warm-start reconciliations may be delayed |
+| `SPREAD_INTERVAL_MINUTES` | `180` | Time window in minutes across which delayed reconciliations are distributed |
+
+> **Note**: Whether spreading is enabled at all is controlled by the `ENABLE_STARTUP_SPREADING` feature flag (see [Feature Flags](#feature-flags) below).
 
 ## Parallel Reconciliation
 
@@ -81,3 +82,13 @@ The `GitHubCachingClientFactory` maintains a per-process cache of authenticated 
 - Clients are cached per GitHub App installation
 - Memory overhead is minimal
 - Automatic token refresh on expiration
+
+## Feature Flags
+
+Feature flags are boolean environment variables that enable or disable operator functionality. They are all loaded once at startup via the `internal/features` package (using [`caarlos0/env`](https://github.com/caarlos0/env)) and passed through the reconciler factory. Invalid values (e.g. a non-boolean string) cause the operator to exit at startup with a clear error message.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_STARTUP_SPREADING` | `true` | Enable the startup spreading mechanism that distributes warm-start reconciliations over time to prevent API rate-limit exhaustion after pod restarts |
+| `ENABLE_WEBHOOKS` | `true` | Enable registration of the admission webhook server. Set to `false` for local development without cert-manager (`make run` does this automatically) |
+| `ENABLE_REQUIRED_REVIEWERS_RULES` | `false` | Enable reconciliation of `requiredReviewers` in pull-request ruleset rules. The underlying GitHub API is currently in **beta**; opt in explicitly when ready |

@@ -212,6 +212,18 @@ Common patterns:
 - **Organizations**: Only deleted when no `Repository` references remain (enforced via finalizer)
 - **Repositories**: Archived instead of hard-deleted
 
+### Feature Flags
+
+Boolean environment variables that enable or disable operator functionality, loaded once at startup. Invalid values cause the operator to exit with a clear error.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_STARTUP_SPREADING` | `true` | Enable startup spreading to prevent API rate-limit exhaustion after pod restarts |
+| `ENABLE_WEBHOOKS` | `true` | Enable the admission webhook server. Set `false` for local development without cert-manager |
+| `ENABLE_REQUIRED_REVIEWERS_RULES` | `false` | Enable `requiredReviewers` in pull-request ruleset rules (GitHub API feature is in **beta**) |
+
+See [Architecture → Feature Flags](https://interhyp.github.io/git-hubby/architecture/#feature-flags) for details.
+
 ## Documentation
 
 For detailed configuration and usage information, see the [full documentation](https://interhyp.github.io/git-hubby/):
