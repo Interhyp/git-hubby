@@ -3,7 +3,7 @@ package mapper
 import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/utils"
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v89/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

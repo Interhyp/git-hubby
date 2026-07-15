@@ -6,7 +6,7 @@ import (
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v89/github"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v2 "k8s.io/client-go/applyconfigurations/meta/v1"
 )

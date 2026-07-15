@@ -17,7 +17,7 @@ import (
 	"github.com/gofri/go-github-pagination/githubpagination"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v89/github"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	v1 "k8s.io/api/core/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -218,8 +218,11 @@ func (m *CachingGitHubClientFactory) createClient(ctx context.Context, app v1alp
 		creds = parsedCreds
 	}
 
-	ghClient := m.buildClientWithMiddleware(app.InstallationId, creds)
-
+	ghClient, err := m.buildClientWithMiddleware(app.InstallationId, creds)
+	if err != nil {
+		log.Error(err, "failed to create GitHub client")
+		return nil, err
+	}
 	return ghClient, nil
 }
 
@@ -227,12 +230,13 @@ func (m *CachingGitHubClientFactory) createClient(ctx context.Context, app v1alp
 func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID int64, creds *AppCredentials) (*github.Client, error) {
 	clientName := fmt.Sprintf("github-%d", appInstallationID)
 
-	client := github.NewClient(&http.Client{
-		Transport: m.buildMiddlewareStack(clientName, creds, appInstallationID),
-		Timeout:   m.config.Timeout,
-	})
-	client.DisableRateLimitCheck = true
-	return client
+	return github.NewClient(
+		github.WithHTTPClient(&http.Client{
+			Transport: m.buildMiddlewareStack(clientName, creds, appInstallationID),
+			Timeout:   m.config.Timeout,
+		}),
+		github.WithDisableRateLimitCheck(),
+	)
 }
 
 // buildMiddlewareStack constructs the HTTP transport middleware stack.

@@ -9,7 +9,6 @@ require (
 	github.com/gofri/go-github-pagination v1.0.1
 	github.com/gofri/go-github-ratelimit/v2 v2.0.2
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-github/v86 v86.0.0
 	github.com/google/go-github/v89 v89.0.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
@@ -57,7 +56,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/google/cel-go v0.26.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/google/go-github/v84 v84.0.0 // indirect
 	github.com/google/go-github/v88 v88.0.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
