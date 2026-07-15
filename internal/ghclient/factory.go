@@ -224,7 +224,7 @@ func (m *CachingGitHubClientFactory) createClient(ctx context.Context, app v1alp
 }
 
 // buildClientWithMiddleware creates a GitHub client with the full middleware stack
-func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID int64, creds *AppCredentials) *github.Client {
+func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID int64, creds *AppCredentials) (*github.Client, error) {
 	clientName := fmt.Sprintf("github-%d", appInstallationID)
 
 	client := github.NewClient(&http.Client{

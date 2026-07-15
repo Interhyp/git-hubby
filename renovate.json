@@ -14,5 +14,9 @@
       ],
       "semanticCommitType": "ci"
     }
+  ],
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
   ]
 }
