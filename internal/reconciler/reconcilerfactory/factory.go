@@ -139,6 +139,7 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 					Name:  repo.Spec.Name,
 				},
 			},
+			MemberSuffix: f.Config.GitHubMemberSuffix,
 			FinalizeMode: reconciler.RepositoryFinalizerMode(f.Config.RepositoryFinalizerMode),
 			Features:     f.Config.Features,
 		},

@@ -401,6 +401,46 @@ func (g *GitHubClientWrapper) RemoveTeamMember(ctx context.Context, org string, 
 	return _handleErrorResponse(response, err)
 }
 
+// Repository team permissions operations
+
+func (g *GitHubClientWrapper) GetAllRepositoryTeams(ctx context.Context, owner, repo string) ([]*github.Team, error) {
+	teams, response, err := g.client.Repositories.ListTeams(ctx, owner, repo, nil)
+	defer _closeBody(response)
+	return teams, _handleErrorResponse(response, err)
+}
+
+func (g *GitHubClientWrapper) AddRepositoryTeam(ctx context.Context, org, slug, owner, repo, permission string) error {
+	response, err := g.client.Teams.AddTeamRepoBySlug(ctx, org, slug, owner, repo, &github.TeamAddTeamRepoOptions{Permission: permission})
+	defer _closeBody(response)
+	return _handleErrorResponse(response, err)
+}
+
+func (g *GitHubClientWrapper) RemoveRepositoryTeam(ctx context.Context, org, slug, owner, repo string) error {
+	response, err := g.client.Teams.RemoveTeamRepoBySlug(ctx, org, slug, owner, repo)
+	defer _closeBody(response)
+	return _handleErrorResponse(response, err)
+}
+
+// Repository collaborators operations
+
+func (g *GitHubClientWrapper) GetAllRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*github.User, error) {
+	users, response, err := g.client.Repositories.ListCollaborators(ctx, owner, repo, &github.ListCollaboratorsOptions{Affiliation: "direct"})
+	defer _closeBody(response)
+	return users, _handleErrorResponse(response, err)
+}
+
+func (g *GitHubClientWrapper) AddRepositoryCollaborator(ctx context.Context, owner, repo, username, permission string) error {
+	_, response, err := g.client.Repositories.AddCollaborator(ctx, owner, repo, username, &github.RepositoryAddCollaboratorOptions{Permission: permission})
+	defer _closeBody(response)
+	return _handleErrorResponse(response, err)
+}
+
+func (g *GitHubClientWrapper) RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error {
+	response, err := g.client.Repositories.RemoveCollaborator(ctx, owner, repo, username)
+	defer _closeBody(response)
+	return _handleErrorResponse(response, err)
+}
+
 // Team IDP group operations
 func (g *GitHubClientWrapper) GetExternalGroupsForTeamBySlug(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error) {
 	result, response, err := g.client.Teams.ListExternalGroupsForTeamBySlug(ctx, org, slug)

@@ -172,6 +172,48 @@ spec:
                 items:
                   type: string
                 type: array
+              collaborators:
+                description: |-
+                  Collaborators defines direct repository member (collaborator) permissions.
+                  Each entry assigns a GitHub user a specific permission level.
+                  Collaborators not present in this list will have their explicit repository access removed.
+                  See: https://docs.github.com/en/rest/collaborators/collaborators#add-a-repository-collaborator
+                items:
+                  description: RepositoryCollaboratorPermission defines repository-level
+                    access for a GitHub user.
+                  properties:
+                    permission:
+                      default: pull
+                      description: |-
+                        Permission is the access level granted to the member for this repository.
+                        - "pull": Read-only access
+                        - "triage": Manage issues and pull requests without write access
+                        - "push": Read and write access
+                        - "maintain": Manage repository settings except sensitive/destructive actions
+                        - "admin": Full repository administrative access
+                      enum:
+                      - pull
+                      - triage
+                      - push
+                      - maintain
+                      - admin
+                      type: string
+                    username:
+                      description: |-
+                        Username is the GitHub username of the member.
+                        Supports standard GitHub usernames and Enterprise Managed Users-style
+                        usernames with an underscore suffix (for example: "name-surname_org").
+                      maxLength: 39
+                      minLength: 1
+                      pattern: ^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*(?:_[a-zA-Z0-9](?:-?[a-zA-Z0-9])*)?$
+                      type: string
+                  required:
+                  - username
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - username
+                x-kubernetes-list-type: map
               customProperties:
                 description: |-
                   CustomProperties is a list of custom property values to apply to this repository.
@@ -355,6 +397,46 @@ spec:
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
+                type: array
+              teams:
+                description: |-
+                  Teams defines team permissions for this repository.
+                  Each entry references an existing Team CRD via TeamRef and assigns it a specific permission level.
+                  Teams not present in this list will have their explicit repository access removed.
+                  See: https://docs.github.com/en/rest/teams/teams#add-or-update-team-repository-permissions
+                items:
+                  description: RepositoryTeamPermission defines repository-level access
+                    for a GitHub team.
+                  properties:
+                    permission:
+                      default: pull
+                      description: |-
+                        Permission is the access level granted to the team for this repository.
+                        - "pull": Read-only access
+                        - "triage": Manage issues and pull requests without write access
+                        - "push": Read and write access
+                        - "maintain": Manage repository settings except sensitive/destructive actions
+                        - "admin": Full repository administrative access
+                      enum:
+                      - pull
+                      - triage
+                      - push
+                      - maintain
+                      - admin
+                      type: string
+                    teamRef:
+                      description: TeamRef references the Team CRD that should be
+                        granted access to this repository.
+                      properties:
+                        name:
+                          description: Name is the name of the referenced Team CRD.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                  required:
+                  - teamRef
+                  type: object
                 type: array
               visibility:
                 default: private
