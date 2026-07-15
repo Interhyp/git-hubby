@@ -499,6 +499,10 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetSpec
           elementRelationship: atomic
+    - name: usesEnterpriseManagedUsers
+      type:
+        scalar: boolean
+      default: false
     - name: website
       type:
         scalar: string
@@ -611,6 +615,16 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: status
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryCollaboratorPermission
+  map:
+    fields:
+    - name: permission
+      type:
+        scalar: string
+      default: pull
+    - name: username
+      type:
+        scalar: string
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryNameCondition
   map:
     fields:
@@ -708,6 +722,14 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             scalar: string
           elementRelationship: atomic
+    - name: collaborators
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryCollaboratorPermission
+          elementRelationship: associative
+          keys:
+          - username
     - name: customProperties
       type:
         list:
@@ -774,6 +796,12 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetSpec
           elementRelationship: atomic
+    - name: teams
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryTeamPermission
+          elementRelationship: atomic
     - name: visibility
       type:
         scalar: string
@@ -827,6 +855,16 @@ var schemaYAML = typed.YAMLObject(`types:
         map:
           elementType:
             namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryTeamPermission
+  map:
+    fields:
+    - name: permission
+      type:
+        scalar: string
+      default: pull
+    - name: teamRef
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.TeamRef
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RequiredPullRequestReviewer
   map:
     fields:
@@ -1086,6 +1124,12 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: status
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.TeamStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.TeamRef
+  map:
+    fields:
+    - name: name
+      type:
+        scalar: string
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.TeamSpec
   map:
     fields:

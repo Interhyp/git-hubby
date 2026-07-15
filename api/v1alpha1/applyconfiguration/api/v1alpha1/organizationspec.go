@@ -92,6 +92,10 @@ type OrganizationSpecApplyConfiguration struct {
 	// Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).
 	// Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped.
 	Plan *string `json:"plan,omitempty"`
+	// UsesEnterpriseManagedUsers indicates whether this organization uses Enterprise Managed Users (EMU).
+	// Reconcilers use this flag to skip operations for users outside the organization that could trigger
+	// invitation workflows when it is false. Organization members are always reconciled.
+	UsesEnterpriseManagedUsers *bool `json:"usesEnterpriseManagedUsers,omitempty"`
 	// MemberPrivileges configures the privileges and default permissions for members of this organization.
 	// Configurability may be restricted by Enterprise policies.
 	MemberPrivileges *OrganizationMemberPrivilegesApplyConfiguration `json:"memberPrivileges,omitempty"`
@@ -229,6 +233,14 @@ func (b *OrganizationSpecApplyConfiguration) WithWebsite(value string) *Organiza
 // If called multiple times, the Plan field is set to the value of the last call.
 func (b *OrganizationSpecApplyConfiguration) WithPlan(value string) *OrganizationSpecApplyConfiguration {
 	b.Plan = &value
+	return b
+}
+
+// WithUsesEnterpriseManagedUsers sets the UsesEnterpriseManagedUsers field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the UsesEnterpriseManagedUsers field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithUsesEnterpriseManagedUsers(value bool) *OrganizationSpecApplyConfiguration {
+	b.UsesEnterpriseManagedUsers = &value
 	return b
 }
 

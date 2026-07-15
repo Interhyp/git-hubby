@@ -176,6 +176,43 @@
           },
           "type": "array"
         },
+        "collaborators": {
+          "description": "Collaborators defines direct repository member (collaborator) permissions.\nEach entry assigns a GitHub user a specific permission level.\nCollaborators not present in this list will have their explicit repository access removed.\nOrganization members are always reconciled. External collaborators are reconciled only when the\nreferenced Organization has spec.usesEnterpriseManagedUsers set to true; otherwise they are skipped\nto avoid triggering an invitation workflow.\nSee: https://docs.github.com/en/rest/collaborators/collaborators#add-a-repository-collaborator",
+          "items": {
+            "description": "RepositoryCollaboratorPermission defines repository-level access for a GitHub user.",
+            "properties": {
+              "permission": {
+                "default": "pull",
+                "description": "Permission is the access level granted to the member for this repository.\n- \"pull\": Read-only access\n- \"triage\": Manage issues and pull requests without write access\n- \"push\": Read and write access\n- \"maintain\": Manage repository settings except sensitive/destructive actions\n- \"admin\": Full repository administrative access",
+                "enum": [
+                  "pull",
+                  "triage",
+                  "push",
+                  "maintain",
+                  "admin"
+                ],
+                "type": "string"
+              },
+              "username": {
+                "description": "Username is the GitHub username of the member.\nSupports standard GitHub usernames and Enterprise Managed Users-style\nusernames with an underscore suffix (for example: \"name-surname_org\").",
+                "maxLength": 39,
+                "minLength": 1,
+                "pattern": "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*(?:_[a-zA-Z0-9](?:-?[a-zA-Z0-9])*)?$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "username"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "username"
+          ],
+          "x-kubernetes-list-type": "map"
+        },
         "customProperties": {
           "description": "CustomProperties is a list of custom property values to apply to this repository.\nThese properties must be defined in the parent organization's custom properties.\nIf a property is not present in this list, it will be unset (removed) from the repository.\nSee: https://docs.github.com/en/rest/repos/custom-properties",
           "items": {
@@ -1035,6 +1072,46 @@
               "rule": "self.all(x, self.filter(y, y.name == x.name).size() <= 1)"
             }
           ]
+        },
+        "teams": {
+          "description": "Teams defines team permissions for this repository.\nEach entry references an existing Team CRD via TeamRef and assigns it a specific permission level.\nTeams not present in this list will have their explicit repository access removed.\nSee: https://docs.github.com/en/rest/teams/teams#add-or-update-team-repository-permissions",
+          "items": {
+            "description": "RepositoryTeamPermission defines repository-level access for a GitHub team.",
+            "properties": {
+              "permission": {
+                "default": "pull",
+                "description": "Permission is the access level granted to the team for this repository.\n- \"pull\": Read-only access\n- \"triage\": Manage issues and pull requests without write access\n- \"push\": Read and write access\n- \"maintain\": Manage repository settings except sensitive/destructive actions\n- \"admin\": Full repository administrative access",
+                "enum": [
+                  "pull",
+                  "triage",
+                  "push",
+                  "maintain",
+                  "admin"
+                ],
+                "type": "string"
+              },
+              "teamRef": {
+                "description": "TeamRef references the Team CRD that should be granted access to this repository.",
+                "properties": {
+                  "name": {
+                    "description": "Name is the name of the referenced Team CRD.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "teamRef"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
         },
         "visibility": {
           "default": "private",

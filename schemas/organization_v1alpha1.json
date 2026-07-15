@@ -1071,6 +1071,11 @@
             }
           ]
         },
+        "usesEnterpriseManagedUsers": {
+          "default": false,
+          "description": "UsesEnterpriseManagedUsers indicates whether this organization uses Enterprise Managed Users (EMU).\nReconcilers use this flag to skip operations for users outside the organization that could trigger\ninvitation workflows when it is false. Organization members are always reconciled.",
+          "type": "boolean"
+        },
         "website": {
           "description": "Website is the organization's website URL.\nThis appears on the organization's GitHub profile page as a clickable link.",
           "maxLength": 255,

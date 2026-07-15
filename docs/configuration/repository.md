@@ -63,11 +63,23 @@ spec:
 
   # --- Team Permissions ---
   teams:
-    - name: checkout-team
+    - teamRef:
+        name: checkout-team
       permission: push
-    - name: platform-team
+    - teamRef:
+        name: platform-team
       permission: admin
-    - name: security-team
+    - teamRef:
+        name: security-team
+      permission: triage
+
+  # --- Collaborator Permissions ---
+  collaborators:
+    - username: alice
+      permission: push
+    - username: bob
+      permission: admin
+    - username: charlie
       permission: triage
 
   # --- Webhooks ---
@@ -139,6 +151,23 @@ customProperties:
       - pci-dss
       - gdpr
 ```
+
+### Collaborator Permissions
+
+Assign GitHub collaborators with specific access levels:
+
+| Permission | Capabilities |
+|------------|-------------|
+| `pull` | Clone, view code and issues |
+| `triage` | + Manage issues and PRs (no code changes) |
+| `push` | + Push code, create branches |
+| `maintain` | + Manage settings (except sensitive) |
+| `admin` | Full access including settings and secrets |
+
+Collaborators who belong to the Organization are always reconciled.
+External collaborators however, are subject to the `Organization.spec.usesEnterpriseManagedUsers` setting:
+  * If set to `true`, external collaborators will also be reconciled.
+  * If set to `false`, external collaborators are skipped, to avoid triggering GitHub's invitation workflow.
 
 ### Team Permissions
 

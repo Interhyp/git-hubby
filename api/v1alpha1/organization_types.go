@@ -434,6 +434,13 @@ type OrganizationSpec struct {
 	// +optional
 	Plan string `json:"plan,omitempty"`
 
+	// UsesEnterpriseManagedUsers indicates whether this organization uses Enterprise Managed Users (EMU).
+	// Reconcilers use this flag to skip operations for users outside the organization that could trigger
+	// invitation workflows when it is false. Organization members are always reconciled.
+	// +kubebuilder:default=false
+	// +optional
+	UsesEnterpriseManagedUsers bool `json:"usesEnterpriseManagedUsers,omitempty"`
+
 	// MemberPrivileges configures the privileges and default permissions for members of this organization.
 	// Configurability may be restricted by Enterprise policies.
 	// +optional

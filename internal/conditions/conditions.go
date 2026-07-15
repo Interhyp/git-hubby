@@ -29,6 +29,10 @@ const (
 const (
 	// WebhooksSynced indicates that repository webhooks are configured successfully
 	TypeWebhooksSynced ConditionType = "WebhooksSynced"
+	// TeamsSynced indicates that repository team permissions are configured successfully
+	TypeTeamsSynced ConditionType = "TeamsSynced"
+	// CollaboratorsSynced indicates that repository collaborator permissions are configured successfully
+	TypeCollaboratorsSynced ConditionType = "CollaboratorsSynced"
 	// CustomPropertiesValuesSynced indicates that repository custom properties are configured successfully
 	TypeCustomPropertiesValuesSynced ConditionType = "CustomPropertiesValuesSynced"
 	// TopicsSynced indicates that repository topics are synced successfully

@@ -80,6 +80,11 @@ func (o *Organization) HasEnterpriseFeatures() bool {
 	return o.GetPlan() != PlanFree
 }
 
+// UsesEnterpriseManagedUsers reports whether the organization uses Enterprise Managed Users.
+func (o *Organization) UsesEnterpriseManagedUsers() bool {
+	return o != nil && o.Spec.UsesEnterpriseManagedUsers
+}
+
 // IsActionsDisabled returns true if GitHub Actions are disabled for all repositories of the organization,
 // i.e. spec.actionsSettings.enabledRepositories is unset or "none".
 func (o *Organization) IsActionsDisabled() bool {

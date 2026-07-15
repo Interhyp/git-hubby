@@ -640,6 +640,7 @@ _Appears in:_
 | `memberSuffix` _string_ | MemberSuffix defines a suffix appended to each team member username before matching/adding them on GitHub.<br />Useful when GitHub usernames follow a naming convention (e.g. enterprise suffix).<br />Is ignored if environment variable GITHUB_MEMBER_SUFFIX is set. |  | MaxLength: 100 <br />Optional: \{\} <br /> |
 | `website` _string_ | Website is the organization's website URL.<br />This appears on the organization's GitHub profile page as a clickable link. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
 | `plan` _string_ | Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).<br />Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped. | enterprise | Enum: [enterprise team free] <br />Optional: \{\} <br /> |
+| `usesEnterpriseManagedUsers` _boolean_ | UsesEnterpriseManagedUsers indicates whether this organization uses Enterprise Managed Users (EMU).<br />Reconcilers use this flag to skip operations for users outside the organization that could trigger<br />invitation workflows when it is false. Organization members are always reconciled. | false | Optional: \{\} <br /> |
 | `memberPrivileges` _[OrganizationMemberPrivileges](#organizationmemberprivileges)_ | MemberPrivileges configures the privileges and default permissions for members of this organization.<br />Configurability may be restricted by Enterprise policies. |  | Optional: \{\} <br /> |
 
 
@@ -763,6 +764,23 @@ _Appears in:_
 | `status` _[RepositoryStatus](#repositorystatus)_ | status defines the observed state of Repository |  | Optional: \{\} <br /> |
 
 
+#### RepositoryCollaboratorPermission
+
+
+
+RepositoryCollaboratorPermission defines repository-level access for a GitHub user.
+
+
+
+_Appears in:_
+- [RepositorySpec](#repositoryspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `username` _string_ | Username is the GitHub username of the member.<br />Supports standard GitHub usernames and Enterprise Managed Users-style<br />usernames with an underscore suffix (for example: "name-surname_org"). |  | MaxLength: 39 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*(?:_[a-zA-Z0-9](?:-?[a-zA-Z0-9])*)?$` <br />Required: \{\} <br /> |
+| `permission` _string_ | Permission is the access level granted to the member for this repository.<br />- "pull": Read-only access<br />- "triage": Manage issues and pull requests without write access<br />- "push": Read and write access<br />- "maintain": Manage repository settings except sensitive/destructive actions<br />- "admin": Full repository administrative access | pull | Enum: [pull triage push maintain admin] <br /> |
+
+
 #### RepositoryList
 
 
@@ -878,6 +896,8 @@ _Appears in:_
 | `accessLevelForExternalWorkflows` _string_ | AccessLevelForExternalWorkflows controls access to workflows outside the repository.<br />- "none": Only workflows in this repository can access actions and reusable workflows<br />- "user": Workflows in user-owned private repositories can access them<br />- "organization": Workflows across the organization can access them<br />- "enterprise": Workflows across the enterprise can access them<br />See: https://docs.github.com/en/rest/actions/permissions | none | Enum: [none user organization enterprise] <br /> |
 | `availableActionsRunnerGroups` _string array_ | AvailableActionsRunnerGroups lists runner group names that this repository can use.<br />This is only relevant when the organization's runner groups have "selected" visibility.<br />See: https://docs.github.com/en/rest/actions/self-hosted-runner-groups |  |  |
 | `organizationRef` _[OrganizationRef](#organizationref)_ | OrganizationRef references the Organization CRD this repository belongs to. |  | Required: \{\} <br /> |
+| `teams` _[RepositoryTeamPermission](#repositoryteampermission) array_ | Teams defines team permissions for this repository.<br />Each entry references an existing Team CRD via TeamRef and assigns it a specific permission level.<br />Teams not present in this list will have their explicit repository access removed.<br />See: https://docs.github.com/en/rest/teams/teams#add-or-update-team-repository-permissions |  |  |
+| `collaborators` _[RepositoryCollaboratorPermission](#repositorycollaboratorpermission) array_ | Collaborators defines direct repository member (collaborator) permissions.<br />Each entry assigns a GitHub user a specific permission level.<br />Collaborators not present in this list will have their explicit repository access removed.<br />Organization members are always reconciled. External collaborators are reconciled only when the<br />referenced Organization has spec.usesEnterpriseManagedUsers set to true; otherwise they are skipped<br />to avoid triggering an invitation workflow.<br />See: https://docs.github.com/en/rest/collaborators/collaborators#add-a-repository-collaborator |  |  |
 | `rulesetPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | RulesetPresetList references RulesetPreset CRDs to apply to this repository.<br />These define branch protection rules, required status checks, and other policies.<br />See: https://docs.github.com/en/rest/repos/rules |  |  |
 | `rulesets` _[RulesetSpec](#rulesetspec) array_ | Rulesets defines repository rulesets inline, without the need for a separate RulesetPreset CRD.<br />Inline rulesets support exactly the same fields as a RulesetPreset.<br />The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.<br />If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,<br />identical definitions are applied once (a warning is logged), while differing definitions are treated as a<br />conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.<br />At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.<br />The target 'repository' is only supported at organization level; inline rulesets with target 'repository'<br />are filtered out (i.e. are not checked nor applied), the same as for RulesetPresets. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 | `webhookPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.<br />Webhooks send HTTP POST payloads to external services when specific events occur.<br />See: https://docs.github.com/en/rest/webhooks/repos |  |  |
@@ -907,6 +927,23 @@ _Appears in:_
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#condition-v1-meta) array_ | conditions represent the current state of the Repository resource.<br />Each condition has a unique type and reflects the status of a specific aspect of the resource.<br />Standard condition types include:<br />- "Available": the resource is fully functional<br />- "Progressing": the resource is being created or updated<br />- "Degraded": the resource failed to reach or maintain its desired state<br />The status of each condition is one of True, False, or Unknown. |  | Optional: \{\} <br /> |
 | `id` _integer_ | ID is the repository ID as created by GitHub. |  |  |
 | `observedSubResourceGenerations` _object (keys:string, values:integer)_ | ObservedSubResourceGenerations is a map of sub-resource names to their observed generations.<br />Keys are in the format "<kind>/<namespace/<name>".<br />SubResources are kubernetes resources that are referenced by this Repository and are not managed<br />by their own controllers like WebhookPresets, RuleSetPresets and the attached CodeSecurityConfiguration<br />The map is atomic, so that a status apply replaces it entirely: keys of sub-resources that are no longer<br />referenced are removed instead of being kept by Server-Side Apply's per-key merge (stale keys made the<br />resource skip startup spreading on every restart). |  |  |
+
+
+#### RepositoryTeamPermission
+
+
+
+RepositoryTeamPermission defines repository-level access for a GitHub team.
+
+
+
+_Appears in:_
+- [RepositorySpec](#repositoryspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `teamRef` _[TeamRef](#teamref)_ | TeamRef references the Team CRD that should be granted access to this repository. |  | Required: \{\} <br /> |
+| `permission` _string_ | Permission is the access level granted to the team for this repository.<br />- "pull": Read-only access<br />- "triage": Manage issues and pull requests without write access<br />- "push": Read and write access<br />- "maintain": Manage repository settings except sensitive/destructive actions<br />- "admin": Full repository administrative access | pull | Enum: [pull triage push maintain admin] <br /> |
 
 
 #### RequiredPullRequestReviewer
@@ -1270,6 +1307,22 @@ TeamList contains a list of Teams
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
 | `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `items` _[Team](#team) array_ |  |  |  |
+
+
+#### TeamRef
+
+
+
+TeamRef is a reference to a Team CRD.
+
+
+
+_Appears in:_
+- [RepositoryTeamPermission](#repositoryteampermission)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the name of the referenced Team CRD. |  | Required: \{\} <br /> |
 
 
 #### TeamSpec
