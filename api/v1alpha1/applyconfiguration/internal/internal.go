@@ -211,15 +211,15 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: codeScanningDefaultSetupOptions
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeScanningDefaultSetupOptions
+    - name: codeScanningDelegatedAlertDismissal
+      type:
+        scalar: string
+    - name: codeScanningOptions
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeScanningOptions
     - name: codeSecurity
       type:
         scalar: string
-    - name: code_scanning_delegated_alert_dismissal
-      type:
-        scalar: string
-    - name: code_scanning_options
-      type:
-        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeScanningOptions
     - name: defaultForNewRepos
       type:
         scalar: string
