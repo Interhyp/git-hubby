@@ -1,0 +1,17 @@
+Name: Cleanup Branches
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  cleanup-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stale Branches
+        uses: crs-k/stale-branches@e876b957ab08f0bad43c8cc271a22cdd7604bd09 # v9.0.1
