@@ -71,8 +71,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			WithStatusSubresource(team).
 			Build()
 
-		// Unset GITHUB_MEMBER_SUFFIX for tests
-		os.Unsetenv("GITHUB_MEMBER_SUFFIX")
+		// MemberSuffix defaults to empty for all tests; override in specific contexts via rec.MemberSuffix.
 	})
 
 	Context("when team is an IDP team", func() {
@@ -661,6 +660,7 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			}
 
 			rec = &GitHubTeamReconciler{
+				MemberSuffix: "_env",
 				Team: reconciler.GitHubTeamIdentifier{
 					Name: "test-team",
 					Slug: new("test-team"),

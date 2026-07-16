@@ -3,7 +3,6 @@ package teamrec
 import (
 	"context"
 	"fmt"
-	"os"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,7 +16,7 @@ func (t *GitHubTeamReconciler) reconcileTeamMembers(ctx context.Context) error {
 		return nil // IDP teams manage members via the identity provider
 	}
 
-	envMemberSuffix := os.Getenv("GITHUB_MEMBER_SUFFIX")
+	envMemberSuffix := t.MemberSuffix
 	k8sOrgs := make(map[string]githubv1alpha1.Organization)
 	if envMemberSuffix == "" {
 		// need to fetch orgs to check for org specific memberSuffixes later

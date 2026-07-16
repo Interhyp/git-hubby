@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
+	"github.com/Interhyp/git-hubby/internal/config"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 
 	"github.com/Interhyp/git-hubby/internal/ghclient"
@@ -55,21 +56,6 @@ func init() {
 
 	utilruntime.Must(githubv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
-}
-
-// getWatchNamespace returns the namespace(s) the manager should watch for changes.
-// It reads the value from the WATCH_NAMESPACE environment variable.
-func getWatchNamespace() (string, error) {
-	watchNamespaceEnvVar := "WATCH_NAMESPACE"
-	ns, found := os.LookupEnv(watchNamespaceEnvVar)
-	if !found {
-		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
-	}
-	ns = strings.TrimSpace(ns)
-	if ns == "" {
-		return "", fmt.Errorf("%s must not be empty", watchNamespaceEnvVar)
-	}
-	return ns, nil
 }
 
 // setupCacheNamespaces configures the cache to watch specific namespace(s).
@@ -148,9 +134,9 @@ func buildLoggerOpts(flagOpts *zap.Options, format logFormat) []zap.Opts {
 
 	switch format {
 	case logFormatECS:
-		ecsConfigOpt := func(config *zapcore.EncoderConfig) {
-			if config != nil {
-				*config = ecszap.ECSCompatibleEncoderConfig(*config)
+		ecsConfigOpt := func(encConf *zapcore.EncoderConfig) {
+			if encConf != nil {
+				*encConf = ecszap.ECSCompatibleEncoderConfig(*encConf)
 			}
 		}
 		logOpts = append(logOpts,
@@ -209,12 +195,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error loading .env file: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Parse all environment configuration immediately after godotenv so that every
+	// subsequent initialisation step (including logger setup) reads from cfg.
+	cfg, err := config.Parse()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to parse configuration from environment: %v\n", err)
+		os.Exit(1)
+	}
+
 	// Support LOG_LEVEL env var (overrides --zap-log-level flag)
-	if level, ok := parseLogLevel(os.Getenv("LOG_LEVEL")); ok {
+	if level, ok := parseLogLevel(cfg.LogLevel); ok {
 		opts.Level = level
 	}
 
-	ctrl.SetLogger(zap.New(buildLoggerOpts(&opts, parseLogFormat(os.Getenv("LOG_FORMAT")))...))
+	ctrl.SetLogger(zap.New(buildLoggerOpts(&opts, parseLogFormat(cfg.LogFormat))...))
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -283,21 +278,7 @@ func main() {
 		metricsServerOptions.KeyName = metricsCertKey
 	}
 
-	// Get the namespace(s) for namespace-scoped mode from WATCH_NAMESPACE environment variable.
-	watchNamespace, err := getWatchNamespace()
-	if err != nil {
-		setupLog.Error(err, "Unable to get WATCH_NAMESPACE")
-		os.Exit(1)
-	}
-
-	// APP_CREDENTIALS_SECRET_NAMESPACE specifies the namespace containing the GitHub App credentials secret.
-	// In the Helm chart this defaults to the release namespace (where the controller is deployed).
-	appCredentialsSecretNamespace := os.Getenv("APP_CREDENTIALS_SECRET_NAMESPACE")
-	if strings.TrimSpace(appCredentialsSecretNamespace) == "" {
-		setupLog.Error(fmt.Errorf("APP_CREDENTIALS_SECRET_NAMESPACE must be set"), "Unable to determine secret namespace")
-		os.Exit(1)
-	}
-	setupLog.Info("App credentials secret namespace configured", "namespace", appCredentialsSecretNamespace)
+	setupLog.Info("App credentials secret namespace configured", "namespace", cfg.AppCredentialsSecretNamespace)
 
 	mgrOptions := ctrl.Options{
 		Scheme:                 scheme,
@@ -321,13 +302,13 @@ func main() {
 	}
 
 	// Configure cache to watch namespace(s) specified in WATCH_NAMESPACE
-	cacheOpts, err := setupCacheNamespaces(watchNamespace)
+	cacheOpts, err := setupCacheNamespaces(cfg.WatchNamespace)
 	if err != nil {
 		setupLog.Error(err, "Invalid WATCH_NAMESPACE configuration")
 		os.Exit(1)
 	}
 	mgrOptions.Cache = cacheOpts
-	setupLog.Info("Watching namespace(s)", "namespaces", watchNamespace)
+	setupLog.Info("Watching namespace(s)", "namespaces", cfg.WatchNamespace)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), mgrOptions)
 	if err != nil {
@@ -350,7 +331,7 @@ func main() {
 		var secret v1.Secret
 		secretKey := client.ObjectKey{
 			Name:      secretName,
-			Namespace: appCredentialsSecretNamespace,
+			Namespace: cfg.AppCredentialsSecretNamespace,
 		}
 		if fetchErr := directClient.Get(ctx, secretKey, &secret); fetchErr != nil {
 			log.Error(fetchErr, "Failed to fetch secret", "secretName", secretName)
@@ -358,12 +339,20 @@ func main() {
 		}
 		return &secret, nil
 	}
-	clientManager, err := ghclient.NewGitHubCachingClientFactory(ghclient.DefaultClientConfig(), fetchSecret)
+	clientManager, err := ghclient.NewGitHubCachingClientFactory(
+		ghclient.DefaultClientConfig(),
+		fetchSecret,
+		appCredentialsSecretName,
+	)
 	if err != nil {
 		setupLog.Error(err, "failed to create GitHub client factory")
 		os.Exit(1)
 	}
-	spreadingManager := spreading.NewDefaultManager()
+	spreadingManager := spreading.NewDefaultManager(
+		spreading.WithEnabled(cfg.Features.EnableStartupSpreading),
+		spreading.WithSpreadPeriod(cfg.SpreadPeriodMinutes),
+		spreading.WithSpreadInterval(cfg.SpreadIntervalMinutes),
+	)
 	setupLog.Info("Startup spreading configured",
 		"spreadPeriod", spreadingManager.Config.SpreadPeriod,
 		"spreadInterval", spreadingManager.Config.SpreadInterval,
@@ -374,10 +363,8 @@ func main() {
 		ClientManager:    clientManager,
 		SpreadingManager: spreadingManager,
 		K8sClient:        mgr.GetClient(),
-		LegacySecretName: appCredentialsSecretName,
+		Config:           cfg,
 	}
-
-	webhooksEnabled := os.Getenv("ENABLE_WEBHOOKS") != "false"
 
 	globalLimiter := ratelimit.NewGitHubRateLimiter(ratelimit.GitHubRateLimiterConfig{
 		RequestsPerHour: 15000, // GitHub's rate limit
@@ -390,7 +377,6 @@ func main() {
 		ReconcilerFactory:      reconcilerFactory,
 		GithubRateLimiter:      globalLimiter,
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
-		LegacySecretName:       appCredentialsSecretName,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
 		os.Exit(1)
@@ -413,14 +399,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Team")
 		os.Exit(1)
 	}
-	if webhooksEnabled {
+	if cfg.Features.EnableWebhooks {
 		setupLog.V(1).Info("Webhooks enabled")
 		if err := webhookv1alpha1.SetupOrganizationWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Organization")
 			os.Exit(1)
 		}
 		if err := webhookv1alpha1.SetupRepositoryWebhookWithManager(
-			mgr, clientManager, appCredentialsSecretName,
+			mgr, clientManager,
 		); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
 			os.Exit(1)
@@ -436,7 +422,7 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
-	if webhooksEnabled {
+	if cfg.Features.EnableWebhooks {
 		if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
 			setupLog.Error(err, "unable to set up webhook ready check")
 			os.Exit(1)

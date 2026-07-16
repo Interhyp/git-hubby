@@ -650,6 +650,25 @@ _Appears in:_
 | `negate` _boolean_ | Negate inverts the pattern matching logic.<br />When true, the rule passes if the pattern does NOT match.<br />Example: Use with "contains" to prevent certain words in commit messages. | false | Optional: \{\} <br /> |
 
 
+#### PullRequestReviewerEntity
+
+
+
+PullRequestReviewerEntity defines who is required to review as part of a required reviewers pull request rule.
+
+_Validation:_
+- ExactlyOneOf: [id slug]
+
+_Appears in:_
+- [RequiredPullRequestReviewer](#requiredpullrequestreviewer)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `id` _integer_ | ID of the required reviewer. This field is exclusive with Slug. |  | Optional: \{\} <br /> |
+| `slug` _string_ | Slug identifying the required reviewer. This field is exclusive with ID.<br />Slug will be resolved to the id during reconciliation. |  | Optional: \{\} <br /> |
+| `type` _string_ | Type of the required reviewer. Currently only Teams are supported. |  | Enum: [Team] <br />Required: \{\} <br /> |
+
+
 #### PullRequestRule
 
 
@@ -670,6 +689,7 @@ _Appears in:_
 | `requireLastPushApproval` _boolean_ | RequireLastPushApproval requires that the most recent push be approved.<br />This prevents merging if new commits are pushed after the last approval. | false | Optional: \{\} <br /> |
 | `requiredApprovingReviewCount` _integer_ | RequiredApprovingReviewCount specifies the minimum number of approving reviews required.<br />Must be between 1 and 10. |  | Maximum: 10 <br />Minimum: 1 <br />Optional: \{\} <br /> |
 | `requiredReviewThreadResolution` _boolean_ | RequiredReviewThreadResolution requires all review comment threads to be resolved before merging.<br />This ensures all feedback is addressed. | false | Optional: \{\} <br /> |
+| `requiredReviewers` _[RequiredPullRequestReviewer](#requiredpullrequestreviewer) array_ | RequiredReviewers forces pull request approval by the configured reviewers<br />on all pull requests changing files that match the configured file patterns. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 
 
 #### RefNameCondition
@@ -853,6 +873,25 @@ _Appears in:_
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#condition-v1-meta) array_ | conditions represent the current state of the Repository resource.<br />Each condition has a unique type and reflects the status of a specific aspect of the resource.<br />Standard condition types include:<br />- "Available": the resource is fully functional<br />- "Progressing": the resource is being created or updated<br />- "Degraded": the resource failed to reach or maintain its desired state<br />The status of each condition is one of True, False, or Unknown. |  | Optional: \{\} <br /> |
 | `id` _integer_ | ID is the repository ID as created by GitHub. |  |  |
 | `observedSubResourceGenerations` _object (keys:string, values:integer)_ | ObservedSubResourceGenerations is a map of sub-resource names to their observed generations.<br />Keys are in the format "<kind>/<namespace/<name>".<br />SubResources are kubernetes resources that are referenced by this Repository and are not managed<br />by their own controllers like WebhookPresets, RuleSetPresets and the attached CodeSecurityConfiguration |  |  |
+
+
+#### RequiredPullRequestReviewer
+
+
+
+RequiredPullRequestReviewer is the configuration for a required review on all pull request changing files that match
+the configured file patterns.
+
+
+
+_Appears in:_
+- [PullRequestRule](#pullrequestrule)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `minimumApprovals` _integer_ | MinimumApprovals is the minimum number of approvals required before a matching pull request<br />can be merged. If set to zero, the team will be added to the pull request but approval is optional.<br />Requires a non-negative value. Defaults to 0. | 0 | Minimum: 0 <br />Optional: \{\} <br /> |
+| `filePatterns` _string array_ | FilePatterns are fnmatch syntax patterns that pull request changes are matched against.<br />If a pull request changes any matching file it must be approved by the configured reviewers.<br />Defaults to "*" representing all files. | [*] | MaxItems: 10 <br />Optional: \{\} <br /> |
+| `reviewer` _[PullRequestReviewerEntity](#pullrequestreviewerentity)_ | Reviewer defines who is required to review. |  | ExactlyOneOf: [id slug] <br />Required: \{\} <br /> |
 
 
 #### RequiredStatusChecks

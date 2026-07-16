@@ -19,6 +19,10 @@ import (
 type GitHubTeamReconciler struct {
 	Team       reconciler.GitHubTeamIdentifier
 	Kubernetes reconciler.Kubernetes[*githubv1alpha1.Team]
+	// MemberSuffix is the global suffix appended to team member usernames (e.g. "@acme.com").
+	// It is superseded by the per-organization spec.memberSuffix field when set.
+	// Corresponds to the GITHUB_MEMBER_SUFFIX environment variable loaded via internal/config.
+	MemberSuffix string
 }
 
 func (t *GitHubTeamReconciler) K8s() reconciler.Kubernetes[*githubv1alpha1.Team] {

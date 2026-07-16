@@ -135,7 +135,6 @@ var _ = Describe("Repository Webhook", func() {
 		validator = RepositoryCustomValidator{
 			K8sClient:           mockK8s,
 			GitHubClientManager: ghclientmock.NewGitHubMockClientFactory(mockClient),
-			LegacySecretName:    "test-credentials",
 		}
 
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")

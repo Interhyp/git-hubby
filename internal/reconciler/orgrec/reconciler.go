@@ -6,6 +6,7 @@ import (
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	ac "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/conditions"
+	"github.com/Interhyp/git-hubby/internal/config"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +33,7 @@ func OrganizationStillHasTeamsError() error {
 type GitHubOrgReconciler struct {
 	Kubernetes reconciler.Kubernetes[*githubv1alpha1.Organization]
 	GitHub     reconciler.GitHub[string]
+	Features   config.Features
 }
 
 func (o *GitHubOrgReconciler) GetAdditionalLogFields() []any {

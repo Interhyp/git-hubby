@@ -417,6 +417,52 @@ type PullRequestRule struct {
 	// +optional
 	// +default:value=false
 	RequiredReviewThreadResolution *bool `json:"requiredReviewThreadResolution,omitempty"`
+
+	// RequiredReviewers forces pull request approval by the configured reviewers
+	// on all pull requests changing files that match the configured file patterns.
+	// +optional
+	// +kubebuilder:validation:MaxItems=10
+	RequiredReviewers []RequiredPullRequestReviewer `json:"requiredReviewers,omitempty"`
+}
+
+// RequiredPullRequestReviewer is the configuration for a required review on all pull request changing files that match
+// the configured file patterns.
+type RequiredPullRequestReviewer struct {
+	// MinimumApprovals is the minimum number of approvals required before a matching pull request
+	// can be merged. If set to zero, the team will be added to the pull request but approval is optional.
+	// Requires a non-negative value. Defaults to 0.
+	// +optional
+	// +default:value=0
+	// +kubebuilder:validation:Minimum=0
+	MinimumApprovals int `json:"minimumApprovals,omitempty"`
+
+	// FilePatterns are fnmatch syntax patterns that pull request changes are matched against.
+	// If a pull request changes any matching file it must be approved by the configured reviewers.
+	// Defaults to "*" representing all files.
+	// +optional
+	// +default:value=["*"]
+	// +kubebuilder:validation:MaxItems=10
+	FilePatterns []string `json:"filePatterns,omitempty"`
+
+	// Reviewer defines who is required to review.
+	// +kubebuilder:validation:Required
+	Reviewer PullRequestReviewerEntity `json:"reviewer"`
+}
+
+// PullRequestReviewerEntity defines who is required to review as part of a required reviewers pull request rule.
+// +kubebuilder:validation:ExactlyOneOf=id;slug
+type PullRequestReviewerEntity struct {
+	// ID of the required reviewer. This field is exclusive with Slug.
+	// +optional
+	ID *int64 `json:"id,omitempty"`
+	// Slug identifying the required reviewer. This field is exclusive with ID.
+	// Slug will be resolved to the id during reconciliation.
+	// +optional
+	Slug *string `json:"slug,omitempty"`
+	// Type of the required reviewer. Currently only Teams are supported.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=Team
+	Type string `json:"type"`
 }
 
 // RequiredStatusChecks defines status check requirements that must pass before merging.

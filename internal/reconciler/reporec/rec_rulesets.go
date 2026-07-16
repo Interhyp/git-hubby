@@ -64,6 +64,11 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 			continue
 		}
 
+		// Strip spec fields for disabled beta features before any processing.
+		if !r.Features.EnableRequiredReviewersRules && rulesetPreset.Spec.Rules.PullRequest != nil {
+			rulesetPreset.Spec.Rules.PullRequest.RequiredReviewers = nil
+		}
+
 		rulesetPreset, err := reconciler.ResolveNamesToIDsInRuleset(ctx, r.GitHub.Client, r.GitHub.Resource.Owner, rulesetPreset)
 		if err != nil {
 			log.Error(err, "failed to resolve ruleset slugs to IDs")

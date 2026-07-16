@@ -6,45 +6,45 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (in *Team) GetConditions() *[]metav1.Condition {
-	if in == nil {
+func (t *Team) GetConditions() *[]metav1.Condition {
+	if t == nil {
 		return nil
 	}
-	return &in.Status.Conditions
+	return &t.Status.Conditions
 }
 
-func (in *Team) GetTypeRepresentation() string {
+func (t *Team) GetTypeRepresentation() string {
 	return "Team"
 }
 
-func (in *Team) IsIDPTeam() bool {
-	if in == nil {
+func (t *Team) IsIDPTeam() bool {
+	if t == nil {
 		return false
 	}
-	return in.Spec.IDPGroup != nil
+	return t.Spec.IDPGroup != nil
 }
 
-func (in *Team) IsHealthy() bool {
-	if in == nil {
+func (t *Team) IsHealthy() bool {
+	if t == nil {
 		return false
 	}
-	readyCondition := meta.FindStatusCondition(in.Status.Conditions, "Ready")
+	readyCondition := meta.FindStatusCondition(t.Status.Conditions, "Ready")
 	return readyCondition != nil && readyCondition.Status == metav1.ConditionTrue
 }
 
-func (in *Team) GetObservedGeneration() int64 {
-	if in == nil {
+func (t *Team) GetObservedGeneration() int64 {
+	if t == nil {
 		return 0
 	}
-	readyCondition := meta.FindStatusCondition(in.Status.Conditions, string(conditions.TypeReady))
+	readyCondition := meta.FindStatusCondition(t.Status.Conditions, string(conditions.TypeReady))
 	if readyCondition == nil {
 		return 0
 	}
 	return readyCondition.ObservedGeneration
 }
 
-func (in *Team) GetObservedSubResourceGenerations() map[string]int64 {
+func (t *Team) GetObservedSubResourceGenerations() map[string]int64 {
 	return nil
 }
 
-func (in *Team) SetObservedSubResourceGeneration(_ map[string]int64) {}
+func (t *Team) SetObservedSubResourceGeneration(_ map[string]int64) {}

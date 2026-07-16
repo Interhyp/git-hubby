@@ -49,6 +49,12 @@ func (o *GitHubOrgReconciler) reconcileRulesetPresets(ctx context.Context) error
 			log.Error(err, "unable to get ruleset preset")
 			return fmt.Errorf("failed to get ruleset preset %s: %w", rulesetRef.Name, err)
 		}
+
+		// Strip spec fields for disabled beta features before any processing.
+		if !o.Features.EnableRequiredReviewersRules && rulesetPreset.Spec.Rules.PullRequest != nil {
+			rulesetPreset.Spec.Rules.PullRequest.RequiredReviewers = nil
+		}
+
 		rulesetPreset, err := reconciler.ResolveNamesToIDsInRuleset(ctx, o.GitHub.Client, o.GitHub.Resource, rulesetPreset)
 		if err != nil {
 			log.Error(err, "failed to resolve ruleset slugs to IDs")
