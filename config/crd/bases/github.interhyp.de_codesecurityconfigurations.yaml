@@ -56,25 +56,6 @@ spec:
                 - code_security
                 - secret_protection
                 type: string
-              code_scanning_delegated_alert_dismissal:
-                description: |-
-                  CodeScanningDelegatedAlertDismissal enables users to dismiss code scanning alerts.
-                  When enabled, users with appropriate permissions can dismiss alerts that don't require action.
-                enum:
-                - enabled
-                - disabled
-                - not_set
-                type: string
-              code_scanning_options:
-                description: CodeScanningOptions configures advanced code scanning
-                  options.
-                properties:
-                  allowAdvanced:
-                    description: |-
-                      AllowAdvanced determines whether users can enable advanced code scanning features.
-                      When true, repository administrators can configure advanced code scanning settings beyond the default setup.
-                    type: boolean
-                type: object
               codeScanningDefaultSetup:
                 description: |-
                   CodeScanningDefaultSetup enables or disables default code scanning setup.
@@ -107,6 +88,25 @@ spec:
                     type: string
                 required:
                 - runnerType
+                type: object
+              codeScanningDelegatedAlertDismissal:
+                description: |-
+                  CodeScanningDelegatedAlertDismissal enables users to dismiss code scanning alerts.
+                  When enabled, users with appropriate permissions can dismiss alerts that don't require action.
+                enum:
+                - enabled
+                - disabled
+                - not_set
+                type: string
+              codeScanningOptions:
+                description: CodeScanningOptions configures advanced code scanning
+                  options.
+                properties:
+                  allowAdvanced:
+                    description: |-
+                      AllowAdvanced determines whether users can enable advanced code scanning features.
+                      When true, repository administrators can configure advanced code scanning settings beyond the default setup.
+                    type: boolean
                 type: object
               codeSecurity:
                 description: CodeSecurity is a meta-setting that enables multiple

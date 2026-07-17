@@ -71,9 +71,9 @@ type CodeSecurityConfigurationSpec struct {
 	// CodeScanningDelegatedAlertDismissal enables users to dismiss code scanning alerts.
 	// When enabled, users with appropriate permissions can dismiss alerts that don't require action.
 	// +kubebuilder:validation:Enum=enabled;disabled;not_set
-	CodeScanningDelegatedAlertDismissal *string `json:"code_scanning_delegated_alert_dismissal,omitempty"`
+	CodeScanningDelegatedAlertDismissal *string `json:"codeScanningDelegatedAlertDismissal,omitempty"`
 	// CodeScanningOptions configures advanced code scanning options.
-	CodeScanningOptions *CodeScanningOptions `json:"code_scanning_options,omitempty"`
+	CodeScanningOptions *CodeScanningOptions `json:"codeScanningOptions,omitempty"`
 
 	// CodeSecurity is a meta-setting that enables multiple code security features.
 	// +kubebuilder:validation:Enum=enabled;disabled;not_set

@@ -71,9 +71,9 @@ type CodeSecurityConfigurationSpecApplyConfiguration struct {
 	CodeScanningDefaultSetupOptions *CodeScanningDefaultSetupOptionsApplyConfiguration `json:"codeScanningDefaultSetupOptions,omitempty"`
 	// CodeScanningDelegatedAlertDismissal enables users to dismiss code scanning alerts.
 	// When enabled, users with appropriate permissions can dismiss alerts that don't require action.
-	CodeScanningDelegatedAlertDismissal *string `json:"code_scanning_delegated_alert_dismissal,omitempty"`
+	CodeScanningDelegatedAlertDismissal *string `json:"codeScanningDelegatedAlertDismissal,omitempty"`
 	// CodeScanningOptions configures advanced code scanning options.
-	CodeScanningOptions *CodeScanningOptionsApplyConfiguration `json:"code_scanning_options,omitempty"`
+	CodeScanningOptions *CodeScanningOptionsApplyConfiguration `json:"codeScanningOptions,omitempty"`
 	// CodeSecurity is a meta-setting that enables multiple code security features.
 	CodeSecurity *string `json:"codeSecurity,omitempty"`
 	// SecretScanning enables or disables secret scanning.
