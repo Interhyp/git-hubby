@@ -1,4 +1,4 @@
-Name: Cleanup Branches
+name: Cleanup Branches
 
 on:
   schedule:
