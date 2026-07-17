@@ -54,6 +54,19 @@ func (t *GitHubTeamReconciler) reconcileTeamMembers(ctx context.Context) error {
 			memberSuffix = org.Spec.MemberSuffix
 		}
 
+		ghMembers, err := githubOrg.Client.ListMembers(ctx, githubOrg.Resource)
+		if err != nil {
+			log.Error(err, "failed to get members from GitHub")
+			return err
+		}
+
+		orgMembersByName := make(map[string]string, len(ghMembers))
+		for _, ghMember := range ghMembers {
+			if ghMember != nil && ghMember.Login != nil {
+				orgMembersByName[*ghMember.Login] = *ghMember.Login
+			}
+		}
+
 		for _, memberRef := range t.Kubernetes.Resource.Spec.Members {
 			memberRef += memberSuffix
 			log := log.WithValues("member", memberRef)
@@ -66,21 +79,7 @@ func (t *GitHubTeamReconciler) reconcileTeamMembers(ctx context.Context) error {
 				delete(membersToDelete, memberRef)
 				continue
 			} else {
-				ghMembers, err := githubOrg.Client.ListMembers(ctx, githubOrg.Resource)
-				if err != nil {
-					log.Error(err, "failed to get members from GitHub")
-					return err
-				}
-
-				found := false
-				for _, ghMember := range ghMembers {
-					if ghMember.Login != nil && *ghMember.Login == memberRef {
-						found = true
-						break
-					}
-				}
-
-				if found {
+				if _, found := orgMembersByName[memberRef]; found {
 					if err := githubOrg.Client.AddTeamMember(ctx, githubOrg.Resource, t.Team.GetSlug(), memberRef); err != nil {
 						log.Error(err, "failed to add member to team", "member", memberRef)
 						return err
