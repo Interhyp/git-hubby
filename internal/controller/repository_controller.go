@@ -235,7 +235,7 @@ func (r *RepositoryCtl) findRepositoriesForRulesetPreset(ctx context.Context, ob
 
 	var repoList githubv1alpha1.RepositoryList
 	if err := r.ReconcilerFactory.K8sClient.List(ctx, &repoList, client.MatchingFields{"spec.rulesetPresets.name": rulesetPreset.Name}); err != nil {
-		logf.FromContext(ctx).Error(err, "failed to list repositories for webhook preset", "rulesetPreset", rulesetPreset.Name)
+		logf.FromContext(ctx).Error(err, "failed to list repositories for ruleset preset", "rulesetPreset", rulesetPreset.Name)
 		return nil
 	}
 
