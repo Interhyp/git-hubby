@@ -5,6 +5,7 @@ go 1.26.3
 require (
 	github.com/PuerkitoBio/rehttp v1.4.0
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
+	github.com/caarlos0/env/v11 v11.4.1
 	github.com/ettle/strcase v0.2.0
 	github.com/gofri/go-github-pagination v1.0.1
 	github.com/gofri/go-github-ratelimit/v2 v2.0.2
@@ -15,7 +16,7 @@ require (
 	go.elastic.co/ecszap v1.0.3
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/exp v0.0.0-20260709172345-9ea1abe57597
+	golang.org/x/exp v0.0.0-20260718201538-764159d718ef
 	golang.org/x/text v0.40.0
 	golang.org/x/time v0.15.0
 	k8s.io/api v0.36.0
@@ -38,7 +39,6 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/caarlos0/env/v11 v11.4.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
