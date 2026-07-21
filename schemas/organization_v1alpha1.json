@@ -1,0 +1,419 @@
+{
+  "description": "Organization is the Schema for the organizations API",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "spec defines the desired state of Organization",
+      "properties": {
+        "actionsSettings": {
+          "description": "ActionsSettings configures GitHub Actions permissions and behavior for the organization.\nThis includes which repositories can use Actions, which actions are allowed, and runner group configurations.\nSee: https://docs.github.com/en/rest/actions/permissions",
+          "properties": {
+            "allowedActions": {
+              "description": "AllowedActions configures which actions and workflows are allowed to run.\nMust be nil if EnabledRepositories is \"none\".\n- \"all\": All actions and reusable workflows are allowed\n- \"local_only\": Only actions and workflows defined in the same repository or organization are allowed\n- \"selected\": Only specific actions are allowed (requires SelectedAllowedActions)",
+              "enum": [
+                "all",
+                "local_only",
+                "selected"
+              ],
+              "type": "string"
+            },
+            "artifactAndLogRetentionDays": {
+              "default": 400,
+              "description": "ArtifactAndLogRetentionDays specifies how many days workflow artifacts and logs are retained.\nMust be between 1 and 400 days. Shorter retention periods reduce storage costs.",
+              "type": "integer"
+            },
+            "canApprovePullRequestReviews": {
+              "default": false,
+              "description": "CanApprovePullRequestReviews determines whether the GITHUB_TOKEN can approve pull requests.\nWhen false, prevents workflows from approving pull requests automatically.",
+              "type": "boolean"
+            },
+            "defaultWorkflowPermissions": {
+              "default": "read",
+              "description": "DefaultWorkflowPermissions sets the default GITHUB_TOKEN permissions for workflows.\n- \"read\": Token has read-only access to repository contents\n- \"write\": Token has read and write access to repository contents",
+              "enum": [
+                "read",
+                "write"
+              ],
+              "type": "string"
+            },
+            "enabledRepositories": {
+              "default": "none",
+              "description": "EnabledRepositories determines which repositories can use GitHub Actions.\n- \"all\": Actions enabled for all repositories\n- \"none\": Actions disabled for all repositories\n- \"selected\": Actions enabled for specific repositories (requires additional configuration)",
+              "enum": [
+                "all",
+                "none",
+                "selected"
+              ],
+              "type": "string"
+            },
+            "runnerGroups": {
+              "description": "RunnerGroups configures self-hosted runner groups for the organization.\nEach group can have different visibility and workflow restrictions.",
+              "items": {
+                "description": "RunnerGroup configures a self-hosted runner group for GitHub Actions in an organization.\nRunner groups allow you to control which repositories can use specific sets of self-hosted runners.\nSee: https://docs.github.com/en/rest/actions/self-hosted-runner-groups",
+                "properties": {
+                  "name": {
+                    "description": "Name is the unique name of the runner group within the organization.",
+                    "type": "string"
+                  },
+                  "restrictedToWorkflows": {
+                    "default": false,
+                    "description": "RestrictedToWorkflows determines whether this runner group can only run specific workflows.\nIf true, only workflows listed in SelectedWorkflows can use runners in this group.\nThis provides additional security by limiting which workflows can execute on sensitive runners.",
+                    "type": "boolean"
+                  },
+                  "selectedWorkflows": {
+                    "description": "SelectedWorkflows lists the workflows that can use runners in this group.\nThis field is only used when RestrictedToWorkflows is true.\nEach entry must be a full workflow path with a reference (branch, tag, or SHA).\nExample: \"octo-org/octo-repo/.github/workflows/deploy.yaml@refs/heads/main\"",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "visibility": {
+                    "default": "all",
+                    "description": "Visibility determines which repositories can access runners in this group.\n- \"all\": All repositories in the organization can use these runners\n- \"private\": Only private repositories can use these runners\n- \"selected\": Only specific repositories can use these runners (selected via AvailableActionsRunnerGroups in RepositorySpec)",
+                    "enum": [
+                      "all",
+                      "private",
+                      "selected"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "type": "array"
+            },
+            "selectedAllowedActions": {
+              "description": "SelectedAllowedActions specifies which actions are allowed when AllowedActions is \"selected\".\nThis field is required when AllowedActions is \"selected\" and ignored otherwise.",
+              "properties": {
+                "githubOwnedAllowed": {
+                  "default": false,
+                  "description": "GitHubOwnedAllowed determines whether actions created by GitHub are allowed to run.\nThis includes actions in the \"actions\" and \"github\" organizations.",
+                  "type": "boolean"
+                },
+                "patternsAllowed": {
+                  "default": [],
+                  "description": "PatternsAllowed is a list of glob patterns specifying allowed actions.\nEach pattern can match action repositories using wildcards, e.g., \"my-org/*\" or \"*/action-name@*\".",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "verifiedAllowed": {
+                  "default": false,
+                  "description": "VerifiedAllowed determines whether actions from verified creators are allowed to run.\nVerified creators are trusted partners and organizations with verified domains.",
+                  "type": "boolean"
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
+            },
+            "shaPinningRequired": {
+              "default": false,
+              "description": "ShaPinningRequired determines whether workflows must reference actions using the commit SHA instead of tags or branches.\nWhen true, improves security by preventing tag manipulation attacks.",
+              "type": "boolean"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        },
+        "codeSecurityConfigurations": {
+          "description": "CodeSecurityConfigurations lists code security configurations to create and optionally attach to repositories.\nEach configuration defines security features like dependency scanning, secret scanning, and code scanning.\nSee: https://docs.github.com/en/rest/code-security/configurations",
+          "items": {
+            "description": "AttachableCodeSecurityConfigurationRef references a CodeSecurityConfiguration CRD and specifies its attachment scope.\nCode security configurations define security settings like dependency scanning, secret scanning, and code scanning.\nSee: https://docs.github.com/en/rest/code-security/configurations",
+            "properties": {
+              "attachmentScope": {
+                "description": "AttachmentScope defines which repositories the code security configuration applies to.\n- \"all\": Apply to all repositories in the organization\n- \"all_without_configurations\": Apply to repositories without an existing configuration\n- \"public\": Apply only to public repositories\n- \"private_or_internal\": Apply only to private and internal repositories\n- \"selected\": Apply only to repositories that explicitly reference this configuration in their AttachedCodeSecurityConfiguration field\nIf not set, the configuration is created but not attached to any repositories.\n\nNote: GitHub's API does not provide a way to retrieve the current attachment scope type.\nThe reconciler ensures functional correctness by comparing the actual list of attached repositories\nto the desired state, not the scope label itself. This means GitHub's UI may display \"selected repositories\"\neven when the scope is set to \"all\" (if all repositories happen to be selected), which is a cosmetic\ndiscrepancy that does not affect the actual security configuration. The reconciler will only re-attach\nif the actual repository attachments differ from what the scope implies.\n\nFor scope \"all_without_configurations\", the attachment is performed unconditionally without\ncomparing repository lists, as there is no reliable way to determine which repositories should\nbe included (repositories without configurations at the time of attachment may have since\nbeen configured). The reconciler will re-attach on every reconciliation for this scope.",
+                "enum": [
+                  "all",
+                  "all_without_configurations",
+                  "public",
+                  "private_or_internal",
+                  "selected"
+                ],
+                "type": "string"
+              },
+              "name": {
+                "description": "Name is the name of the referenced CodeSecurityConfiguration CRD.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
+        },
+        "customProperties": {
+          "description": "CustomProperties defines custom metadata properties that can be assigned to repositories in the organization.\nThese properties allow you to categorize and add structured metadata to your repositories.\nSee: https://docs.github.com/en/rest/orgs/custom-properties",
+          "items": {
+            "description": "OrgCustomProperty defines a custom property for an organization.\nCustom properties allow you to add metadata to repositories in your organization.\nThis is a kubebuilder annotated copy of github.CustomProperty without the source_type (as it is fixed to \"organization\").\nFor the logic to work the json field names must match the ones in github.CustomProperty.\nSee: https://docs.github.com/en/rest/orgs/custom-properties",
+            "properties": {
+              "allowedValues": {
+                "description": "AllowedValues is a list of allowed values for the property.\nThis property is required for ValueType \"single_select\" and \"multi_select\".\nFor the other ValueTypes, it must be empty.",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              "defaultValue": {
+                "description": "DefaultValue is the default value for the property.\nThis property must be set if Required is true. It must be empty if Required is false.\nThe allowed format depends on the ValueType.\nFor ValueType \"string\" or \"single_select\", it must be a string. For \"single_select\", it must be one of the AllowedValues.\nFor ValueType \"multi_select\", it must be a JSON array of strings only containing elements of AllowedValues.\nFor ValueType \"true_false\", it must be a string that is either \"true\" or \"false\".",
+                "properties": {
+                  "value": {
+                    "description": "Value is the default value for properties with ValueType \"string\", \"single_select\", or \"true_false\".\nFor \"true_false\", it must be either \"true\" or \"false\".\nFor \"single_select\", it must be one of the AllowedValues defined in the property.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "Values is the default value for properties with ValueType \"multi_select\".\nEach value must be one of the AllowedValues defined in the property.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object",
+                "x-kubernetes-validations": [
+                  {
+                    "message": "exactly one of the fields in [value values] must be set",
+                    "rule": "[has(self.value),has(self.values)].filter(x,x==true).size() == 1"
+                  }
+                ],
+                "additionalProperties": false
+              },
+              "description": {
+                "description": "Description provides additional information about the purpose and usage of this custom property.",
+                "type": "string"
+              },
+              "propertyName": {
+                "description": "PropertyName is the unique name of the custom property.\nMust start with a letter, number, _, $, or # and can only contain letters, numbers, _, $, #, and -.",
+                "pattern": "^[a-zA-Z0-9_\\$#\\-]+$",
+                "type": "string"
+              },
+              "required": {
+                "default": false,
+                "description": "Required indicates whether this property must be set on all repositories.\nIf true, a DefaultValue must be provided.",
+                "type": "boolean"
+              },
+              "valueType": {
+                "description": "ValueType specifies the type of value this property accepts.\n- \"string\": A free-form text value\n- \"single_select\": A single value from a predefined list (requires AllowedValues)\n- \"multi_select\": Multiple values from a predefined list (requires AllowedValues)\n- \"true_false\": A boolean value represented as \"true\" or \"false\"",
+                "enum": [
+                  "string",
+                  "single_select",
+                  "multi_select",
+                  "true_false"
+                ],
+                "type": "string"
+              },
+              "valuesEditableBy": {
+                "default": "org_actors",
+                "description": "ValuesEditableBy determines who can edit the property values on repositories.\n- \"org_actors\": Only organization members can edit values\n- \"org_and_repo_actors\": Both organization and repository members can edit values",
+                "enum": [
+                  "org_actors",
+                  "org_and_repo_actors"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "propertyName",
+              "valueType"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "maxItems": 100,
+          "type": "array"
+        },
+        "description": {
+          "description": "Description is a human-readable description of the organization.\nThis appears on the organization's GitHub profile page.",
+          "type": "string"
+        },
+        "githubAppConfig": {
+          "description": "GitHubAppConfig specifies the GitHub App installation and credentials secret to use for\nauthenticating API requests on behalf of this organization.\nAt least one of GitHubAppConfig or GitHubAppInstallationId must be set.\nIf both are set, GitHubAppConfig takes precedence.",
+          "properties": {
+            "credentialsSecretName": {
+              "description": "CredentialsSecretName is the name of the Kubernetes Secret containing the GitHub App credentials.\nThe secret must contain the keys `app-id` and `private-key` and must reside in the namespace\nconfigured via the APP_CREDENTIALS_SECRET_NAMESPACE environment variable.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "installationId": {
+              "description": "InstallationId is the numeric ID of the GitHub App installation for this organization.\nYou can find this ID in your GitHub App's installation settings or via the GitHub API.",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "credentialsSecretName",
+            "installationId"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
+        "githubAppInstallationId": {
+          "description": "GitHubAppInstallationId is the numeric ID of the GitHub App installation for this organization.\nThis field is deprecated. Use GitHubAppConfig instead, which also allows specifying which\ncredential secret to use. When only this field is set, the operator falls back to the\nsecret name configured via --app-credentials-secret-name.\nAt least one of GitHubAppInstallationId or GitHubAppConfig must be set.\nIf both are set, GitHubAppConfig takes precedence.",
+          "format": "int64",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "location": {
+          "description": "Location is the organization's location (e.g., \"Munich, Germany\").\nThis appears on the organization's GitHub profile page.",
+          "maxLength": 100,
+          "type": "string"
+        },
+        "login": {
+          "description": "Login is the GitHub organization login (the unique, immutable identifier on GitHub).\nThis field is optional for backwards compatibility. If not specified, the Name field\nwill be used as both login and display name.\nIt is recommended to explicitly set this field to clearly separate login from display name.",
+          "maxLength": 39,
+          "minLength": 1,
+          "type": "string"
+        },
+        "memberSuffix": {
+          "default": "",
+          "description": "MemberSuffix defines a suffix appended to each team member username before matching/adding them on GitHub.\nUseful when GitHub usernames follow a naming convention (e.g. enterprise suffix).\nIs ignored if environment variable GITHUB_MEMBER_SUFFIX is set.",
+          "maxLength": 100,
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the organization's display name shown on the GitHub profile.\nIf Login is not specified, this field will also be used as the organization login\nfor backwards compatibility.\nAt least one of Login or Name must be specified.",
+          "maxLength": 255,
+          "minLength": 1,
+          "type": "string"
+        },
+        "plan": {
+          "default": "enterprise",
+          "description": "Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).\nDetermines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped.",
+          "enum": [
+            "enterprise",
+            "team",
+            "free"
+          ],
+          "type": "string"
+        },
+        "rulesetPresets": {
+          "description": "RulesetPresetList references RulesetPreset CRDs that define repository rulesets for this organization.\nRulesets enforce policies like branch protection, required reviews, and status checks.\nSee: https://docs.github.com/en/rest/orgs/rules",
+          "items": {
+            "description": "LocalObjectReference contains enough information to let you locate the\nreferenced object inside the same namespace.",
+            "properties": {
+              "name": {
+                "default": "",
+                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                "type": "string"
+              }
+            },
+            "type": "object",
+            "x-kubernetes-map-type": "atomic",
+            "additionalProperties": false
+          },
+          "type": "array"
+        },
+        "website": {
+          "description": "Website is the organization's website URL.\nThis appears on the organization's GitHub profile page as a clickable link.",
+          "maxLength": 255,
+          "type": "string"
+        }
+      },
+      "required": [
+        "actionsSettings",
+        "codeSecurityConfigurations",
+        "description"
+      ],
+      "type": "object",
+      "additionalProperties": false
+    },
+    "status": {
+      "description": "status defines the observed state of Organization",
+      "properties": {
+        "conditions": {
+          "description": "conditions represent the current state of the Organization resource.\nEach condition has a unique type and reflects the status of a specific aspect of the resource.\n\nStandard condition types include:\n- \"Available\": the resource is fully functional\n- \"Progressing\": the resource is being created or updated\n- \"Degraded\": the resource failed to reach or maintain its desired state\n\nThe status of each condition is one of True, False, or Unknown.",
+          "items": {
+            "description": "Condition contains details for one aspect of the current state of this API Resource.",
+            "properties": {
+              "lastTransitionTime": {
+                "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nThis should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "message": {
+                "description": "message is a human readable message indicating details about the transition.\nThis may be an empty string.",
+                "maxLength": 32768,
+                "type": "string"
+              },
+              "observedGeneration": {
+                "description": "observedGeneration represents the .metadata.generation that the condition was set based upon.\nFor instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date\nwith respect to the current state of the instance.",
+                "format": "int64",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "reason": {
+                "description": "reason contains a programmatic identifier indicating the reason for the condition's last transition.\nProducers of specific condition types may define expected values and meanings for this field,\nand whether the values are considered a guaranteed API.\nThe value should be a CamelCase string.\nThis field may not be empty.",
+                "maxLength": 1024,
+                "minLength": 1,
+                "pattern": "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$",
+                "type": "string"
+              },
+              "status": {
+                "description": "status of the condition, one of True, False, Unknown.",
+                "enum": [
+                  "True",
+                  "False",
+                  "Unknown"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+                "maxLength": 316,
+                "pattern": "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "lastTransitionTime",
+              "message",
+              "reason",
+              "status",
+              "type"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
+        },
+        "observedSubResourceGenerations": {
+          "additionalProperties": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "description": "ObservedSubResourceGenerations is a map of sub-resource names to their observed generations.\nKeys are in the format \"<kind>/<namespace/<name>\".\nSubResources are kubernetes resources that are referenced by this Organization and are not managed\nby their own controllers like RuleSetPresets and CodeSecurityConfigurations",
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "spec"
+  ],
+  "type": "object"
+}

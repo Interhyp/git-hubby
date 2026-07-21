@@ -60,15 +60,12 @@ jobs:
           go-version-file: go.mod
 
       - name: Run code generation
-        run: |
-          make manifests
-          make generate
-          make crd-docs
+        run: make codegen
 
       - name: Check for uncommitted changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::Generated code is out of date. Please run 'make manifests generate crd-docs' and commit the changes."
+            echo "::error::Generated code is out of date. Please run 'make codegen' and commit the changes."
             echo ""
             echo "Changed files:"
             git status --short

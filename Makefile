@@ -231,6 +231,7 @@ GINKGO ?= $(LOCALBIN)/ginkgo
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.8.1
 CONTROLLER_TOOLS_VERSION ?= v0.21.0
+KUBECONFORM_VERSION ?= v0.8.0
 
 #ENVTEST_VERSION is the controller-runtime version to use for setup-envtest, derived from go.mod
 ENVTEST_VERSION ?= $(shell v='$(call gomodver,sigs.k8s.io/controller-runtime)'; \
@@ -244,6 +245,7 @@ ENVTEST_K8S_VERSION ?= $(shell v='$(call gomodver,k8s.io/api)'; \
 
 GOLANGCI_LINT_VERSION ?= v2.12.2
 GINKGO_VERSION ?= v2.27.2  # Match the version in go.mod
+OPENAPI2JSONSCHEMA ?= $(LOCALBIN)/openapi2jsonschema
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -303,6 +305,19 @@ $(CRD_REF_DOCS): $(LOCALBIN)
 crd-docs: crd-ref-docs generate
 	$(CRD_REF_DOCS) --source-path ./api/v1alpha1 --config ./crd-ref-docs.config.yaml --output-path=./docs/crds.md --renderer=markdown
 
+.PHONY: codegen
+codegen: manifests generate crd-docs schemas ## Regenerate all derived artifacts after an API change (CRDs, deepcopy, docs, schemas).
+
+.PHONY: openapi2jsonschema-tool
+openapi2jsonschema-tool: $(OPENAPI2JSONSCHEMA) ## Download and build openapi2jsonschema from kubeconform if necessary.
+$(OPENAPI2JSONSCHEMA): $(LOCALBIN)
+	$(call clone-and-build-tool,$(OPENAPI2JSONSCHEMA),yannh/kubeconform,$(KUBECONFORM_VERSION),openapi2jsonschema-go)
+
+.PHONY: schemas
+schemas: manifests openapi2jsonschema-tool ## Generate per-kind JSON Schema files for CR validation into schemas/.
+	@mkdir -p schemas
+	@cd schemas && for crd in ../config/crd/bases/*.yaml; do "$(OPENAPI2JSONSCHEMA)" "$$crd"; done
+
 # Add the Grafana plugin
 
 .PHONY: grafana
@@ -322,6 +337,24 @@ rm -f "$(1)" ;\
 GOBIN="$(LOCALBIN)" go install $${package} ;\
 mv "$(LOCALBIN)/$$(basename "$(1)")" "$(1)-$(3)" ;\
 } ;\
+[ -L "$(1)" ] && [ -e "$(1)" ] || \
+ln -sf "$$(basename "$(1)-$(3)")" "$(1)"
+endef
+
+# clone-and-build-tool clones a GitHub repo at a given tag and builds a Go binary from a subdirectory.
+# $1 - target binary path (without version suffix)
+# $2 - GitHub repo slug (e.g. yannh/kubeconform)
+# $3 - version tag to clone
+# $4 - subdirectory that contains the go.mod and main package
+define clone-and-build-tool
+@[ -f "$(1)-$(3)" ] || { \
+set -e; \
+echo "Building $$(basename "$(1)") from github.com/$(2) $(3)..."; \
+tmpdir=$$(mktemp -d); \
+git clone --quiet --depth=1 --branch "$(3)" "https://github.com/$(2).git" "$$tmpdir"; \
+( cd "$$tmpdir/$(4)" && go build -o "$(1)-$(3)" . ); \
+rm -rf "$$tmpdir"; \
+}; \
 [ -L "$(1)" ] && [ -e "$(1)" ] || \
 ln -sf "$$(basename "$(1)-$(3)")" "$(1)"
 endef
