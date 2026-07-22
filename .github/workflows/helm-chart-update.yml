@@ -108,6 +108,46 @@ jobs:
             sed -i "s|^appVersion:.*|appVersion: \"${{ steps.version.outputs.version }}\"|" ${{ env.CHART_DIR }}/Chart.yaml
           fi
 
+      - name: Determine commit type from version change
+        id: commit-type
+        run: |
+          # Extract current appVersion from the chart (before update was applied above — read from git)
+          CURRENT_VERSION=$(cd ${{ env.CHART_DIR }} && git show HEAD:Chart.yaml 2>/dev/null | grep "^appVersion:" | sed 's/^appVersion: *"\?//;s/"\? *$//' || echo "")
+          NEW_VERSION="${{ steps.version.outputs.version }}"
+          SOURCE_REPO="https://github.com/${{ github.repository }}"
+
+          # Helper: extract semver triple (MAJOR.MINOR.PATCH) from a version string, returns "" if not semver
+          semver() { echo "$1" | grep -oP '^\d+\.\d+\.\d+' || true; }
+
+          CURRENT_SV=$(semver "$CURRENT_VERSION")
+          NEW_SV=$(semver "$NEW_VERSION")
+
+          if [[ -z "$CURRENT_SV" || -z "$NEW_SV" ]]; then
+            # Non-semver (e.g. snapshot builds) — use chore, link to the commit
+            COMMIT_TYPE="chore"
+            COMPARE_URL="${SOURCE_REPO}/commit/${{ steps.source.outputs.sha }}"
+          else
+            CURRENT_MAJOR=$(echo "$CURRENT_SV" | cut -d. -f1)
+            CURRENT_MINOR=$(echo "$CURRENT_SV" | cut -d. -f2)
+            NEW_MAJOR=$(echo "$NEW_SV" | cut -d. -f1)
+            NEW_MINOR=$(echo "$NEW_SV" | cut -d. -f2)
+
+            if (( NEW_MAJOR > CURRENT_MAJOR )); then
+              COMMIT_TYPE="feat!"
+            elif (( NEW_MINOR > CURRENT_MINOR )); then
+              COMMIT_TYPE="feat"
+            else
+              COMMIT_TYPE="fix"
+            fi
+
+            COMPARE_URL="${SOURCE_REPO}/compare/v${CURRENT_SV}...v${NEW_SV}"
+          fi
+
+          echo "type=${COMMIT_TYPE}" >> "$GITHUB_OUTPUT"
+          echo "compare_url=${COMPARE_URL}" >> "$GITHUB_OUTPUT"
+          echo "Detected commit type: ${COMMIT_TYPE} (${CURRENT_VERSION} → ${NEW_VERSION})"
+          echo "Compare URL: ${COMPARE_URL}"
+
       - name: Commit and push changes
         id: commit
         working-directory: ${{ env.CHART_DIR }}
@@ -120,7 +160,8 @@ jobs:
             echo "changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git commit -m "feat: update CRDs and appVersion to version ${{ steps.version.outputs.version }}"
+          git commit -m "${{ steps.commit-type.outputs.type }}: update CRDs and appVersion to version ${{ steps.version.outputs.version }}" \
+            -m "${{ steps.commit-type.outputs.compare_url }}"
           git push origin "${{ steps.branch.outputs.name }}"
           echo "changes=true" >> "$GITHUB_OUTPUT"
 
@@ -132,18 +173,19 @@ jobs:
           cd ${{ env.CHART_DIR }}
           # Ensure the label exists
           gh label create "automatic-update" --description "Automated updates" --color "0E8A16" --repo "${{ env.HELM_REPO }}" 2>/dev/null || true
+          PR_BODY="Automated CRD and appVersion update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})"$'\n\n'"**Changelog diff:** ${{ steps.commit-type.outputs.compare_url }}"
           EXISTING_PR=$(gh pr list --head "${{ steps.branch.outputs.name }}" --json number --jq '.[0].number' 2>/dev/null || true)
           if [[ -n "$EXISTING_PR" ]]; then
             echo "PR #${EXISTING_PR} already exists, updating..."
             gh pr edit "$EXISTING_PR" \
-              --title "feat: update CRDs and appVersion to v${{ steps.version.outputs.version }}" \
-              --body "Automated CRD and appVersion update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})"
+              --title "${{ steps.commit-type.outputs.type }}: update CRDs and appVersion to v${{ steps.version.outputs.version }}" \
+              --body "$PR_BODY"
           else
             gh pr create \
               --repo "${{ env.HELM_REPO }}" \
               --head "${{ steps.branch.outputs.name }}" \
               --base main \
-              --title "feat: update CRDs and appVersion to v${{ steps.version.outputs.version }}" \
-              --body "Automated CRD and appVersion update from [git-hubby release v${{ steps.version.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }})" \
+              --title "${{ steps.commit-type.outputs.type }}: update CRDs and appVersion to v${{ steps.version.outputs.version }}" \
+              --body "$PR_BODY" \
               --label "automatic-update"
           fi
