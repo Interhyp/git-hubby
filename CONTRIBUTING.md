@@ -86,6 +86,7 @@ Run `make help` for the full list. The most important targets are:
 | `make lint-fix` | Lint with auto-fix |
 | `make generate` | Regenerate deepcopy and apply-configuration code |
 | `make manifests` | Regenerate CRDs and RBAC from kubebuilder markers |
+| `make codegen` | Run all code generation steps after an API change (manifests, generate, crd-docs, schemas) |
 | `make install` | Install CRDs into the current cluster |
 | `make deploy IMG=<image>` | Deploy the operator to the current cluster |
 | `make undeploy` | Remove the operator from the current cluster |
@@ -93,10 +94,10 @@ Run `make help` for the full list. The most important targets are:
 
 ### After Editing `*_types.go` or Kubebuilder Markers
 
-Always regenerate manifests and code:
+Always regenerate all derived artifacts:
 
 ```bash
-make manifests generate
+make codegen
 ```
 
 ### After Any Go Code Change
@@ -152,6 +153,8 @@ kubebuilder create webhook --group github --version v1alpha1 --kind <Kind> --def
 | `config/crd/bases/*.yaml` | `make manifests` |
 | `config/rbac/role.yaml` | `make manifests` |
 | `config/webhook/manifests.yaml` | `make manifests` |
+| `docs/crds.md` | `make crd-docs` |
+| `schemas/*.json` | `make schemas` |
 | `PROJECT` | Kubebuilder CLI |
 
 ### Where to Look
@@ -265,7 +268,7 @@ Edit `.env` freely — it won't be committed. The template (`.env.tmpl`) contain
 2. Make your changes, following the conventions above.
 3. Run the full validation suite:
    ```bash
-   make manifests generate  # if you changed types or markers
+   make codegen   # if you changed types or markers
    make lint-fix
    make test
    ```
@@ -277,10 +280,10 @@ Edit `.env` freely — it won't be committed. The template (`.env.tmpl`) contain
 
 ### Codegen Check
 
-The **Codegen Check** workflow verifies that generated code is up to date on every PR. It runs `make manifests`, `make generate`, and `make crd-docs`, then fails if there are uncommitted changes. Always run these before pushing:
+The **Codegen Check** workflow verifies that generated code is up to date on every PR. It runs all generation steps, then fails if there are uncommitted changes. Always run this before pushing:
 
 ```bash
-make manifests generate crd-docs
+make codegen
 ```
 
 ### Helm Chart Update

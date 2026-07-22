@@ -15,7 +15,7 @@
 - [ ] My commits follow the [Conventional Commits](https://www.conventionalcommits.org/) format
 - [ ] I have added/updated unit tests for any new or changed templates
 - [ ] I have updated documentation (README, CONTRIBUTING, values comments) if needed
-- [ ] I have updated the generated CRDs and Manifest
+- [ ] I have updated the generated files using `make codegen`
 
 ## Related Issues
 

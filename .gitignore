@@ -46,7 +46,6 @@ go.work
 !vendor/**/zz_generated.*
 
 # editor and IDE paraphernalia
-.vscode
 *.swp
 *.swo
 *~

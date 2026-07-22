@@ -1,0 +1,766 @@
+{
+  "description": "RulesetPreset is the Schema for the rulesetpresets API",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "spec defines the desired state of RulesetPreset",
+      "properties": {
+        "bypassActors": {
+          "description": "BypassActors defines actors (users, teams, apps) who can bypass this ruleset.\nBypass actors can perform operations that would otherwise be blocked by the ruleset.\nSee: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-bypass-mode-for-rulesets",
+          "items": {
+            "description": "RulesetBypassActor defines an actor (user, team, or integration) who can bypass ruleset enforcement.\nEither ActorID (for direct specification) or ActorSlug (for name-based resolution) must be provided for\nActorTypes \"Integration\" and \"Team\". ActorID must be provided for ActorType \"RepositoryRole\".\nBoth must be empty for ActorType \"DeployKey\".\nSee: https://docs.github.com/en/rest/repos/rules#create-an-organization-repository-ruleset",
+            "properties": {
+              "actorId": {
+                "description": "ActorID is the numeric ID of the bypass actor.\nThis field is mutually exclusive with ActorSlug.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "actorSlug": {
+                "description": "ActorSlug is the slug or name of the actor, which will be resolved to an ID.\nThis field is mutually exclusive with ActorID.\nOnly supported for ActorType \"Integration\" (GitHub Apps) and \"Team\" (organization teams).\nFor Integration, use the app slug (e.g., \"my-github-app\").\nFor Team, use the team slug (e.g., \"platform-engineers\").",
+                "type": "string"
+              },
+              "actorType": {
+                "description": "ActorType specifies the type of actor that can bypass the ruleset.\n- \"Integration\": A GitHub App\n- \"OrganizationAdmin\": Organization administrators\n- \"RepositoryRole\": Users with a specific repository role\n- \"Team\": An organization team\n- \"DeployKey\": A deploy key\n- \"EnterpriseOwner\": Enterprise owners (GitHub Enterprise only)",
+                "enum": [
+                  "Integration",
+                  "OrganizationAdmin",
+                  "RepositoryRole",
+                  "Team",
+                  "DeployKey",
+                  "EnterpriseOwner"
+                ],
+                "type": "string"
+              },
+              "bypassMode": {
+                "description": "BypassMode determines when and how the actor can bypass the ruleset.\n- \"always\": Actor can always bypass the ruleset\n- \"pull_request\": Actor can bypass only when submitting via pull request",
+                "enum": [
+                  "always",
+                  "pull_request"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "actorType"
+            ],
+            "type": "object",
+            "x-kubernetes-validations": [
+              {
+                "message": "at most one of the fields in [actorId actorSlug] may be set",
+                "rule": "[has(self.actorId),has(self.actorSlug)].filter(x,x==true).size() <= 1"
+              }
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 100,
+          "type": "array"
+        },
+        "conditions": {
+          "description": "Conditions defines which refs are included or excluded in the list of targets for this Ruleset.\nThey also define which Repositories are targeted by Organization-level Rulesets.",
+          "properties": {
+            "refName": {
+              "description": "RefName defines which git refs (branches or tags) a ruleset applies to.",
+              "minProperties": 1,
+              "properties": {
+                "exclude": {
+                  "description": "Exclude defines ref patterns to exempt from the ruleset.\nRefs matching exclude patterns will not be subject to the ruleset rules.\nUseful for exempting release branches or other special refs.",
+                  "items": {
+                    "pattern": "^(~DEFAULT_BRANCH|~ALL|refs/(heads|tags)(/?[*a-zA-Z0-9][a-zA-Z0-9*_.-]*)*)$",
+                    "type": "string"
+                  },
+                  "maxItems": 50,
+                  "type": "array"
+                },
+                "include": {
+                  "description": "Include defines ref patterns that the ruleset applies to.\nPatterns can use wildcards (*) and must start with refs/heads/ (branches) or refs/tags/ (tags).\nUse \"~DEFAULT_BRANCH\" to target the default branch.\nUse \"~ALL\" to target all branches.\nExamples: \"refs/heads/main\", \"refs/heads/feature/*\", \"refs/tags/v*\", \"~DEFAULT_BRANCH\", \"~ALL\"",
+                  "items": {
+                    "pattern": "^(~DEFAULT_BRANCH|~ALL|refs/(heads|tags)(/?[*a-zA-Z0-9][a-zA-Z0-9*_.-]*)*)$",
+                    "type": "string"
+                  },
+                  "maxItems": 50,
+                  "minItems": 1,
+                  "type": "array"
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
+            },
+            "repositoryName": {
+              "description": "RepositoryName targets repositories for Organization-level rulesets by their name.\nThe field is ignored for Repository-level rulesets.",
+              "properties": {
+                "exclude": {
+                  "description": "Exclude defines repository name patterns to exempt from the ruleset.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 50,
+                  "type": "array"
+                },
+                "include": {
+                  "description": "Include defines repository name patterns that the ruleset applies to.\nUse \"~ALL\" to target all repositories. Supports wildcards (*).\nExamples: \"~ALL\", \"my-repo-*\", \"backend-*\"",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 50,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "protected": {
+                  "default": false,
+                  "description": "Protected determines whether renaming a targeted repository is prevented.",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "include"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "repositoryProperty": {
+              "description": "RepositoryProperty targets repositories for Organization-level rulesets by matching against custom properties.\nThe field is ignored for Repository-level rulesets.",
+              "properties": {
+                "exclude": {
+                  "description": "Exclude defines repository property conditions that exempt repositories from the ruleset.\nA repository matching any of the conditions is excluded from the rule.\nThe names of the properties in the slice are validated to be unique.",
+                  "items": {
+                    "description": "RepositoryPropertyTarget defines a single repository property condition for ruleset targeting.\nThe repository must have the specified property set to one of the given values.",
+                    "properties": {
+                      "name": {
+                        "description": "Name is the name of the repository custom property to match against.\nMust match a custom property defined at the organization level.\nNote: restrict name length to be able to validate within budget",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "propertyValues": {
+                        "description": "PropertyValues is the list of values to match against the custom property.\nThe repository's property value must be one of these values for the condition to match.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      "source": {
+                        "description": "Source defines where the property is defined. Defaults to \"custom\" for organization-defined properties.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "propertyValues"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "maxItems": 50,
+                  "type": "array",
+                  "x-kubernetes-validations": [
+                    {
+                      "message": "property names must be unique",
+                      "rule": "self.all(x, self.filter(y, y.name == x.name).size() <= 1)"
+                    }
+                  ]
+                },
+                "include": {
+                  "description": "Include defines repository property conditions that must match for the ruleset to apply.\nA repository must match all included property conditions. The names of the properties in the slice are\nvalidated to be unique.",
+                  "items": {
+                    "description": "RepositoryPropertyTarget defines a single repository property condition for ruleset targeting.\nThe repository must have the specified property set to one of the given values.",
+                    "properties": {
+                      "name": {
+                        "description": "Name is the name of the repository custom property to match against.\nMust match a custom property defined at the organization level.\nNote: restrict name length to be able to validate within budget",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "propertyValues": {
+                        "description": "PropertyValues is the list of values to match against the custom property.\nThe repository's property value must be one of these values for the condition to match.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      "source": {
+                        "description": "Source defines where the property is defined. Defaults to \"custom\" for organization-defined properties.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "propertyValues"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "maxItems": 50,
+                  "minItems": 1,
+                  "type": "array",
+                  "x-kubernetes-validations": [
+                    {
+                      "message": "property names must be unique",
+                      "rule": "self.all(x, self.filter(y, y.name == x.name).size() <= 1)"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "include"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            }
+          },
+          "type": "object",
+          "x-kubernetes-validations": [
+            {
+              "message": "at most one of the fields in [repositoryName repositoryProperty] may be set",
+              "rule": "[has(self.repositoryName),has(self.repositoryProperty)].filter(x,x==true).size() <= 1"
+            }
+          ],
+          "additionalProperties": false
+        },
+        "enforcement": {
+          "description": "Enforcement determines whether the ruleset is enforced.\n- \"disabled\": Ruleset is not enforced\n- \"active\": Ruleset is actively enforced; violations block operations\n- \"evaluate\": Ruleset is evaluated but violations only generate warnings",
+          "enum": [
+            "disabled",
+            "active",
+            "evaluate"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the display name of the ruleset shown in the GitHub UI.",
+          "maxLength": 255,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9\\s\\[\\]*/'_.,~-]*[a-zA-Z0-9\\[\\]]$",
+          "type": "string"
+        },
+        "rules": {
+          "description": "Rules defines the specific rules to enforce in this ruleset.",
+          "properties": {
+            "branchNamePattern": {
+              "description": "BranchNamePattern enforces a pattern for branch names.\nUse this to enforce branch naming conventions like \"feature/*\" or \"hotfix/*\".",
+              "properties": {
+                "negate": {
+                  "default": false,
+                  "description": "Negate inverts the pattern matching logic.\nWhen true, the rule passes if the pattern does NOT match.\nExample: Use with \"contains\" to prevent certain words in commit messages.",
+                  "type": "boolean"
+                },
+                "operator": {
+                  "description": "Operator defines how the pattern is evaluated.\n- \"starts_with\": String must start with the pattern\n- \"ends_with\": String must end with the pattern\n- \"contains\": String must contain the pattern\n- \"regex\": String must match the pattern as a regular expression",
+                  "enum": [
+                    "starts_with",
+                    "ends_with",
+                    "contains",
+                    "regex"
+                  ],
+                  "type": "string"
+                },
+                "pattern": {
+                  "description": "Pattern is the pattern to match against.\nFor regex operator, this is a regular expression.\nFor other operators, this is a literal string or substring.",
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operator",
+                "pattern"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "commitAuthorEmailPattern": {
+              "description": "CommitAuthorEmailPattern enforces a pattern for commit author email addresses.\nUse this to ensure commits come from verified email domains.",
+              "properties": {
+                "negate": {
+                  "default": false,
+                  "description": "Negate inverts the pattern matching logic.\nWhen true, the rule passes if the pattern does NOT match.\nExample: Use with \"contains\" to prevent certain words in commit messages.",
+                  "type": "boolean"
+                },
+                "operator": {
+                  "description": "Operator defines how the pattern is evaluated.\n- \"starts_with\": String must start with the pattern\n- \"ends_with\": String must end with the pattern\n- \"contains\": String must contain the pattern\n- \"regex\": String must match the pattern as a regular expression",
+                  "enum": [
+                    "starts_with",
+                    "ends_with",
+                    "contains",
+                    "regex"
+                  ],
+                  "type": "string"
+                },
+                "pattern": {
+                  "description": "Pattern is the pattern to match against.\nFor regex operator, this is a regular expression.\nFor other operators, this is a literal string or substring.",
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operator",
+                "pattern"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "commitMessagePattern": {
+              "description": "CommitMessagePattern enforces a pattern for commit messages.\nUse this to enforce commit message conventions like Conventional Commits.",
+              "properties": {
+                "negate": {
+                  "default": false,
+                  "description": "Negate inverts the pattern matching logic.\nWhen true, the rule passes if the pattern does NOT match.\nExample: Use with \"contains\" to prevent certain words in commit messages.",
+                  "type": "boolean"
+                },
+                "operator": {
+                  "description": "Operator defines how the pattern is evaluated.\n- \"starts_with\": String must start with the pattern\n- \"ends_with\": String must end with the pattern\n- \"contains\": String must contain the pattern\n- \"regex\": String must match the pattern as a regular expression",
+                  "enum": [
+                    "starts_with",
+                    "ends_with",
+                    "contains",
+                    "regex"
+                  ],
+                  "type": "string"
+                },
+                "pattern": {
+                  "description": "Pattern is the pattern to match against.\nFor regex operator, this is a regular expression.\nFor other operators, this is a literal string or substring.",
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operator",
+                "pattern"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "committerEmailPattern": {
+              "description": "CommitterEmailPattern enforces a pattern for committer email addresses.",
+              "properties": {
+                "negate": {
+                  "default": false,
+                  "description": "Negate inverts the pattern matching logic.\nWhen true, the rule passes if the pattern does NOT match.\nExample: Use with \"contains\" to prevent certain words in commit messages.",
+                  "type": "boolean"
+                },
+                "operator": {
+                  "description": "Operator defines how the pattern is evaluated.\n- \"starts_with\": String must start with the pattern\n- \"ends_with\": String must end with the pattern\n- \"contains\": String must contain the pattern\n- \"regex\": String must match the pattern as a regular expression",
+                  "enum": [
+                    "starts_with",
+                    "ends_with",
+                    "contains",
+                    "regex"
+                  ],
+                  "type": "string"
+                },
+                "pattern": {
+                  "description": "Pattern is the pattern to match against.\nFor regex operator, this is a regular expression.\nFor other operators, this is a literal string or substring.",
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operator",
+                "pattern"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "copilotReview": {
+              "description": "CopilotReview automatically requests a GitHub Copilot pull request review\nif the author has access to Copilot code review and their premium requests quota has not reached the limit.",
+              "properties": {
+                "reviewDraftPullRequests": {
+                  "default": true,
+                  "description": "ReviewDraftPullRequests configures Copilot to automatically review draft pull requests before they are marked as ready for review.",
+                  "type": "boolean"
+                },
+                "reviewOnPush": {
+                  "default": true,
+                  "description": "ReviewOnPush configures Copilot to automatically review each new push to the pull request.",
+                  "type": "boolean"
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
+            },
+            "creation": {
+              "default": false,
+              "description": "Creation prevents the creation of matching refs.\nWhen enabled, users cannot create branches or tags matching the ruleset target.",
+              "type": "boolean"
+            },
+            "deletion": {
+              "default": false,
+              "description": "Deletion prevents deletion of matching refs.\nWhen enabled, users cannot delete matching branches or tags.",
+              "type": "boolean"
+            },
+            "nonFastForward": {
+              "default": false,
+              "description": "NonFastForward prevents non-fast-forward updates.\nWhen enabled, only fast-forward pushes are allowed, preventing force pushes.",
+              "type": "boolean"
+            },
+            "pullRequest": {
+              "description": "PullRequest defines pull request requirements for merging.\nSee: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-pull-request-reviews-before-merging",
+              "properties": {
+                "allowedMergeMethods": {
+                  "description": "AllowedMergeMethods specifies which merge methods are allowed for pull requests.\n- \"squash\": Squash all commits into a single commit\n- \"merge\": Create a merge commit (preserves all commits)\n- \"rebase\": Rebase commits onto the base branch",
+                  "items": {
+                    "enum": [
+                      "squash",
+                      "merge",
+                      "rebase"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "dismissStaleReviewsOnPush": {
+                  "default": false,
+                  "description": "DismissStaleReviewsOnPush automatically dismisses approved reviews when new commits are pushed.\nThis ensures reviewers see the latest changes before approval.",
+                  "type": "boolean"
+                },
+                "requireCodeOwnerReviews": {
+                  "default": false,
+                  "description": "RequireCodeOwnerReviews requires approval from code owners before merging.\nCode owners are defined in a CODEOWNERS file in the repository.\nSee: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners",
+                  "type": "boolean"
+                },
+                "requireLastPushApproval": {
+                  "default": false,
+                  "description": "RequireLastPushApproval requires that the most recent push be approved.\nThis prevents merging if new commits are pushed after the last approval.",
+                  "type": "boolean"
+                },
+                "requiredApprovingReviewCount": {
+                  "description": "RequiredApprovingReviewCount specifies the minimum number of approving reviews required.\nMust be between 1 and 10.",
+                  "maximum": 10,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "requiredReviewThreadResolution": {
+                  "default": false,
+                  "description": "RequiredReviewThreadResolution requires all review comment threads to be resolved before merging.\nThis ensures all feedback is addressed.",
+                  "type": "boolean"
+                },
+                "requiredReviewers": {
+                  "description": "RequiredReviewers forces pull request approval by the configured reviewers\non all pull requests changing files that match the configured file patterns.",
+                  "items": {
+                    "description": "RequiredPullRequestReviewer is the configuration for a required review on all pull request changing files that match\nthe configured file patterns.",
+                    "properties": {
+                      "filePatterns": {
+                        "default": [
+                          "*"
+                        ],
+                        "description": "FilePatterns are fnmatch syntax patterns that pull request changes are matched against.\nIf a pull request changes any matching file it must be approved by the configured reviewers.\nDefaults to \"*\" representing all files.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "maxItems": 10,
+                        "type": "array"
+                      },
+                      "minimumApprovals": {
+                        "default": 0,
+                        "description": "MinimumApprovals is the minimum number of approvals required before a matching pull request\ncan be merged. If set to zero, the team will be added to the pull request but approval is optional.\nRequires a non-negative value. Defaults to 0.",
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "reviewer": {
+                        "description": "Reviewer defines who is required to review.",
+                        "properties": {
+                          "id": {
+                            "description": "ID of the required reviewer. This field is exclusive with Slug.",
+                            "format": "int64",
+                            "type": "integer"
+                          },
+                          "slug": {
+                            "description": "Slug identifying the required reviewer. This field is exclusive with ID.\nSlug will be resolved to the id during reconciliation.",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "Type of the required reviewer. Currently only Teams are supported.",
+                            "enum": [
+                              "Team"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object",
+                        "x-kubernetes-validations": [
+                          {
+                            "message": "exactly one of the fields in [id slug] must be set",
+                            "rule": "[has(self.id),has(self.slug)].filter(x,x==true).size() == 1"
+                          }
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "reviewer"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "maxItems": 10,
+                  "type": "array"
+                }
+              },
+              "required": [
+                "allowedMergeMethods"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "requiredLinearHistory": {
+              "default": false,
+              "description": "RequiredLinearHistory requires branches to have a linear commit history.\nWhen enabled, merge commits are not allowed; only rebasing and fast-forward merges are permitted.",
+              "type": "boolean"
+            },
+            "requiredSignatures": {
+              "default": false,
+              "description": "RequiredSignatures requires commits to be signed with a verified signature.\nWhen enabled, only commits signed with GPG, SSH, or S/MIME are allowed.\nSee: https://docs.github.com/en/authentication/managing-commit-signature-verification",
+              "type": "boolean"
+            },
+            "requiredStatusChecks": {
+              "description": "RequiredStatusChecks defines status checks that must pass before merging.\nSee: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging",
+              "properties": {
+                "checks": {
+                  "description": "Checks lists the required status checks that must pass.",
+                  "items": {
+                    "description": "StatusCheck defines a required status check that must pass before merging.\nA status check can be provided by a GitHub App or CI/CD integration.\nSee: https://docs.github.com/en/rest/repos/rules#required-status-checks",
+                    "properties": {
+                      "appSlug": {
+                        "description": "AppSlug is the slug of the GitHub App integration providing the status check.\nThis field is mutually exclusive with IntegrationID.\nThe slug will be resolved to the corresponding integration ID.\nOnly supported for GitHub App integrations.\nExample: \"my-ci-app\"",
+                        "type": "string"
+                      },
+                      "context": {
+                        "description": "Context is the name of the status check as reported by the CI/CD system or app.\nExamples: \"ci/circleci: build\", \"Security Scan\", \"Unit Tests\"",
+                        "maxLength": 255,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "integrationId": {
+                        "description": "IntegrationID is the numeric ID of the GitHub App integration providing the status check.\nThis field is mutually exclusive with AppSlug.",
+                        "format": "int64",
+                        "minimum": 1,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "context"
+                    ],
+                    "type": "object",
+                    "x-kubernetes-validations": [
+                      {
+                        "message": "at most one of the fields in [integrationId appSlug] may be set",
+                        "rule": "[has(self.integrationId),has(self.appSlug)].filter(x,x==true).size() <= 1"
+                      }
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 100,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "strictPolicy": {
+                  "default": false,
+                  "description": "StrictPolicy requires branches to be up to date with the base branch before merging.\nWhen enabled, branches must include the latest changes from the base branch.\nThis prevents merge conflicts but may require additional merges/rebases.",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "checks"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "tagNamePattern": {
+              "description": "TagNamePattern enforces a pattern for tag names.\nUse this to enforce semantic versioning or other tag naming conventions.",
+              "properties": {
+                "negate": {
+                  "default": false,
+                  "description": "Negate inverts the pattern matching logic.\nWhen true, the rule passes if the pattern does NOT match.\nExample: Use with \"contains\" to prevent certain words in commit messages.",
+                  "type": "boolean"
+                },
+                "operator": {
+                  "description": "Operator defines how the pattern is evaluated.\n- \"starts_with\": String must start with the pattern\n- \"ends_with\": String must end with the pattern\n- \"contains\": String must contain the pattern\n- \"regex\": String must match the pattern as a regular expression",
+                  "enum": [
+                    "starts_with",
+                    "ends_with",
+                    "contains",
+                    "regex"
+                  ],
+                  "type": "string"
+                },
+                "pattern": {
+                  "description": "Pattern is the pattern to match against.\nFor regex operator, this is a regular expression.\nFor other operators, this is a literal string or substring.",
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operator",
+                "pattern"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "update": {
+              "default": false,
+              "description": "Update prevents updates to matching refs.\nWhen enabled, users cannot push commits to matching branches.",
+              "type": "boolean"
+            },
+            "workflows": {
+              "description": "Workflows defines required workflow rules that must pass before merging.\nThis rule type is only effective for organization-level rulesets and is ignored\nwhen the preset is applied at the repository level.\nSee: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-workflows-to-pass-before-merging",
+              "properties": {
+                "doNotEnforceOnCreate": {
+                  "default": false,
+                  "description": "DoNotEnforceOnCreate disables enforcement of this rule for newly created refs.\nWhen true, the workflow requirement is not enforced on the first push creating the ref.",
+                  "type": "boolean"
+                },
+                "workflows": {
+                  "description": "Workflows lists the required workflows that must pass.",
+                  "items": {
+                    "description": "RuleWorkflow defines a single required workflow for the workflows rule.\nThe workflow is referenced by its path in a repository. The repository is identified by name\n(resolved to a numeric ID at reconciliation time via the GitHub API).",
+                    "properties": {
+                      "path": {
+                        "description": "Path is the path to the workflow file relative to the repository root.\nExample: \".github/workflows/ci.yaml\"",
+                        "maxLength": 500,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "ref": {
+                        "description": "Ref is the git ref (branch, tag, or SHA) to use for the workflow file.\nExample: \"refs/heads/main\"",
+                        "type": "string"
+                      },
+                      "repositoryName": {
+                        "description": "RepositoryName is the name of the repository containing the workflow.\nMust be a repository within the same organization. The name will be resolved\nto a numeric repository ID at reconciliation time via the GitHub API.",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "repositoryName"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "maxItems": 100,
+                  "minItems": 1,
+                  "type": "array"
+                }
+              },
+              "required": [
+                "workflows"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        },
+        "target": {
+          "default": "branch",
+          "description": "Target defines which ref types this ruleset applies to.\nThe Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level\nRulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied).",
+          "enum": [
+            "branch",
+            "tag",
+            "push",
+            "repository"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "enforcement",
+        "name",
+        "rules"
+      ],
+      "type": "object",
+      "additionalProperties": false
+    },
+    "status": {
+      "description": "status defines the observed state of RulesetPreset",
+      "properties": {
+        "conditions": {
+          "description": "conditions represent the current state of the RulesetPreset resource.\nEach condition has a unique type and reflects the status of a specific aspect of the resource.\n\nStandard condition types include:\n- \"Available\": the resource is fully functional\n- \"Progressing\": the resource is being created or updated\n- \"Degraded\": the resource failed to reach or maintain its desired state\n\nThe status of each condition is one of True, False, or Unknown.",
+          "items": {
+            "description": "Condition contains details for one aspect of the current state of this API Resource.",
+            "properties": {
+              "lastTransitionTime": {
+                "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nThis should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "message": {
+                "description": "message is a human readable message indicating details about the transition.\nThis may be an empty string.",
+                "maxLength": 32768,
+                "type": "string"
+              },
+              "observedGeneration": {
+                "description": "observedGeneration represents the .metadata.generation that the condition was set based upon.\nFor instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date\nwith respect to the current state of the instance.",
+                "format": "int64",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "reason": {
+                "description": "reason contains a programmatic identifier indicating the reason for the condition's last transition.\nProducers of specific condition types may define expected values and meanings for this field,\nand whether the values are considered a guaranteed API.\nThe value should be a CamelCase string.\nThis field may not be empty.",
+                "maxLength": 1024,
+                "minLength": 1,
+                "pattern": "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$",
+                "type": "string"
+              },
+              "status": {
+                "description": "status of the condition, one of True, False, Unknown.",
+                "enum": [
+                  "True",
+                  "False",
+                  "Unknown"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+                "maxLength": 316,
+                "pattern": "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "lastTransitionTime",
+              "message",
+              "reason",
+              "status",
+              "type"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "spec"
+  ],
+  "type": "object"
+}
