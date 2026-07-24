@@ -179,6 +179,20 @@ type RepositorySpec struct {
 	// +kubebuilder:validation:Required
 	OrganizationRef OrganizationRef `json:"organizationRef,omitempty"`
 
+	// Teams defines team permissions for this repository.
+	// Each entry references an existing Team CRD via TeamRef and assigns it a specific permission level.
+	// Teams not present in this list will have their explicit repository access removed.
+	// See: https://docs.github.com/en/rest/teams/teams#add-or-update-team-repository-permissions
+	Teams []RepositoryTeamPermission `json:"teams,omitempty"`
+
+	// Collaborators defines direct repository member (collaborator) permissions.
+	// Each entry assigns a GitHub user a specific permission level.
+	// Collaborators not present in this list will have their explicit repository access removed.
+	// See: https://docs.github.com/en/rest/collaborators/collaborators#add-a-repository-collaborator
+	// +listType=map
+	// +listMapKey=username
+	Collaborators []RepositoryCollaboratorPermission `json:"collaborators,omitempty"`
+
 	// RulesetPresetList references RulesetPreset CRDs to apply to this repository.
 	// These define branch protection rules, required status checks, and other policies.
 	// See: https://docs.github.com/en/rest/repos/rules
@@ -215,6 +229,45 @@ type CodeSecurityConfigurationRef struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Type=string
 	Name string `json:"name"`
+}
+
+// RepositoryTeamPermission defines repository-level access for a GitHub team.
+type RepositoryTeamPermission struct {
+	// TeamRef references the Team CRD that should be granted access to this repository.
+	// +kubebuilder:validation:Required
+	TeamRef TeamRef `json:"teamRef"`
+
+	// Permission is the access level granted to the team for this repository.
+	// - "pull": Read-only access
+	// - "triage": Manage issues and pull requests without write access
+	// - "push": Read and write access
+	// - "maintain": Manage repository settings except sensitive/destructive actions
+	// - "admin": Full repository administrative access
+	// +kubebuilder:validation:Enum=pull;triage;push;maintain;admin
+	// +kubebuilder:default=pull
+	Permission string `json:"permission,omitempty"`
+}
+
+// RepositoryCollaboratorPermission defines repository-level access for a GitHub user.
+type RepositoryCollaboratorPermission struct {
+	// Username is the GitHub username of the member.
+	// Supports standard GitHub usernames and Enterprise Managed Users-style
+	// usernames with an underscore suffix (for example: "name-surname_org").
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=39
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*(?:_[a-zA-Z0-9](?:-?[a-zA-Z0-9])*)?$`
+	// +kubebuilder:validation:Required
+	Username string `json:"username"`
+
+	// Permission is the access level granted to the member for this repository.
+	// - "pull": Read-only access
+	// - "triage": Manage issues and pull requests without write access
+	// - "push": Read and write access
+	// - "maintain": Manage repository settings except sensitive/destructive actions
+	// - "admin": Full repository administrative access
+	// +kubebuilder:validation:Enum=pull;triage;push;maintain;admin
+	// +kubebuilder:default=pull
+	Permission string `json:"permission,omitempty"`
 }
 
 // MergeStrategy defines an allowed merge strategy for pull requests.

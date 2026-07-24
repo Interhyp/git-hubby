@@ -104,6 +104,16 @@ type RepositorySpecApplyConfiguration struct {
 	AvailableActionsRunnerGroups []string `json:"availableActionsRunnerGroups,omitempty"`
 	// OrganizationRef references the Organization CRD this repository belongs to.
 	OrganizationRef *OrganizationRefApplyConfiguration `json:"organizationRef,omitempty"`
+	// Teams defines team permissions for this repository.
+	// Each entry references an existing Team CRD via TeamRef and assigns it a specific permission level.
+	// Teams not present in this list will have their explicit repository access removed.
+	// See: https://docs.github.com/en/rest/teams/teams#add-or-update-team-repository-permissions
+	Teams []RepositoryTeamPermissionApplyConfiguration `json:"teams,omitempty"`
+	// Collaborators defines direct repository member (collaborator) permissions.
+	// Each entry assigns a GitHub user a specific permission level.
+	// Collaborators not present in this list will have their explicit repository access removed.
+	// See: https://docs.github.com/en/rest/collaborators/collaborators#add-a-repository-collaborator
+	Collaborators []RepositoryCollaboratorPermissionApplyConfiguration `json:"collaborators,omitempty"`
 	// RulesetPresetList references RulesetPreset CRDs to apply to this repository.
 	// These define branch protection rules, required status checks, and other policies.
 	// See: https://docs.github.com/en/rest/repos/rules
@@ -296,6 +306,32 @@ func (b *RepositorySpecApplyConfiguration) WithAvailableActionsRunnerGroups(valu
 // If called multiple times, the OrganizationRef field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithOrganizationRef(value *OrganizationRefApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.OrganizationRef = value
+	return b
+}
+
+// WithTeams adds the given value to the Teams field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Teams field.
+func (b *RepositorySpecApplyConfiguration) WithTeams(values ...*RepositoryTeamPermissionApplyConfiguration) *RepositorySpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithTeams")
+		}
+		b.Teams = append(b.Teams, *values[i])
+	}
+	return b
+}
+
+// WithCollaborators adds the given value to the Collaborators field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Collaborators field.
+func (b *RepositorySpecApplyConfiguration) WithCollaborators(values ...*RepositoryCollaboratorPermissionApplyConfiguration) *RepositorySpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithCollaborators")
+		}
+		b.Collaborators = append(b.Collaborators, *values[i])
+	}
 	return b
 }
 

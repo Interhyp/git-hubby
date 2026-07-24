@@ -57,6 +57,17 @@ type TeamCall struct {
 	Org         string
 	Slug        string
 	Description string
+	Owner       string
+	Repo        string
+	Permission  string
+}
+
+type CollaboratorCall struct {
+	Method     string
+	Owner      string
+	Repo       string
+	Username   string
+	Permission string
 }
 
 type TeamMemberCall struct {

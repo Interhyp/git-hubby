@@ -196,3 +196,36 @@ func (m *MockGitHubClientWrapper) GetOrgRepositories(ctx context.Context, org st
 	// Default implementation - return empty list
 	return make([]*github.Repository, 0), nil
 }
+
+func (m *MockGitHubClientWrapper) GetAllRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*github.User, error) {
+	m.recordRepoCall(RepoCall{Method: "GetAllRepositoryCollaborators", Owner: owner, Repo: repo})
+
+	if m.GetAllRepositoryCollaboratorsFunc != nil {
+		return m.GetAllRepositoryCollaboratorsFunc(ctx, owner, repo)
+	}
+
+	// Default implementation - return empty list
+	return make([]*github.User, 0), nil
+}
+
+func (m *MockGitHubClientWrapper) AddRepositoryCollaborator(ctx context.Context, owner, repo, username, permission string) error {
+	m.recordRepoCall(RepoCall{Method: "AddRepositoryCollaborator", Owner: owner, Repo: repo})
+
+	if m.AddRepositoryCollaboratorFunc != nil {
+		return m.AddRepositoryCollaboratorFunc(ctx, owner, repo, username, permission)
+	}
+
+	// Default implementation - return success
+	return nil
+}
+
+func (m *MockGitHubClientWrapper) RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error {
+	m.recordRepoCall(RepoCall{Method: "RemoveRepositoryCollaborator", Owner: owner, Repo: repo})
+
+	if m.RemoveRepositoryCollaboratorFunc != nil {
+		return m.RemoveRepositoryCollaboratorFunc(ctx, owner, repo, username)
+	}
+
+	// Default implementation - return success
+	return nil
+}
