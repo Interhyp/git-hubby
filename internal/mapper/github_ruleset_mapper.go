@@ -10,7 +10,7 @@ import (
 )
 
 // RulesetPresetToGithubRuleset converts a RulesetPreset to a GitHub RepositoryRuleset.
-// reconciler.ResolveNamesToIDsInRuleset must have been called before.
+// NameResolver.ResolveRuleset must have been called on preset before passing it here.
 func RulesetPresetToGithubRuleset(preset githubv1alpha1.RulesetPreset) (*github.RepositoryRuleset, error) {
 	if preset.Spec.Name == "" {
 		return nil, fmt.Errorf("ruleset name cannot be empty")

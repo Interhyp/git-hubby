@@ -6,7 +6,6 @@ import (
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
-	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/google/go-github/v89/github"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
@@ -69,7 +68,7 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 			rulesetPreset.Spec.Rules.PullRequest.RequiredReviewers = nil
 		}
 
-		rulesetPreset, err := reconciler.ResolveNamesToIDsInRuleset(ctx, r.GitHub.Client, r.GitHub.Resource.Owner, rulesetPreset)
+		rulesetPreset, err = r.NameResolver.ResolveRuleset(ctx, rulesetPreset)
 		if err != nil {
 			log.Error(err, "failed to resolve ruleset slugs to IDs")
 			return fmt.Errorf("failed to resolve slugs in ruleset %s to IDs: %w", rulesetRef.Name, err)

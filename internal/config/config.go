@@ -20,9 +20,20 @@ type Features struct {
 	EnableStartupSpreading bool `env:"ENABLE_STARTUP_SPREADING" envDefault:"true"`
 }
 
+// RateLimitConfig holds configuration for the per-org rate limit registry.
+type RateLimitConfig struct {
+	// StallThresholdCore is the minimum core API calls remaining before stalling an org.
+	StallThresholdCore int `env:"RATE_LIMIT_STALL_THRESHOLD_CORE" envDefault:"100"`
+	// ResetGracePeriod is added to the GitHub reset time before allowing reconciliation to resume.
+	ResetGracePeriod int `env:"RATE_LIMIT_RESET_GRACE_PERIOD_SECONDS" envDefault:"10"`
+	// StalenessThresholdMinutes is how many minutes old registry data can be before refreshing.
+	StalenessThresholdMinutes int `env:"RATE_LIMIT_STALENESS_THRESHOLD_MINUTES" envDefault:"5"`
+}
+
 // Config holds all operator configuration loaded from environment variables at startup.
 type Config struct {
-	Features Features
+	Features        Features
+	RateLimitConfig RateLimitConfig
 
 	// Kubernetes scope
 	WatchNamespace                string `env:"WATCH_NAMESPACE,notEmpty"`

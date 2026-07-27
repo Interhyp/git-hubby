@@ -201,9 +201,10 @@ Common patterns:
 
 ### Rate Limit Handling
 
-- Factory checks remaining GitHub API quota before reconciliation
-- Returns `RateLimitedError` when quota is low
-- Controllers use exponential backoff + global GitHub limiter
+- **Per-org passive tracking**: A `rateLimitTrackerTransport` HTTP middleware reads `X-RateLimit-*` response headers from every API call and updates a per-org, per-category registry — no extra API calls required
+- **Stall-on-threshold**: Before each reconciliation, the factory checks remaining quota against a configurable threshold (default: 100 core calls). If quota is low, a `RateLimitedError` is returned and the reconciliation is requeued after the GitHub reset time
+- **Staleness recovery**: If registry data is older than the configured staleness window, the factory refreshes via a free `GET /rate_limit` call
+- **Independent per-org**: A heavily used org does not delay reconciliation of others
 - Priority queue ensures new resources reconcile immediately
 - Successful reconciliations requeue after spread interval for continuous monitoring
 
@@ -211,6 +212,14 @@ Common patterns:
 
 - **Organizations**: Only deleted when no `Repository` references remain (enforced via finalizer)
 - **Repositories**: Archived instead of hard-deleted
+
+### Rate Limit Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RATE_LIMIT_STALL_THRESHOLD_CORE` | `100` | Minimum remaining core API calls before stalling reconciliation for an org |
+| `RATE_LIMIT_RESET_GRACE_PERIOD_SECONDS` | `10` | Seconds added to the GitHub reset time before allowing reconciliation to resume |
+| `RATE_LIMIT_STALENESS_THRESHOLD_MINUTES` | `5` | Minutes after which cached rate-limit data is refreshed via `GET /rate_limit` |
 
 ### Feature Flags
 

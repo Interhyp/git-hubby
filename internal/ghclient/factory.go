@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Interhyp/git-hubby/internal/ratelimit"
 	"github.com/PuerkitoBio/rehttp"
 	"github.com/gofri/go-github-pagination/githubpagination"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit"
@@ -38,6 +39,10 @@ type ClientConfig struct {
 	RetryBaseDelay time.Duration
 	// Maximum delay between retries
 	RetryMaxDelay time.Duration
+	// ResponseCacheTTL controls how long expensive list operations (teams, apps, roles)
+	// are cached in the CachingClient wrapper. Caching is opt-in per call via WithCache(ctx).
+	// Zero disables the caching wrapper entirely.
+	ResponseCacheTTL time.Duration
 }
 
 // AppConfig identifies a GitHub App installation for client creation and caching.
@@ -64,22 +69,24 @@ func (e RateLimitedError) Is(err error) bool {
 // DefaultClientConfig returns a configuration with sensible defaults
 func DefaultClientConfig() *ClientConfig {
 	return &ClientConfig{
-		Timeout:        2 * time.Minute,
-		EnableRetry:    true,
-		EnableMetrics:  true,
-		EnableLogging:  false, // Disabled by default to avoid log spam
-		MaxRetries:     3,
-		RetryBaseDelay: 1 * time.Second,
-		RetryMaxDelay:  10 * time.Second,
+		Timeout:          2 * time.Minute,
+		EnableRetry:      true,
+		EnableMetrics:    true,
+		EnableLogging:    false, // Disabled by default to avoid log spam
+		MaxRetries:       3,
+		RetryBaseDelay:   1 * time.Second,
+		RetryMaxDelay:    10 * time.Second,
+		ResponseCacheTTL: 5 * time.Minute,
 	}
 }
 
 // ClientInfo holds metadata about a cached client
 type ClientInfo struct {
-	Client         *GitHubClientWrapper
+	Client         GitHubClient
 	InstallationID int64
 	CacheKey       string
 	SecretName     string
+	OrgLogin       string
 }
 
 // CachingGitHubClientFactory creates and caches GitHub clients with proper lifecycle and thread safety.
@@ -93,6 +100,8 @@ type CachingGitHubClientFactory struct {
 	credentials      map[string]*AppCredentials
 	rateLimitStates  map[int64]*github_primary_ratelimit.RateLimitState
 	legacySecretName string
+	// orgRegistry, if non-nil, receives rate limit header updates from every API response.
+	orgRegistry *ratelimit.OrgRateLimitRegistry
 }
 
 // AppCredentials holds parsed GitHub App credentials
@@ -109,7 +118,8 @@ type SecretProviderFunc = func(ctx context.Context, secretName string) (*v1.Secr
 // credentials are fetched lazily via the given SecretProviderFunc upon first client creation for each secret.
 // legacySecretName is the fallback credentials secret name used for Organizations that still rely on the
 // deprecated GitHubAppInstallationId field rather than the new GitHubAppConfig.
-func NewGitHubCachingClientFactory(config *ClientConfig, providerFunc SecretProviderFunc, legacySecretName string) (*CachingGitHubClientFactory, error) {
+// orgRegistry is optional: when non-nil, every API response's rate limit headers are recorded in the registry.
+func NewGitHubCachingClientFactory(config *ClientConfig, providerFunc SecretProviderFunc, legacySecretName string, orgRegistry *ratelimit.OrgRateLimitRegistry) (*CachingGitHubClientFactory, error) {
 	if config == nil {
 		config = DefaultClientConfig()
 	}
@@ -121,14 +131,20 @@ func NewGitHubCachingClientFactory(config *ClientConfig, providerFunc SecretProv
 		config:           config,
 		secretProvider:   providerFunc,
 		legacySecretName: legacySecretName,
+		orgRegistry:      orgRegistry,
 	}
 	return manager, nil
 }
 
-// GetClient retrieves or creates a GitHub client for the given cacheKey and AppConfig.
-// If app.CredentialsSecretName is empty the factory falls back to its legacySecretName.
-// If a cached client exists for the cacheKey with matching credentials, it is returned directly.
-// If the credentials secret changed, the old client is evicted and a new one is created.
+// GetClient retrieves or creates a GitHub client for the given cacheKey and AppConfig,
+// then enforces rate-limit gating before returning it.
+//
+// If an OrgRateLimitRegistry is configured (the normal path):
+//  1. Check for a stall before acquiring the client.
+//  2. If registry data is stale, refresh via GET /rate_limit (this endpoint is free).
+//  3. Re-check for a stall after the refresh.
+//
+// If the credentials secret changed, the old cached client is evicted and a new one is created.
 func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey string, app AppConfig) (GitHubClient, error) {
 	secretName := app.CredentialsSecretName
 	if secretName == "" {
@@ -137,7 +153,7 @@ func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey str
 	log := logf.FromContext(ctx, "function", "GetClient")
 
 	if c := m.getCachedClient(cacheKey, secretName); c != nil {
-		return c, nil
+		return m.checkRateLimit(ctx, cacheKey, app.InstallationID, c)
 	}
 
 	// Create new client with write lock
@@ -147,7 +163,7 @@ func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey str
 	// Double-check after acquiring write lock
 	if info, exists := m.clients[cacheKey]; exists {
 		if info.SecretName == secretName {
-			return info.Client, nil
+			return m.checkRateLimit(ctx, cacheKey, app.InstallationID, info.Client)
 		}
 		// Credentials secret changed – evict the stale client
 		delete(m.clients, cacheKey)
@@ -156,47 +172,62 @@ func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey str
 
 	log.Info("Creating new GitHub client")
 
-	ghClient, err := m.createClient(ctx, app.InstallationID, secretName)
+	ghClient, err := m.createClient(ctx, app.InstallationID, secretName, cacheKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GitHub client for key %s: %w", cacheKey, err)
 	}
-	wrappedClient := &GitHubClientWrapper{
-		client: ghClient,
+
+	var clientToCache GitHubClient = &GitHubClientWrapper{client: ghClient}
+	if m.config.ResponseCacheTTL > 0 {
+		clientToCache = NewCachingClient(clientToCache, m.config.ResponseCacheTTL)
 	}
 
 	m.clients[cacheKey] = &ClientInfo{
-		Client:         wrappedClient,
+		Client:         clientToCache,
 		InstallationID: app.InstallationID,
 		CacheKey:       cacheKey,
 		SecretName:     secretName,
+		OrgLogin:       cacheKey,
 	}
 
 	log.Info("Successfully created and cached GitHub client", "installationID", app.InstallationID)
-	return wrappedClient, nil
+	return m.checkRateLimit(ctx, cacheKey, app.InstallationID, clientToCache)
 }
 
-// GetGitHubClientAndCheckRateLimit retrieves a GitHub client and verifies the remaining rate limit.
-func (m *CachingGitHubClientFactory) GetGitHubClientAndCheckRateLimit(ctx context.Context, cacheKey string, app AppConfig, rateLimitMinimum int) (GitHubClient, error) {
-	ghClient, err := m.GetClient(ctx, cacheKey, app)
-	if err != nil {
-		return nil, err
+// checkRateLimit enforces rate-limit gating for the given org using the registry when available.
+// It is called at the end of GetClient once a client has been acquired (cached or newly created).
+func (m *CachingGitHubClientFactory) checkRateLimit(ctx context.Context, orgLogin string, installationID int64, ghClient GitHubClient) (GitHubClient, error) {
+	if m.orgRegistry == nil {
+		return ghClient, nil
 	}
-	rl, err := ghClient.GetRateLimit(ctx)
-	if err != nil {
-		return nil, err
+	log := logf.FromContext(ctx)
+
+	// Fast path: stall already known from tracked response headers.
+	if stalled, delay := m.orgRegistry.ShouldStall(orgLogin); stalled {
+		log.V(1).Info("Per-org rate limit stall detected, requeuing", "org", orgLogin, "delay", delay)
+		return nil, &RateLimitedError{ResetTime: time.Now().Add(delay)}
 	}
-	if rl.Core != nil && rl.Core.Remaining < rateLimitMinimum {
-		logf.FromContext(ctx).V(1).Info("Encountered Rate limit", "remaining", rl.Core.Remaining, "reset", rl.Core.Reset.Time)
-		return nil, &RateLimitedError{
-			ResetTime: rl.Core.Reset.Time,
+
+	// Slow path: registry data is stale — refresh via GET /rate_limit (free endpoint).
+	if m.orgRegistry.IsStale(orgLogin) {
+		rl, rlErr := ghClient.GetRateLimit(ctx)
+		if rlErr != nil {
+			log.V(1).Info("Could not refresh rate limit registry, continuing without refresh", "org", orgLogin, "error", rlErr)
+		} else {
+			m.orgRegistry.UpdateFromRateLimitResponse(orgLogin, rl, installationID)
+			if stalled, delay := m.orgRegistry.ShouldStall(orgLogin); stalled {
+				log.V(1).Info("Per-org rate limit stall detected after refresh, requeuing", "org", orgLogin, "delay", delay)
+				return nil, &RateLimitedError{ResetTime: time.Now().Add(delay)}
+			}
 		}
 	}
+
 	return ghClient, nil
 }
 
 // getCachedClient returns an existing client without creating a new one, only if the cached
 // client was created with the same credential secret.
-func (m *CachingGitHubClientFactory) getCachedClient(cacheKey string, secretName string) *GitHubClientWrapper {
+func (m *CachingGitHubClientFactory) getCachedClient(cacheKey string, secretName string) GitHubClient {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -207,8 +238,18 @@ func (m *CachingGitHubClientFactory) getCachedClient(cacheKey string, secretName
 	return nil
 }
 
-// createClient creates a new GitHub client with proper middleware setup
-func (m *CachingGitHubClientFactory) createClient(ctx context.Context, installationID int64, secretName string) (*github.Client, error) {
+// SetOrgRateLimitRegistry attaches a registry to an already-constructed factory.
+// This allows the registry to be created after the factory (e.g., depending on a feature flag)
+// and injected before the first client is created.
+// It is not safe to call concurrently with GetClient.
+func (m *CachingGitHubClientFactory) SetOrgRateLimitRegistry(registry *ratelimit.OrgRateLimitRegistry) {
+	m.orgRegistry = registry
+}
+
+// createClient creates a new GitHub client with proper middleware setup.
+// orgLogin is used to label the rate limit tracker transport so the registry
+// can attribute response headers to the correct organization.
+func (m *CachingGitHubClientFactory) createClient(ctx context.Context, installationID int64, secretName string, orgLogin string) (*github.Client, error) {
 	log := logf.FromContext(ctx)
 	log.Info("Creating GitHub client with middleware stack")
 
@@ -232,7 +273,7 @@ func (m *CachingGitHubClientFactory) createClient(ctx context.Context, installat
 		creds = parsedCreds
 	}
 
-	ghClient, err := m.buildClientWithMiddleware(installationID, creds)
+	ghClient, err := m.buildClientWithMiddleware(installationID, creds, orgLogin)
 	if err != nil {
 		log.Error(err, "failed to create GitHub client")
 		return nil, err
@@ -241,12 +282,12 @@ func (m *CachingGitHubClientFactory) createClient(ctx context.Context, installat
 }
 
 // buildClientWithMiddleware creates a GitHub client with the full middleware stack
-func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID int64, creds *AppCredentials) (*github.Client, error) {
+func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID int64, creds *AppCredentials, orgLogin string) (*github.Client, error) {
 	clientName := fmt.Sprintf("github-%d", appInstallationID)
 
 	return github.NewClient(
 		github.WithHTTPClient(&http.Client{
-			Transport: m.buildMiddlewareStack(clientName, creds, appInstallationID),
+			Transport: m.buildMiddlewareStack(clientName, creds, appInstallationID, orgLogin),
 			Timeout:   m.config.Timeout,
 		}),
 		github.WithDisableRateLimitCheck(),
@@ -255,7 +296,8 @@ func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID
 
 // buildMiddlewareStack constructs the HTTP transport middleware stack.
 // Rate limit state is shared per GitHub App ID so installations of the same App share a quota bucket.
-func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, creds *AppCredentials, appInstallationID int64) http.RoundTripper {
+// If the factory has an OrgRateLimitRegistry, a tracker transport is inserted to record response headers.
+func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, creds *AppCredentials, appInstallationID int64, orgLogin string) http.RoundTripper {
 	// Start with the base transport
 	rt := http.DefaultTransport
 
@@ -271,7 +313,11 @@ func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, cre
 	// Authentication
 	rt = AuthorizeGitHubAccess(rt, creds.AppID, appInstallationID, creds.PrivateKey)
 
-	// Request logging (if enabled) - TODO: Implement when logging package is available
+	// Per-org rate limit header tracking (inserted above auth so it sees authenticated responses)
+	if m.orgRegistry != nil {
+		rt = newRateLimitTrackerTransport(rt, orgLogin, creds.AppID, m.orgRegistry)
+	}
+
 	// retry
 	retryFn := rehttp.RetryAll(
 		rehttp.RetryAny(

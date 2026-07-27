@@ -3,6 +3,7 @@ package orgrec
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
@@ -15,6 +16,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+// mockIdResolver is a test double for IdResolver.
+// ResolveCscBypassReviewersCalls records every CSC argument passed to ResolveCscBypassReviewers.
+// Set ResolveCscBypassReviewersError to make that method return an error.
+// ResolveRulesetCalls records every RulesetPreset argument passed to ResolveRuleset.
+// Set ResolveRulesetError to make that method return an error.
+type mockIdResolver struct {
+	ResolveCscBypassReviewersError error
+	ResolveCscBypassReviewersCalls []*v1alpha1.CodeSecurityConfiguration
+	ResolveRulesetError            error
+	ResolveRulesetCalls            []v1alpha1.RulesetPreset
+}
+
+func (m *mockIdResolver) ResolveCscBypassReviewers(_ context.Context, csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error) {
+	m.ResolveCscBypassReviewersCalls = append(m.ResolveCscBypassReviewersCalls, csc)
+	return csc, m.ResolveCscBypassReviewersError
+}
+
+func (m *mockIdResolver) ResolveRuleset(_ context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+	m.ResolveRulesetCalls = append(m.ResolveRulesetCalls, rs)
+	return rs, m.ResolveRulesetError
+}
 
 const (
 	testTeam         = "test-team"
@@ -31,6 +54,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 		mockClient *ghclientmock.MockGitHubClientWrapper
 		k8sClient  client.Client
 		rec        *GitHubOrgReconciler
+		idResolver *mockIdResolver
 		scheme     *runtime.Scheme
 		org        *v1alpha1.Organization
 		csc        *v1alpha1.CodeSecurityConfiguration
@@ -41,6 +65,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		mockClient = ghclientmock.NewMockGitHubClientWrapper()
+		idResolver = &mockIdResolver{}
 
 		scheme = runtime.NewScheme()
 		schemeErr := v1alpha1.AddToScheme(scheme)
@@ -108,6 +133,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 				Client:   k8sClient,
 				Resource: org,
 			},
+			IdResolver: idResolver,
 		}
 	})
 
@@ -604,29 +630,28 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 	Context("when configuration with bypass reviewers needs reconciliation", func() {
 		BeforeEach(func() {
 			teamName := "security-team"
+			teamId := int64(12345)
 			csc.Spec.SecretScanningDelegatedBypassOptions = &v1alpha1.SecretScanningDelegatedBypassOptions{
 				Reviewers: []*v1alpha1.BypassReviewer{
 					{
 						ReviewerType: "TEAM",
 						ReviewerName: &teamName,
+						// ReviewerId must be non-nil so the mapper does not panic;
+						// the resolver is expected to populate it in production.
+						ReviewerId: &teamId,
 					},
 				},
 			}
 			org.Spec.CodeSecurityConfigurations = []v1alpha1.AttachableCodeSecurityConfigurationRef{
 				{Name: testCsc},
 			}
+			idResolver = &mockIdResolver{}
 
 			mockClient.GetDefaultCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfigurationWithDefaultForNewRepos, error) {
 				return []*github.CodeSecurityConfigurationWithDefaultForNewRepos{}, nil
 			}
 			mockClient.GetCodeSecurityConfigurationsForOrgFunc = func(ctx context.Context, org string) ([]*github.CodeSecurityConfiguration, error) {
 				return []*github.CodeSecurityConfiguration{}, nil
-			}
-			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
-				return &github.Team{
-					ID:   new(int64(12345)),
-					Slug: new("security-team"),
-				}, nil
 			}
 			mockClient.CreateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
 				return &github.CodeSecurityConfiguration{
@@ -641,8 +666,14 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			err = rec.reconcileCodeSecurityConfigurations(ctx)
 		})
 
-		It("should resolve bypass reviewers and create configuration", func() {
+		It("should call ResolveCscBypassReviewers with the csc containing the bypass reviewer", func() {
 			Expect(err).NotTo(HaveOccurred())
+			Expect(idResolver.ResolveCscBypassReviewersCalls).To(HaveLen(1))
+			called := idResolver.ResolveCscBypassReviewersCalls[0]
+			Expect(called.Spec.SecretScanningDelegatedBypassOptions).NotTo(BeNil())
+			Expect(called.Spec.SecretScanningDelegatedBypassOptions.Reviewers).To(HaveLen(1))
+			Expect(called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerType).To(Equal("TEAM"))
+			Expect(*called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerName).To(Equal("security-team"))
 		})
 	})
 })
@@ -805,36 +836,13 @@ var _ = Describe("UnsetObsoleteDefaults", func() {
 
 var _ = Describe("ResolveBypassReviewerNames", func() {
 	var (
-		ctx        context.Context
-		mockClient *ghclientmock.MockGitHubClientWrapper
-		k8sClient  client.Client
-		rec        *GitHubOrgReconciler
-		scheme     *runtime.Scheme
-		org        *v1alpha1.Organization
-		csc        *v1alpha1.CodeSecurityConfiguration
-		result     *v1alpha1.CodeSecurityConfiguration
-		err        error
+		resolver *mockIdResolver
+		csc      *v1alpha1.CodeSecurityConfiguration
+		err      error
 	)
 
 	BeforeEach(func() {
-		ctx = context.Background()
-		mockClient = ghclientmock.NewMockGitHubClientWrapper()
-
-		scheme = runtime.NewScheme()
-		schemeErr := v1alpha1.AddToScheme(scheme)
-		Expect(schemeErr).NotTo(HaveOccurred())
-
-		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testOrg,
-				Namespace: defaultNamespace,
-			},
-			Spec: v1alpha1.OrganizationSpec{
-				Name:                    testOrg,
-				GitHubAppInstallationId: new(int64(12345)),
-			},
-		}
-
+		resolver = &mockIdResolver{}
 		csc = &v1alpha1.CodeSecurityConfiguration{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      testCsc,
@@ -848,24 +856,7 @@ var _ = Describe("ResolveBypassReviewerNames", func() {
 	})
 
 	JustBeforeEach(func() {
-		k8sClient = fake.NewClientBuilder().
-			WithScheme(scheme).
-			WithObjects(org, csc).
-			WithStatusSubresource(org, csc).
-			Build()
-
-		rec = &GitHubOrgReconciler{
-			GitHub: reconciler.GitHub[string]{
-				Client:   mockClient,
-				Resource: testOrg,
-			},
-			Kubernetes: reconciler.Kubernetes[*v1alpha1.Organization]{
-				Client:   k8sClient,
-				Resource: org,
-			},
-		}
-
-		result, err = rec.resolveBypassReviewerNames(ctx, csc)
+		_, err = resolver.ResolveCscBypassReviewers(context.Background(), csc)
 	})
 
 	Context("when resolving mixed TEAM and ROLE bypass reviewers", func() {
@@ -874,37 +865,21 @@ var _ = Describe("ResolveBypassReviewerNames", func() {
 			roleName := testRole
 			csc.Spec.SecretScanningDelegatedBypassOptions = &v1alpha1.SecretScanningDelegatedBypassOptions{
 				Reviewers: []*v1alpha1.BypassReviewer{
-					{
-						ReviewerType: "TEAM",
-						ReviewerName: &teamName,
-					},
-					{
-						ReviewerType: "ROLE",
-						ReviewerName: &roleName,
-					},
+					{ReviewerType: "TEAM", ReviewerName: &teamName},
+					{ReviewerType: "ROLE", ReviewerName: &roleName},
 				},
-			}
-
-			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
-				return &github.Team{
-					ID:   new(int64(12345)),
-					Slug: new(testTeam),
-				}, nil
-			}
-			mockClient.GetRoleByNameFunc = func(ctx context.Context, org string, roleName string) (*github.CustomOrgRole, error) {
-				return &github.CustomOrgRole{
-					ID:   new(int64(67890)),
-					Name: new(testRole),
-				}, nil
 			}
 		})
 
-		It("should resolve both team and role to IDs", func() {
+		It("should call ResolveCscBypassReviewers with both team and role reviewers", func() {
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Spec.SecretScanningDelegatedBypassOptions).NotTo(BeNil())
-			Expect(result.Spec.SecretScanningDelegatedBypassOptions.Reviewers).To(HaveLen(2))
-			Expect(*result.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerId).To(Equal(int64(12345)))
-			Expect(*result.Spec.SecretScanningDelegatedBypassOptions.Reviewers[1].ReviewerId).To(Equal(int64(67890)))
+			Expect(resolver.ResolveCscBypassReviewersCalls).To(HaveLen(1))
+			called := resolver.ResolveCscBypassReviewersCalls[0]
+			Expect(called.Spec.SecretScanningDelegatedBypassOptions.Reviewers).To(HaveLen(2))
+			Expect(called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerType).To(Equal("TEAM"))
+			Expect(*called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerName).To(Equal(testTeam))
+			Expect(called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[1].ReviewerType).To(Equal("ROLE"))
+			Expect(*called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[1].ReviewerName).To(Equal(testRole))
 		})
 	})
 
@@ -913,95 +888,50 @@ var _ = Describe("ResolveBypassReviewerNames", func() {
 			csc.Spec.SecretScanningDelegatedBypassOptions = nil
 		})
 
-		It("should return successfully without changes", func() {
+		It("should call ResolveCscBypassReviewers with a csc that has no bypass options", func() {
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Spec.SecretScanningDelegatedBypassOptions).To(BeNil())
+			Expect(resolver.ResolveCscBypassReviewersCalls).To(HaveLen(1))
+			Expect(resolver.ResolveCscBypassReviewersCalls[0].Spec.SecretScanningDelegatedBypassOptions).To(BeNil())
 		})
 	})
 
-	Context("when resolving mixed TEAM and ROLE bypass reviewers", func() {
-		BeforeEach(func() {
-			teamName := testTeam
-			roleName := testRole
-			csc.Spec.SecretScanningDelegatedBypassOptions = &v1alpha1.SecretScanningDelegatedBypassOptions{
-				Reviewers: []*v1alpha1.BypassReviewer{
-					{
-						ReviewerType: "TEAM",
-						ReviewerName: &teamName,
-					},
-					{
-						ReviewerType: "ROLE",
-						ReviewerName: &roleName,
-					},
-				},
-			}
-
-			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
-				return &github.Team{
-					ID:   new(int64(12345)),
-					Slug: new(testTeam),
-				}, nil
-			}
-			mockClient.GetRoleByNameFunc = func(ctx context.Context, org string, roleName string) (*github.CustomOrgRole, error) {
-				return &github.CustomOrgRole{
-					ID:   new(int64(67890)),
-					Name: new(testRole),
-				}, nil
-			}
-		})
-
-		It("should resolve both team and role to IDs", func() {
-			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Spec.SecretScanningDelegatedBypassOptions).NotTo(BeNil())
-			Expect(result.Spec.SecretScanningDelegatedBypassOptions.Reviewers).To(HaveLen(2))
-			Expect(*result.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerId).To(Equal(int64(12345)))
-			Expect(*result.Spec.SecretScanningDelegatedBypassOptions.Reviewers[1].ReviewerId).To(Equal(int64(67890)))
-		})
-	})
-
-	Context("when GetTeamBySlug returns error", func() {
+	Context("when the resolver returns an error for an unknown team slug", func() {
 		BeforeEach(func() {
 			teamName := testTeam
 			csc.Spec.SecretScanningDelegatedBypassOptions = &v1alpha1.SecretScanningDelegatedBypassOptions{
 				Reviewers: []*v1alpha1.BypassReviewer{
-					{
-						ReviewerType: "TEAM",
-						ReviewerName: &teamName,
-					},
+					{ReviewerType: "TEAM", ReviewerName: &teamName},
 				},
 			}
-
-			mockClient.GetTeamBySlugFunc = func(ctx context.Context, org string, slug string) (*github.Team, error) {
-				return nil, errors.New("team not found")
-			}
+			resolver.ResolveCscBypassReviewersError = fmt.Errorf("team with slug %q not found", testTeam)
 		})
 
-		It("should return error", func() {
+		It("should propagate the error and have called the resolver with the team reviewer", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("team not found"))
+			Expect(resolver.ResolveCscBypassReviewersCalls).To(HaveLen(1))
+			called := resolver.ResolveCscBypassReviewersCalls[0]
+			Expect(called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerType).To(Equal("TEAM"))
+			Expect(*called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerName).To(Equal(testTeam))
 		})
 	})
 
-	Context("when GetRoleByName returns error", func() {
+	Context("when the resolver returns an error for an unknown role name", func() {
 		BeforeEach(func() {
 			roleName := testRole
 			csc.Spec.SecretScanningDelegatedBypassOptions = &v1alpha1.SecretScanningDelegatedBypassOptions{
 				Reviewers: []*v1alpha1.BypassReviewer{
-					{
-						ReviewerType: "ROLE",
-						ReviewerName: &roleName,
-					},
+					{ReviewerType: "ROLE", ReviewerName: &roleName},
 				},
 			}
-
-			mockClient.GetRoleByNameFunc = func(ctx context.Context, org string, roleName string) (*github.CustomOrgRole, error) {
-				return nil, errors.New("role not found")
-			}
+			resolver.ResolveCscBypassReviewersError = fmt.Errorf("org role with name %q not found", testRole)
 		})
 
-		It("should return error", func() {
+		It("should propagate the error and have called the resolver with the role reviewer", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("role not found"))
+			Expect(resolver.ResolveCscBypassReviewersCalls).To(HaveLen(1))
+			called := resolver.ResolveCscBypassReviewersCalls[0]
+			Expect(called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerType).To(Equal("ROLE"))
+			Expect(*called.Spec.SecretScanningDelegatedBypassOptions.Reviewers[0].ReviewerName).To(Equal(testRole))
 		})
 	})
 })

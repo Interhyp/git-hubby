@@ -17,12 +17,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+// mockRepoResourceNameResolver is a test double for RepoResourceNameResolver.
+// ResolveRulesetCalls records every RulesetPreset argument passed to ResolveRuleset.
+// Set ResolveRulesetError to make that method return an error.
+type mockRepoResourceNameResolver struct {
+	ResolveRulesetError error
+	ResolveRulesetCalls []v1alpha1.RulesetPreset
+}
+
+func (m *mockRepoResourceNameResolver) ResolveRuleset(_ context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+	m.ResolveRulesetCalls = append(m.ResolveRulesetCalls, rs)
+	return rs, m.ResolveRulesetError
+}
+
 var _ = Describe("ReconcileRuleSets", func() {
 	var (
 		ctx                 context.Context
 		mockClient          *ghclientmock.MockGitHubClientWrapper
 		k8sClient           client.Client
 		rec                 *GitHubRepoReconciler
+		nameResolver        *mockRepoResourceNameResolver
 		scheme              *runtime.Scheme
 		repo                *v1alpha1.Repository
 		rulesetPresets      []*v1alpha1.RulesetPreset
@@ -42,6 +56,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		mockClient = ghclientmock.NewMockGitHubClientWrapper()
+		nameResolver = &mockRepoResourceNameResolver{}
 
 		scheme = runtime.NewScheme()
 		schemeErr := v1alpha1.AddToScheme(scheme)
@@ -164,6 +179,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 				Client:   k8sClient,
 				Resource: repo,
 			},
+			NameResolver: nameResolver,
 		}
 
 		err = rec.reconcileRuleSets(ctx)
@@ -1609,6 +1625,114 @@ var _ = Describe("ReconcileRuleSets", func() {
 			Expect(updateRulesetCalled).To(BeFalse())
 			Expect(deleteRulesetCalled).To(BeTrue())
 			Expect(deletedRulesetIDs).To(ConsistOf(int64(999)))
+		})
+	})
+
+	Context("when ResolveRuleset is called for each processed preset", func() {
+		BeforeEach(func() {
+			rulesetPresets = []*v1alpha1.RulesetPreset{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "branch-ruleset-a",
+						Namespace: "default",
+					},
+					Spec: v1alpha1.RulesetPresetSpec{
+						Name:        "branch-ruleset-a",
+						Target:      "branch",
+						Enforcement: v1alpha1.RulesetEnforcementActive,
+						Conditions: &v1alpha1.RulesetConditions{
+							RefName: &v1alpha1.RefNameCondition{
+								Include: []string{"main"},
+							},
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "branch-ruleset-b",
+						Namespace: "default",
+					},
+					Spec: v1alpha1.RulesetPresetSpec{
+						Name:        "branch-ruleset-b",
+						Target:      "branch",
+						Enforcement: v1alpha1.RulesetEnforcementActive,
+						Conditions: &v1alpha1.RulesetConditions{
+							RefName: &v1alpha1.RefNameCondition{
+								Include: []string{"develop"},
+							},
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "repo-target-skipped",
+						Namespace: "default",
+					},
+					Spec: v1alpha1.RulesetPresetSpec{
+						Name:        "repo-target-skipped",
+						Target:      "repository",
+						Enforcement: v1alpha1.RulesetEnforcementActive,
+					},
+				},
+			}
+		})
+
+		It("should call ResolveRuleset exactly once for each non-repository-target preset", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(nameResolver.ResolveRulesetCalls).To(HaveLen(2))
+			resolvedNames := []string{
+				nameResolver.ResolveRulesetCalls[0].Spec.Name,
+				nameResolver.ResolveRulesetCalls[1].Spec.Name,
+			}
+			Expect(resolvedNames).To(ConsistOf("branch-ruleset-a", "branch-ruleset-b"))
+		})
+
+		It("should not call ResolveRuleset for the repository-target preset", func() {
+			Expect(err).NotTo(HaveOccurred())
+			for _, call := range nameResolver.ResolveRulesetCalls {
+				Expect(call.Spec.Target).NotTo(Equal("repository"))
+			}
+		})
+	})
+
+	Context("when ResolveRuleset returns an error", func() {
+		BeforeEach(func() {
+			nameResolver.ResolveRulesetError = errors.New("failed to resolve slugs")
+
+			rulesetPresets = []*v1alpha1.RulesetPreset{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "main-protection",
+						Namespace: "default",
+					},
+					Spec: v1alpha1.RulesetPresetSpec{
+						Name:        "main-protection",
+						Target:      "branch",
+						Enforcement: v1alpha1.RulesetEnforcementActive,
+						Conditions: &v1alpha1.RulesetConditions{
+							RefName: &v1alpha1.RefNameCondition{
+								Include: []string{"main"},
+							},
+						},
+					},
+				},
+			}
+		})
+
+		It("should return the error", func() {
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("failed to resolve slugs in ruleset"))
+			Expect(err.Error()).To(ContainSubstring("failed to resolve slugs"))
+		})
+
+		It("should not create or update any ruleset", func() {
+			Expect(createRulesetCalled).To(BeFalse())
+			Expect(updateRulesetCalled).To(BeFalse())
+		})
+
+		It("should have called ResolveRuleset once before failing", func() {
+			Expect(nameResolver.ResolveRulesetCalls).To(HaveLen(1))
+			Expect(nameResolver.ResolveRulesetCalls[0].Spec.Name).To(Equal("main-protection"))
 		})
 	})
 })

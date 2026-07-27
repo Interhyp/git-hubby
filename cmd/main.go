@@ -339,15 +339,21 @@ func main() {
 		}
 		return &secret, nil
 	}
+	orgRegistry := ratelimit.NewOrgRateLimitRegistryFromConfig(cfg)
+	setupLog.Info("Per-org rate limit tracking initialized",
+		"coreThreshold", cfg.RateLimitConfig.StallThresholdCore,
+	)
 	clientManager, err := ghclient.NewGitHubCachingClientFactory(
 		ghclient.DefaultClientConfig(),
 		fetchSecret,
 		appCredentialsSecretName,
+		orgRegistry,
 	)
 	if err != nil {
 		setupLog.Error(err, "failed to create GitHub client factory")
 		os.Exit(1)
 	}
+
 	spreadingManager := spreading.NewDefaultManager(
 		spreading.WithEnabled(cfg.Features.EnableStartupSpreading),
 		spreading.WithSpreadPeriod(cfg.SpreadPeriodMinutes),
@@ -366,16 +372,9 @@ func main() {
 		Config:           cfg,
 	}
 
-	globalLimiter := ratelimit.NewGitHubRateLimiter(ratelimit.GitHubRateLimiterConfig{
-		RequestsPerHour: 15000, // GitHub's rate limit
-		BurstSize:       500,   // Allow some burst
-		EnableBlocking:  true,  // Enable blocking behavior
-	})
-
 	if err := (&controller.OrganizationCtl{
 		Scheme:                 mgr.GetScheme(),
 		ReconcilerFactory:      reconcilerFactory,
-		GithubRateLimiter:      globalLimiter,
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
@@ -384,7 +383,6 @@ func main() {
 	if err := (&controller.RepositoryCtl{
 		Scheme:                 mgr.GetScheme(),
 		ReconcilerFactory:      reconcilerFactory,
-		GithubRateLimiter:      globalLimiter,
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Repository")
@@ -393,7 +391,6 @@ func main() {
 	if err := (&controller.TeamCtl{
 		Scheme:                 mgr.GetScheme(),
 		ReconcilerFactory:      reconcilerFactory,
-		GithubRateLimiter:      globalLimiter,
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Team")

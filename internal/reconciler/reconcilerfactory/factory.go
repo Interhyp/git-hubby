@@ -24,12 +24,6 @@ type Factory struct {
 	Config           config.Config
 }
 
-const (
-	orgRateLimitThreshold  = 100
-	repoRateLimitThreshold = 100
-	teamRateLimitThreshold = 100
-)
-
 // CreateForOrg creates a reconciler.ReconciliationExecutor for a v1alpha1.Organization
 // If both the returned Executor and the error are nil, the Organization K8s resource was not found and no reconciliation is necessary.
 func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.NamespacedName) (*reconciler.ReconciliationExecutor[*v1alpha1.Organization], error) {
@@ -66,10 +60,17 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 		return nil, err
 	}
 
-	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), appConfig, orgRateLimitThreshold)
+	ghClient, err := f.ClientManager.GetClient(ctx, org.GetLogin(), appConfig)
 	if err != nil {
 		return nil, err
 	}
+
+	nameResolverOrg, err := reconciler.NewGitHubIDResolver(ctx, ghClient, org.GetLogin())
+	if err != nil {
+		log.Error(err, "Failed to warm name resolver for Organization", "organization", org.GetLogin())
+		return nil, err
+	}
+
 	return &reconciler.ReconciliationExecutor[*v1alpha1.Organization]{
 		Reconciler: &orgrec.GitHubOrgReconciler{
 			Kubernetes: reconciler.Kubernetes[*v1alpha1.Organization]{
@@ -81,7 +82,8 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 				Client:   ghClient,
 				Resource: org.GetLogin(),
 			},
-			Features: f.Config.Features,
+			Features:   f.Config.Features,
+			IdResolver: nameResolverOrg,
 		},
 	}, nil
 }
@@ -121,10 +123,17 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 		return nil, err
 	}
 
-	ghClient, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), appConfig, repoRateLimitThreshold)
+	ghClient, err := f.ClientManager.GetClient(ctx, org.GetLogin(), appConfig)
 	if err != nil {
 		return nil, err
 	}
+
+	nameResolverRepo, err := reconciler.NewGitHubIDResolver(ctx, ghClient, org.GetLogin())
+	if err != nil {
+		log.Error(err, "Failed to warm name resolver for Repository", "organization", org.GetLogin())
+		return nil, err
+	}
+
 	return &reconciler.ReconciliationExecutor[*v1alpha1.Repository]{
 		Reconciler: &reporec.GitHubRepoReconciler{
 			Kubernetes: reconciler.Kubernetes[*v1alpha1.Repository]{
@@ -141,6 +150,7 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 			},
 			FinalizeMode: reconciler.RepositoryFinalizerMode(f.Config.RepositoryFinalizerMode),
 			Features:     f.Config.Features,
+			NameResolver: nameResolverRepo,
 		},
 	}, nil
 }
@@ -306,7 +316,7 @@ func buildGitHubOrgsSlice(ctx context.Context, f *Factory, team v1alpha1.Team, r
 			log.Error(err, "unable to resolve GitHub App config for Organization", "organization", org.GetLogin())
 			return nil, err
 		}
-		ghRepo, err := f.ClientManager.GetGitHubClientAndCheckRateLimit(ctx, org.GetLogin(), appConfig, teamRateLimitThreshold)
+		ghRepo, err := f.ClientManager.GetClient(ctx, org.GetLogin(), appConfig)
 		if err != nil {
 			log.Error(err, "unable to get github client for installationId", "organization", org.GetLogin(), "installationId", appConfig.InstallationID)
 			return nil, err

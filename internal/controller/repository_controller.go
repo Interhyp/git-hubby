@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Interhyp/git-hubby/internal/ratelimit"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
 	"github.com/google/go-github/v89/github"
@@ -26,7 +25,6 @@ import (
 
 // RepositoryCtl reconciles a Repository object
 type RepositoryCtl struct {
-	GithubRateLimiter      *ratelimit.GitHubRateLimiter
 	Scheme                 *runtime.Scheme
 	ReconcilerFactory      *reconcilerfactory.Factory
 	SuccessRequeueInterval time.Duration
@@ -57,7 +55,7 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	rec, err := r.ReconcilerFactory.CreateForRepo(ctx, req.NamespacedName)
 	if err != nil {
-		return handleRequeueError(ctx, err, r.GithubRateLimiter)
+		return handleRequeueError(ctx, err)
 	}
 	if rec == nil {
 		return ctrl.Result{}, nil // no requeue, k8s resource not found
@@ -71,7 +69,7 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
 			log.Error(err, "Reconciliation failed")
 		}
-		return handleRequeueError(ctx, err, r.GithubRateLimiter)
+		return handleRequeueError(ctx, err)
 	}
 	if resourceWasDeleted(rec.Reconciler) {
 		return ctrl.Result{}, nil
@@ -174,12 +172,9 @@ func (r *RepositoryCtl) SetupWithManager(mgr ctrl.Manager) error {
 		WithOptions(controller.Options{
 			UsePriorityQueue:        new(true),
 			MaxConcurrentReconciles: 20,
-			RateLimiter: workqueue.NewTypedMaxOfRateLimiter(
-				workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
-					1*time.Second,    // base delay
-					1000*time.Second, // max delay, ~17min
-				),
-				ratelimit.NewControllerRuntimeRateLimiter[reconcile.Request](r.GithubRateLimiter),
+			RateLimiter: workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
+				1*time.Second,    // base delay
+				1000*time.Second, // max delay, ~17min
 			),
 		}).
 		Named("repository").

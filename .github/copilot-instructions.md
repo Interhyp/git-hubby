@@ -178,7 +178,15 @@ Controllers implement continuous drift detection:
 - **Log level**: Configurable via `LOG_LEVEL` environment variable (accepts `debug`, `info`, `warn`, `error`; case-insensitive). Overrides the `--zap-log-level` CLI flag. Can also be set in `.env` file.
 
 ## Project-Specific Conventions
-- GitHub rate limit awareness: the factory checks remaining budget and returns a `RateLimitedError`; controllers back off and optionally block using a global limiter; see [internal/reconciler/reconcilerfactory/factory.go](internal/reconciler/reconcilerfactory/factory.go) and [internal/ratelimit/github.go](internal/ratelimit/github.go).
+- GitHub rate limit awareness: the factory checks remaining budget per-org via `OrgRateLimitRegistry` and returns a `RateLimitedError`; controllers back off based on the reset time; see [internal/reconciler/reconcilerfactory/factory.go](internal/reconciler/reconcilerfactory/factory.go) and [internal/ratelimit/org_registry.go](internal/ratelimit/org_registry.go).
+  - The `rateLimitTrackerTransport` (HTTP middleware) passively records rate limit headers from every GitHub API response into the per-org registry.
+  - The registry tracks rate limit state per **category** (currently, only category "core" is in use). Each category in use has a configurable stall threshold via environment variables (see `config.RateLimitConfig`).
+  - **IMPORTANT — when adding or modifying a GitHubClient method that calls a non-core API endpoint** (e.g., `/search/*`, `/graphql`), you MUST:
+    1. Verify the category is listed in `ratelimit.MonitoredCategories` ([internal/ratelimit/category.go](internal/ratelimit/category.go))
+    2. Ensure a `RATE_LIMIT_STALL_THRESHOLD_<CATEGORY>` env var exists in `config.RateLimitConfig` ([internal/config/config.go](internal/config/config.go))
+    3. Wire it in `ratelimit.ConfiguredThresholds()` ([internal/ratelimit/org_registry.go](internal/ratelimit/org_registry.go))
+    4. Set a sensible non-zero default for the new env var
+    5. The CI test `ConfiguredThresholds coverage` validates that every `MonitoredCategory` is wired; a runtime warning also fires if traffic is observed for an uncovered category
 - Startup spreading integration: factory methods evaluate spreading before creating reconcilers; return `RequiresSpreadError` to delay warm-start reconciliations; see [internal/reconciler/spreading](internal/reconciler/spreading) and factory implementation.
 - Parallel reconciliation: reconcilers define sequential groups of parallel tasks via `RequiredReconciliations()`; executor runs groups sequentially with concurrent execution within groups; see [internal/reconciler/executor.go](internal/reconciler/executor.go).
 - Success requeue: after successful reconciliation, controllers requeue after `SuccessRequeueInterval` (defaults to spread interval, ~180 min) for continuous drift detection.

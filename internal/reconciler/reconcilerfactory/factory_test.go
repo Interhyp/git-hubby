@@ -154,7 +154,6 @@ var _ = Describe("Factory", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(mockClientMgr.lastOrgName).To(Equal(defaultOrgName))
 				Expect(mockClientMgr.lastAppConfig.InstallationID).To(Equal(defaultAppID))
-				Expect(mockClientMgr.lastRateLimit).To(Equal(orgRateLimitThreshold))
 			})
 		})
 
@@ -297,7 +296,6 @@ var _ = Describe("Factory", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(mockClientMgr.lastOrgName).To(Equal(defaultOrgName))
 				Expect(mockClientMgr.lastAppConfig.InstallationID).To(Equal(defaultAppID))
-				Expect(mockClientMgr.lastRateLimit).To(Equal(repoRateLimitThreshold))
 			})
 		})
 
@@ -498,7 +496,6 @@ var _ = Describe("Factory", func() {
 
 			It("should call GetGitHubClientAndCheckRateLimit with correct parameters", func() {
 				Expect(err).NotTo(HaveOccurred())
-				Expect(mockClientMgr.lastRateLimit).To(Equal(teamRateLimitThreshold))
 			})
 		})
 
@@ -1814,14 +1811,12 @@ type mockGitHubClientManager struct {
 	callCount       int
 	lastOrgName     string
 	lastAppConfig   ghclient.AppConfig
-	lastRateLimit   int
 }
 
-func (m *mockGitHubClientManager) GetGitHubClientAndCheckRateLimit(_ context.Context, orgName string, app ghclient.AppConfig, rateLimitMinimum int) (ghclient.GitHubClient, error) {
+func (m *mockGitHubClientManager) GetClient(_ context.Context, orgName string, app ghclient.AppConfig) (ghclient.GitHubClient, error) {
 	m.callCount++
 	m.lastOrgName = orgName
 	m.lastAppConfig = app
-	m.lastRateLimit = rateLimitMinimum
 
 	if m.shouldFailLimit {
 		return nil, m.rateLimitErr
@@ -1830,8 +1825,6 @@ func (m *mockGitHubClientManager) GetGitHubClientAndCheckRateLimit(_ context.Con
 	if m.shouldFail {
 		return nil, m.genericErr
 	}
-
-	// Return org-specific client if configured
 	if m.clientByOrg != nil {
 		if ghClient, ok := m.clientByOrg[orgName]; ok {
 			return ghClient, nil

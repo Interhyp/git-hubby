@@ -6,7 +6,6 @@ import (
 	"time"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/Interhyp/git-hubby/internal/ratelimit"
 	"github.com/Interhyp/git-hubby/internal/reconciler/orgrec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,7 +23,6 @@ import (
 
 // OrganizationCtl reconciles a Organization object
 type OrganizationCtl struct {
-	GithubRateLimiter      *ratelimit.GitHubRateLimiter
 	Scheme                 *runtime.Scheme
 	ReconcilerFactory      *reconcilerfactory.Factory
 	SuccessRequeueInterval time.Duration
@@ -48,7 +46,7 @@ func (r *OrganizationCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	rec, err := r.ReconcilerFactory.CreateForOrg(ctx, req.NamespacedName)
 	if err != nil {
-		return handleRequeueError(ctx, err, r.GithubRateLimiter)
+		return handleRequeueError(ctx, err)
 	}
 	if rec == nil {
 		return ctrl.Result{}, nil // no requeue, k8s resource not found
@@ -61,7 +59,7 @@ func (r *OrganizationCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
 			log.Error(err, "Reconciliation failed")
 		}
-		return handleRequeueError(ctx, err, r.GithubRateLimiter)
+		return handleRequeueError(ctx, err)
 	}
 	if resourceWasDeleted(rec.Reconciler) {
 		return ctrl.Result{}, nil
@@ -112,12 +110,9 @@ func (r *OrganizationCtl) SetupWithManager(mgr ctrl.Manager) error {
 		// A pod restart is required to pick up rotated credentials.
 		WithOptions(controller.Options{
 			UsePriorityQueue: new(true),
-			RateLimiter: workqueue.NewTypedMaxOfRateLimiter(
-				workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
-					1*time.Second,    // base delay
-					1000*time.Second, // max delay, ~17min
-				),
-				ratelimit.NewControllerRuntimeRateLimiter[reconcile.Request](r.GithubRateLimiter),
+			RateLimiter: workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
+				1*time.Second,    // base delay
+				1000*time.Second, // max delay, ~17min
 			),
 		}).
 		Named("organization").

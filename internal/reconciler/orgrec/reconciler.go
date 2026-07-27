@@ -3,7 +3,7 @@ package orgrec
 import (
 	"context"
 
-	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	ac "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/conditions"
 	"github.com/Interhyp/git-hubby/internal/config"
@@ -30,10 +30,16 @@ func OrganizationStillHasTeamsError() error {
 	return FinalizationFailedError{message: "organization still has teams, cannot delete it"}
 }
 
+type IdResolver interface {
+	ResolveCscBypassReviewers(ctx context.Context, csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error)
+	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error)
+}
+
 type GitHubOrgReconciler struct {
-	Kubernetes reconciler.Kubernetes[*githubv1alpha1.Organization]
+	Kubernetes reconciler.Kubernetes[*v1alpha1.Organization]
 	GitHub     reconciler.GitHub[string]
 	Features   config.Features
+	IdResolver IdResolver
 }
 
 func (o *GitHubOrgReconciler) GetAdditionalLogFields() []any {
@@ -60,7 +66,7 @@ func (o *GitHubOrgReconciler) RequiredReconciliations() []reconciler.ParallelRec
 	}
 }
 
-func (o *GitHubOrgReconciler) K8s() reconciler.Kubernetes[*githubv1alpha1.Organization] {
+func (o *GitHubOrgReconciler) K8s() reconciler.Kubernetes[*v1alpha1.Organization] {
 	return o.Kubernetes
 }
 
@@ -90,18 +96,18 @@ func (o *GitHubOrgReconciler) checkForExistingRepos(ctx context.Context) error {
 	return nil
 }
 
-func (o *GitHubOrgReconciler) getReferencingK8sRepos(ctx context.Context) (githubv1alpha1.RepositoryList, error) {
-	var repos githubv1alpha1.RepositoryList
+func (o *GitHubOrgReconciler) getReferencingK8sRepos(ctx context.Context) (v1alpha1.RepositoryList, error) {
+	var repos v1alpha1.RepositoryList
 	if err := o.Kubernetes.Client.List(ctx, &repos, client.InNamespace(o.Kubernetes.Resource.Namespace), client.MatchingFields{"spec.organizationRef.name": o.Kubernetes.Resource.Name}); err != nil {
 		logPkg.FromContext(ctx).Error(err, "unable to list repositories for organization")
-		return githubv1alpha1.RepositoryList{}, err
+		return v1alpha1.RepositoryList{}, err
 	}
 	return repos, nil
 }
 
 func (o *GitHubOrgReconciler) checkForExistingTeams(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
-	var teams githubv1alpha1.TeamList
+	var teams v1alpha1.TeamList
 	if err := o.Kubernetes.Client.List(ctx, &teams, client.InNamespace(o.Kubernetes.Resource.Namespace), client.MatchingFields{"spec.organizationRefs.name": o.Kubernetes.Resource.Name}); err != nil {
 		log.Error(err, "unable to list teams for organization")
 		return err
