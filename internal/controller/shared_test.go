@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Interhyp/git-hubby/internal/ghclient"
-	"github.com/Interhyp/git-hubby/internal/ratelimit"
 	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
 	. "github.com/onsi/ginkgo/v2"
@@ -15,18 +14,10 @@ import (
 )
 
 var _ = Describe("Shared Controller Functions", func() {
-	var (
-		ctx     context.Context
-		limiter *ratelimit.GitHubRateLimiter
-	)
+	var ctx context.Context
 
 	BeforeEach(func() {
 		ctx = context.Background()
-		limiter = ratelimit.NewGitHubRateLimiter(ratelimit.GitHubRateLimiterConfig{
-			RequestsPerHour: 5000,
-			BurstSize:       100,
-			EnableBlocking:  true,
-		})
 	})
 
 	Describe("handleRequeueError", func() {
@@ -37,7 +28,7 @@ var _ = Describe("Shared Controller Functions", func() {
 					ResetTime: &resetTime,
 				}
 
-				result, returnErr := handleRequeueError(ctx, err, limiter)
+				result, returnErr := handleRequeueError(ctx, err)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result.RequeueAfter).To(BeNumerically("~", time.Until(resetTime), time.Second))
@@ -49,7 +40,7 @@ var _ = Describe("Shared Controller Functions", func() {
 					ResetTime: resetTime,
 				}
 
-				result, returnErr := handleRequeueError(ctx, err, limiter)
+				result, returnErr := handleRequeueError(ctx, err)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result.RequeueAfter).To(BeNumerically("~", time.Until(resetTime), time.Second))
@@ -68,7 +59,7 @@ var _ = Describe("Shared Controller Functions", func() {
 				}
 				err := errors.Join(libErr, customErr)
 
-				result, returnErr := handleRequeueError(ctx, err, limiter)
+				result, returnErr := handleRequeueError(ctx, err)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				// Should use the library error's reset time
@@ -82,7 +73,7 @@ var _ = Describe("Shared Controller Functions", func() {
 					RequeueAfter: 15 * time.Minute,
 				}
 
-				result, returnErr := handleRequeueError(ctx, spreadErr, limiter)
+				result, returnErr := handleRequeueError(ctx, spreadErr)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result.RequeueAfter).To(Equal(15 * time.Minute))
@@ -94,7 +85,7 @@ var _ = Describe("Shared Controller Functions", func() {
 				}
 				wrappedErr := errors.Join(errors.New("some context"), spreadErr)
 
-				result, returnErr := handleRequeueError(ctx, wrappedErr, limiter)
+				result, returnErr := handleRequeueError(ctx, wrappedErr)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result.RequeueAfter).To(Equal(20 * time.Minute))
@@ -112,7 +103,7 @@ var _ = Describe("Shared Controller Functions", func() {
 				}
 				err := errors.Join(rateLimitErr, spreadErr)
 
-				result, returnErr := handleRequeueError(ctx, err, limiter)
+				result, returnErr := handleRequeueError(ctx, err)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				// Should use rate limit reset time, not spreading delay
@@ -124,7 +115,7 @@ var _ = Describe("Shared Controller Functions", func() {
 			It("should return generic error for exponential backoff", func() {
 				genericErr := errors.New("some reconciliation error")
 
-				result, returnErr := handleRequeueError(ctx, genericErr, limiter)
+				result, returnErr := handleRequeueError(ctx, genericErr)
 
 				Expect(returnErr).To(Equal(genericErr))
 				Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
@@ -135,7 +126,7 @@ var _ = Describe("Shared Controller Functions", func() {
 				outerErr := errors.New("outer error")
 				wrappedErr := errors.Join(outerErr, innerErr)
 
-				result, returnErr := handleRequeueError(ctx, wrappedErr, limiter)
+				result, returnErr := handleRequeueError(ctx, wrappedErr)
 
 				Expect(returnErr).To(Equal(wrappedErr))
 				Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
@@ -144,7 +135,7 @@ var _ = Describe("Shared Controller Functions", func() {
 
 		Context("with nil error", func() {
 			It("should return empty result with no error", func() {
-				result, returnErr := handleRequeueError(ctx, nil, limiter)
+				result, returnErr := handleRequeueError(ctx, nil)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result).To(Equal(controllerruntime.Result{}))
@@ -158,7 +149,7 @@ var _ = Describe("Shared Controller Functions", func() {
 
 				genericErr := errors.New("context canceled")
 
-				result, returnErr := handleRequeueError(cancelCtx, genericErr, limiter)
+				result, returnErr := handleRequeueError(cancelCtx, genericErr)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result).To(Equal(controllerruntime.Result{}))
@@ -173,7 +164,7 @@ var _ = Describe("Shared Controller Functions", func() {
 					ResetTime: &resetTime,
 				}
 
-				result, returnErr := handleRequeueError(cancelCtx, err, limiter)
+				result, returnErr := handleRequeueError(cancelCtx, err)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result).To(Equal(controllerruntime.Result{}))
@@ -187,7 +178,7 @@ var _ = Describe("Shared Controller Functions", func() {
 					RequeueAfter: 15 * time.Minute,
 				}
 
-				result, returnErr := handleRequeueError(cancelCtx, spreadErr, limiter)
+				result, returnErr := handleRequeueError(cancelCtx, spreadErr)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result).To(Equal(controllerruntime.Result{}))
@@ -201,7 +192,7 @@ var _ = Describe("Shared Controller Functions", func() {
 
 				genericErr := errors.New("context deadline exceeded")
 
-				result, returnErr := handleRequeueError(deadlineCtx, genericErr, limiter)
+				result, returnErr := handleRequeueError(deadlineCtx, genericErr)
 
 				Expect(returnErr).To(Equal(genericErr))
 				Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
@@ -216,7 +207,7 @@ var _ = Describe("Shared Controller Functions", func() {
 					ResetTime: &resetTime,
 				}
 
-				result, returnErr := handleRequeueError(deadlineCtx, err, limiter)
+				result, returnErr := handleRequeueError(deadlineCtx, err)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				Expect(result.RequeueAfter).To(BeNumerically("~", time.Until(resetTime), time.Second))
@@ -230,7 +221,7 @@ var _ = Describe("Shared Controller Functions", func() {
 					ResetTime: resetTime,
 				}
 
-				result, returnErr := handleRequeueError(ctx, err, limiter)
+				result, returnErr := handleRequeueError(ctx, err)
 
 				Expect(returnErr).ToNot(HaveOccurred())
 				// RequeueAfter will be negative, which controller-runtime interprets as immediate

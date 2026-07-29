@@ -16,7 +16,9 @@ import (
 const FieldOwner = client.FieldOwner("git-hubby")
 
 type GitHubClientManager interface {
-	GetGitHubClientAndCheckRateLimit(ctx context.Context, cacheKey string, app ghclient.AppConfig, rateLimitMinimum int) (ghclient.GitHubClient, error)
+	// GetClient returns a rate-limit-checked GitHub client for the given org.
+	// It enforces per-org stall thresholds via the OrgRateLimitRegistry when configured.
+	GetClient(ctx context.Context, cacheKey string, app ghclient.AppConfig) (ghclient.GitHubClient, error)
 }
 
 type SpreadManager interface {

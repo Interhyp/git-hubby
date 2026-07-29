@@ -31,14 +31,13 @@ To prevent API rate limit exhaustion during pod restarts (e.g., rolling deployme
 
 ### Configuration
 
-Control spreading behaviour via environment variables:
+Control via environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `STARTUP_SPREAD_PERIOD_MINUTES` | `5` | Window in minutes after startup during which warm-start reconciliations may be delayed |
-| `SPREAD_INTERVAL_MINUTES` | `180` | Time window in minutes across which delayed reconciliations are distributed |
-
-> **Note**: Whether spreading is enabled at all is controlled by the `ENABLE_STARTUP_SPREADING` feature flag (see [Feature Flags](#feature-flags) below).
+| `ENABLE_STARTUP_SPREADING` | `true` | Enable/disable spreading |
+| `STARTUP_SPREAD_PERIOD_MINUTES` | `5` | Window after startup for spreading |
+| `SPREAD_INTERVAL_MINUTES` | `180` | Time window for distribution |
 
 ## Parallel Reconciliation
 
@@ -55,14 +54,23 @@ Common patterns:
 
 ## Rate Limit Handling
 
-The operator manages reconciliation timing to conserve GitHub API quota:
+The operator uses a **per-organization, per-category** rate limit registry (`OrgRateLimitRegistry`) to protect against GitHub API quota exhaustion:
 
-- Checks remaining quota before each reconciliation (threshold: 100 requests)
-- Delays reconciliations until rate limit resets when quota is low
-- Global limiter synchronizes delays across all controller instances
-- Priority queue ensures new resources reconcile first when quota becomes available
+- **Passive tracking**: A `rateLimitTrackerTransport` HTTP middleware reads the `X-RateLimit-Remaining`, `X-RateLimit-Limit`, and `X-RateLimit-Reset` response headers from every GitHub API call and updates the registry — no extra API requests needed.
+- **Stall check on `GetClient`**: Before returning a client to a reconciler, the factory checks the registry. If the remaining quota for any monitored category is below its configured threshold, a `RateLimitedError` is returned and the reconciliation is requeued until after the reset time (plus a configurable grace period).
+- **Staleness recovery**: If registry data for an org is older than the configured staleness threshold, the factory refreshes it via a single `GET /rate_limit` call (which is free and not counted against quota).
+- **Per-category monitoring**: Four categories are tracked — `core` (all general REST calls), `graphql`, `search`, and `code_search`. Only `core` has a non-zero stall threshold by default; the others are tracked and will emit a runtime warning if traffic is observed without a configured threshold.
+- **Priority queue**: Ensures new resources reconcile first when quota is available.
 
-This protects against self-inflicted rate limit exhaustion but does not prevent exhaustion from external sources (CI/CD, other tools).
+### Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RATE_LIMIT_STALL_THRESHOLD_CORE` | `100` | Minimum remaining core API calls before stalling reconciliation for an org |
+| `RATE_LIMIT_RESET_GRACE_PERIOD_SECONDS` | `10` | Seconds added to the GitHub-reported reset time before allowing reconciliation to resume |
+| `RATE_LIMIT_STALENESS_THRESHOLD_MINUTES` | `5` | Minutes after which registry data is considered stale and refreshed via `GET /rate_limit` |
+
+Each organization is tracked independently, so a heavily used org does not delay reconciliation of others.
 
 ## Deletion Semantics
 
@@ -83,12 +91,25 @@ The `GitHubCachingClientFactory` maintains a per-process cache of authenticated 
 - Memory overhead is minimal
 - Automatic token refresh on expiration
 
-## Feature Flags
+### Response Caching (`CachingClient`)
 
-Feature flags are boolean environment variables that enable or disable operator functionality. They are all loaded once at startup via the `internal/features` package (using [`caarlos0/env`](https://github.com/caarlos0/env)) and passed through the reconciler factory. Invalid values (e.g. a non-boolean string) cause the operator to exit at startup with a clear error message.
+Expensive paginated list operations (teams, app installations, org roles) are wrapped in an opt-in TTL cache via `CachingClient`. Caching is controlled at the call site by decorating the context:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENABLE_STARTUP_SPREADING` | `true` | Enable the startup spreading mechanism that distributes warm-start reconciliations over time to prevent API rate-limit exhaustion after pod restarts |
-| `ENABLE_WEBHOOKS` | `true` | Enable registration of the admission webhook server. Set to `false` for local development without cert-manager (`make run` does this automatically) |
-| `ENABLE_REQUIRED_REVIEWERS_RULES` | `false` | Enable reconciliation of `requiredReviewers` in pull-request ruleset rules. The underlying GitHub API is currently in **beta**; opt in explicitly when ready |
+```go
+ctx = ghclient.WithCache(ctx)  // enables caching for this call
+```
+
+Without `WithCache`, all calls pass through to the GitHub API directly. This allows callers that need fresh data (e.g. team membership reconciliation) to bypass the cache while callers that tolerate slight staleness (e.g. slug-to-ID resolution) share cached results across concurrent reconciliations of the same org.
+
+The cache TTL defaults to 5 minutes and can be adjusted via `ClientConfig.ResponseCacheTTL`. Callers can force a cache invalidation via `ghclient.InvalidateCache(client)`, which is done automatically by `GitHubIDResolver` when a slug lookup fails (to handle newly created resources not yet in the cached list).
+
+### ID Resolution (`GitHubIDResolver`)
+
+Ruleset bypass actors, required-status-check apps, required-reviewer teams, and code security configuration bypass reviewers all reference GitHub resources by slug or name, which must be resolved to numeric IDs before the GitHub API will accept them.
+
+`GitHubIDResolver` handles this efficiently:
+
+1. At construction time it makes exactly **three bulk API calls** — `GetAllTeamsForOrg`, `GetGitHubAppsInstallations`, `GetAllOrgRoles` — using the cached context so concurrent reconciliations share results.
+2. All subsequent `ResolveTeamSlug`, `ResolveRoleName`, and app-slug lookups are **in-memory map reads** with no further API calls.
+3. On lookup failure the resolver invalidates the cache and retries once, gracefully handling newly created resources that are not yet reflected in the cached list.
+

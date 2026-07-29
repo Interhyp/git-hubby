@@ -24,6 +24,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 		mockClient         *ghclientmock.MockGitHubClientWrapper
 		k8sClient          client.Client
 		rec                *GitHubOrgReconciler
+		idResolver         *mockIdResolver
 		scheme             *runtime.Scheme
 		org                *v1alpha1.Organization
 		rulesetPreset1     *v1alpha1.RulesetPreset
@@ -39,6 +40,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		mockClient = ghclientmock.NewMockGitHubClientWrapper()
+		idResolver = &mockIdResolver{}
 
 		scheme = runtime.NewScheme()
 		schemeErr := v1alpha1.AddToScheme(scheme)
@@ -116,6 +118,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 				Client:   k8sClient,
 				Resource: org,
 			},
+			IdResolver: idResolver,
 		}
 
 		mockClient.GetAllOrganizationRulesetsFunc = func(ctx context.Context, org string, includesParents bool) ([]*github.RepositoryRuleset, error) {
@@ -989,6 +992,57 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			// Should delete orphaned ruleset
 			Expect(deletedRulesetIDs).To(HaveLen(1))
 			Expect(deletedRulesetIDs).To(ContainElement(int64(300)))
+		})
+	})
+
+	Context("when ResolveRuleset is called for each configured preset", func() {
+		BeforeEach(func() {
+			org.Spec.RulesetPresetList = []corev1.LocalObjectReference{
+				{Name: "ruleset-1"},
+				{Name: "ruleset-2"},
+			}
+		})
+
+		It("should call ResolveRuleset once for each preset", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(idResolver.ResolveRulesetCalls).To(HaveLen(2))
+			resolvedNames := []string{
+				idResolver.ResolveRulesetCalls[0].Spec.Name,
+				idResolver.ResolveRulesetCalls[1].Spec.Name,
+			}
+			Expect(resolvedNames).To(ConsistOf("ruleset-1", "ruleset-2"))
+		})
+	})
+
+	Context("when no rulesets are configured", func() {
+		It("should not call ResolveRuleset at all", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(idResolver.ResolveRulesetCalls).To(BeEmpty())
+		})
+	})
+
+	Context("when ResolveRuleset returns an error", func() {
+		BeforeEach(func() {
+			idResolver.ResolveRulesetError = errors.New("failed to resolve slugs")
+			org.Spec.RulesetPresetList = []corev1.LocalObjectReference{
+				{Name: "ruleset-1"},
+			}
+		})
+
+		It("should return the error", func() {
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("failed to resolve slugs of ruleset"))
+			Expect(err.Error()).To(ContainSubstring("failed to resolve slugs"))
+		})
+
+		It("should not create or update any ruleset", func() {
+			Expect(createdRulesets).To(BeEmpty())
+			Expect(updatedRulesets).To(BeEmpty())
+		})
+
+		It("should have called ResolveRuleset once before failing", func() {
+			Expect(idResolver.ResolveRulesetCalls).To(HaveLen(1))
+			Expect(idResolver.ResolveRulesetCalls[0].Spec.Name).To(Equal("ruleset-1"))
 		})
 	})
 })

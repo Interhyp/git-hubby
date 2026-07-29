@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	ac "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/conditions"
 	"github.com/Interhyp/git-hubby/internal/config"
@@ -31,14 +31,19 @@ func (g *GitHubRepoIdentifier) GetID() int64 {
 	return *g.ID
 }
 
-type GitHubRepoReconciler struct {
-	GitHub       reconciler.GitHub[GitHubRepoIdentifier]
-	Kubernetes   reconciler.Kubernetes[*githubv1alpha1.Repository]
-	FinalizeMode reconciler.RepositoryFinalizerMode
-	Features     config.Features
+type RepoResourceNameResolver interface {
+	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error)
 }
 
-func (r *GitHubRepoReconciler) K8s() reconciler.Kubernetes[*githubv1alpha1.Repository] {
+type GitHubRepoReconciler struct {
+	GitHub       reconciler.GitHub[GitHubRepoIdentifier]
+	Kubernetes   reconciler.Kubernetes[*v1alpha1.Repository]
+	FinalizeMode reconciler.RepositoryFinalizerMode
+	Features     config.Features
+	NameResolver RepoResourceNameResolver
+}
+
+func (r *GitHubRepoReconciler) K8s() reconciler.Kubernetes[*v1alpha1.Repository] {
 	return r.Kubernetes
 }
 

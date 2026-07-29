@@ -366,7 +366,7 @@ type RuleWorkflow struct {
 
 	// ResolvedRepositoryID is the numeric ID of the repository, resolved from RepositoryName at reconciliation time.
 	// This field is transient and intentionally excluded from JSON serialization (json:"-").
-	// It is populated in-memory by ResolveNamesToIDsInRuleset() during each reconciliation and passed to the mapper
+	// It is populated in-memory by GitHubIDResolver.ResolveRuleset() during each reconciliation and passed to the mapper
 	// to construct the GitHub API request. It is not persisted in the CRD because:
 	// - Repository IDs can change (e.g., repo deleted and recreated with the same name)
 	// - Re-resolving on each reconciliation ensures correctness

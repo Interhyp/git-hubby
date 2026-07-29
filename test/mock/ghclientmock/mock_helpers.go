@@ -174,6 +174,7 @@ func (m *MockGitHubClientWrapper) Reset() {
 	m.TeamCalls = make([]TeamCall, 0)
 	m.RoleCalls = make([]RoleCall, 0)
 	m.ActionsCalls = make([]ActionsCall, 0)
+	m.EnterpriseAppsCalls = make([]AppsCall, 0)
 
 	m.GetOrganizationFunc = nil
 	m.EditOrganizationFunc = nil

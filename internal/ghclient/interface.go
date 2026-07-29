@@ -6,7 +6,22 @@ import (
 	"github.com/google/go-github/v89/github"
 )
 
-// GitHubClient defines the interface for GitHub operations used by reconcilers
+// GitHubClient defines the interface for GitHub operations used by reconcilers.
+//
+// RATE LIMIT CATEGORIES: All methods in this interface currently use the "core" REST API
+// category. If you add a method that calls a different GitHub API category (search, code_search,
+// graphql), you MUST also:
+//  1. Ensure the category is listed in ratelimit.MonitoredCategories
+//  2. Ensure a RATE_LIMIT_STALL_THRESHOLD_<CATEGORY> env var exists in config.RateLimitConfig
+//  3. Wire it in ratelimit.ConfiguredThresholds()
+//  4. Set a sensible non-zero default in config.RateLimitConfig's envDefault tag
+//  5. Document the new env var in the Helm chart values.yaml
+//
+// Failing to do so leaves the category unprotected against rate limit exhaustion.
+// A CI test (TestRateLimit/ConfiguredThresholds_coverage) will catch missing wiring for
+// MonitoredCategories, but it cannot detect new API categories introduced without updating
+// MonitoredCategories. The rateLimitTrackerTransport will log a runtime warning if it
+// observes traffic for an uncovered category.
 type GitHubClient interface {
 	// Organization operations
 	GetOrganization(ctx context.Context, org string) (*github.Organization, error)

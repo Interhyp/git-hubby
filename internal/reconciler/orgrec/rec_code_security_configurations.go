@@ -54,7 +54,7 @@ func (o *GitHubOrgReconciler) reconcileCodeSecurityConfigurations(ctx context.Co
 			return err
 		}
 		k8sName := expectedCsc.Name
-		expectedCsc, err = o.resolveBypassReviewerNames(ctx, expectedCsc)
+		expectedCsc, err = o.IdResolver.ResolveCscBypassReviewers(ctx, expectedCsc)
 		if err != nil {
 			return err
 		}
@@ -149,37 +149,6 @@ func (o *GitHubOrgReconciler) getOrgLevelCodeSecurityConfigurationsByName(ctx co
 		func(c github.CodeSecurityConfiguration) bool { return c.GetTargetType() != targetTypeOrganization },
 	)
 	return ghOrgConfsByName, nil
-}
-
-// resolveBypassReviewerNames resolves the ReviewerName fields in the BypassReviewers to ReviewerId fields with respect
-// to their type (TEAM or ROLE).
-func (o *GitHubOrgReconciler) resolveBypassReviewerNames(ctx context.Context, csc *githubv1alpha1.CodeSecurityConfiguration) (*githubv1alpha1.CodeSecurityConfiguration, error) {
-	if csc.Spec.SecretScanningDelegatedBypassOptions != nil {
-		updated := make([]*githubv1alpha1.BypassReviewer, len(csc.Spec.SecretScanningDelegatedBypassOptions.Reviewers))
-		for i, reviewer := range csc.Spec.SecretScanningDelegatedBypassOptions.Reviewers {
-			if reviewer.ReviewerName != nil {
-				switch reviewer.ReviewerType {
-				case "TEAM":
-					team, err := o.GitHub.Client.GetTeamBySlug(ctx, o.GitHub.Resource, *reviewer.ReviewerName)
-					if err != nil {
-						return nil, err
-					}
-					id := team.GetID()
-					reviewer.ReviewerId = &id
-				case "ROLE":
-					role, err := o.GitHub.Client.GetRoleByName(ctx, o.GitHub.Resource, *reviewer.ReviewerName)
-					if err != nil {
-						return nil, err
-					}
-					id := role.GetID()
-					reviewer.ReviewerId = &id
-				}
-			}
-			updated[i] = reviewer
-		}
-		csc.Spec.SecretScanningDelegatedBypassOptions.Reviewers = updated
-	}
-	return csc, nil
 }
 
 func (o *GitHubOrgReconciler) updateCsc(ctx context.Context, desired *githubv1alpha1.CodeSecurityConfiguration, current *github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
