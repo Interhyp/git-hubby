@@ -215,7 +215,7 @@ var _ = Describe("Shared Controller Functions", func() {
 		})
 
 		Context("rate limit error with past reset time", func() {
-			It("should handle reset time in the past gracefully", func() {
+			It("should apply minimum backoff when reset time is in the past", func() {
 				resetTime := time.Now().Add(-1 * time.Minute)
 				err := &ghclient.RateLimitedError{
 					ResetTime: resetTime,
@@ -224,8 +224,8 @@ var _ = Describe("Shared Controller Functions", func() {
 				result, returnErr := handleRequeueError(ctx, err)
 
 				Expect(returnErr).ToNot(HaveOccurred())
-				// RequeueAfter will be negative, which controller-runtime interprets as immediate
-				Expect(result.RequeueAfter).To(BeNumerically("<", 0))
+				// Minimum backoff of 30s applied to avoid tight-loop
+				Expect(result.RequeueAfter).To(Equal(30 * time.Second))
 			})
 		})
 	})
