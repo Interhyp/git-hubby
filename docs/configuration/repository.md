@@ -63,11 +63,23 @@ spec:
 
   # --- Team Permissions ---
   teams:
-    - name: checkout-team
+    - teamRef:
+        name: checkout-team
       permission: push
-    - name: platform-team
+    - teamRef:
+        name: platform-team
       permission: admin
-    - name: security-team
+    - teamRef:
+        name: security-team
+      permission: triage
+
+  # --- Collaborator Permissions ---
+  collaborators:
+    - username: alice
+      permission: push
+    - username: bob
+      permission: admin
+    - username: charlie
       permission: triage
 
   # --- Webhooks ---

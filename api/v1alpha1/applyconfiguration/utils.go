@@ -93,6 +93,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.RefNameConditionApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Repository"):
 		return &apiv1alpha1.RepositoryApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RepositoryCollaboratorPermission"):
+		return &apiv1alpha1.RepositoryCollaboratorPermissionApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RepositoryNameCondition"):
 		return &apiv1alpha1.RepositoryNameConditionApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RepositoryPropertyCondition"):
@@ -103,6 +105,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.RepositorySpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RepositoryStatus"):
 		return &apiv1alpha1.RepositoryStatusApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RepositoryTeamPermission"):
+		return &apiv1alpha1.RepositoryTeamPermissionApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RequiredPullRequestReviewer"):
 		return &apiv1alpha1.RequiredPullRequestReviewerApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RequiredStatusChecks"):
@@ -131,6 +135,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.StatusCheckApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Team"):
 		return &apiv1alpha1.TeamApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("TeamRef"):
+		return &apiv1alpha1.TeamRefApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TeamSpec"):
 		return &apiv1alpha1.TeamSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TeamStatus"):

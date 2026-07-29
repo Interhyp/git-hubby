@@ -97,6 +97,40 @@ func (m *MockGitHubClientWrapper) RemoveTeamMember(ctx context.Context, org stri
 	return nil
 }
 
+// Repository team permissions operations
+func (m *MockGitHubClientWrapper) GetAllRepositoryTeams(ctx context.Context, owner, repo string) ([]*github.Team, error) {
+	m.recordTeamCall(TeamCall{Method: "GetAllRepositoryTeams", Owner: owner, Repo: repo})
+
+	if m.GetAllRepositoryTeamsFunc != nil {
+		return m.GetAllRepositoryTeamsFunc(ctx, owner, repo)
+	}
+
+	// Default implementation returns empty list
+	return make([]*github.Team, 0), nil
+}
+
+func (m *MockGitHubClientWrapper) AddRepositoryTeam(ctx context.Context, org, slug, owner, repo, permission string) error {
+	m.recordTeamCall(TeamCall{Method: "AddRepositoryTeam", Org: org, Slug: slug, Owner: owner, Repo: repo, Permission: permission})
+
+	if m.AddRepositoryTeamFunc != nil {
+		return m.AddRepositoryTeamFunc(ctx, org, slug, owner, repo, permission)
+	}
+
+	// Default implementation returns nil
+	return nil
+}
+
+func (m *MockGitHubClientWrapper) RemoveRepositoryTeam(ctx context.Context, org, slug, owner, repo string) error {
+	m.recordTeamCall(TeamCall{Method: "RemoveRepositoryTeam", Org: org, Slug: slug, Owner: owner, Repo: repo})
+
+	if m.RemoveTeamFromRepoFunc != nil {
+		return m.RemoveTeamFromRepoFunc(ctx, org, slug, owner, repo)
+	}
+
+	// Default implementation returns nil
+	return nil
+}
+
 // Team IDP group operations
 func (m *MockGitHubClientWrapper) GetExternalGroupsForTeamBySlug(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error) {
 	m.recordExternalGroupCall(ExternalGroupCall{Method: "GetExternalGroupsForTeamBySlug", Org: org, Slug: slug})

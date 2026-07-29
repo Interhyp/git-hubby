@@ -20,8 +20,6 @@ package v1alpha1
 // TeamSpecApplyConfiguration represents a declarative configuration of the TeamSpec type for use
 // with apply.
 //
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // TeamSpec defines the desired state of Team within one or more Organizations.
 // Teams group organization members and can be assigned permissions to repositories.
 // A Team can exist in multiple organizations simultaneously.

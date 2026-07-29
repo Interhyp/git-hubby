@@ -8,6 +8,13 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// TeamRef is a reference to a Team CRD.
+type TeamRef struct {
+	// Name is the name of the referenced Team CRD.
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+}
+
 // TeamSpec defines the desired state of Team within one or more Organizations.
 // Teams group organization members and can be assigned permissions to repositories.
 // A Team can exist in multiple organizations simultaneously.

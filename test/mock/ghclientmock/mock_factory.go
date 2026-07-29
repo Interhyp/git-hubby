@@ -46,11 +46,17 @@ type MockGitHubClientWrapper struct {
 	ListMembersFunc                                func(ctx context.Context, org string) ([]*github.User, error)
 
 	// Repository mocks
-	GetRepositoryFunc      func(ctx context.Context, owner, repo string) (*github.Repository, error)
-	CreateRepositoryFunc   func(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error)
-	EditRepositoryFunc     func(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error)
-	DeleteRepositoryFunc   func(ctx context.Context, owner, repo string) error
-	GetOrgRepositoriesFunc func(ctx context.Context, org string) ([]*github.Repository, error)
+	GetRepositoryFunc                 func(ctx context.Context, owner, repo string) (*github.Repository, error)
+	CreateRepositoryFunc              func(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error)
+	EditRepositoryFunc                func(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error)
+	DeleteRepositoryFunc              func(ctx context.Context, owner, repo string) error
+	GetOrgRepositoriesFunc            func(ctx context.Context, org string) ([]*github.Repository, error)
+	GetAllRepositoryTeamsFunc         func(ctx context.Context, owner, repo string) ([]*github.Team, error)
+	AddRepositoryTeamFunc             func(ctx context.Context, org, slug, owner, repo, permission string) error
+	RemoveTeamFromRepoFunc            func(ctx context.Context, org, slug, owner, repo string) error
+	GetAllRepositoryCollaboratorsFunc func(ctx context.Context, owner, repo string) ([]*github.User, error)
+	AddRepositoryCollaboratorFunc     func(ctx context.Context, owner, repo, username, permission string) error
+	RemoveRepositoryCollaboratorFunc  func(ctx context.Context, owner, repo, username string) error
 
 	// Topic mocks
 	GetAllTopicsFunc     func(ctx context.Context, owner, repo string) ([]string, error)

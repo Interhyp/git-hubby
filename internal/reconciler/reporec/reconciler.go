@@ -32,8 +32,12 @@ func (g *GitHubRepoIdentifier) GetID() int64 {
 }
 
 type GitHubRepoReconciler struct {
-	GitHub       reconciler.GitHub[GitHubRepoIdentifier]
-	Kubernetes   reconciler.Kubernetes[*githubv1alpha1.Repository]
+	GitHub     reconciler.GitHub[GitHubRepoIdentifier]
+	Kubernetes reconciler.Kubernetes[*githubv1alpha1.Repository]
+	// MemberSuffix is the global suffix appended to team member usernames (e.g. "@acme.com").
+	// It is superseded by the per-organization spec.memberSuffix field when set.
+	// Corresponds to the GITHUB_MEMBER_SUFFIX environment variable loaded via internal/config.
+	MemberSuffix string
 	FinalizeMode reconciler.RepositoryFinalizerMode
 	Features     config.Features
 }
@@ -68,6 +72,14 @@ func (r *GitHubRepoReconciler) RequiredReconciliations() []reconciler.ParallelRe
 			},
 		},
 		{
+			{
+				Function:  r.reconcileTeams,
+				Condition: conditions.TypeTeamsSynced,
+			},
+			{
+				Function:  r.reconcileCollaborators,
+				Condition: conditions.TypeCollaboratorsSynced,
+			},
 			{
 				Function:  r.reconcileCustomProperties,
 				Condition: conditions.TypeCustomPropertiesValuesSynced,

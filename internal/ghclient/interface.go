@@ -85,6 +85,16 @@ type GitHubClient interface {
 	AddTeamMember(ctx context.Context, org string, slug string, username string) error
 	RemoveTeamMember(ctx context.Context, org string, slug string, username string) error
 
+	// Repository teams operations
+	GetAllRepositoryTeams(ctx context.Context, owner, repo string) ([]*github.Team, error)
+	AddRepositoryTeam(ctx context.Context, org, slug, owner, repo, permission string) error
+	RemoveRepositoryTeam(ctx context.Context, org, slug, owner, repo string) error
+
+	// Repository collaborators operations
+	GetAllRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*github.User, error)
+	AddRepositoryCollaborator(ctx context.Context, owner, repo, username, permission string) error
+	RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error
+
 	// Team external group operations
 	GetExternalGroupNamesToIDForOrg(ctx context.Context, org string) (map[string]int64, error)
 	GetExternalGroupsForTeamBySlug(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error)
