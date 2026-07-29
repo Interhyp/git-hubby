@@ -35,8 +35,10 @@ func handleRequeueError(ctx context.Context, err error) (controllerruntime.Resul
 		resetTime = &ownRateLimitErr.ResetTime
 	}
 	if resetTime != nil {
-		logPkg.FromContext(ctx).Info("GitHub API rate limit reached, requeuing after reset time", "resetTime", *resetTime)
-		return controllerruntime.Result{RequeueAfter: time.Until(*resetTime)}, nil
+		// requeue after at least 30 seconds
+		delay := max(time.Until(*resetTime), 30*time.Second)
+		logPkg.FromContext(ctx).Info("GitHub API rate limit reached, requeuing after reset time", "resetTime", *resetTime, "requeueAfter", delay)
+		return controllerruntime.Result{RequeueAfter: delay}, nil
 	}
 
 	// requeue because spreading requires it

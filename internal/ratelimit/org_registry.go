@@ -221,8 +221,14 @@ func (r *OrgRateLimitRegistry) ShouldStall(orgLogin string, categories ...Catego
 			continue
 		}
 		if catState.Remaining < threshold {
+			// If the reset time (plus grace period) has already passed, the rate limit window
+			// has renewed and the cached Remaining value is stale. Do NOT stall — let the
+			// request through so the rateLimitTrackerTransport can record fresh headers.
+			delay := time.Until(catState.ResetTime.Add(r.config.ResetGracePeriod))
+			if delay <= 0 {
+				continue
+			}
 			stalled = true
-			delay := max(time.Until(catState.ResetTime.Add(r.config.ResetGracePeriod)), 0)
 			if delay > maxDelay {
 				maxDelay = delay
 			}

@@ -131,12 +131,12 @@ var _ = Describe("OrgRateLimitRegistry", func() {
 		})
 
 		Context("when reset time is already in the past", func() {
-			It("returns stalled=true but with zero delay", func() {
+			It("returns stalled=false because the rate limit window has renewed", func() {
 				past := time.Now().Add(-5 * time.Minute)
 				registry.Update("my-org", ratelimit.CategoryCore, 5, 5000, past, 1)
 
 				stalled, delay := registry.ShouldStall("my-org", ratelimit.CategoryCore)
-				Expect(stalled).To(BeTrue())
+				Expect(stalled).To(BeFalse())
 				Expect(delay).To(Equal(time.Duration(0)))
 			})
 		})
