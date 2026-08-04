@@ -179,6 +179,255 @@ var _ = Describe("GitHub Org Mapper", func() {
 				Expect(githubOrg.Blog).To(BeNil())
 			})
 		})
+
+		Context("when converting an organization without MemberPrivileges", func() {
+			It("should not set any member privilege fields on the GitHub organization", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-org",
+					},
+					Spec: v1alpha1.OrganizationSpec{
+						Name:        "my-org",
+						Description: "Test description",
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg).NotTo(BeNil())
+				Expect(githubOrg.DefaultRepoPermission).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePages).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePublicPages).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePrivatePages).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePublicRepos).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePrivateRepos).To(BeNil())
+				Expect(githubOrg.MembersCanForkPrivateRepos).To(BeNil())
+				Expect(githubOrg.MembersCanCreateInternalRepos).To(BeNil())
+			})
+		})
+
+		Context("when converting an organization with MemberPrivileges set", func() {
+			var org *v1alpha1.Organization
+
+			BeforeEach(func() {
+				org = &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-org",
+					},
+					Spec: v1alpha1.OrganizationSpec{
+						Name:        "my-org",
+						Description: "Test description",
+					},
+				}
+			})
+
+			It("should map DefaultRepositoryPermission to DefaultRepoPermission", func() {
+				org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+					DefaultRepositoryPermission: new("write"),
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.DefaultRepoPermission).To(Equal(new("write")))
+			})
+
+			It("should map MembersCanCreatePages", func() {
+				org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+					MembersCanCreatePages: new(true),
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreatePages).To(Equal(new(true)))
+			})
+
+			It("should map MembersCanCreatePublicPages", func() {
+				org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+					MembersCanCreatePublicPages: new(false),
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreatePublicPages).To(Equal(new(false)))
+			})
+
+			It("should map MembersCanCreatePrivatePages", func() {
+				org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+					MembersCanCreatePrivatePages: new(true),
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreatePrivatePages).To(Equal(new(true)))
+			})
+
+			It("should map MembersCanCreatePublicRepositories to MembersCanCreatePublicRepos", func() {
+				org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+					MembersCanCreatePublicRepositories: new(true),
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreatePublicRepos).To(Equal(new(true)))
+			})
+
+			It("should map MembersCanCreatePrivateRepositories to MembersCanCreatePrivateRepos", func() {
+				org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+					MembersCanCreatePrivateRepositories: new(false),
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreatePrivateRepos).To(Equal(new(false)))
+			})
+
+			It("should map MembersCanForkPrivateRepositories to MembersCanForkPrivateRepos", func() {
+				org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+					MembersCanForkPrivateRepositories: new(true),
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanForkPrivateRepos).To(Equal(new(true)))
+			})
+
+			It("should map all MemberPrivileges fields together", func() {
+				org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+					DefaultRepositoryPermission:          new("admin"),
+					MembersCanCreatePublicRepositories:   new(true),
+					MembersCanCreatePrivateRepositories:  new(false),
+					MembersCanCreateInternalRepositories: new(true),
+					MembersCanCreatePages:                new(true),
+					MembersCanCreatePublicPages:          new(false),
+					MembersCanCreatePrivatePages:         new(true),
+					MembersCanForkPrivateRepositories:    new(false),
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.DefaultRepoPermission).To(Equal(new("admin")))
+				Expect(githubOrg.MembersCanCreatePublicRepos).To(Equal(new(true)))
+				Expect(githubOrg.MembersCanCreatePrivateRepos).To(Equal(new(false)))
+				Expect(githubOrg.MembersCanCreateInternalRepos).To(Equal(new(true)))
+				Expect(githubOrg.MembersCanCreatePages).To(Equal(new(true)))
+				Expect(githubOrg.MembersCanCreatePublicPages).To(Equal(new(false)))
+				Expect(githubOrg.MembersCanCreatePrivatePages).To(Equal(new(true)))
+				Expect(githubOrg.MembersCanForkPrivateRepos).To(Equal(new(false)))
+			})
+		})
+
+		Context("when MemberPrivileges is set with only some fields populated", func() {
+			It("should only set populated fields on the GitHub organization, leaving the rest nil", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+						MemberPrivileges: &v1alpha1.OrganizationMemberPrivileges{
+							MembersCanCreatePages: new(true),
+						},
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreatePages).To(Equal(new(true)))
+				Expect(githubOrg.DefaultRepoPermission).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePublicPages).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePrivatePages).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePublicRepos).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePrivateRepos).To(BeNil())
+				Expect(githubOrg.MembersCanForkPrivateRepos).To(BeNil())
+				Expect(githubOrg.MembersCanCreateInternalRepos).To(BeNil())
+			})
+		})
+
+		Context("when organization plan gates MembersCanCreateInternalRepositories", func() {
+			It("should map MembersCanCreateInternalRepositories when Plan is empty (defaults to enterprise)", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+						MemberPrivileges: &v1alpha1.OrganizationMemberPrivileges{
+							MembersCanCreateInternalRepositories: new(true),
+						},
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreateInternalRepos).To(Equal(new(true)))
+			})
+
+			It("should map MembersCanCreateInternalRepositories when Plan is enterprise", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+						Plan: v1alpha1.PlanEnterprise,
+						MemberPrivileges: &v1alpha1.OrganizationMemberPrivileges{
+							MembersCanCreateInternalRepositories: new(true),
+						},
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreateInternalRepos).To(Equal(new(true)))
+			})
+
+			It("should map MembersCanCreateInternalRepositories when Plan is team", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+						Plan: v1alpha1.PlanTeam,
+						MemberPrivileges: &v1alpha1.OrganizationMemberPrivileges{
+							MembersCanCreateInternalRepositories: new(true),
+						},
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreateInternalRepos).To(Equal(new(true)))
+			})
+
+			It("should NOT map MembersCanCreateInternalRepositories when Plan is free", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+						Plan: v1alpha1.PlanFree,
+						MemberPrivileges: &v1alpha1.OrganizationMemberPrivileges{
+							MembersCanCreateInternalRepositories: new(true),
+						},
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreateInternalRepos).To(BeNil())
+			})
+
+			It("should still map other MemberPrivileges fields when Plan is free", func() {
+				org := &v1alpha1.Organization{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Spec: v1alpha1.OrganizationSpec{
+						Name: "my-org",
+						Plan: v1alpha1.PlanFree,
+						MemberPrivileges: &v1alpha1.OrganizationMemberPrivileges{
+							MembersCanCreateInternalRepositories: new(true),
+							MembersCanCreatePublicRepositories:   new(true),
+						},
+					},
+				}
+
+				githubOrg := OrgToGithubOrg(org)
+
+				Expect(githubOrg.MembersCanCreateInternalRepos).To(BeNil())
+				Expect(githubOrg.MembersCanCreatePublicRepos).To(Equal(new(true)))
+			})
+		})
 	})
 
 	Describe("OrgDiffers", func() {
@@ -400,6 +649,430 @@ var _ = Describe("GitHub Org Mapper", func() {
 				differs := OrgDiffers(org, githubOrg)
 
 				Expect(differs).To(BeFalse())
+			})
+		})
+
+		Describe("MemberPrivileges", func() {
+			Context("when org has no MemberPrivileges set", func() {
+				It("should ignore member privilege fields on the GitHub organization", func() {
+					githubOrg := github.Organization{
+						Login:                 new("my-org"),
+						Name:                  new("my-org"),
+						Description:           new("Test organization"),
+						DefaultRepoPermission: new("admin"),
+						MembersCanCreatePages: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when DefaultRepositoryPermission differs", func() {
+				BeforeEach(func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						DefaultRepositoryPermission: new("write"),
+					}
+				})
+
+				It("should return true when GitHub value is nil", func() {
+					githubOrg := github.Organization{
+						Login:       new("my-org"),
+						Name:        new("my-org"),
+						Description: new("Test organization"),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return true when values differ", func() {
+					githubOrg := github.Organization{
+						Login:                 new("my-org"),
+						Name:                  new("my-org"),
+						Description:           new("Test organization"),
+						DefaultRepoPermission: new("read"),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return false when values match", func() {
+					githubOrg := github.Organization{
+						Login:                 new("my-org"),
+						Name:                  new("my-org"),
+						Description:           new("Test organization"),
+						DefaultRepoPermission: new("write"),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MembersCanCreatePages differs", func() {
+				BeforeEach(func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanCreatePages: new(true),
+					}
+				})
+
+				It("should return true when GitHub value is nil", func() {
+					githubOrg := github.Organization{
+						Login:       new("my-org"),
+						Name:        new("my-org"),
+						Description: new("Test organization"),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return true when values differ", func() {
+					githubOrg := github.Organization{
+						Login:                 new("my-org"),
+						Name:                  new("my-org"),
+						Description:           new("Test organization"),
+						MembersCanCreatePages: new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return false when values match", func() {
+					githubOrg := github.Organization{
+						Login:                 new("my-org"),
+						Name:                  new("my-org"),
+						Description:           new("Test organization"),
+						MembersCanCreatePages: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MembersCanCreatePublicPages differs", func() {
+				BeforeEach(func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanCreatePublicPages: new(true),
+					}
+				})
+
+				It("should return true when values differ", func() {
+					githubOrg := github.Organization{
+						Login:                       new("my-org"),
+						Name:                        new("my-org"),
+						Description:                 new("Test organization"),
+						MembersCanCreatePublicPages: new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return false when values match", func() {
+					githubOrg := github.Organization{
+						Login:                       new("my-org"),
+						Name:                        new("my-org"),
+						Description:                 new("Test organization"),
+						MembersCanCreatePublicPages: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MembersCanCreatePrivatePages differs", func() {
+				BeforeEach(func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanCreatePrivatePages: new(false),
+					}
+				})
+
+				It("should return true when values differ", func() {
+					githubOrg := github.Organization{
+						Login:                        new("my-org"),
+						Name:                         new("my-org"),
+						Description:                  new("Test organization"),
+						MembersCanCreatePrivatePages: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return false when values match", func() {
+					githubOrg := github.Organization{
+						Login:                        new("my-org"),
+						Name:                         new("my-org"),
+						Description:                  new("Test organization"),
+						MembersCanCreatePrivatePages: new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MembersCanCreatePublicRepositories differs", func() {
+				BeforeEach(func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanCreatePublicRepositories: new(true),
+					}
+				})
+
+				It("should return true when values differ", func() {
+					githubOrg := github.Organization{
+						Login:                       new("my-org"),
+						Name:                        new("my-org"),
+						Description:                 new("Test organization"),
+						MembersCanCreatePublicRepos: new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return false when values match", func() {
+					githubOrg := github.Organization{
+						Login:                       new("my-org"),
+						Name:                        new("my-org"),
+						Description:                 new("Test organization"),
+						MembersCanCreatePublicRepos: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MembersCanCreatePrivateRepositories differs", func() {
+				BeforeEach(func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanCreatePrivateRepositories: new(false),
+					}
+				})
+
+				It("should return true when values differ", func() {
+					githubOrg := github.Organization{
+						Login:                        new("my-org"),
+						Name:                         new("my-org"),
+						Description:                  new("Test organization"),
+						MembersCanCreatePrivateRepos: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return false when values match", func() {
+					githubOrg := github.Organization{
+						Login:                        new("my-org"),
+						Name:                         new("my-org"),
+						Description:                  new("Test organization"),
+						MembersCanCreatePrivateRepos: new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MembersCanForkPrivateRepositories differs", func() {
+				BeforeEach(func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanForkPrivateRepositories: new(true),
+					}
+				})
+
+				It("should return true when GitHub value is nil", func() {
+					githubOrg := github.Organization{
+						Login:       new("my-org"),
+						Name:        new("my-org"),
+						Description: new("Test organization"),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return true when values differ", func() {
+					githubOrg := github.Organization{
+						Login:                      new("my-org"),
+						Name:                       new("my-org"),
+						Description:                new("Test organization"),
+						MembersCanForkPrivateRepos: new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return false when values match", func() {
+					githubOrg := github.Organization{
+						Login:                      new("my-org"),
+						Name:                       new("my-org"),
+						Description:                new("Test organization"),
+						MembersCanForkPrivateRepos: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MembersCanCreateInternalRepositories differs and the org has enterprise features (default plan)", func() {
+				BeforeEach(func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanCreateInternalRepositories: new(true),
+					}
+				})
+
+				It("should return true when values differ", func() {
+					githubOrg := github.Organization{
+						Login:                         new("my-org"),
+						Name:                          new("my-org"),
+						Description:                   new("Test organization"),
+						MembersCanCreateInternalRepos: new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+
+				It("should return false when values match", func() {
+					githubOrg := github.Organization{
+						Login:                         new("my-org"),
+						Name:                          new("my-org"),
+						Description:                   new("Test organization"),
+						MembersCanCreateInternalRepos: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MembersCanCreateInternalRepositories differs but the org plan is free", func() {
+				BeforeEach(func() {
+					org.Spec.Plan = v1alpha1.PlanFree
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanCreateInternalRepositories: new(true),
+					}
+				})
+
+				It("should ignore the difference and return false", func() {
+					githubOrg := github.Organization{
+						Login:                         new("my-org"),
+						Name:                          new("my-org"),
+						Description:                   new("Test organization"),
+						MembersCanCreateInternalRepos: new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+			})
+
+			Context("when MemberPrivileges is set but individual fields are left unset", func() {
+				It("should ignore GitHub values for fields not specified in the spec", func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						// Only MembersCanCreatePages is set; all other fields are left nil
+						// and must not be compared against GitHub's current values.
+						MembersCanCreatePages: new(true),
+					}
+					githubOrg := github.Organization{
+						Login:                         new("my-org"),
+						Name:                          new("my-org"),
+						Description:                   new("Test organization"),
+						MembersCanCreatePages:         new(true),
+						DefaultRepoPermission:         new("admin"),
+						MembersCanCreatePublicPages:   new(true),
+						MembersCanCreatePrivatePages:  new(true),
+						MembersCanCreatePublicRepos:   new(false),
+						MembersCanCreatePrivateRepos:  new(false),
+						MembersCanForkPrivateRepos:    new(true),
+						MembersCanCreateInternalRepos: new(true),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
+
+				It("should still detect a difference for the one field that is specified", func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						MembersCanCreatePages: new(true),
+					}
+					githubOrg := github.Organization{
+						Login:                 new("my-org"),
+						Name:                  new("my-org"),
+						Description:           new("Test organization"),
+						MembersCanCreatePages: new(false),
+						DefaultRepoPermission: new("admin"),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeTrue())
+				})
+			})
+
+			Context("when all MemberPrivileges fields match", func() {
+				It("should return false", func() {
+					org.Spec.MemberPrivileges = &v1alpha1.OrganizationMemberPrivileges{
+						DefaultRepositoryPermission:          new("admin"),
+						MembersCanCreatePublicRepositories:   new(true),
+						MembersCanCreatePrivateRepositories:  new(false),
+						MembersCanCreateInternalRepositories: new(true),
+						MembersCanCreatePages:                new(true),
+						MembersCanCreatePublicPages:          new(false),
+						MembersCanCreatePrivatePages:         new(true),
+						MembersCanForkPrivateRepositories:    new(false),
+					}
+					githubOrg := github.Organization{
+						Login:                         new("my-org"),
+						Name:                          new("my-org"),
+						Description:                   new("Test organization"),
+						DefaultRepoPermission:         new("admin"),
+						MembersCanCreatePublicRepos:   new(true),
+						MembersCanCreatePrivateRepos:  new(false),
+						MembersCanCreateInternalRepos: new(true),
+						MembersCanCreatePages:         new(true),
+						MembersCanCreatePublicPages:   new(false),
+						MembersCanCreatePrivatePages:  new(true),
+						MembersCanForkPrivateRepos:    new(false),
+					}
+
+					differs := OrgDiffers(org, githubOrg)
+
+					Expect(differs).To(BeFalse())
+				})
 			})
 		})
 	})

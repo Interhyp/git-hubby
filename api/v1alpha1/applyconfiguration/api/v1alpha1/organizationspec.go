@@ -83,6 +83,9 @@ type OrganizationSpecApplyConfiguration struct {
 	// Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).
 	// Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped.
 	Plan *string `json:"plan,omitempty"`
+	// MemberPrivileges configures the privileges and default permissions for members of this organization.
+	// Configurability may be restricted by Enterprise policies.
+	MemberPrivileges *OrganizationMemberPrivilegesApplyConfiguration `json:"memberPrivileges,omitempty"`
 }
 
 // OrganizationSpecApplyConfiguration constructs a declarative configuration of the OrganizationSpec type for use with
@@ -204,5 +207,13 @@ func (b *OrganizationSpecApplyConfiguration) WithWebsite(value string) *Organiza
 // If called multiple times, the Plan field is set to the value of the last call.
 func (b *OrganizationSpecApplyConfiguration) WithPlan(value string) *OrganizationSpecApplyConfiguration {
 	b.Plan = &value
+	return b
+}
+
+// WithMemberPrivileges sets the MemberPrivileges field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MemberPrivileges field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithMemberPrivileges(value *OrganizationMemberPrivilegesApplyConfiguration) *OrganizationSpecApplyConfiguration {
+	b.MemberPrivileges = value
 	return b
 }

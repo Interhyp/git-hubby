@@ -283,6 +283,51 @@
           "minLength": 1,
           "type": "string"
         },
+        "memberPrivileges": {
+          "description": "MemberPrivileges configures the privileges and default permissions for members of this organization.\nConfigurability may be restricted by Enterprise policies.",
+          "properties": {
+            "defaultRepositoryPermission": {
+              "description": "DefaultRepositoryPermission defines the default permission level members have for organization repositories.\nThis setting can not be set if it is fixed at Enterprise level.",
+              "enum": [
+                "read",
+                "write",
+                "admin",
+                "none"
+              ],
+              "type": "string"
+            },
+            "membersCanCreateInternalRepositories": {
+              "description": "MembersCanCreateInternalRepositories defines whether organization members can create internal repositories,\nwhich are visible to all enterprise members. You can only allow members to create internal repositories if\nyour organization is associated with an enterprise account using GitHub Enterprise Cloud or\nGitHub Enterprise Server 2.20+.",
+              "type": "boolean"
+            },
+            "membersCanCreatePages": {
+              "description": "MembersCanCreatePages defines whether organization members can create GitHub Pages sites.\nExisting published sites will not be impacted.",
+              "type": "boolean"
+            },
+            "membersCanCreatePrivatePages": {
+              "description": "MembersCanCreatePrivatePages defines whether organization members can create private GitHub Pages sites.\nExisting published sites will not be impacted.",
+              "type": "boolean"
+            },
+            "membersCanCreatePrivateRepositories": {
+              "description": "MembersCanCreatePrivateRepositories defines whether organization members can create private repositories,\nwhich are visible to organization members with permission.",
+              "type": "boolean"
+            },
+            "membersCanCreatePublicPages": {
+              "description": "MembersCanCreatePublicPages defines whether organization members can create public GitHub Pages sites.\nExisting published sites will not be impacted.\nThis setting is not supported for Organizations in Enterprises with Managed Users (EMU).",
+              "type": "boolean"
+            },
+            "membersCanCreatePublicRepositories": {
+              "description": "MembersCanCreatePublicRepositories defines whether organization members can create public repositories,\nwhich are visible to anyone.\nThis setting is not supported for Organizations in Enterprises with Managed Users (EMU).",
+              "type": "boolean"
+            },
+            "membersCanForkPrivateRepositories": {
+              "description": "MembersCanForkPrivateRepositories defines whether organization members can fork private organization repositories.",
+              "type": "boolean"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        },
         "memberSuffix": {
           "default": "",
           "description": "MemberSuffix defines a suffix appended to each team member username before matching/adding them on GitHub.\nUseful when GitHub usernames follow a naming convention (e.g. enterprise suffix).\nIs ignored if environment variable GITHUB_MEMBER_SUFFIX is set.",
