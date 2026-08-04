@@ -4,7 +4,7 @@ package ghclientmock
 import (
 	"context"
 
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 )
 
 // Code Security Configuration operations

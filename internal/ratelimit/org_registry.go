@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Interhyp/git-hubby/internal/config"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 

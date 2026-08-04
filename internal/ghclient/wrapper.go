@@ -8,7 +8,7 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/gofri/go-github-pagination/githubpagination"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 )
 
 // GitHubClientWrapper is the production implementation of GitHubClient using the real GitHub API.
