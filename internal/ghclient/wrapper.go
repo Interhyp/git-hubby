@@ -121,8 +121,8 @@ func (g *GitHubClientWrapper) DeleteAutolink(ctx context.Context, owner, repo st
 	return _handleErrorResponse(response, err)
 }
 
-func (g *GitHubClientWrapper) CreateAutolink(ctx context.Context, owner, repo string, autolink *github.AutolinkOptions) error {
-	_, response, err := g.client.Repositories.AddAutolink(ctx, owner, repo, autolink)
+func (g *GitHubClientWrapper) CreateAutolink(ctx context.Context, owner, repo string, autolink github.CreateAutolinkRequest) error {
+	_, response, err := g.client.Repositories.CreateAutolink(ctx, owner, repo, autolink)
 	defer _closeBody(response)
 	return _handleErrorResponse(response, err)
 }
@@ -426,7 +426,7 @@ func (g *GitHubClientWrapper) GetExternalGroupNamesToIDForOrg(ctx context.Contex
 	return groupNamesToId, nil
 }
 
-func (g *GitHubClientWrapper) AddExternalGroupToTeamBySlug(ctx context.Context, org string, slug string, group *github.ExternalGroup) error {
+func (g *GitHubClientWrapper) AddExternalGroupToTeamBySlug(ctx context.Context, org string, slug string, group github.UpdateConnectedExternalGroupRequest) error {
 	_, response, err := g.client.Teams.UpdateConnectedExternalGroup(ctx, org, slug, group)
 	defer _closeBody(response)
 	return _handleErrorResponse(response, err)

@@ -59,7 +59,7 @@ type MockGitHubClientWrapper struct {
 	// Autolink mocks
 	ListAllAutolinksFunc func(ctx context.Context, owner, repo string) ([]*github.Autolink, error)
 	DeleteAutolinkFunc   func(ctx context.Context, owner, repo string, id int64) error
-	CreateAutolinkFunc   func(ctx context.Context, owner, repo string, autolink *github.AutolinkOptions) error
+	CreateAutolinkFunc   func(ctx context.Context, owner, repo string, autolink github.CreateAutolinkRequest) error
 
 	// Deploy key mocks
 	ListAllDeployKeysFunc func(ctx context.Context, owner, repo string) ([]*github.Key, error)
@@ -114,7 +114,7 @@ type MockGitHubClientWrapper struct {
 	// Team IDP group operations
 	GetExternalGroupsForTeamBySlugFunc  func(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error)
 	GetExternalGroupNamesToIDForOrgFunc func(ctx context.Context, org string) (map[string]int64, error)
-	AddExternalGroupToTeamBySlugFunc    func(ctx context.Context, org string, slug string, group *github.ExternalGroup) error
+	AddExternalGroupToTeamBySlugFunc    func(ctx context.Context, org string, slug string, group github.UpdateConnectedExternalGroupRequest) error
 
 	// Organization role assignments
 	GetAllTeamsAssignedToOrgRoleFunc   func(ctx context.Context, org string, role string) ([]string, error)

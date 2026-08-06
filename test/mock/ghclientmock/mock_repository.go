@@ -142,7 +142,7 @@ func (m *MockGitHubClientWrapper) DeleteAutolink(ctx context.Context, owner, rep
 	return nil
 }
 
-func (m *MockGitHubClientWrapper) CreateAutolink(ctx context.Context, owner, repo string, autolink *github.AutolinkOptions) error {
+func (m *MockGitHubClientWrapper) CreateAutolink(ctx context.Context, owner, repo string, autolink github.CreateAutolinkRequest) error {
 	m.recordRepoCall(RepoCall{Method: "CreateAutolink", Owner: owner, Repo: repo})
 
 	if m.CreateAutolinkFunc != nil {

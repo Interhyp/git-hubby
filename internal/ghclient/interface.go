@@ -46,7 +46,7 @@ type GitHubClient interface {
 	// Autolink operations
 	ListAllAutolinks(ctx context.Context, owner, repo string) ([]*github.Autolink, error)
 	DeleteAutolink(ctx context.Context, owner, repo string, id int64) error
-	CreateAutolink(ctx context.Context, owner, repo string, autolink *github.AutolinkOptions) error
+	CreateAutolink(ctx context.Context, owner, repo string, autolink github.CreateAutolinkRequest) error
 
 	// DeployKey operations
 	ListAllDeployKeys(ctx context.Context, owner, repo string) ([]*github.Key, error)
@@ -103,7 +103,7 @@ type GitHubClient interface {
 	// Team external group operations
 	GetExternalGroupNamesToIDForOrg(ctx context.Context, org string) (map[string]int64, error)
 	GetExternalGroupsForTeamBySlug(ctx context.Context, org string, slug string) ([]*github.ExternalGroup, error)
-	AddExternalGroupToTeamBySlug(ctx context.Context, org string, slug string, group *github.ExternalGroup) error
+	AddExternalGroupToTeamBySlug(ctx context.Context, org string, slug string, group github.UpdateConnectedExternalGroupRequest) error
 
 	// App operations
 	GetGitHubAppsInstallations(ctx context.Context, org string) ([]*github.Installation, error)

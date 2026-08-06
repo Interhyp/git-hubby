@@ -334,7 +334,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 				}, nil
 			}
 
-			mockClient1.AddExternalGroupToTeamBySlugFunc = func(ctx context.Context, org string, slug string, group *github.ExternalGroup) error {
+			mockClient1.AddExternalGroupToTeamBySlugFunc = func(ctx context.Context, org string, slug string, group github.UpdateConnectedExternalGroupRequest) error {
 				return errors.New("failed to add external group")
 			}
 

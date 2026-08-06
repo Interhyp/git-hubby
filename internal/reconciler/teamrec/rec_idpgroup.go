@@ -68,8 +68,8 @@ func (t *GitHubTeamReconciler) reconcileIDPGroupForOrg(ctx context.Context, ghOr
 		log.Error(nil, "specified external group not found in available external groups from GitHub")
 		return nil
 	}
-	if err := ghOrg.Client.AddExternalGroupToTeamBySlug(ctx, ghOrg.Resource, t.Team.GetSlug(), &github.ExternalGroup{
-		GroupID: &groupID,
+	if err := ghOrg.Client.AddExternalGroupToTeamBySlug(ctx, ghOrg.Resource, t.Team.GetSlug(), github.UpdateConnectedExternalGroupRequest{
+		GroupID: groupID,
 	}); err != nil {
 		log.Error(err, "failed to add external group to team on GitHub")
 		return err
