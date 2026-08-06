@@ -407,6 +407,33 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: status
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationStatus
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationMemberPrivileges
+  map:
+    fields:
+    - name: defaultRepositoryPermission
+      type:
+        scalar: string
+    - name: membersCanCreateInternalRepositories
+      type:
+        scalar: boolean
+    - name: membersCanCreatePages
+      type:
+        scalar: boolean
+    - name: membersCanCreatePrivatePages
+      type:
+        scalar: boolean
+    - name: membersCanCreatePrivateRepositories
+      type:
+        scalar: boolean
+    - name: membersCanCreatePublicPages
+      type:
+        scalar: boolean
+    - name: membersCanCreatePublicRepositories
+      type:
+        scalar: boolean
+    - name: membersCanForkPrivateRepositories
+      type:
+        scalar: boolean
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationRef
   map:
     fields:
@@ -446,6 +473,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: login
       type:
         scalar: string
+    - name: memberPrivileges
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.OrganizationMemberPrivileges
     - name: memberSuffix
       type:
         scalar: string

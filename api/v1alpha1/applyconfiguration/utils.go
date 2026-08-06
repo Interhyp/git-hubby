@@ -73,6 +73,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.MergeStrategyApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Organization"):
 		return &apiv1alpha1.OrganizationApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("OrganizationMemberPrivileges"):
+		return &apiv1alpha1.OrganizationMemberPrivilegesApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("OrganizationRef"):
 		return &apiv1alpha1.OrganizationRefApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("OrganizationSpec"):

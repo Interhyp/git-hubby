@@ -274,13 +274,64 @@ type AttachableCodeSecurityConfigurationRef struct {
 	AttachmentScope *string `json:"attachmentScope,omitempty"`
 }
 
+// MemberPrivileges configures the privileges and default permissions for members of this organization.
+// Configurability may be restricted by Enterprise policies.
+// The individual settings do not have a default by design: not setting a value results in keeping the current
+// setting in GitHub. This is necessary if the setting is managed by Enterprise policies or manual configuration
+// is preferred.
+type OrganizationMemberPrivileges struct {
+	// DefaultRepositoryPermission defines the default permission level members have for organization repositories.
+	// This setting can not be set if it is fixed at Enterprise level.
+	// +kubebuilder:validation:Enum=read;write;admin;none
+	// +optional
+	DefaultRepositoryPermission *string `json:"defaultRepositoryPermission,omitempty"`
+
+	// MembersCanCreatePublicRepositories defines whether organization members can create public repositories,
+	// which are visible to anyone.
+	// This setting is not supported for Organizations in Enterprises with Managed Users (EMU).
+	// +optional
+	MembersCanCreatePublicRepositories *bool `json:"membersCanCreatePublicRepositories,omitempty"`
+
+	// MembersCanCreatePrivateRepositories defines whether organization members can create private repositories,
+	// which are visible to organization members with permission.
+	// +optional
+	MembersCanCreatePrivateRepositories *bool `json:"membersCanCreatePrivateRepositories,omitempty"`
+
+	// MembersCanCreateInternalRepositories defines whether organization members can create internal repositories,
+	// which are visible to all enterprise members. You can only allow members to create internal repositories if
+	// your organization is associated with an enterprise account using GitHub Enterprise Cloud or
+	// GitHub Enterprise Server 2.20+.
+	// +optional
+	MembersCanCreateInternalRepositories *bool `json:"membersCanCreateInternalRepositories,omitempty"`
+
+	// MembersCanCreatePages defines whether organization members can create GitHub Pages sites.
+	// Existing published sites will not be impacted.
+	// +optional
+	MembersCanCreatePages *bool `json:"membersCanCreatePages,omitempty"`
+
+	// MembersCanCreatePublicPages defines whether organization members can create public GitHub Pages sites.
+	// Existing published sites will not be impacted.
+	// This setting is not supported for Organizations in Enterprises with Managed Users (EMU).
+	// +optional
+	MembersCanCreatePublicPages *bool `json:"membersCanCreatePublicPages,omitempty"`
+
+	// MembersCanCreatePrivatePages defines whether organization members can create private GitHub Pages sites.
+	// Existing published sites will not be impacted.
+	// +optional
+	MembersCanCreatePrivatePages *bool `json:"membersCanCreatePrivatePages,omitempty"`
+
+	// MembersCanForkPrivateRepositories defines whether organization members can fork private organization repositories.
+	// +optional
+	MembersCanForkPrivateRepositories *bool `json:"membersCanForkPrivateRepositories,omitempty"`
+}
+
 // OrganizationSpec defines the desired state of Organization.
 // An Organization represents a GitHub organization and its configuration including custom properties,
 // rulesets, code security settings, and Actions permissions.
 // See: https://docs.github.com/en/rest/orgs/orgs
 type OrganizationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make codegen" to regenerate code after modifying this file
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
@@ -370,6 +421,11 @@ type OrganizationSpec struct {
 	// +kubebuilder:default=enterprise
 	// +optional
 	Plan string `json:"plan,omitempty"`
+
+	// MemberPrivileges configures the privileges and default permissions for members of this organization.
+	// Configurability may be restricted by Enterprise policies.
+	// +optional
+	MemberPrivileges *OrganizationMemberPrivileges `json:"memberPrivileges,omitempty"`
 }
 
 // OrganizationStatus defines the observed state of Organization.

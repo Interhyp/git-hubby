@@ -564,6 +564,33 @@ OrganizationList contains a list of Organization
 | `items` _[Organization](#organization) array_ |  |  |  |
 
 
+#### OrganizationMemberPrivileges
+
+
+
+MemberPrivileges configures the privileges and default permissions for members of this organization.
+Configurability may be restricted by Enterprise policies.
+The individual settings do not have a default by design: not setting a value results in keeping the current
+setting in GitHub. This is necessary if the setting is managed by Enterprise policies or manual configuration
+is preferred.
+
+
+
+_Appears in:_
+- [OrganizationSpec](#organizationspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `defaultRepositoryPermission` _string_ | DefaultRepositoryPermission defines the default permission level members have for organization repositories.<br />This setting can not be set if it is fixed at Enterprise level. |  | Enum: [read write admin none] <br />Optional: \{\} <br /> |
+| `membersCanCreatePublicRepositories` _boolean_ | MembersCanCreatePublicRepositories defines whether organization members can create public repositories,<br />which are visible to anyone.<br />This setting is not supported for Organizations in Enterprises with Managed Users (EMU). |  | Optional: \{\} <br /> |
+| `membersCanCreatePrivateRepositories` _boolean_ | MembersCanCreatePrivateRepositories defines whether organization members can create private repositories,<br />which are visible to organization members with permission. |  | Optional: \{\} <br /> |
+| `membersCanCreateInternalRepositories` _boolean_ | MembersCanCreateInternalRepositories defines whether organization members can create internal repositories,<br />which are visible to all enterprise members. You can only allow members to create internal repositories if<br />your organization is associated with an enterprise account using GitHub Enterprise Cloud or<br />GitHub Enterprise Server 2.20+. |  | Optional: \{\} <br /> |
+| `membersCanCreatePages` _boolean_ | MembersCanCreatePages defines whether organization members can create GitHub Pages sites.<br />Existing published sites will not be impacted. |  | Optional: \{\} <br /> |
+| `membersCanCreatePublicPages` _boolean_ | MembersCanCreatePublicPages defines whether organization members can create public GitHub Pages sites.<br />Existing published sites will not be impacted.<br />This setting is not supported for Organizations in Enterprises with Managed Users (EMU). |  | Optional: \{\} <br /> |
+| `membersCanCreatePrivatePages` _boolean_ | MembersCanCreatePrivatePages defines whether organization members can create private GitHub Pages sites.<br />Existing published sites will not be impacted. |  | Optional: \{\} <br /> |
+| `membersCanForkPrivateRepositories` _boolean_ | MembersCanForkPrivateRepositories defines whether organization members can fork private organization repositories. |  | Optional: \{\} <br /> |
+
+
 #### OrganizationRef
 
 
@@ -611,6 +638,7 @@ _Appears in:_
 | `memberSuffix` _string_ | MemberSuffix defines a suffix appended to each team member username before matching/adding them on GitHub.<br />Useful when GitHub usernames follow a naming convention (e.g. enterprise suffix).<br />Is ignored if environment variable GITHUB_MEMBER_SUFFIX is set. |  | MaxLength: 100 <br />Optional: \{\} <br /> |
 | `website` _string_ | Website is the organization's website URL.<br />This appears on the organization's GitHub profile page as a clickable link. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
 | `plan` _string_ | Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).<br />Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped. | enterprise | Enum: [enterprise team free] <br />Optional: \{\} <br /> |
+| `memberPrivileges` _[OrganizationMemberPrivileges](#organizationmemberprivileges)_ | MemberPrivileges configures the privileges and default permissions for members of this organization.<br />Configurability may be restricted by Enterprise policies. |  | Optional: \{\} <br /> |
 
 
 #### OrganizationStatus
