@@ -7,7 +7,7 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -334,7 +334,7 @@ var _ = Describe("ReconcileIDPGroup", func() {
 				}, nil
 			}
 
-			mockClient1.AddExternalGroupToTeamBySlugFunc = func(ctx context.Context, org string, slug string, group *github.ExternalGroup) error {
+			mockClient1.AddExternalGroupToTeamBySlugFunc = func(ctx context.Context, org string, slug string, group github.UpdateConnectedExternalGroupRequest) error {
 				return errors.New("failed to add external group")
 			}
 

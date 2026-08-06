@@ -7,7 +7,7 @@ import (
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 

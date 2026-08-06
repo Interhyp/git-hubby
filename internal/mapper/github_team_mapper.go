@@ -5,7 +5,7 @@ import (
 	"unicode"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 	"golang.org/x/text/unicode/norm"
 )
 

@@ -3,7 +3,7 @@ package ghclientmock
 import (
 	"context"
 
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 )
 
 // Team operations
@@ -120,7 +120,7 @@ func (m *MockGitHubClientWrapper) GetExternalGroupNamesToIDForOrg(ctx context.Co
 	return make(map[string]int64), nil
 }
 
-func (m *MockGitHubClientWrapper) AddExternalGroupToTeamBySlug(ctx context.Context, org string, slug string, group *github.ExternalGroup) error {
+func (m *MockGitHubClientWrapper) AddExternalGroupToTeamBySlug(ctx context.Context, org string, slug string, group github.UpdateConnectedExternalGroupRequest) error {
 	m.recordExternalGroupCall(ExternalGroupCall{Method: "AddExternalGroupToTeamBySlug", Org: org, Slug: slug, GroupID: group.GetGroupID()})
 
 	if m.AddExternalGroupToTeamBySlugFunc != nil {

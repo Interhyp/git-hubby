@@ -7,7 +7,7 @@ import (
 
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"

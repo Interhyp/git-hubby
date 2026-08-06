@@ -7,7 +7,7 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -32,7 +32,7 @@ var _ = Describe("ReconcileAutolinks", func() {
 		currentAutolinks []*github.Autolink
 
 		err                       error
-		appliedAutolinks          []*github.AutolinkOptions
+		appliedAutolinks          []github.CreateAutolinkRequest
 		createAutolinkCalled      bool
 		deletedAutolinkIDs        []int64
 		deleteAutolinkCalled      bool
@@ -51,7 +51,7 @@ var _ = Describe("ReconcileAutolinks", func() {
 		autolinks = []v1alpha1.Autolink{}
 
 		// Reset flags and errors
-		appliedAutolinks = []*github.AutolinkOptions{}
+		appliedAutolinks = []github.CreateAutolinkRequest{}
 		createAutolinkCalled = false
 		deletedAutolinkIDs = []int64{}
 		deleteAutolinkCalled = false
@@ -62,7 +62,7 @@ var _ = Describe("ReconcileAutolinks", func() {
 			return currentAutolinks, getCurrentAutolionksError
 		}
 
-		mockClient.CreateAutolinkFunc = func(ctx context.Context, owner, repo string, autolink *github.AutolinkOptions) error {
+		mockClient.CreateAutolinkFunc = func(ctx context.Context, owner, repo string, autolink github.CreateAutolinkRequest) error {
 			createAutolinkCalled = true
 			appliedAutolinks = append(appliedAutolinks, autolink)
 			return nil
@@ -196,19 +196,19 @@ var _ = Describe("ReconcileAutolinks", func() {
 			Expect(appliedAutolinks).To(HaveLen(2))
 
 			// Check that both autolinks exist (order is non-deterministic due to map iteration)
-			keyPrefixes := make(map[string]*github.AutolinkOptions)
+			keyPrefixes := make(map[string]github.CreateAutolinkRequest)
 			for _, autolink := range appliedAutolinks {
-				keyPrefixes[*autolink.KeyPrefix] = autolink
+				keyPrefixes[autolink.KeyPrefix] = autolink
 			}
 
 			Expect(keyPrefixes).To(HaveKey("foo"))
-			Expect(*keyPrefixes["foo"].KeyPrefix).To(Equal("foo"))
-			Expect(*keyPrefixes["foo"].URLTemplate).To(Equal("https://example.com/foo"))
+			Expect(keyPrefixes["foo"].KeyPrefix).To(Equal("foo"))
+			Expect(keyPrefixes["foo"].URLTemplate).To(Equal("https://example.com/foo"))
 			Expect(*keyPrefixes["foo"].IsAlphanumeric).To(BeFalse())
 
 			Expect(keyPrefixes).To(HaveKey("bar"))
-			Expect(*keyPrefixes["bar"].KeyPrefix).To(Equal("bar"))
-			Expect(*keyPrefixes["bar"].URLTemplate).To(Equal("https://example.com/bar"))
+			Expect(keyPrefixes["bar"].KeyPrefix).To(Equal("bar"))
+			Expect(keyPrefixes["bar"].URLTemplate).To(Equal("https://example.com/bar"))
 			Expect(*keyPrefixes["bar"].IsAlphanumeric).To(BeFalse())
 		})
 	})
@@ -247,8 +247,8 @@ var _ = Describe("ReconcileAutolinks", func() {
 			Expect(deleteAutolinkCalled).To(BeTrue())
 			// Mapper returns all 1 autolinks
 			Expect(appliedAutolinks).To(HaveLen(1))
-			Expect(*appliedAutolinks[0].KeyPrefix).To(Equal("foo"))
-			Expect(*appliedAutolinks[0].URLTemplate).To(Equal("https://example.com/foo"))
+			Expect(appliedAutolinks[0].KeyPrefix).To(Equal("foo"))
+			Expect(appliedAutolinks[0].URLTemplate).To(Equal("https://example.com/foo"))
 			Expect(*appliedAutolinks[0].IsAlphanumeric).To(BeFalse())
 			Expect(deletedAutolinkIDs).To(HaveLen(1))
 			Expect(deletedAutolinkIDs).To(ContainElements(int64(12345)))
@@ -295,7 +295,7 @@ var _ = Describe("ReconcileAutolinks", func() {
 
 	Context("when CreateAutolink returns an error", func() {
 		BeforeEach(func() {
-			mockClient.CreateAutolinkFunc = func(ctx context.Context, owner, repo string, autolink *github.AutolinkOptions) error {
+			mockClient.CreateAutolinkFunc = func(ctx context.Context, owner, repo string, autolink github.CreateAutolinkRequest) error {
 				createAutolinkCalled = true
 				return errors.New("add autolink failed")
 			}
@@ -370,7 +370,7 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 		currentAutolinks []*github.Autolink
 
 		err                       error
-		appliedAutolinks          []*github.AutolinkOptions
+		appliedAutolinks          []github.CreateAutolinkRequest
 		createAutolinkCalled      bool
 		deletedAutolinkIDs        []int64
 		deleteAutolinkCalled      bool
@@ -386,7 +386,7 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		// Reset flags and errors
-		appliedAutolinks = []*github.AutolinkOptions{}
+		appliedAutolinks = []github.CreateAutolinkRequest{}
 		createAutolinkCalled = false
 		deletedAutolinkIDs = []int64{}
 		deleteAutolinkCalled = false
@@ -398,7 +398,7 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			return currentAutolinks, getCurrentAutolionksError
 		}
 
-		mockClient.CreateAutolinkFunc = func(ctx context.Context, owner, repo string, autolink *github.AutolinkOptions) error {
+		mockClient.CreateAutolinkFunc = func(ctx context.Context, owner, repo string, autolink github.CreateAutolinkRequest) error {
 			createAutolinkCalled = true
 			appliedAutolinks = append(appliedAutolinks, autolink)
 			return nil
@@ -501,7 +501,7 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			// Verify all four autolinks are present
 			keyPrefixes := make([]string, 0, 4)
 			for _, autolink := range appliedAutolinks {
-				keyPrefixes = append(keyPrefixes, *autolink.KeyPrefix)
+				keyPrefixes = append(keyPrefixes, autolink.KeyPrefix)
 			}
 			Expect(keyPrefixes).To(ConsistOf("JIRA-", "TICKET-", "GH-", "PR-"))
 		})
@@ -597,7 +597,7 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			// Verify only unique autolinks are present (JIRA- should appear only once)
 			keyPrefixes := make([]string, 0, 3)
 			for _, autolink := range appliedAutolinks {
-				keyPrefixes = append(keyPrefixes, *autolink.KeyPrefix)
+				keyPrefixes = append(keyPrefixes, autolink.KeyPrefix)
 			}
 			Expect(keyPrefixes).To(ConsistOf("JIRA-", "TICKET-", "GH-"))
 		})
@@ -715,7 +715,7 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			// Verify only unique autolinks are present (JIRA- and TICKET- should appear only once each)
 			keyPrefixes := make([]string, 0, 4)
 			for _, autolink := range appliedAutolinks {
-				keyPrefixes = append(keyPrefixes, *autolink.KeyPrefix)
+				keyPrefixes = append(keyPrefixes, autolink.KeyPrefix)
 			}
 			Expect(keyPrefixes).To(ConsistOf("JIRA-", "TICKET-", "GH-", "CUSTOM-"))
 		})
@@ -827,7 +827,7 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			// Verify only missing autolinks are created (TICKET- and PR-)
 			keyPrefixes := make([]string, 0, 2)
 			for _, autolink := range appliedAutolinks {
-				keyPrefixes = append(keyPrefixes, *autolink.KeyPrefix)
+				keyPrefixes = append(keyPrefixes, autolink.KeyPrefix)
 			}
 			Expect(keyPrefixes).To(ConsistOf("TICKET-", "PR-"))
 		})
@@ -1047,7 +1047,7 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			Expect(appliedAutolinks).To(HaveLen(3))
 			keyPrefixes := make([]string, 0, 3)
 			for _, autolink := range appliedAutolinks {
-				keyPrefixes = append(keyPrefixes, *autolink.KeyPrefix)
+				keyPrefixes = append(keyPrefixes, autolink.KeyPrefix)
 			}
 			Expect(keyPrefixes).To(ConsistOf("TICKET-", "GH-", "PR-"))
 
@@ -1199,8 +1199,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			alphaCount := 0
 			nonAlphaCount := 0
 			for _, autolink := range appliedAutolinks {
-				Expect(*autolink.KeyPrefix).To(Equal("TICKET-"))
-				Expect(*autolink.URLTemplate).To(Equal("https://example.com/ticket/<num>"))
+				Expect(autolink.KeyPrefix).To(Equal("TICKET-"))
+				Expect(autolink.URLTemplate).To(Equal("https://example.com/ticket/<num>"))
 				if *autolink.IsAlphanumeric {
 					alphaCount++
 				} else {
@@ -1368,8 +1368,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			// Both should be created because URLs differ
 			urls := make([]string, 0, 2)
 			for _, autolink := range appliedAutolinks {
-				Expect(*autolink.KeyPrefix).To(Equal("TICKET-"))
-				urls = append(urls, *autolink.URLTemplate)
+				Expect(autolink.KeyPrefix).To(Equal("TICKET-"))
+				urls = append(urls, autolink.URLTemplate)
 			}
 			Expect(urls).To(ConsistOf("https://first.example.com/<num>", "https://second.example.com/<num>"))
 		})

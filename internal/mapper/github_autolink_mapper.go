@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v90/github"
 )
 
 func HashAutolink(keyPrefix, urlTemplate string, isAlphanumeric bool) string {
@@ -13,10 +13,10 @@ func HashAutolink(keyPrefix, urlTemplate string, isAlphanumeric bool) string {
 	return fmt.Sprintf("%x", h)
 }
 
-func KubernetesAutolinkToGitHubAutolink(preset v1alpha1.Autolink) *github.AutolinkOptions {
-	return &github.AutolinkOptions{
-		KeyPrefix:      new(preset.KeyPrefix),
-		URLTemplate:    new(preset.URLTemplate),
+func KubernetesAutolinkToGitHubAutolink(preset v1alpha1.Autolink) github.CreateAutolinkRequest {
+	return github.CreateAutolinkRequest{
+		KeyPrefix:      preset.KeyPrefix,
+		URLTemplate:    preset.URLTemplate,
 		IsAlphanumeric: new(preset.IsAlphanumeric),
 	}
 }
