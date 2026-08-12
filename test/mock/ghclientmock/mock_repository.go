@@ -28,6 +28,17 @@ func (m *MockGitHubClientWrapper) GetRepository(ctx context.Context, owner, repo
 	}, nil
 }
 
+func (m *MockGitHubClientWrapper) GetRepositoryByID(ctx context.Context, id int64) (*github.Repository, error) {
+	m.recordRepoCall(RepoCall{Method: "GetRepositoryByID"})
+
+	if m.GetRepositoryByIDFunc != nil {
+		return m.GetRepositoryByIDFunc(ctx, id)
+	}
+
+	// Default implementation - not found, forces fallback to name-based lookup
+	return nil, nil
+}
+
 func (m *MockGitHubClientWrapper) CreateRepository(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error) {
 	m.recordRepoCall(RepoCall{Method: "CreateRepository", Owner: org, Repo: repo.GetName()})
 

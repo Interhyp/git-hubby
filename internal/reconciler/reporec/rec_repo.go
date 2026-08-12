@@ -58,7 +58,17 @@ func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 
 func (r *GitHubRepoReconciler) getRepo(ctx context.Context) (*github.Repository, error) {
 	log := logPkg.FromContext(ctx)
-	ghRepo, err := r.GitHub.Client.GetRepository(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name)
+	var ghRepo *github.Repository
+	var err error
+	storedID := r.K8s().Resource.Status.ID
+	if storedID != nil {
+		ghRepo, err = r.GitHub.Client.GetRepositoryByID(ctx, *storedID)
+		log.V(1).Info("Repository identified by ID in status", "id", *storedID)
+	}
+	if ghRepo == nil { // do not use 'else' to try again if GetRepositoryByID fails
+		ghRepo, err = r.GitHub.Client.GetRepository(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name)
+		log.V(1).Info("Repository identified by name and owner")
+	}
 	if err != nil {
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
@@ -81,7 +91,7 @@ func (r *GitHubRepoReconciler) getRepo(ctx context.Context) (*github.Repository,
 			return nil, err
 		}
 	}
-	err = r.updateID(ctx, ghRepo)
+	err = r.updateRecFieldsFromGitHub(ctx, ghRepo)
 	if err != nil {
 		log.Error(err, "failed to update repository status in Kubernetes")
 		return nil, err
@@ -117,7 +127,7 @@ func (r *GitHubRepoReconciler) updateRepo(ctx context.Context) (*github.Reposito
 		log.Error(err, "failed to update repository on GitHub")
 		return ghRepo, err
 	}
-	err = r.updateID(ctx, ghRepo)
+	err = r.updateRecFieldsFromGitHub(ctx, ghRepo)
 	if err != nil {
 		log.Error(err, "failed to update repository status in Kubernetes")
 		return ghRepo, err
@@ -125,10 +135,11 @@ func (r *GitHubRepoReconciler) updateRepo(ctx context.Context) (*github.Reposito
 	return ghRepo, err
 }
 
-func (r *GitHubRepoReconciler) updateID(_ context.Context, ghRepo *github.Repository) error {
-	if ghRepo == nil || ghRepo.ID == nil {
-		return errors.New("unable to update repository ID with nil repository or nil ID")
+func (r *GitHubRepoReconciler) updateRecFieldsFromGitHub(_ context.Context, ghRepo *github.Repository) error {
+	if ghRepo == nil || ghRepo.ID == nil || ghRepo.Name == nil {
+		return errors.New("unable to update reconciler fields with nil data")
 	}
+	r.GitHub.Resource.Name = ghRepo.GetName()
 	r.GitHub.Resource.ID = ghRepo.ID
 	r.Kubernetes.Resource.Status.ID = ghRepo.ID
 	return nil
