@@ -63,6 +63,12 @@ func (g *GitHubClientWrapper) GetRepository(ctx context.Context, owner, repo str
 	return result, _handleErrorResponse(response, err)
 }
 
+func (g *GitHubClientWrapper) GetRepositoryByID(ctx context.Context, id int64) (*github.Repository, error) {
+	result, response, err := g.client.Repositories.GetByID(ctx, id)
+	defer _closeBody(response)
+	return result, _handleErrorResponse(response, err)
+}
+
 func (g *GitHubClientWrapper) CreateRepository(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error) {
 	result, response, err := g.client.Repositories.Create(ctx, org, repo)
 	defer _closeBody(response)

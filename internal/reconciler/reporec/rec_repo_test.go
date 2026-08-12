@@ -416,7 +416,7 @@ var _ = Describe("ReconcileRepository", func() {
 
 		It("should return an error", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("unable to update repository ID"))
+			Expect(err.Error()).To(ContainSubstring("unable to update reconciler fields with nil data"))
 		})
 	})
 
@@ -429,7 +429,7 @@ var _ = Describe("ReconcileRepository", func() {
 
 		It("should return an error", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("unable to update repository ID"))
+			Expect(err.Error()).To(ContainSubstring("unable to update reconciler fields with nil data"))
 		})
 	})
 
@@ -669,6 +669,73 @@ var _ = Describe("ReconcileRepository", func() {
 			Expect(createdRepo.Archived).To(BeNil())
 		})
 	})
+
+	Context("when the repository was renamed via spec.name", func() {
+		// Simulates the factory setting rec.GitHub.Resource.Name from repo.Spec.Name (the new desired name),
+		// while the repository on GitHub still exists under its old name and Status.ID is already populated.
+		BeforeEach(func() {
+			repo.Spec.Name = "new-repo-name"
+			repo.Status.ID = new(int64(12345))
+
+			currentGHRepo = &github.Repository{
+				Name:       new("old-repo-name"),
+				Visibility: new("internal"),
+				Archived:   new(false),
+				ID:         new(int64(12345)),
+			}
+
+			mockClient.GetRepositoryByIDFunc = func(ctx context.Context, id int64) (*github.Repository, error) {
+				return currentGHRepo, nil
+			}
+		})
+
+		JustBeforeEach(func() {
+			k8sClient = fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(repo).
+				WithStatusSubresource(repo).
+				Build()
+
+			rec = &GitHubRepoReconciler{
+				GitHub: reconciler.GitHub[GitHubRepoIdentifier]{
+					Client: mockClient,
+					Resource: GitHubRepoIdentifier{
+						Owner: "test-org",
+						Name:  repo.Spec.Name, // mirrors what the factory does
+					},
+				},
+				Kubernetes: reconciler.Kubernetes[*v1alpha1.Repository]{
+					Client:   k8sClient,
+					Resource: repo,
+				},
+			}
+
+			err = rec.reconcileRepository(ctx)
+		})
+
+		It("should not create a duplicate repository", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(createRepoCalled).To(BeFalse())
+		})
+
+		It("should call EditRepository using the current (old) name and the new name in the body", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(editRepoCalled).To(BeTrue())
+			Expect(editedRepo).NotTo(BeNil())
+			Expect(editedRepo.GetName()).To(Equal("new-repo-name"))
+		})
+
+		It("should end up with the new name on the reconciler's GitHub resource", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(rec.GitHub.Resource.Name).To(Equal("new-repo-name"))
+		})
+
+		It("should keep the same repository ID in status", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(repo.Status.ID).NotTo(BeNil())
+			Expect(*repo.Status.ID).To(Equal(int64(12345)))
+		})
+	})
 })
 
 var _ = Describe("getRepo", func() {
@@ -844,6 +911,108 @@ var _ = Describe("getRepo", func() {
 			Expect(ghRepo).To(BeNil())
 		})
 	})
+
+	Context("when a repository ID is stored in status", func() {
+		var (
+			getByIDCalled   bool
+			getByNameCalled bool
+		)
+
+		BeforeEach(func() {
+			repo.Status.ID = new(int64(12345))
+			getByIDCalled = false
+			getByNameCalled = false
+
+			mockClient.GetRepositoryByIDFunc = func(ctx context.Context, id int64) (*github.Repository, error) {
+				getByIDCalled = true
+				Expect(id).To(Equal(int64(12345)))
+				return &github.Repository{
+					Name:       new("test-repo"),
+					Visibility: new("internal"),
+					Archived:   new(false),
+					ID:         new(int64(12345)),
+				}, nil
+			}
+			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, name string) (*github.Repository, error) {
+				getByNameCalled = true
+				return &github.Repository{
+					Name:       new("test-repo"),
+					Visibility: new("internal"),
+					Archived:   new(false),
+					ID:         new(int64(12345)),
+				}, nil
+			}
+
+			ghRepo, err = rec.getRepo(ctx)
+		})
+
+		It("should look up the repository by ID and skip the name-based lookup", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(getByIDCalled).To(BeTrue())
+			Expect(getByNameCalled).To(BeFalse())
+			Expect(ghRepo).NotTo(BeNil())
+			Expect(ghRepo.GetID()).To(Equal(int64(12345)))
+		})
+	})
+
+	Context("when the stored repository ID lookup does not find a repository", func() {
+		BeforeEach(func() {
+			repo.Status.ID = new(int64(99999))
+
+			mockClient.GetRepositoryByIDFunc = func(ctx context.Context, id int64) (*github.Repository, error) {
+				return nil, nil
+			}
+			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, name string) (*github.Repository, error) {
+				getRepoCalled = true
+				return &github.Repository{
+					Name:       new("test-repo"),
+					Visibility: new("internal"),
+					Archived:   new(false),
+					ID:         new(int64(12345)),
+				}, nil
+			}
+
+			ghRepo, err = rec.getRepo(ctx)
+		})
+
+		It("should fall back to the name-based lookup", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(getRepoCalled).To(BeTrue())
+			Expect(ghRepo).NotTo(BeNil())
+			Expect(ghRepo.GetID()).To(Equal(int64(12345)))
+		})
+	})
+
+	Context("when the repository was renamed on GitHub", func() {
+		BeforeEach(func() {
+			// rec.GitHub.Resource.Name still holds the desired (new) name from spec.Name,
+			// but the repository was renamed on GitHub, so the ID-based lookup must be used
+			// to find it and the actual (old) current name must be adopted.
+			repo.Status.ID = new(int64(12345))
+
+			mockClient.GetRepositoryByIDFunc = func(ctx context.Context, id int64) (*github.Repository, error) {
+				return &github.Repository{
+					Name:       new("old-name"),
+					Visibility: new("internal"),
+					Archived:   new(false),
+					ID:         new(int64(12345)),
+				}, nil
+			}
+
+			ghRepo, err = rec.getRepo(ctx)
+		})
+
+		It("should return the repository under its current (old) name", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ghRepo).NotTo(BeNil())
+			Expect(ghRepo.GetName()).To(Equal("old-name"))
+		})
+
+		It("should update the GitHub resource identifier to the current name", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(rec.GitHub.Resource.Name).To(Equal("old-name"))
+		})
+	})
 })
 
 var _ = Describe("updateRepo", func() {
@@ -937,7 +1106,7 @@ var _ = Describe("updateRepo", func() {
 	})
 })
 
-var _ = Describe("updateID", func() {
+var _ = Describe("updateRecFieldsFromGitHub", func() {
 	var (
 		ctx        context.Context
 		mockClient *ghclientmock.MockGitHubClientWrapper
@@ -999,7 +1168,7 @@ var _ = Describe("updateID", func() {
 				ID:   new(int64(54321)),
 			}
 
-			err = rec.updateID(ctx, ghRepo)
+			err = rec.updateRecFieldsFromGitHub(ctx, ghRepo)
 		})
 
 		It("should not return an error", func() {
@@ -1022,15 +1191,33 @@ var _ = Describe("updateID", func() {
 		})
 	})
 
+	Context("when repository has a different name than currently stored", func() {
+		BeforeEach(func() {
+			ghRepo = &github.Repository{
+				Name: new("renamed-repo"),
+				ID:   new(int64(54321)),
+			}
+
+			err = rec.updateRecFieldsFromGitHub(ctx, ghRepo)
+		})
+
+		It("should not return an error", func() {
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should update the Name in GitHub resource", func() {
+			Expect(rec.GitHub.Resource.Name).To(Equal("renamed-repo"))
+		})
+	})
+
 	Context("when repository is nil", func() {
 		BeforeEach(func() {
-			err = rec.updateID(ctx, nil)
+			err = rec.updateRecFieldsFromGitHub(ctx, nil)
 		})
 
 		It("should return an error", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("unable to update repository ID"))
-			Expect(err.Error()).To(ContainSubstring("nil repository"))
+			Expect(err.Error()).To(ContainSubstring("unable to update reconciler fields with nil data"))
 		})
 	})
 
@@ -1041,13 +1228,28 @@ var _ = Describe("updateID", func() {
 				ID:   nil,
 			}
 
-			err = rec.updateID(ctx, ghRepo)
+			err = rec.updateRecFieldsFromGitHub(ctx, ghRepo)
 		})
 
 		It("should return an error", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("unable to update repository ID"))
-			Expect(err.Error()).To(ContainSubstring("nil ID"))
+			Expect(err.Error()).To(ContainSubstring("unable to update reconciler fields with nil data"))
+		})
+	})
+
+	Context("when repository Name is nil", func() {
+		BeforeEach(func() {
+			ghRepo = &github.Repository{
+				Name: nil,
+				ID:   new(int64(54321)),
+			}
+
+			err = rec.updateRecFieldsFromGitHub(ctx, ghRepo)
+		})
+
+		It("should return an error", func() {
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("unable to update reconciler fields with nil data"))
 		})
 	})
 })

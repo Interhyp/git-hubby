@@ -33,6 +33,7 @@ type GitHubClient interface {
 	// Repository operations
 	GetOrgRepositories(ctx context.Context, org string) ([]*github.Repository, error)
 	GetRepository(ctx context.Context, owner, repo string) (*github.Repository, error)
+	GetRepositoryByID(ctx context.Context, id int64) (*github.Repository, error)
 	CreateRepository(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error)
 	EditRepository(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error)
 	DeleteRepository(ctx context.Context, owner, repo string) error
