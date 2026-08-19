@@ -1,5 +1,5 @@
 [tools]
-go = "1.26.6"
+go = "1.27.0"
 kubebuilder = "4.15.0"
 make = "4.4.1"
 
