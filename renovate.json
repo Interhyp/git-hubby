@@ -9,6 +9,7 @@
     {
       "matchManagers": [
         "github-actions",
+        "node",
         "npm",
         "mise"
       ],
