@@ -2,7 +2,6 @@ package mapper
 
 import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/google/go-github/v90/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +34,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 				Expect(hook.Active).To(Equal(new(true)))
 				Expect(hook.Config).NotTo(BeNil())
 				Expect(hook.Config.URL).To(Equal(new("https://example.com/webhook")))
-				Expect(hook.Config.ContentType).To(Equal(github.Ptr(contentTypeApplicationJSON)))
+				Expect(hook.Config.ContentType).To(Equal(new(contentTypeApplicationJSON)))
 				Expect(hook.Config.Secret).To(Equal(new("secret123")))
 				Expect(hook.Config.InsecureSSL).To(Equal(new("1")))
 				Expect(hook.Events).To(ConsistOf("push", "pull_request"))
@@ -77,7 +76,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 				hook := WebhookPresetToGithubHook(preset)
 
 				Expect(hook).NotTo(BeNil())
-				Expect(hook.Config.ContentType).To(Equal(github.Ptr(contentTypeApplicationJSON)))
+				Expect(hook.Config.ContentType).To(Equal(new(contentTypeApplicationJSON)))
 			})
 		})
 

@@ -8,7 +8,7 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,7 +71,7 @@ var _ = Describe("ReconcileTeam", func() {
 				}
 			}
 
-			mockClient1.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient1.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.CreateTeamRequest) (*github.Team, error) {
 				return &github.Team{
 					Name:                &newTeam.Name,
 					Slug:                &newTeam.Name,
@@ -173,10 +173,10 @@ var _ = Describe("ReconcileTeam", func() {
 				}, nil
 			}
 
-			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 				return &github.Team{
-					Name:                &newTeam.Name,
-					Slug:                &newTeam.Name,
+					Name:                newTeam.Name,
+					Slug:                newTeam.Name,
 					Description:         newTeam.Description,
 					Privacy:             newTeam.Privacy,
 					Permission:          newTeam.Permission, //nolint:staticcheck
@@ -230,10 +230,10 @@ var _ = Describe("ReconcileTeam", func() {
 				}, nil
 			}
 
-			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 				return &github.Team{
-					Name:                &newTeam.Name,
-					Slug:                &newTeam.Name,
+					Name:                newTeam.Name,
+					Slug:                newTeam.Name,
 					Description:         newTeam.Description,
 					Privacy:             newTeam.Privacy,
 					Permission:          newTeam.Permission, //nolint:staticcheck
@@ -285,10 +285,10 @@ var _ = Describe("ReconcileTeam", func() {
 					NotificationSetting: new("notifications_disabled"),
 				}, nil
 			}
-			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 				return &github.Team{
-					Name:                &newTeam.Name,
-					Slug:                &newTeam.Name,
+					Name:                newTeam.Name,
+					Slug:                newTeam.Name,
 					Description:         newTeam.Description,
 					Privacy:             newTeam.Privacy,
 					Permission:          newTeam.Permission, //nolint:staticcheck
@@ -341,10 +341,10 @@ var _ = Describe("ReconcileTeam", func() {
 				}, nil
 			}
 
-			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 				return &github.Team{
-					Name:                &newTeam.Name,
-					Slug:                &newTeam.Name,
+					Name:                newTeam.Name,
+					Slug:                newTeam.Name,
 					Description:         newTeam.Description,
 					Privacy:             newTeam.Privacy,
 					Permission:          newTeam.Permission, //nolint:staticcheck
@@ -428,7 +428,7 @@ var _ = Describe("ReconcileTeam", func() {
 				}
 			}
 
-			mockClient1.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient1.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.CreateTeamRequest) (*github.Team, error) {
 				return nil, errors.New("failed to create team")
 			}
 
@@ -473,7 +473,7 @@ var _ = Describe("ReconcileTeam", func() {
 				}, nil
 			}
 
-			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 				return nil, errors.New("failed to update team")
 			}
 
@@ -535,10 +535,10 @@ var _ = Describe("ReconcileTeam", func() {
 				}, nil
 			}
 
-			mockClient2.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient2.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 				return &github.Team{
-					Name:                &newTeam.Name,
-					Slug:                &newTeam.Name,
+					Name:                newTeam.Name,
+					Slug:                newTeam.Name,
 					Description:         newTeam.Description,
 					Privacy:             newTeam.Privacy,
 					Permission:          newTeam.Permission, //nolint:staticcheck
@@ -715,10 +715,10 @@ var _ = Describe("ReconcileTeam", func() {
 				}, nil
 			}
 
-			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+			mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 				return &github.Team{
-					Name:                &newTeam.Name,
-					Slug:                &newTeam.Name,
+					Name:                newTeam.Name,
+					Slug:                newTeam.Name,
 					Description:         newTeam.Description,
 					Privacy:             newTeam.Privacy,
 					Permission:          newTeam.Permission, //nolint:staticcheck

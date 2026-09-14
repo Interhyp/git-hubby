@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -373,19 +373,19 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		BeforeEach(func() {
 			definitions = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr(stringProp),
+					PropertyName: new(stringProp),
 					ValueType:    "string",
 				},
 				{
-					PropertyName: github.Ptr(selectProp),
+					PropertyName: new(selectProp),
 					ValueType:    "single_select",
 				},
 				{
-					PropertyName: github.Ptr(multiProp),
+					PropertyName: new(multiProp),
 					ValueType:    "multi_select",
 				},
 				{
-					PropertyName: github.Ptr(boolProp),
+					PropertyName: new(boolProp),
 					ValueType:    "true_false",
 				},
 			}

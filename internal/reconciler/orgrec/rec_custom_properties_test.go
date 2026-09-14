@@ -8,7 +8,7 @@ import (
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -192,7 +192,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						Description:      new("Old description"),
 						AllowedValues:    []string{"dev", "prod"},
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
 			}
@@ -232,7 +232,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						Description:      new("Environment type"),
 						AllowedValues:    []string{"dev", "staging", "prod"},
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
 			}
@@ -269,14 +269,14 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						DefaultValue:     "dev",
 						AllowedValues:    []string{"dev", "prod"},
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 					{
 						PropertyName:     new("team"),
 						ValueType:        github.PropertyValueTypeString,
 						Required:         new(false),
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
 			}
@@ -443,7 +443,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						ValueType:        github.PropertyValueTypeMultiSelect,
 						DefaultValue:     "not-a-slice", // Invalid type for multi_select
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
 			}
@@ -475,7 +475,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						ValueType:        github.PropertyValueTypeString,
 						Required:         new(false), // Must match default
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 					{
 						PropertyName:     new("repo_property"),
@@ -514,7 +514,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						DefaultValue:     "dev",
 						AllowedValues:    []string{"prod", "dev", "staging"}, // Different order
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
 			}
@@ -546,7 +546,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						PropertyName:     new("team"),
 						ValueType:        github.PropertyValueTypeString,
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
 			}
@@ -576,7 +576,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						ValueType:        github.PropertyValueTypeString,
 						Required:         new(false),
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
 			}
@@ -634,7 +634,7 @@ var _ = Describe("ReconcileCustomProperties", func() {
 						ValueType:        github.PropertyValueTypeString,
 						Required:         new(false), // GitHub has default
 						ValuesEditableBy: new("org_actors"),
-						SourceType:       github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+						SourceType:       new(mapper.CustomPropertySourceTypeOrganization),
 					},
 				}, nil
 			}
@@ -734,12 +734,12 @@ var _ = Describe("getGitHubOrgCustomPropertiesByPropertyName", func() {
 				{
 					PropertyName: new("prop1"),
 					ValueType:    github.PropertyValueTypeString,
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
 					PropertyName: new("prop2"),
 					ValueType:    github.PropertyValueTypeString,
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 			}
 		})
@@ -758,7 +758,7 @@ var _ = Describe("getGitHubOrgCustomPropertiesByPropertyName", func() {
 				{
 					PropertyName: new("org_prop"),
 					ValueType:    github.PropertyValueTypeString,
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
 					PropertyName: new("repo_prop"),
@@ -782,12 +782,12 @@ var _ = Describe("getGitHubOrgCustomPropertiesByPropertyName", func() {
 				{
 					PropertyName: new(""),
 					ValueType:    github.PropertyValueTypeString,
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
 					PropertyName: new("valid_prop"),
 					ValueType:    github.PropertyValueTypeString,
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 			}
 		})
@@ -836,11 +836,11 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 			input := []*github.CustomProperty{
 				{
 					PropertyName: new("prop1"),
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
 					PropertyName: new("prop2"),
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 			}
 			result := retainOnlyOrgProperties(input)
@@ -870,7 +870,7 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 			input := []*github.CustomProperty{
 				{
 					PropertyName: new("org1"),
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
 					PropertyName: new("repo1"),
@@ -878,7 +878,7 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 				},
 				{
 					PropertyName: new("org2"),
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 			}
 			result := retainOnlyOrgProperties(input)
@@ -893,7 +893,7 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 			input := []*github.CustomProperty{
 				{
 					PropertyName: new("org1"),
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
 					PropertyName: new("unknown"),
@@ -911,7 +911,7 @@ var _ = Describe("retainOnlyOrgProperties", func() {
 			input := []*github.CustomProperty{
 				{
 					PropertyName: new("org1"),
-					SourceType:   github.Ptr(mapper.CustomPropertySourceTypeOrganization),
+					SourceType:   new(mapper.CustomPropertySourceTypeOrganization),
 				},
 				{
 					PropertyName: new("unknown"),

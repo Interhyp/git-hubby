@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/Interhyp/git-hubby/internal/ghclient"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 )
 
 type GitHubMockClientFactory struct {
@@ -64,7 +64,7 @@ type MockGitHubClientWrapper struct {
 
 	// Deploy key mocks
 	ListAllDeployKeysFunc func(ctx context.Context, owner, repo string) ([]*github.Key, error)
-	CreateDeployKeyFunc   func(ctx context.Context, owner, repo string, key *github.Key) error
+	CreateDeployKeyFunc   func(ctx context.Context, owner, repo string, key github.CreateDeployKeyRequest) error
 	DeleteDeployKeyFunc   func(ctx context.Context, owner, repo string, id int64) error
 
 	// Webhook mocks
@@ -102,8 +102,8 @@ type MockGitHubClientWrapper struct {
 	// Team and Role mocks
 	GetAllTeamsForOrgFunc func(ctx context.Context, org string) ([]*github.Team, error)
 	GetTeamBySlugFunc     func(ctx context.Context, org string, slug string) (*github.Team, error)
-	EditTeamBySlugFunc    func(ctx context.Context, org string, slug string, team *github.NewTeam) (*github.Team, error)
-	CreateTeamFunc        func(ctx context.Context, org string, team *github.NewTeam) (*github.Team, error)
+	EditTeamBySlugFunc    func(ctx context.Context, org string, slug string, team *github.UpdateTeamRequest) (*github.Team, error)
+	CreateTeamFunc        func(ctx context.Context, org string, team *github.CreateTeamRequest) (*github.Team, error)
 	DeleteTeamBySlugFunc  func(ctx context.Context, org string, slug string) error
 	GetRoleByNameFunc     func(ctx context.Context, org string, roleName string) (*github.CustomOrgRole, error)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -309,7 +309,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"main"}, // Changed from refs/heads/main to main
@@ -360,7 +360,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -412,7 +412,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -461,7 +461,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -492,7 +492,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "old-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 				},
 			}
 		})
@@ -534,7 +534,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "keep-this",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -548,13 +548,13 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(456)),
 					Name:        "delete-this",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 				},
 				{
 					ID:          new(int64(789)),
 					Name:        "delete-this-too",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 				},
 			}
 		})
@@ -612,7 +612,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "existing-ruleset",
 					Enforcement: github.RulesetEnforcementActive, // Different enforcement
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -834,7 +834,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive, // Different
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -904,7 +904,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          nil, // Nil ID
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementEvaluate,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 				},
 			}
 
@@ -913,7 +913,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          nil,
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementEvaluate,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 				}, nil
 			}
 		})
@@ -1034,7 +1034,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -1043,7 +1043,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					BypassActors: []*github.BypassActor{
 						{
 							ActorID:   new(int64(888)),
-							ActorType: github.Ptr(github.BypassActorTypeTeam),
+							ActorType: new(github.BypassActorTypeTeam),
 						},
 					},
 					Rules: &github.RepositoryRulesetRules{
@@ -1180,7 +1180,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "main-protection",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -1310,7 +1310,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "copilot-review-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"main"},
@@ -1366,7 +1366,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "copilot-review-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"main"},
@@ -1423,7 +1423,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(123)),
 					Name:        "copilot-review-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"main"},
@@ -1614,7 +1614,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 					ID:          new(int64(999)),
 					Name:        "repo-target-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTarget("repository")),
+					Target:      new(github.RulesetTarget("repository")),
 				},
 			}
 		})

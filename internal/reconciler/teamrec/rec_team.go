@@ -7,7 +7,7 @@ import (
 
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -66,7 +66,7 @@ func (t *GitHubTeamReconciler) reconcileTeamForOrg(ctx context.Context, ghOrg re
 }
 
 func (t *GitHubTeamReconciler) updateTeam(ctx context.Context, ghOrg reconciler.GitHub[string]) (*github.Team, error) {
-	ghTeam, err := ghOrg.Client.EditTeamBySlug(ctx, ghOrg.Resource, t.Team.GetSlug(), mapper.TeamToNewGitHubTeam(t.Kubernetes.Resource))
+	ghTeam, err := ghOrg.Client.EditTeamBySlug(ctx, ghOrg.Resource, t.Team.GetSlug(), mapper.TeamToUpdateTeamRequest(t.Kubernetes.Resource))
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (t *GitHubTeamReconciler) createTeam(ctx context.Context, ghOrg reconciler.
 	log := logPkg.FromContext(ctx)
 	log.V(1).Info("Team not found in GitHub, creating it")
 
-	ghTeam, err := ghOrg.Client.CreateTeam(ctx, ghOrg.Resource, mapper.TeamToNewGitHubTeam(t.Kubernetes.Resource))
+	ghTeam, err := ghOrg.Client.CreateTeam(ctx, ghOrg.Resource, mapper.TeamToCreateTeamRequest(t.Kubernetes.Resource))
 	if err != nil {
 		log.Error(err, "failed to create team on GitHub")
 		return err

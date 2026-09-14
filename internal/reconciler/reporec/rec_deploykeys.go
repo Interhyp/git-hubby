@@ -6,7 +6,7 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/Interhyp/git-hubby/internal/utils"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -109,7 +109,7 @@ func (r *GitHubRepoReconciler) createMissingDeployKeys(ctx context.Context, depl
 		log := log.WithValues("deployKeyTitle", preset.Title)
 
 		log.V(1).Info("Creating deploy key")
-		deployKey := mapper.DeployKeyPresetToGitHubDeployKey(*preset)
+		deployKey := mapper.DeployKeyPresetToDeployKeyRequest(*preset)
 		if err := r.GitHub.Client.CreateDeployKey(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, deployKey); err != nil {
 			log.Error(err, "Failed to create missing deploy key")
 			return err

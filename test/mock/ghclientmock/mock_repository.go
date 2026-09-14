@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 )
 
 // Repository operations
@@ -186,7 +186,7 @@ func (m *MockGitHubClientWrapper) DeleteDeployKey(ctx context.Context, owner, re
 	return nil
 }
 
-func (m *MockGitHubClientWrapper) CreateDeployKey(ctx context.Context, owner, repo string, key *github.Key) error {
+func (m *MockGitHubClientWrapper) CreateDeployKey(ctx context.Context, owner, repo string, key github.CreateDeployKeyRequest) error {
 	m.recordRepoCall(RepoCall{Method: "CreateDeployKey", Owner: owner, Repo: repo})
 
 	if m.CreateDeployKeyFunc != nil {

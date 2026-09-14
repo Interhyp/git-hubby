@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Interhyp/git-hubby/internal/mapper"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 )
 
 // Organization operations
@@ -48,7 +48,7 @@ func (m *MockGitHubClientWrapper) CreateOrUpdateOrganizationCustomProperties(ctx
 		resultProp := *prop
 		// Set source type to organization if not set
 		if resultProp.SourceType == nil {
-			resultProp.SourceType = github.Ptr(mapper.CustomPropertySourceTypeOrganization)
+			resultProp.SourceType = new(mapper.CustomPropertySourceTypeOrganization)
 		}
 		resultProperties[i] = &resultProp
 	}

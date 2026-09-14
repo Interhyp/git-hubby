@@ -10,7 +10,7 @@ import (
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 	"github.com/Interhyp/git-hubby/test/mock"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/types"
@@ -76,10 +76,10 @@ var _ = Describe("TeamController", func() {
 			It("should successfully create and reconcile a team", func() {
 				By("Setting up mock to return 404 for team not found")
 				mockClient.SetTeamNotFound([]string{orgName}, teamName)
-				mockClient.CreateTeamFunc = func(ctx context.Context, org string, team *github.NewTeam) (*github.Team, error) {
+				mockClient.CreateTeamFunc = func(ctx context.Context, org string, team *github.CreateTeamRequest) (*github.Team, error) {
 					return &github.Team{
-						Name: github.Ptr(teamName),
-						Slug: github.Ptr(teamName),
+						Name: new(teamName),
+						Slug: new(teamName),
 					}, nil
 				}
 
@@ -106,10 +106,10 @@ var _ = Describe("TeamController", func() {
 			It("should reconcile team across multiple organizations", func() {
 				By("Setting up mock for multi-org team creation")
 				mockClient.SetTeamNotFound([]string{orgName, secondOrgName}, teamName)
-				mockClient.CreateTeamFunc = func(ctx context.Context, org string, team *github.NewTeam) (*github.Team, error) {
+				mockClient.CreateTeamFunc = func(ctx context.Context, org string, team *github.CreateTeamRequest) (*github.Team, error) {
 					return &github.Team{
-						Name: github.Ptr(teamName),
-						Slug: github.Ptr(teamName),
+						Name: new(teamName),
+						Slug: new(teamName),
 					}, nil
 				}
 
@@ -126,7 +126,7 @@ var _ = Describe("TeamController", func() {
 
 		Context("Team deletion", func() {
 			BeforeEach(func() {
-				team = testEnv.SetupTeamTest(nil, namespaceName, teamName, github.Ptr(teamName), []githubv1alpha1.OrganizationRef{{Name: orgName}})
+				team = testEnv.SetupTeamTest(nil, namespaceName, teamName, new(teamName), []githubv1alpha1.OrganizationRef{{Name: orgName}})
 				team.Finalizers = []string{"team.github.interhyp.de/finalizer"}
 				Expect(testEnv.Client.Update(testEnv.Context, team)).To(Succeed())
 				Expect(testEnv.Client.Delete(testEnv.Context, team)).To(Succeed())
@@ -136,8 +136,8 @@ var _ = Describe("TeamController", func() {
 				By("Setting up mock to return existing team")
 				mockClient.GetTeamBySlugFunc = func(ctx context.Context, owner, team string) (*github.Team, error) {
 					return &github.Team{
-						Name:                github.Ptr(teamName),
-						Slug:                github.Ptr(teamName),
+						Name:                new(teamName),
+						Slug:                new(teamName),
 						Description:         new(""),
 						Privacy:             new("closed"),
 						Permission:          new("pull"),
@@ -165,8 +165,8 @@ var _ = Describe("TeamController", func() {
 				By("Setting up mock for member reconciliation")
 				mockClient.GetTeamBySlugFunc = func(ctx context.Context, owner, team string) (*github.Team, error) {
 					return &github.Team{
-						Name:                github.Ptr(teamName),
-						Slug:                github.Ptr(teamName),
+						Name:                new(teamName),
+						Slug:                new(teamName),
 						Description:         new(""),
 						Privacy:             new("closed"),
 						Permission:          new("pull"),
@@ -199,7 +199,7 @@ var _ = Describe("TeamController", func() {
 
 		Context("Error handling", func() {
 			BeforeEach(func() {
-				team = testEnv.SetupTeamTest(nil, namespaceName, teamName, github.Ptr(teamName), []githubv1alpha1.OrganizationRef{{Name: orgName}})
+				team = testEnv.SetupTeamTest(nil, namespaceName, teamName, new(teamName), []githubv1alpha1.OrganizationRef{{Name: orgName}})
 			})
 
 			It("should handle GitHub API errors gracefully", func() {

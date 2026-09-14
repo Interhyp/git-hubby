@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v91/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -162,11 +162,11 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "production-deploy-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result).NotTo(BeNil())
 			Expect(result.Key).NotTo(BeNil())
-			Expect(*result.Key).To(Equal(preset.Key))
+			Expect(result.Key).To(Equal(preset.Key))
 			Expect(result.ReadOnly).NotTo(BeNil())
 			Expect(*result.ReadOnly).To(Equal(*preset.ReadOnly))
 			Expect(result.Title).NotTo(BeNil())
@@ -180,7 +180,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "write-access-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result).NotTo(BeNil())
 			Expect(result.GetReadOnly()).To(BeFalse())
@@ -193,7 +193,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "empty-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result).NotTo(BeNil())
 			Expect(result.GetKey()).To(BeEmpty())
@@ -206,7 +206,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result).NotTo(BeNil())
 			Expect(result.GetTitle()).To(BeEmpty())
@@ -219,9 +219,9 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "test-title",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
-			Expect(result).To(BeAssignableToTypeOf(&github.Key{}))
+			Expect(result).To(BeAssignableToTypeOf(github.CreateDeployKeyRequest{}))
 		})
 
 		It("should handle all fields as pointers", func() {
@@ -231,7 +231,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "deploy-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.Key).NotTo(BeNil())
 			Expect(result.ReadOnly).NotTo(BeNil())
@@ -245,7 +245,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "special-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetKey()).To(Equal(preset.Key))
 		})
@@ -257,7 +257,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "部署密钥-デプロイキー",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetTitle()).To(Equal(preset.Title))
 		})
@@ -274,8 +274,8 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "readwrite-key",
 			}
 
-			resultTrue := DeployKeyPresetToGitHubDeployKey(presetTrue)
-			resultFalse := DeployKeyPresetToGitHubDeployKey(presetFalse)
+			resultTrue := DeployKeyPresetToDeployKeyRequest(presetTrue)
+			resultFalse := DeployKeyPresetToDeployKeyRequest(presetFalse)
 
 			Expect(resultTrue.GetReadOnly()).To(BeTrue())
 			Expect(resultFalse.GetReadOnly()).To(BeFalse())
@@ -290,7 +290,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "rsa-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetKey()).To(ContainSubstring("ssh-rsa"))
 		})
@@ -302,7 +302,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "ed25519-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetKey()).To(ContainSubstring("ssh-ed25519"))
 		})
@@ -314,7 +314,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "ecdsa-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetKey()).To(ContainSubstring("ecdsa-sha2"))
 		})
@@ -326,7 +326,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "key-with-comment",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetKey()).To(ContainSubstring("user@host"))
 		})
@@ -341,7 +341,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    longTitle,
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetTitle()).To(Equal(longTitle))
 		})
@@ -353,7 +353,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "whitespace-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetKey()).To(Equal(preset.Key))
 		})
@@ -365,7 +365,7 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "  deploy key  ",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result.GetTitle()).To(Equal(preset.Title))
 		})
@@ -379,11 +379,11 @@ var _ = Describe("DeployKeyPresetToGitHubDeployKey", func() {
 				Title:    "nil-readonly-key",
 			}
 
-			result := DeployKeyPresetToGitHubDeployKey(preset)
+			result := DeployKeyPresetToDeployKeyRequest(preset)
 
 			Expect(result).NotTo(BeNil())
 			Expect(result.Key).NotTo(BeNil())
-			Expect(*result.Key).To(Equal(preset.Key))
+			Expect(result.Key).To(Equal(preset.Key))
 			Expect(result.Title).NotTo(BeNil())
 			Expect(*result.Title).To(Equal(preset.Title))
 			Expect(result.ReadOnly).NotTo(BeNil())
