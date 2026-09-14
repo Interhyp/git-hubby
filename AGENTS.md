@@ -60,7 +60,8 @@ Ensure you run them against a dedicated [Kind](https://kind.sigs.k8s.io/) cluste
 
 **After editing `*_types.go` or markers:**
 ```
-make codegen  # Regenerate CRDs/RBAC, DeepCopy, docs, and validation schemas
+make manifests  # Regenerate CRDs/RBAC from markers
+make generate   # Regenerate DeepCopy methods
 ```
 
 **After editing `*.go` files:**
@@ -153,7 +154,7 @@ Tests use **Ginkgo + Gomega** (BDD style). Check `suite_test.go` for setup.
 
 ```bash
 # 1. Regenerate manifests
-make codegen
+make manifests generate
 
 # 2. Build & deploy
 export IMG=<registry>/<project>:tag

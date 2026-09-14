@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= git-hubby:latest
+IMG ?= controller:latest
 # YEAR defines the year value used for substituting the YEAR placeholder in the boilerplate header.
 YEAR ?= $(shell date +%Y)
 
@@ -49,8 +49,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	"$(CONTROLLER_GEN)" object:headerFile="hack/boilerplate.go.txt",year=$(YEAR) paths="./..."
-	"$(CONTROLLER_GEN)" applyconfiguration:headerFile="hack/boilerplate.go.txt" paths="./api/..."
+	"$(CONTROLLER_GEN)" object paths="./..."
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -61,17 +60,8 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet setup-envtest ## Run tests using go test
+test: manifests generate fmt vet setup-envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell "$(ENVTEST)" use $(ENVTEST_K8S_VERSION) --bin-dir "$(LOCALBIN)" -p path)" go test $$(go list ./... | grep -v /e2e) -coverprofile cover.out
-
-.PHONY: test-ginkgo
-test-ginkgo: manifests generate fmt vet setup-envtest ginkgo
-	KUBEBUILDER_ASSETS="$(shell "$(ENVTEST)" use $(ENVTEST_K8S_VERSION) --bin-dir "$(LOCALBIN)" -p path)" \
-		"$(GINKGO)" --procs=4 --randomize-all -r --skip-package=e2e --keep-going
-
-.PHONY: test-with-report
-test-with-report: manifests generate setup-envtest
-	KUBEBUILDER_ASSETS="$(shell "$(ENVTEST)" use $(ENVTEST_K8S_VERSION) --bin-dir "$(LOCALBIN)" -p path)" go test $$(go list ./... | grep -v /e2e) -coverprofile cover.out -json | tee test_results.json
 
 # TODO(user): To use a different vendor for e2e tests, modify the setup under 'tests/e2e'.
 # The default setup assumes Kind is pre-installed and builds/loads the Manager Docker image locally.
@@ -112,42 +102,15 @@ lint: golangci-lint ## Run golangci-lint linter
 lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 	"$(GOLANGCI_LINT)" run --fix
 
-# retry will retry a command up to $1 times with a $2 second delay between attempts.
-# Usage: $(call retry,<max-attempts>,<delay-seconds>,<command>)
-define retry
-attempts=0; max=$(1); delay=$(2); \
-while true; do \
-  attempts=$$((attempts + 1)); \
-  $(3) && break; \
-  if [ $$attempts -ge $$max ]; then \
-    echo "Command failed after $$max attempts"; exit 1; \
-  fi; \
-  echo "Attempt $$attempts/$$max failed. Retrying in $(2)s..."; \
-  sleep $$delay; \
-done
-endef
-
 .PHONY: lint-config
 lint-config: golangci-lint ## Verify golangci-lint linter configuration
-	@$(call retry,3,5,"$(GOLANGCI_LINT)" config verify)
-
-.PHONY: validate
-validate: lint-config lint test-with-report
+	"$(GOLANGCI_LINT)" config verify
 
 ##@ Build
 
 .PHONY: build
 build: manifests generate fmt vet ## Build manager binary.
 	go build -o bin/manager cmd/main.go
-
-.PHONY: env
-env: ## Create .env from .env.tmpl if it does not exist.
-	@if [ -f .env ]; then \
-		echo ".env already exists, skipping (delete it first to re-create from template)"; \
-	else \
-		cp .env.tmpl .env; \
-		echo ".env created from .env.tmpl — edit it to configure your local environment"; \
-	fi
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
@@ -226,12 +189,10 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
-GINKGO ?= $(LOCALBIN)/ginkgo
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.8.1
 CONTROLLER_TOOLS_VERSION ?= v0.21.0
-KUBECONFORM_VERSION ?= v0.8.0
 
 #ENVTEST_VERSION is the controller-runtime version to use for setup-envtest, derived from go.mod
 ENVTEST_VERSION ?= $(shell v='$(call gomodver,sigs.k8s.io/controller-runtime)'; \
@@ -244,9 +205,6 @@ ENVTEST_K8S_VERSION ?= $(shell v='$(call gomodver,k8s.io/api)'; \
   printf '%s\n' "$$v" | sed -E 's/^v?[0-9]+\.([0-9]+).*/1.\1/')
 
 GOLANGCI_LINT_VERSION ?= v2.12.2
-GINKGO_VERSION ?= v2.27.2  # Match the version in go.mod
-OPENAPI2JSONSCHEMA ?= $(LOCALBIN)/openapi2jsonschema
-
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
@@ -275,61 +233,17 @@ golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(GOLANGCI_LINT): $(LOCALBIN)
 	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
 	@test -f .custom-gcl.yml && { \
-		config_hash="$$( (sha256sum .custom-gcl.yml 2>/dev/null || shasum -a 256 .custom-gcl.yml) | head -c 12)"; \
-		custom_marker="$(GOLANGCI_LINT)-custom-$(GOLANGCI_LINT_VERSION)-$$config_hash"; \
-		[ -f "$$custom_marker" ] && [ "$$(readlink "$(GOLANGCI_LINT)" 2>/dev/null)" = "$$(basename "$$custom_marker")" ] || { \
-			echo "Building custom golangci-lint with plugins..." && \
-			ln -sf "$$(basename "$(GOLANGCI_LINT)-$(GOLANGCI_LINT_VERSION)")" "$(GOLANGCI_LINT)" && \
-			$(GOLANGCI_LINT) custom --destination $(LOCALBIN) --name golangci-lint-custom && \
-			mv -f $(LOCALBIN)/golangci-lint-custom "$$custom_marker" && \
-			ln -sf "$$(basename "$$custom_marker")" "$(GOLANGCI_LINT)"; \
-		}; \
+		echo "Building custom golangci-lint with plugins..." && \
+		$(GOLANGCI_LINT) custom --destination $(LOCALBIN) --name golangci-lint-custom && \
+		mv -f $(LOCALBIN)/golangci-lint-custom $(GOLANGCI_LINT); \
 	} || true
-
-.PHONY: ginkgo
-ginkgo: $(GINKGO) ## Download ginkgo CLI locally if necessary.
-$(GINKGO): $(LOCALBIN)
-	$(call go-install-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo,$(GINKGO_VERSION))
-
-# Generate CRD Documentation using crd-ref-docs
-
-CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
-CRD_REF_DOCS_VERSION ?= v0.3.0
-
-.PHONY: crd-ref-docs
-crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
-$(CRD_REF_DOCS): $(LOCALBIN)
-	$(call go-install-tool,$(CRD_REF_DOCS),github.com/elastic/crd-ref-docs,$(CRD_REF_DOCS_VERSION))
-
-.PHONY: crd-docs
-crd-docs: crd-ref-docs generate
-	$(CRD_REF_DOCS) --source-path ./api/v1alpha1 --config ./crd-ref-docs.config.yaml --output-path=./docs/crds.md --renderer=markdown
-
-.PHONY: codegen
-codegen: manifests generate crd-docs schemas ## Regenerate all derived artifacts after an API change (CRDs, deepcopy, docs, schemas).
-
-.PHONY: openapi2jsonschema-tool
-openapi2jsonschema-tool: $(OPENAPI2JSONSCHEMA) ## Download and build openapi2jsonschema from kubeconform if necessary.
-$(OPENAPI2JSONSCHEMA): $(LOCALBIN)
-	$(call clone-and-build-tool,$(OPENAPI2JSONSCHEMA),yannh/kubeconform,$(KUBECONFORM_VERSION),openapi2jsonschema-go)
-
-.PHONY: schemas
-schemas: manifests openapi2jsonschema-tool ## Generate per-kind JSON Schema files for CR validation into schemas/.
-	@mkdir -p schemas
-	@cd schemas && for crd in ../config/crd/bases/*.yaml; do "$(OPENAPI2JSONSCHEMA)" "$$crd"; done
-
-# Add the Grafana plugin
-
-.PHONY: grafana
-grafana:
-	kubebuilder edit --plugins grafana.kubebuilder.io/v1-alpha
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary
 # $2 - package url which can be installed
 # $3 - specific version of package
 define go-install-tool
-@[ -f "$(1)-$(3)" ] || { \
+@[ -f "$(1)-$(3)" ] && [ "$$(readlink -- "$(1)" 2>/dev/null)" = "$(1)-$(3)" ] || { \
 set -e; \
 package=$(2)@$(3) ;\
 echo "Downloading $${package}" ;\
@@ -337,26 +251,7 @@ rm -f "$(1)" ;\
 GOBIN="$(LOCALBIN)" go install $${package} ;\
 mv "$(LOCALBIN)/$$(basename "$(1)")" "$(1)-$(3)" ;\
 } ;\
-[ -L "$(1)" ] && [ -e "$(1)" ] || \
-ln -sf "$$(basename "$(1)-$(3)")" "$(1)"
-endef
-
-# clone-and-build-tool clones a GitHub repo at a given tag and builds a Go binary from a subdirectory.
-# $1 - target binary path (without version suffix)
-# $2 - GitHub repo slug (e.g. yannh/kubeconform)
-# $3 - version tag to clone
-# $4 - subdirectory that contains the go.mod and main package
-define clone-and-build-tool
-@[ -f "$(1)-$(3)" ] || { \
-set -e; \
-echo "Building $$(basename "$(1)") from github.com/$(2) $(3)..."; \
-tmpdir=$$(mktemp -d); \
-git clone --quiet --depth=1 --branch "$(3)" "https://github.com/$(2).git" "$$tmpdir"; \
-( cd "$$tmpdir/$(4)" && go build -o "$(1)-$(3)" . ); \
-rm -rf "$$tmpdir"; \
-}; \
-[ -L "$(1)" ] && [ -e "$(1)" ] || \
-ln -sf "$$(basename "$(1)-$(3)")" "$(1)"
+ln -sf "$$(realpath "$(1)-$(3)")" "$(1)"
 endef
 
 define gomodver

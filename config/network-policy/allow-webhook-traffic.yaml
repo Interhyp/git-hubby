@@ -21,7 +21,7 @@ spec:
     - from:
       - namespaceSelector:
           matchLabels:
-            kubernetes.io/metadata.name: kube-system # Only from namespaces with this label
+            webhook: enabled # Only from namespaces with this label
       ports:
-        - port: 9443
+        - port: 443
           protocol: TCP

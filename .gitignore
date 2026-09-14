@@ -1,29 +1,3 @@
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-out/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
-.vscode/
-
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -46,27 +20,11 @@ go.work
 !vendor/**/zz_generated.*
 
 # editor and IDE paraphernalia
+.idea
+.vscode
 *.swp
 *.swo
 *~
 
 # Kubeconfig might contain secrets
 *.kubeconfig
-
-# env may contain secrets
-.env
-
-# created by build related make targets
-report.xml
-test_results.json
-build-output/
-
-# place to store untracked files
-.gitignored
-
-
-node_modules/
-
-# MkDocs generated site
-site/
-

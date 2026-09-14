@@ -40,12 +40,9 @@ spec:
           spec:
             description: spec defines the desired state of WebhookIgnorePreset
             properties:
-              ignoreURLRegex:
-                description: |-
-                  IgnoreURLRegex is a regular expression pattern to match against webhook payload URLs.
-                  Webhooks with URLs matching this pattern will not be created, even if they are
-                  referenced in a repository's WebhookPresetList.
-                  Example: "^https://deprecated\\.example\\.com/.*" to ignore all webhooks to deprecated.example.com
+              foo:
+                description: foo is an example field of WebhookIgnorePreset. Edit
+                  webhookignorepreset_types.go to remove/update
                 type: string
             type: object
           status:

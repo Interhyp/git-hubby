@@ -6,7 +6,4 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: repository-sample
 spec:
-  organizationRef:
-    name: sample-org
-  webhookPresets:
-    - name: webhookpreset-sample
+  # TODO(user): Add fields here

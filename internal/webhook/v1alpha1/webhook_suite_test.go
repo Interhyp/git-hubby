@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -98,8 +96,7 @@ var _ = BeforeSuite(func() {
 	err = SetupOrganizationWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
-	mockClient := ghclientmock.NewMockGitHubClientWrapper()
-	err = SetupRepositoryWebhookWithManager(mgr, ghclientmock.NewGitHubMockClientFactory(mockClient))
+	err = SetupRepositoryWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:webhook

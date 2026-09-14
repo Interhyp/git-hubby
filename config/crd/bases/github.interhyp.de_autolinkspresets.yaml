@@ -39,45 +39,10 @@ spec:
           spec:
             description: spec defines the desired state of AutolinksPreset
             properties:
-              autolinks:
-                description: |-
-                  AutolinkList is a list of autolink configurations to create in repositories.
-                  Each autolink defines a prefix that triggers link generation and a URL template.
-                items:
-                  description: |-
-                    Autolink defines an automatic link reference for external resources.
-                    When a reference matching KeyPrefix is found in issues, pull requests, or commit messages,
-                    GitHub automatically converts it to a clickable link using the URLTemplate.
-                    See: https://docs.github.com/en/rest/repos/autolinks
-                  properties:
-                    isAlphanumeric:
-                      default: false
-                      description: |-
-                        IsAlphanumeric determines whether the reference must be alphanumeric.
-                        - true: the <num> parameter of the url_template matches alphanumeric characters `A-Z` (case insensitive), `0-9`, and `-`
-                        - false: reference only matches numeric characters.
-                      type: boolean
-                    keyPrefix:
-                      description: |-
-                        KeyPrefix is the text prefix that triggers autolink creation.
-                        When text starts with this prefix followed by a reference, it becomes a link.
-                        Examples: "JIRA-", "TICKET-", "BUG-"
-                      maxLength: 20
-                      pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]{0,19}$
-                      type: string
-                    urlTemplate:
-                      description: |-
-                        URLTemplate is the URL pattern used to generate links.
-                        Use <num> as a placeholder for the reference number/ID.
-                        Example: "https://jira.example.com/browse/<num>" converts "JIRA-123" to "https://jira.example.com/browse/123"
-                      maxLength: 200
-                      type: string
-                  required:
-                  - isAlphanumeric
-                  - keyPrefix
-                  - urlTemplate
-                  type: object
-                type: array
+              foo:
+                description: foo is an example field of AutolinksPreset. Edit autolinkspreset_types.go
+                  to remove/update
+                type: string
             type: object
           status:
             description: status defines the observed state of AutolinksPreset

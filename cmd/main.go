@@ -1,31 +1,11 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
-	"errors"
 	"flag"
 	"fmt"
-	"io/fs"
 	"os"
 	"strings"
-
-	"github.com/Interhyp/git-hubby/internal/logging"
-	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
-	"github.com/joho/godotenv"
-	"go.elastic.co/ecszap"
-	uberzap "go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
-
-	"github.com/Interhyp/git-hubby/internal/config"
-	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
-
-	"github.com/Interhyp/git-hubby/internal/ghclient"
-	"github.com/Interhyp/git-hubby/internal/ratelimit"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -35,6 +15,8 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -58,98 +40,30 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
+// getWatchNamespace returns the namespace(s) the manager should watch for changes.
+// It reads the value from the WATCH_NAMESPACE environment variable.
+// - If WATCH_NAMESPACE is not set, an error is returned
+// - If WATCH_NAMESPACE contains a single namespace, the manager watches that namespace
+// - If WATCH_NAMESPACE contains comma-separated namespaces, the manager watches those namespaces
+func getWatchNamespace() (string, error) {
+	watchNamespaceEnvVar := "WATCH_NAMESPACE"
+	ns, found := os.LookupEnv(watchNamespaceEnvVar)
+	if !found {
+		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
+	}
+	return ns, nil
+}
+
 // setupCacheNamespaces configures the cache to watch specific namespace(s).
-// It returns an error if no valid namespaces remain after parsing.
-func setupCacheNamespaces(namespaces string) (cache.Options, error) {
+// It supports both single namespace ("ns1") and multi-namespace ("ns1,ns2,ns3") formats.
+func setupCacheNamespaces(namespaces string) cache.Options {
 	defaultNamespaces := make(map[string]cache.Config)
 	for ns := range strings.SplitSeq(namespaces, ",") {
-		cleaned := strings.TrimSpace(ns)
-		if cleaned == "" {
-			continue
-		}
-		defaultNamespaces[cleaned] = cache.Config{}
-	}
-	if len(defaultNamespaces) == 0 {
-		return cache.Options{}, fmt.Errorf("WATCH_NAMESPACE resolved to zero valid namespaces (input: %q)", namespaces)
+		defaultNamespaces[strings.TrimSpace(ns)] = cache.Config{}
 	}
 	return cache.Options{
 		DefaultNamespaces: defaultNamespaces,
-	}, nil
-}
-
-// parseLogLevel parses a log level string (e.g. "debug", "info", "warn", "error")
-// into a zapcore.Level. It returns the level and true if parsing succeeded,
-// or the zero value and false if the input is empty or invalid.
-func parseLogLevel(value string) (zapcore.Level, bool) {
-	value = strings.TrimSpace(strings.ToLower(value))
-	if value == "" {
-		return zapcore.InfoLevel, false
 	}
-	var level zapcore.Level
-	if err := level.UnmarshalText([]byte(value)); err != nil {
-		return zapcore.InfoLevel, false
-	}
-	return level, true
-}
-
-// logFormat represents the supported log output formats.
-type logFormat string
-
-const (
-	// logFormatJSON is the default structured JSON format.
-	logFormatJSON logFormat = "json"
-	// logFormatECS is the Elastic Common Schema JSON format.
-	logFormatECS logFormat = "ecs"
-	// logFormatConsole is a human-readable console format for local development.
-	logFormatConsole logFormat = "console"
-)
-
-// parseLogFormat normalises the LOG_FORMAT env value into a known logFormat.
-// The comparison is case-insensitive and surrounding whitespace is trimmed.
-// Unknown or empty values fall back to logFormatJSON.
-func parseLogFormat(value string) logFormat {
-	switch logFormat(strings.ToLower(strings.TrimSpace(value))) {
-	case logFormatECS:
-		return logFormatECS
-	case logFormatConsole:
-		return logFormatConsole
-	default:
-		return logFormatJSON
-	}
-}
-
-// buildLoggerOpts returns the zap.Opts slice for configuring the controller-runtime logger.
-//   - logFormatECS: ECS-compatible JSON encoding with ecszap core wrapping.
-//   - logFormatConsole: human-readable console encoder (ideal for local development).
-//   - logFormatJSON (default): standard kubebuilder JSON encoder.
-func buildLoggerOpts(flagOpts *zap.Options, format logFormat) []zap.Opts {
-	logOpts := []zap.Opts{
-		zap.UseFlagOptions(flagOpts),
-		zap.RawZapOpts(
-			uberzap.WrapCore(func(core zapcore.Core) zapcore.Core {
-				return logging.NewLogMapper(core, nil)
-			}),
-		),
-	}
-
-	switch format {
-	case logFormatECS:
-		ecsConfigOpt := func(encConf *zapcore.EncoderConfig) {
-			if encConf != nil {
-				*encConf = ecszap.ECSCompatibleEncoderConfig(*encConf)
-			}
-		}
-		logOpts = append(logOpts,
-			zap.JSONEncoder(ecsConfigOpt),
-			zap.RawZapOpts(ecszap.WrapCoreOption()),
-		)
-	case logFormatConsole:
-		logOpts = append(logOpts, zap.ConsoleEncoder())
-	default:
-		logOpts = append(logOpts, zap.JSONEncoder())
-	}
-
-	return logOpts
 }
 
 // nolint:gocyclo
@@ -157,12 +71,10 @@ func main() {
 	var metricsAddr string
 	var metricsCertPath, metricsCertName, metricsCertKey string
 	var webhookCertPath, webhookCertName, webhookCertKey string
-	var appCredentialsSecretName string
 	var enableLeaderElection bool
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
-	var envFile string
 	var tlsOpts []func(*tls.Config)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
@@ -179,37 +91,15 @@ func main() {
 		"The directory that contains the metrics server certificate.")
 	flag.StringVar(&metricsCertName, "metrics-cert-name", "tls.crt", "The name of the metrics server certificate file.")
 	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
-	flag.StringVar(&appCredentialsSecretName, "app-credentials-secret-name", "git-hubby-app-credentials",
-		"The name of the secret containing the GitHub app credentials.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
-	flag.StringVar(&envFile, "env-file", ".env",
-		"Comma-separated list of paths to env-files to load environment based configuration from. Defaults to .env.")
 	opts := zap.Options{
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	if err := godotenv.Load(strings.Split(envFile, ",")...); err != nil && !errors.Is(err, fs.ErrNotExist) {
-		fmt.Fprintf(os.Stderr, "Error loading .env file: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Parse all environment configuration immediately after godotenv so that every
-	// subsequent initialisation step (including logger setup) reads from cfg.
-	cfg, err := config.Parse()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to parse configuration from environment: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Support LOG_LEVEL env var (overrides --zap-log-level flag)
-	if level, ok := parseLogLevel(cfg.LogLevel); ok {
-		opts.Level = level
-	}
-
-	ctrl.SetLogger(zap.New(buildLoggerOpts(&opts, parseLogFormat(cfg.LogFormat))...))
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -218,7 +108,7 @@ func main() {
 	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
 	// - https://github.com/advisories/GHSA-4374-p667-p6c8
 	disableHTTP2 := func(c *tls.Config) {
-		setupLog.Info("disabling http/2")
+		setupLog.Info("Disabling HTTP/2")
 		c.NextProtos = []string{"http/1.1"}
 	}
 
@@ -278,16 +168,23 @@ func main() {
 		metricsServerOptions.KeyName = metricsCertKey
 	}
 
-	setupLog.Info("App credentials secret namespace configured", "namespace", cfg.AppCredentialsSecretNamespace)
+	// Get the namespace(s) for namespace-scoped mode from WATCH_NAMESPACE environment variable.
+	// The manager will only watch and manage resources in the specified namespace(s).
+	watchNamespace, err := getWatchNamespace()
+	if err != nil {
+		setupLog.Error(err, "Unable to get WATCH_NAMESPACE, "+
+			"the manager will watch and manage resources in all namespaces")
+		os.Exit(1)
+	}
 
+	// Configure manager options for namespace-scoped mode
 	mgrOptions := ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "6cee1c41.interhyp.de",
-
+		LeaderElectionID:       "ac3e6f29.interhyp.de",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -298,138 +195,68 @@ func main() {
 		// the manager stops, so would be fine to enable this option. However,
 		// if you are doing or is intended to do any operation such as perform cleanups
 		// after the manager stops then its usage might be unsafe.
-		LeaderElectionReleaseOnCancel: true,
+		// LeaderElectionReleaseOnCancel: true,
 	}
 
 	// Configure cache to watch namespace(s) specified in WATCH_NAMESPACE
-	cacheOpts, err := setupCacheNamespaces(cfg.WatchNamespace)
-	if err != nil {
-		setupLog.Error(err, "Invalid WATCH_NAMESPACE configuration")
-		os.Exit(1)
-	}
-	mgrOptions.Cache = cacheOpts
-	setupLog.Info("Watching namespace(s)", "namespaces", cfg.WatchNamespace)
+	mgrOptions.Cache = setupCacheNamespaces(watchNamespace)
+	setupLog.Info("Watching namespace(s)", "namespaces", watchNamespace)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), mgrOptions)
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "Failed to start manager")
 		os.Exit(1)
 	}
 
-	// Create a direct (non-cached) client for reading secrets outside the watched namespaces.
-	// The manager's cached client only sees resources in WATCH_NAMESPACE, but the credentials
-	// secret may live in a different namespace (APP_CREDENTIALS_SECRET_NAMESPACE).
-	directClient, err := client.New(ctrl.GetConfigOrDie(), client.Options{Scheme: scheme})
-	if err != nil {
-		setupLog.Error(err, "unable to create direct API client")
-		os.Exit(1)
-	}
-
-	// fetchSecret is a generic closure that fetches any secret by name from the credentials namespace.
-	fetchSecret := func(ctx context.Context, secretName string) (*v1.Secret, error) {
-		log := ctrl.LoggerFrom(ctx)
-		var secret v1.Secret
-		secretKey := client.ObjectKey{
-			Name:      secretName,
-			Namespace: cfg.AppCredentialsSecretNamespace,
-		}
-		if fetchErr := directClient.Get(ctx, secretKey, &secret); fetchErr != nil {
-			log.Error(fetchErr, "Failed to fetch secret", "secretName", secretName)
-			return nil, fetchErr
-		}
-		return &secret, nil
-	}
-	orgRegistry := ratelimit.NewOrgRateLimitRegistryFromConfig(cfg)
-	setupLog.Info("Per-org rate limit tracking initialized",
-		"coreThreshold", cfg.RateLimitConfig.StallThresholdCore,
-	)
-	clientManager, err := ghclient.NewGitHubCachingClientFactory(
-		ghclient.DefaultClientConfig(),
-		fetchSecret,
-		appCredentialsSecretName,
-		orgRegistry,
-	)
-	if err != nil {
-		setupLog.Error(err, "failed to create GitHub client factory")
-		os.Exit(1)
-	}
-
-	spreadingManager := spreading.NewDefaultManager(
-		spreading.WithEnabled(cfg.Features.EnableStartupSpreading),
-		spreading.WithSpreadPeriod(cfg.SpreadPeriodMinutes),
-		spreading.WithSpreadInterval(cfg.SpreadIntervalMinutes),
-	)
-	setupLog.Info("Startup spreading configured",
-		"spreadPeriod", spreadingManager.Config.SpreadPeriod,
-		"spreadInterval", spreadingManager.Config.SpreadInterval,
-		"startTime", spreadingManager.Config.StartTime,
-		"enabled", spreadingManager.Config.Enabled)
-
-	reconcilerFactory := &reconcilerfactory.Factory{
-		ClientManager:    clientManager,
-		SpreadingManager: spreadingManager,
-		K8sClient:        mgr.GetClient(),
-		Config:           cfg,
-	}
-
-	if err := (&controller.OrganizationCtl{
-		Scheme:                 mgr.GetScheme(),
-		ReconcilerFactory:      reconcilerFactory,
-		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
+	if err := (&controller.OrganizationReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Organization")
+		setupLog.Error(err, "Failed to create controller", "controller", "organization")
 		os.Exit(1)
 	}
-	if err := (&controller.RepositoryCtl{
-		Scheme:                 mgr.GetScheme(),
-		ReconcilerFactory:      reconcilerFactory,
-		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
+	if err := (&controller.RepositoryReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Repository")
+		setupLog.Error(err, "Failed to create controller", "controller", "repository")
 		os.Exit(1)
 	}
-	if err := (&controller.TeamCtl{
-		Scheme:                 mgr.GetScheme(),
-		ReconcilerFactory:      reconcilerFactory,
-		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
+	if err := (&controller.TeamReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Team")
+		setupLog.Error(err, "Failed to create controller", "controller", "team")
 		os.Exit(1)
 	}
-	if cfg.Features.EnableWebhooks {
-		setupLog.V(1).Info("Webhooks enabled")
+	// nolint:goconst
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err := webhookv1alpha1.SetupOrganizationWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Organization")
+			setupLog.Error(err, "Failed to create webhook", "webhook", "Organization")
 			os.Exit(1)
 		}
-		if err := webhookv1alpha1.SetupRepositoryWebhookWithManager(
-			mgr, clientManager,
-		); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
+	}
+	// nolint:goconst
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err := webhookv1alpha1.SetupRepositoryWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "Failed to create webhook", "webhook", "Repository")
 			os.Exit(1)
 		}
 	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
+		setupLog.Error(err, "Failed to set up health check")
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
+		setupLog.Error(err, "Failed to set up ready check")
 		os.Exit(1)
-	}
-	if cfg.Features.EnableWebhooks {
-		if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
-			setupLog.Error(err, "unable to set up webhook ready check")
-			os.Exit(1)
-		}
 	}
 
 	setupLog.Info("Starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "unable to run manager")
+		setupLog.Error(err, "Failed to run manager")
 		os.Exit(1)
 	}
-
 }

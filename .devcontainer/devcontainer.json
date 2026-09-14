@@ -1,8 +1,8 @@
 {
   "name": "Kubebuilder DevContainer",
-  "image": "golang:1.27",
+  "image": "golang:1.26",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:4": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": false,
       "dockerDefaultAddressPool": "base=172.30.0.0/16,size=24"
     },
