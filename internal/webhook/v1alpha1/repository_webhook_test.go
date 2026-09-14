@@ -12,13 +12,13 @@ var _ = Describe("Repository Webhook", func() {
 	var (
 		obj       *githubv1alpha1.Repository
 		oldObj    *githubv1alpha1.Repository
-		validator RepositoryCustomValidator
+		validator RepositoryValidator
 	)
 
 	BeforeEach(func() {
 		obj = &githubv1alpha1.Repository{}
 		oldObj = &githubv1alpha1.Repository{}
-		validator = RepositoryCustomValidator{}
+		validator = RepositoryValidator{}
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
 		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
 		Expect(obj).NotTo(BeNil(), "Expected obj to be initialized")

@@ -12,13 +12,13 @@ var _ = Describe("Organization Webhook", func() {
 	var (
 		obj       *githubv1alpha1.Organization
 		oldObj    *githubv1alpha1.Organization
-		validator OrganizationCustomValidator
+		validator OrganizationValidator
 	)
 
 	BeforeEach(func() {
 		obj = &githubv1alpha1.Organization{}
 		oldObj = &githubv1alpha1.Organization{}
-		validator = OrganizationCustomValidator{}
+		validator = OrganizationValidator{}
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
 		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
 		Expect(obj).NotTo(BeNil(), "Expected obj to be initialized")
