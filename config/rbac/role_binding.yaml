@@ -5,6 +5,7 @@ metadata:
     app.kubernetes.io/name: git-hubby
     app.kubernetes.io/managed-by: kustomize
   name: manager-rolebinding
+  namespace: github-configuration
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role

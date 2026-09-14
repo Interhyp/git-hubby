@@ -1,0 +1,46 @@
+name: Bug Report
+description: Report a problem with the Helm chart
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the sections below.
+  - type: input
+    id: chart-version
+    attributes:
+      label: Chart Version
+      placeholder: e.g. 1.2.3
+    validations:
+      required: true
+  - type: input
+    id: helm-version
+    attributes:
+      label: Helm Version
+      placeholder: e.g. 3.15.0
+    validations:
+      required: true
+  - type: input
+    id: k8s-version
+    attributes:
+      label: Kubernetes Version
+      placeholder: e.g. 1.30.2
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: values
+    attributes:
+      label: Relevant values.yaml overrides
+      render: yaml
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or error output
+      render: text

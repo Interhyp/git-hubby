@@ -8,16 +8,46 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// AutolinksPresetSpec defines the desired state of AutolinksPreset
+// AutolinksPresetSpec defines the desired state of AutolinksPreset.
+// Autolinks automatically convert references to external resources (like issue trackers) into clickable links.
+// See: https://docs.github.com/en/rest/repos/autolinks
 type AutolinksPresetSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
-	// foo is an example field of AutolinksPreset. Edit autolinkspreset_types.go to remove/update
-	// +optional
-	Foo *string `json:"foo,omitempty"`
+	// AutolinkList is a list of autolink configurations to create in repositories.
+	// Each autolink defines a prefix that triggers link generation and a URL template.
+	AutolinkList []Autolink `json:"autolinks,omitempty"`
+}
+
+// Autolink defines an automatic link reference for external resources.
+// When a reference matching KeyPrefix is found in issues, pull requests, or commit messages,
+// GitHub automatically converts it to a clickable link using the URLTemplate.
+// See: https://docs.github.com/en/rest/repos/autolinks
+type Autolink struct {
+	// KeyPrefix is the text prefix that triggers autolink creation.
+	// When text starts with this prefix followed by a reference, it becomes a link.
+	// Examples: "JIRA-", "TICKET-", "BUG-"
+	// +kubebuilder:validation:MaxLength=20
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9][a-zA-Z0-9-]{0,19}$`
+	// +kubebuilder:validation:Type=string
+	KeyPrefix string `json:"keyPrefix"`
+
+	// URLTemplate is the URL pattern used to generate links.
+	// Use <num> as a placeholder for the reference number/ID.
+	// Example: "https://jira.example.com/browse/<num>" converts "JIRA-123" to "https://jira.example.com/browse/123"
+	// +kubebuilder:validation:MaxLength=200
+	// +kubebuilder:validation:Type=string
+	URLTemplate string `json:"urlTemplate"`
+
+	// IsAlphanumeric determines whether the reference must be alphanumeric.
+	// - true: the <num> parameter of the url_template matches alphanumeric characters `A-Z` (case insensitive), `0-9`, and `-`
+	// - false: reference only matches numeric characters.
+	// +default:value=false
+	// +kubebuilder:validation:Type=boolean
+	IsAlphanumeric bool `json:"isAlphanumeric"`
 }
 
 // AutolinksPresetStatus defines the observed state of AutolinksPreset.
@@ -45,6 +75,7 @@ type AutolinksPresetStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource
 
 // AutolinksPreset is the Schema for the autolinkspresets API
 type AutolinksPreset struct {

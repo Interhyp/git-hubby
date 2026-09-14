@@ -4,6 +4,13 @@ metadata:
   labels:
     app.kubernetes.io/name: git-hubby
     app.kubernetes.io/managed-by: kustomize
-  name: organization-sample
+  name: sample-org
 spec:
-  # TODO(user): Add fields here
+  login: sample-org
+  name: "Sample Organization"
+  description: "GitHub Sample Organization"
+  location: "Munich, Germany"
+  website: "https://example.com"
+  githubAppCredentials:
+    secretRef:
+      name: sample-org-app-credentials

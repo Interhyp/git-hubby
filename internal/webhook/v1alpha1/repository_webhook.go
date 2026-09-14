@@ -2,12 +2,18 @@ package v1alpha1
 
 import (
 	"context"
-
-	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	baseerrors "errors"
+	"fmt"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	"github.com/Interhyp/git-hubby/internal/ghclient"
+	"github.com/google/go-github/v91/github"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // nolint:unused
@@ -15,13 +21,19 @@ import (
 var repositorylog = logf.Log.WithName("repository-resource")
 
 // SetupRepositoryWebhookWithManager registers the webhook for Repository in the manager.
-func SetupRepositoryWebhookWithManager(mgr ctrl.Manager) error {
+func SetupRepositoryWebhookWithManager(mgr ctrl.Manager, clientManager GitHubClientManager) error {
 	return ctrl.NewWebhookManagedBy(mgr, &githubv1alpha1.Repository{}).
-		WithValidator(&RepositoryValidator{}).
+		WithValidator(&RepositoryValidator{
+			K8sClient:           mgr.GetClient(),
+			GitHubClientManager: clientManager,
+		}).
 		Complete()
 }
 
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
+// GitHubClientManager is the interface the repository webhook uses to obtain a GitHub client.
+type GitHubClientManager interface {
+	GetClient(ctx context.Context, cacheKey string, app ghclient.AppConfig) (ghclient.GitHubClient, error)
+}
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // NOTE: If you want to customise the 'path', use the flags '--defaulting-path' or '--validation-path'.
@@ -33,32 +45,107 @@ func SetupRepositoryWebhookWithManager(mgr ctrl.Manager) error {
 // NOTE: The +kubebuilder:object:generate=false marker prevents controller-gen from generating DeepCopy methods,
 // as this struct is used only for temporary operations and does not need to be deeply copied.
 type RepositoryValidator struct {
-	// TODO(user): Add more fields as needed for validation
+	// TODO fugly: find a way to validate without doing either k8s or github api calls
+	K8sClient           client.Client
+	GitHubClientManager GitHubClientManager
 }
 
+var _ admission.Validator[*githubv1alpha1.Repository] = &RepositoryValidator{}
+
 // ValidateCreate implements admission.Validator so a webhook will be registered for the type Repository.
-func (v *RepositoryValidator) ValidateCreate(_ context.Context, obj *githubv1alpha1.Repository) (admission.Warnings, error) {
-	repositorylog.Info("Validation for Repository upon creation", "name", obj.GetName())
+func (v *RepositoryValidator) ValidateCreate(ctx context.Context, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
+	if repository == nil {
+		return nil, fmt.Errorf("expected a Repository object but got nil")
+	}
+	repositorylog.Info("Validation for Repository upon creation", "name", repository.GetName())
 
-	// TODO(user): fill in your validation logic upon object creation.
-
-	return nil, nil
+	return nil, v.validateRepository(ctx, repository)
 }
 
 // ValidateUpdate implements admission.Validator so a webhook will be registered for the type Repository.
-func (v *RepositoryValidator) ValidateUpdate(_ context.Context, oldObj, newObj *githubv1alpha1.Repository) (admission.Warnings, error) {
-	repositorylog.Info("Validation for Repository upon update", "name", newObj.GetName())
+func (v *RepositoryValidator) ValidateUpdate(ctx context.Context, _ *githubv1alpha1.Repository, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
+	if repository == nil {
+		return nil, fmt.Errorf("expected a Repository object for the new object but got nil")
+	}
+	repositorylog.Info("Validation for Repository upon update", "name", repository.GetName())
 
-	// TODO(user): fill in your validation logic upon object update.
+	return nil, v.validateRepository(ctx, repository)
 
-	return nil, nil
 }
 
 // ValidateDelete implements admission.Validator so a webhook will be registered for the type Repository.
-func (v *RepositoryValidator) ValidateDelete(_ context.Context, obj *githubv1alpha1.Repository) (admission.Warnings, error) {
-	repositorylog.Info("Validation for Repository upon deletion", "name", obj.GetName())
+func (v *RepositoryValidator) ValidateDelete(_ context.Context, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
+	if repository == nil {
+		return nil, fmt.Errorf("expected a Repository object but got nil")
+	}
+	repositorylog.Info("Validation for Repository upon deletion", "name", repository.GetName())
 
-	// TODO(user): fill in your validation logic upon object deletion.
-
+	// nothing to do here as deletion validation is not activated
 	return nil, nil
+}
+func (v *RepositoryValidator) validateRepository(ctx context.Context, repo *githubv1alpha1.Repository) error {
+	allErrs := make([]*field.Error, 0, 1)
+
+	// TODO find better or cached solution to avoid fetching organization and custom property definitions for every repository validation
+	var org githubv1alpha1.Organization
+	if err := v.K8sClient.Get(ctx, client.ObjectKey{Name: repo.Spec.OrganizationRef.Name, Namespace: repo.Namespace}, &org); err != nil {
+		return fmt.Errorf("failed to fetch organization during validation of repository %s: %w", repo.Name, err)
+	}
+
+	installationID, err := org.GetGitHubAppInstallationID()
+	if err != nil {
+		return fmt.Errorf("failed to resolve GitHub App installation ID for organization %s during validation of repository %s: %w", org.GetLogin(), repo.Name, err)
+	}
+
+	githubClient, err := v.GitHubClientManager.GetClient(ctx, org.GetLogin(), ghclient.AppConfig{
+		InstallationID:        installationID,
+		CredentialsSecretName: org.GetGitHubAppCredentialsSecretName(),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create GitHub client for organization %s during validation of repository %s: %w", org.GetLogin(), repo.Name, err)
+	}
+	customPropertyDefinitions, err := githubClient.GetAllCustomPropertiesForOrganization(ctx, org.GetLogin())
+	if err != nil {
+		return fmt.Errorf("failed to fetch custom properties for GitHub organization %s during validation of repository %s: %w", org.GetLogin(), repo.Name, err)
+	}
+	// TODO end of external requests
+
+	allErrs = append(allErrs, validateCustomPropertyValuesHaveCorrectTypes(customPropertyDefinitions, repo.Spec.CustomProperties, field.NewPath("spec").Child("customProperties"))...)
+	if len(allErrs) == 0 {
+		return nil
+	}
+	return errors.NewInvalid(
+		repo.GroupVersionKind().GroupKind(),
+		repo.Name, allErrs)
+}
+
+func validateCustomPropertyValuesHaveCorrectTypes(customPropertyDefinitions []*github.CustomProperty, rawValues []githubv1alpha1.CustomPropertyValue, fldPath *field.Path) field.ErrorList {
+	errs := make([]*field.Error, 0, len(rawValues))
+	rawValuesMap := make(map[string]githubv1alpha1.CustomPropertyValue)
+	for _, rawValue := range rawValues {
+		rawValuesMap[rawValue.PropertyName] = rawValue
+	}
+	for _, propDefinition := range customPropertyDefinitions {
+		if propDefinition == nil {
+			errs = append(errs, field.InternalError(fldPath, baseerrors.New("received nil custom property definition from GitHub")))
+			continue // skip nil definitions
+		}
+		propertyName := propDefinition.GetPropertyName()
+		if rawValue, ok := rawValuesMap[propertyName]; ok {
+			vErrs := validateValueAgainstCustomPropertyDefinition(rawValue, *propDefinition, fldPath.Child(propertyName))
+			if vErrs != nil {
+				errs = append(errs, vErrs...)
+			}
+		}
+	}
+	return errs
+}
+
+// validateValueAgainstCustomPropertyDefinition checks whether the given value is valid against the given definition of an organization level custom property.
+// The validationType parameter indicates whether an actual value set for a repository or the default value of an
+// OrgCustomProperty is validated.
+// The *field.Path parameter child is the field path to the value being validated, which is used to create meaningful field errors.
+// This method assumes that the allowed_values field of the OrgCustomProperty is valid (i.e. not empty for selection based value_types).
+func validateValueAgainstCustomPropertyDefinition(value githubv1alpha1.CustomPropertyValue, propDefinition github.CustomProperty, validatedField *field.Path) field.ErrorList {
+	return validateValueAgainstValueTypeAndAllowedValues(actualValueValidation, &value, propDefinition.ValueType, propDefinition.AllowedValues, validatedField)
 }

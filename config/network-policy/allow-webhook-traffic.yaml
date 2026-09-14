@@ -19,6 +19,11 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    - ports:
+    # This allows ingress traffic from any namespace with the label webhook: enabled
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system # Only from namespaces with this label
+      ports:
         - port: 9443
           protocol: TCP

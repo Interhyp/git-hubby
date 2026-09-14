@@ -6,4 +6,15 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: webhookpreset-sample
 spec:
-  # TODO(user): Add fields here
+  payloadUrl: "https://api.example.com/webhooks/github"
+  secret: "my-webhook-secret-token"
+  contentType: "application/json"  # Optional: json or form (defaults to json)
+  active: true
+  events:
+    - "push"
+    - "pull_request"
+    - "issues"
+    - "issue_comment"
+    - "pull_request_review"
+    - "release"
+  sslVerify: true
