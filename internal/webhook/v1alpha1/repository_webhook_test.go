@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	gogithub "github.com/google/go-github/v91/github"
+	gogithub "github.com/google/go-github/v92/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

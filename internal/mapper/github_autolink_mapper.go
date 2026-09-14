@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/google/go-github/v91/github"
+	"github.com/google/go-github/v92/github"
 )
 
 func HashAutolink(keyPrefix, urlTemplate string, isAlphanumeric bool) string {
