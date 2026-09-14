@@ -2,24 +2,31 @@ package controller
 
 import (
 	"context"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"errors"
+	"time"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/util/workqueue"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// TeamReconciler reconciles a Team object
-type TeamReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+// TeamCtl reconciles a Repository object
+type TeamCtl struct {
+	Scheme                 *runtime.Scheme
+	ReconcilerFactory      *reconcilerfactory.Factory
+	SuccessRequeueInterval time.Duration
 }
 
-// +kubebuilder:rbac:groups=github.interhyp.de,namespace=git-hubby-system,resources=teams,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=github.interhyp.de,namespace=git-hubby-system,resources=teams/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=github.interhyp.de,namespace=git-hubby-system,resources=teams/finalizers,verbs=update
+// +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=teams,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=teams/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=teams/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -29,19 +36,57 @@ type TeamReconciler struct {
 // the user.
 //
 // For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.24.1/pkg/reconcile
-func (r *TeamReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.23.3/pkg/reconcile
+func (r *TeamCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := logf.FromContext(ctx)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
 
-	// TODO(user): your logic here
+	rec, err := r.ReconcilerFactory.CreateForTeam(ctx, req.NamespacedName)
+	if err != nil {
+		return handleRequeueError(ctx, err)
+	}
+	if rec == nil {
+		return ctrl.Result{}, nil // no requeue, k8s resource not found
+	}
 
-	return ctrl.Result{}, nil
+	if err = rec.Reconcile(ctx); err != nil {
+		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
+			log.Error(err, "Reconciliation failed")
+		}
+		return handleRequeueError(ctx, err)
+	}
+	if resourceWasDeleted(rec.Reconciler) {
+		return ctrl.Result{}, nil
+	}
+
+	return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *TeamReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *TeamCtl) SetupWithManager(mgr ctrl.Manager) error {
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &githubv1alpha1.Team{}, "spec.organizationRefs", func(rawObj client.Object) []string {
+		team := rawObj.(*githubv1alpha1.Team)
+		orgNames := make([]string, 0, len(team.Spec.OrganizationRefs))
+		for _, orgRef := range team.Spec.OrganizationRefs {
+			orgNames = append(orgNames, orgRef.Name)
+		}
+		return orgNames
+	}); err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&githubv1alpha1.Team{}).
+		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.AnnotationChangedPredicate{})).
+		WithOptions(controller.Options{
+			UsePriorityQueue:        new(true),
+			MaxConcurrentReconciles: 20,
+			RateLimiter: workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
+				1*time.Second,    // base delay
+				1000*time.Second, // max delay, ~17min
+			),
+		}).
 		Named("team").
 		Complete(r)
 }

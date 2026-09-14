@@ -28,4 +28,4 @@
   value:
     name: webhook-certs
     secret:
-      secretName: webhook-server-cert
+      secretName: webhook-server-certificate

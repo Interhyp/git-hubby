@@ -21,7 +21,12 @@ spec:
     matchLabels:
       control-plane: controller-manager
       app.kubernetes.io/name: git-hubby
-  replicas: 1
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       annotations:
@@ -63,17 +68,19 @@ spec:
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
-        image: controller:latest
+#        envFrom:
+#          - configMapRef:
+#              name: controller-manager-envs
+        image: ghcr.io/interhyp/git-hubby:latest
         name: manager
         env:
         - name: WATCH_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        ports:
-        - containerPort: 8081
-          name: health
-          protocol: TCP
+          value: git-hubby-system
+        - name: APP_CREDENTIALS_SECRET_NAMESPACE
+          value: git-hubby-system
+        - name: ENABLE_WEBHOOKS
+          value: "false"
+        ports: []
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
@@ -101,7 +108,11 @@ spec:
           requests:
             cpu: 10m
             memory: 64Mi
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
         volumeMounts: []
       volumes: []
       serviceAccountName: controller-manager
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 20

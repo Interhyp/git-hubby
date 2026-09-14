@@ -3,8 +3,28 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: manager-role
-  namespace: git-hubby-system
+  namespace: github-configuration
 rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - github.interhyp.de
+  resources:
+  - autolinkspresets
+  - codesecurityconfigurations
+  - rulesetpresets
+  - webhookignorepresets
+  - webhookpresets
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - github.interhyp.de
   resources:

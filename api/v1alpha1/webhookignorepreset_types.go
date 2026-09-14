@@ -8,16 +8,22 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// WebhookIgnorePresetSpec defines the desired state of WebhookIgnorePreset
+// WebhookIgnorePresetSpec defines the desired state of WebhookIgnorePreset.
+// WebhookIgnorePresets allow you to exclude certain webhooks from being created,
+// even if they are referenced in a repository's WebhookPresetList.
+// This is useful for globally excluding webhooks based on URL patterns.
 type WebhookIgnorePresetSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
-	// foo is an example field of WebhookIgnorePreset. Edit webhookignorepreset_types.go to remove/update
+	// IgnoreURLRegex is a regular expression pattern to match against webhook payload URLs.
+	// Webhooks with URLs matching this pattern will not be created, even if they are
+	// referenced in a repository's WebhookPresetList.
+	// Example: "^https://deprecated\\.example\\.com/.*" to ignore all webhooks to deprecated.example.com
 	// +optional
-	Foo *string `json:"foo,omitempty"`
+	IgnoreURLRegex *string `json:"ignoreURLRegex,omitempty"`
 }
 
 // WebhookIgnorePresetStatus defines the observed state of WebhookIgnorePreset.
@@ -45,6 +51,7 @@ type WebhookIgnorePresetStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource
 
 // WebhookIgnorePreset is the Schema for the webhookignorepresets API
 type WebhookIgnorePreset struct {

@@ -1,5 +1,6 @@
 // Package v1alpha1 contains API Schema definitions for the github v1alpha1 API group.
 // +kubebuilder:object:generate=true
+// +kubebuilder:ac:generate=true
 // +groupName=github.interhyp.de
 package v1alpha1
 

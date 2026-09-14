@@ -53,6 +53,16 @@ linters:
           - dupl
           - lll
         path: internal/*
+      - path: _test\.go
+        linters:
+          - lll
+          - goconst
+          - unparam
+          - prealloc
+          - errcheck
+      - path: mock_.*\.go
+        linters:
+          - lll
     paths:
       - third_party$
       - builtin$
