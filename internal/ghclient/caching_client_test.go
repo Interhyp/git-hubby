@@ -48,14 +48,14 @@ var _ = Describe("CachingClient", func() {
 	BeforeEach(func() {
 		inner = &fakeClient{
 			teams: []*github.Team{
-				{ID: ptr(int64(1)), Slug: ptr("team-a")},
-				{ID: ptr(int64(2)), Slug: ptr("team-b")},
+				{ID: new(int64(1)), Slug: new("team-a")},
+				{ID: new(int64(2)), Slug: new("team-b")},
 			},
 			apps: []*github.Installation{
-				{ID: ptr(int64(10)), AppSlug: ptr("github-actions")},
+				{ID: new(int64(10)), AppSlug: new("github-actions")},
 			},
 			roles: []*github.CustomOrgRole{
-				{ID: ptr(int64(99)), Name: ptr("maintain")},
+				{ID: new(int64(99)), Name: new("maintain")},
 			},
 		}
 		cached = NewCachingClient(inner, 5*time.Minute)
@@ -201,7 +201,3 @@ var _ = Describe("CachingClient", func() {
 		})
 	})
 })
-
-func ptr[T any](v T) *T {
-	return &v
-}

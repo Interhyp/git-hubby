@@ -47,7 +47,7 @@ type RepositoryCtl struct {
 // the user.
 //
 // For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.23.3/pkg/reconcile
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.25.0/pkg/reconcile
 func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
@@ -79,12 +79,10 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 }
 
 func isArchivedRepoError(err error) bool {
-	var archivedErr *reporec.RepoArchivedError
-	if errors.As(err, &archivedErr) {
+	if _, ok := errors.AsType[*reporec.RepoArchivedError](err); ok {
 		return true
 	}
-	var ghErr *github.ErrorResponse
-	if errors.As(err, &ghErr) {
+	if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok {
 		return ghErr.Response != nil &&
 			ghErr.Response.StatusCode == 403 &&
 			ghErr.Message == "Repository was archived so is read-only."

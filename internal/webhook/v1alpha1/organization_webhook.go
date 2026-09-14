@@ -22,7 +22,7 @@ var organizationlog = logf.Log.WithName("organization-resource")
 // SetupOrganizationWebhookWithManager registers the webhook for Organization in the manager.
 func SetupOrganizationWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, &githubv1alpha1.Organization{}).
-		WithValidator(&OrganizationCustomValidator{}).
+		WithValidator(&OrganizationValidator{}).
 		Complete()
 }
 
@@ -30,17 +30,17 @@ func SetupOrganizationWebhookWithManager(mgr ctrl.Manager) error {
 // NOTE: If you want to customise the 'path', use the flags '--defaulting-path' or '--validation-path'.
 // +kubebuilder:webhook:path=/validate-github-interhyp-de-v1alpha1-organization,mutating=false,failurePolicy=fail,sideEffects=None,groups=github.interhyp.de,resources=organizations,verbs=create;update,versions=v1alpha1,name=vorganization-v1alpha1.kb.io,admissionReviewVersions=v1
 
-// OrganizationCustomValidator struct is responsible for validating the Organization resource
+// OrganizationValidator struct is responsible for validating the Organization resource
 // when it is created, updated, or deleted.
 //
 // NOTE: The +kubebuilder:object:generate=false marker prevents controller-gen from generating DeepCopy methods,
 // as this struct is used only for temporary operations and does not need to be deeply copied.
-type OrganizationCustomValidator struct{}
+type OrganizationValidator struct{}
 
-var _ admission.Validator[*githubv1alpha1.Organization] = &OrganizationCustomValidator{}
+var _ admission.Validator[*githubv1alpha1.Organization] = &OrganizationValidator{}
 
-// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type Organization.
-func (v *OrganizationCustomValidator) ValidateCreate(_ context.Context, organization *githubv1alpha1.Organization) (admission.Warnings, error) {
+// ValidateCreate implements admission.Validator so a webhook will be registered for the type Organization.
+func (v *OrganizationValidator) ValidateCreate(_ context.Context, organization *githubv1alpha1.Organization) (admission.Warnings, error) {
 	if organization == nil {
 		return nil, fmt.Errorf("expected an Organization object but got nil")
 	}
@@ -49,8 +49,8 @@ func (v *OrganizationCustomValidator) ValidateCreate(_ context.Context, organiza
 	return nil, validateOrganization(organization)
 }
 
-// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type Organization.
-func (v *OrganizationCustomValidator) ValidateUpdate(_ context.Context, _ *githubv1alpha1.Organization, organization *githubv1alpha1.Organization) (admission.Warnings, error) {
+// ValidateUpdate implements admission.Validator so a webhook will be registered for the type Organization.
+func (v *OrganizationValidator) ValidateUpdate(_ context.Context, _ *githubv1alpha1.Organization, organization *githubv1alpha1.Organization) (admission.Warnings, error) {
 	if organization == nil {
 		return nil, fmt.Errorf("expected an Organization object for the new object but got nil")
 	}
@@ -181,8 +181,8 @@ func validateDefaultValue(propDefinition githubv1alpha1.OrgCustomProperty, valid
 	return validateValueAgainstValueTypeAndAllowedValues(defaultValueValidation, propDefinition.DefaultValue, github.PropertyValueType(propDefinition.ValueType), propDefinition.AllowedValues, validatedField)
 }
 
-// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type Organization.
-func (v *OrganizationCustomValidator) ValidateDelete(_ context.Context, organization *githubv1alpha1.Organization) (admission.Warnings, error) {
+// ValidateDelete implements admission.Validator so a webhook will be registered for the type Organization.
+func (v *OrganizationValidator) ValidateDelete(_ context.Context, organization *githubv1alpha1.Organization) (admission.Warnings, error) {
 	if organization == nil {
 		return nil, fmt.Errorf("expected an Organization object but got nil")
 	}

@@ -73,7 +73,7 @@ var _ = Describe("Repository Webhook", func() {
 		ctx        context.Context
 		obj        *githubv1alpha1.Repository
 		oldObj     *githubv1alpha1.Repository
-		validator  RepositoryCustomValidator
+		validator  RepositoryValidator
 		mockK8s    *mockK8sClient
 		mockClient *ghclientmock.MockGitHubClientWrapper
 		testOrg    *githubv1alpha1.Organization
@@ -132,7 +132,7 @@ var _ = Describe("Repository Webhook", func() {
 			},
 		}
 
-		validator = RepositoryCustomValidator{
+		validator = RepositoryValidator{
 			K8sClient:           mockK8s,
 			GitHubClientManager: ghclientmock.NewGitHubMockClientFactory(mockClient),
 		}

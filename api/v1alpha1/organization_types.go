@@ -268,7 +268,6 @@ type AttachableCodeSecurityConfigurationRef struct {
 	// comparing repository lists, as there is no reliable way to determine which repositories should
 	// be included (repositories without configurations at the time of attachment may have since
 	// been configured). The reconciler will re-attach on every reconciliation for this scope.
-	//
 	// +kubebuilder:validation:Enum=all;all_without_configurations;public;private_or_internal;selected
 	// +optional
 	AttachmentScope *string `json:"attachmentScope,omitempty"`

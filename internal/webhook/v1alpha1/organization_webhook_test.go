@@ -20,7 +20,7 @@ var _ = Describe("Organization Webhook", func() {
 		ctx       context.Context
 		obj       *githubv1alpha1.Organization
 		oldObj    *githubv1alpha1.Organization
-		validator OrganizationCustomValidator
+		validator OrganizationValidator
 	)
 
 	installationID := int64(12345)
@@ -49,7 +49,7 @@ var _ = Describe("Organization Webhook", func() {
 				CustomProperties:        []githubv1alpha1.OrgCustomProperty{},
 			},
 		}
-		validator = OrganizationCustomValidator{}
+		validator = OrganizationValidator{}
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
 		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")
 		Expect(obj).NotTo(BeNil(), "Expected obj to be initialized")

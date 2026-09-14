@@ -34,5 +34,5 @@ func retryByContextCodes(att rehttp.Attempt) bool {
 		return false
 	}
 	codes := retryableStatusCodesFromContext(att.Request.Context())
-	return slices.Contains(codes, att.Response.StatusCode)
+	return slices.Contains(codes, att.Response.StatusCode) //nolint:govet
 }

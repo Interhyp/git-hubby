@@ -165,7 +165,7 @@
             "x-kubernetes-validations": [
               {
                 "message": "exactly one of the fields in [value values] must be set",
-                "rule": "[has(self.value),has(self.values)].filter(x,x==true).size() == 1"
+                "rule": "(has(self.value)?1:0)+(has(self.values)?1:0) == 1"
               }
             ],
             "additionalProperties": false

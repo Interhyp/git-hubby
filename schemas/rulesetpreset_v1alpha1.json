@@ -57,7 +57,7 @@
             "x-kubernetes-validations": [
               {
                 "message": "at most one of the fields in [actorId actorSlug] may be set",
-                "rule": "[has(self.actorId),has(self.actorSlug)].filter(x,x==true).size() <= 1"
+                "rule": "(has(self.actorId)?1:0)+(has(self.actorSlug)?1:0) <= 1"
               }
             ],
             "additionalProperties": false
@@ -223,7 +223,7 @@
           "x-kubernetes-validations": [
             {
               "message": "at most one of the fields in [repositoryName repositoryProperty] may be set",
-              "rule": "[has(self.repositoryName),has(self.repositoryProperty)].filter(x,x==true).size() <= 1"
+              "rule": "(has(self.repositoryName)?1:0)+(has(self.repositoryProperty)?1:0) <= 1"
             }
           ],
           "additionalProperties": false
@@ -497,7 +497,7 @@
                         "x-kubernetes-validations": [
                           {
                             "message": "exactly one of the fields in [id slug] must be set",
-                            "rule": "[has(self.id),has(self.slug)].filter(x,x==true).size() == 1"
+                            "rule": "(has(self.id)?1:0)+(has(self.slug)?1:0) == 1"
                           }
                         ],
                         "additionalProperties": false
@@ -561,7 +561,7 @@
                     "x-kubernetes-validations": [
                       {
                         "message": "at most one of the fields in [integrationId appSlug] may be set",
-                        "rule": "[has(self.integrationId),has(self.appSlug)].filter(x,x==true).size() <= 1"
+                        "rule": "(has(self.integrationId)?1:0)+(has(self.appSlug)?1:0) <= 1"
                       }
                     ],
                     "additionalProperties": false

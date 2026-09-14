@@ -29,7 +29,7 @@ import (
 // TeamApplyConfiguration represents a declarative configuration of the Team type for use
 // with apply.
 type TeamApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:""`
 	// metadata is a standard object metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	// spec defines the desired state of Team
