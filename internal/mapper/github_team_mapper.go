@@ -41,7 +41,7 @@ func TeamToCreateTeamRequest(team *v1alpha1.Team) *github.CreateTeamRequest {
 		Name:                team.Spec.Name,
 		Description:         new(team.Spec.Description),
 		Privacy:             new(teamPrivacy(team)),
-		Permission:          new(teamPermission(team)),
+		Permission:          new(teamPermission(team)), //nolint:staticcheck
 		NotificationSetting: new(teamNotificationSetting(team)),
 	}
 }
@@ -51,7 +51,7 @@ func TeamToUpdateTeamRequest(team *v1alpha1.Team) *github.UpdateTeamRequest {
 		Name:                new(team.Spec.Name),
 		Description:         new(team.Spec.Description),
 		Privacy:             new(teamPrivacy(team)),
-		Permission:          new(teamPermission(team)),
+		Permission:          new(teamPermission(team)), //nolint:staticcheck
 		NotificationSetting: new(teamNotificationSetting(team)),
 	}
 }

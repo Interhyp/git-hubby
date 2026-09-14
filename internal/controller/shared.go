@@ -26,8 +26,7 @@ func handleRequeueError(ctx context.Context, err error) (controllerruntime.Resul
 	var resetTime *time.Time
 
 	// requeue because rate limit was hit
-	var libRateLimitErr *github_primary_ratelimit.RateLimitReachedError
-	if errors.As(err, &libRateLimitErr) {
+	if libRateLimitErr, ok := errors.AsType[*github_primary_ratelimit.RateLimitReachedError](err); ok {
 		resetTime = libRateLimitErr.ResetTime
 	}
 	var ownRateLimitErr *ghclient.RateLimitedError
@@ -42,8 +41,7 @@ func handleRequeueError(ctx context.Context, err error) (controllerruntime.Resul
 	}
 
 	// requeue because spreading requires it
-	var requiresSpreadError *spreading.RequiresSpreadError
-	if errors.As(err, &requiresSpreadError) {
+	if requiresSpreadError, ok := errors.AsType[*spreading.RequiresSpreadError](err); ok {
 		return controllerruntime.Result{RequeueAfter: requiresSpreadError.RequeueAfter}, nil
 	}
 

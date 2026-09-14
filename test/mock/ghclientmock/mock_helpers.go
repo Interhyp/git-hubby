@@ -9,13 +9,14 @@ import (
 )
 
 // Helper methods for testing
+const notFoundMessage = "expected 404 Not Found"
 
 // SetOrganizationNotFound configures the mock to return a 404 error for GetOrganization
 func (m *MockGitHubClientWrapper) SetOrganizationNotFound(org string) {
 	m.GetOrganizationFunc = func(ctx context.Context, orgName string) (*github.Organization, error) {
 		if orgName == org {
 			return nil, &github.ErrorResponse{
-				Message: "expected 404 Not Found",
+				Message: notFoundMessage,
 				Response: &http.Response{
 					StatusCode: http.StatusNotFound,
 				},
@@ -30,7 +31,7 @@ func (m *MockGitHubClientWrapper) SetRepositoryNotFound(owner, repo string) {
 	m.GetRepositoryFunc = func(ctx context.Context, repoOwner, repoName string) (*github.Repository, error) {
 		if repoOwner == owner && repoName == repo {
 			return nil, &github.ErrorResponse{
-				Message: "expected 404 Not Found",
+				Message: notFoundMessage,
 				Response: &http.Response{
 					StatusCode: http.StatusNotFound,
 				},
@@ -63,7 +64,7 @@ func (m *MockGitHubClientWrapper) SetTeamNotFound(owners []string, team string) 
 		for _, owner := range owners {
 			if teamOwner == owner && teamName == team {
 				return nil, &github.ErrorResponse{
-					Message: "expected 404 Not Found",
+					Message: notFoundMessage,
 					Response: &http.Response{
 						StatusCode: http.StatusNotFound,
 					},

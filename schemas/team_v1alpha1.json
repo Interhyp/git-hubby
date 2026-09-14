@@ -100,7 +100,7 @@
       "x-kubernetes-validations": [
         {
           "message": "exactly one of the fields in [idpGroup members] must be set",
-          "rule": "[has(self.idpGroup),has(self.members)].filter(x,x==true).size() == 1"
+          "rule": "(has(self.idpGroup)?1:0)+(has(self.members)?1:0) == 1"
         }
       ],
       "additionalProperties": false

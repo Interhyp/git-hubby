@@ -329,8 +329,7 @@ func (o *GitHubOrgReconciler) attachToRepos(ctx context.Context, attachmentScope
 	log := logPkg.FromContext(ctx)
 	err := o.GitHub.Client.AttachCodeSecurityConfigurations(ctx, o.GitHub.Resource, cscGitHubID, attachmentScope, repoIds)
 	if err != nil {
-		var acceptedErr *github.AcceptedError
-		if errors.As(err, &acceptedErr) {
+		if _, ok := errors.AsType[*github.AcceptedError](err); ok {
 			// Attachment was accepted and is processing asynchronously - wait for it to finish
 			log.V(1).Info("Attachment accepted, waiting for completion", "scope", attachmentScope)
 			if _, waitErr := o.getAndWaitForFinishedAttachments(ctx, cscGitHubID, 5*time.Second, 2*time.Minute); waitErr != nil {

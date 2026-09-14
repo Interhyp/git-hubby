@@ -31,7 +31,7 @@ import (
 //
 // AutolinksPreset is the Schema for the autolinkspresets API
 type AutolinksPresetApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:""`
 	// metadata is a standard object metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	// spec defines the desired state of AutolinksPreset

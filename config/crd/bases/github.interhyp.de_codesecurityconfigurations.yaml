@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   name: codesecurityconfigurations.github.interhyp.de
 spec:
   group: github.interhyp.de
@@ -284,8 +284,8 @@ spec:
                       x-kubernetes-validations:
                       - message: exactly one of the fields in [reviewerId reviewerName]
                           must be set
-                        rule: '[has(self.reviewerId),has(self.reviewerName)].filter(x,x==true).size()
-                          == 1'
+                        rule: (has(self.reviewerId)?1:0)+(has(self.reviewerName)?1:0)
+                          == 1
                     type: array
                 required:
                 - reviewers

@@ -23,7 +23,7 @@ var repositorylog = logf.Log.WithName("repository-resource")
 // SetupRepositoryWebhookWithManager registers the webhook for Repository in the manager.
 func SetupRepositoryWebhookWithManager(mgr ctrl.Manager, clientManager GitHubClientManager) error {
 	return ctrl.NewWebhookManagedBy(mgr, &githubv1alpha1.Repository{}).
-		WithValidator(&RepositoryCustomValidator{
+		WithValidator(&RepositoryValidator{
 			K8sClient:           mgr.GetClient(),
 			GitHubClientManager: clientManager,
 		}).
@@ -39,21 +39,21 @@ type GitHubClientManager interface {
 // NOTE: If you want to customise the 'path', use the flags '--defaulting-path' or '--validation-path'.
 // +kubebuilder:webhook:path=/validate-github-interhyp-de-v1alpha1-repository,mutating=false,failurePolicy=fail,sideEffects=None,groups=github.interhyp.de,resources=repositories,verbs=create;update,versions=v1alpha1,name=vrepository-v1alpha1.kb.io,admissionReviewVersions=v1
 
-// RepositoryCustomValidator struct is responsible for validating the Repository resource
+// RepositoryValidator struct is responsible for validating the Repository resource
 // when it is created, updated, or deleted.
 //
 // NOTE: The +kubebuilder:object:generate=false marker prevents controller-gen from generating DeepCopy methods,
 // as this struct is used only for temporary operations and does not need to be deeply copied.
-type RepositoryCustomValidator struct {
+type RepositoryValidator struct {
 	// TODO fugly: find a way to validate without doing either k8s or github api calls
 	K8sClient           client.Client
 	GitHubClientManager GitHubClientManager
 }
 
-var _ admission.Validator[*githubv1alpha1.Repository] = &RepositoryCustomValidator{}
+var _ admission.Validator[*githubv1alpha1.Repository] = &RepositoryValidator{}
 
-// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type Repository.
-func (v *RepositoryCustomValidator) ValidateCreate(ctx context.Context, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
+// ValidateCreate implements admission.Validator so a webhook will be registered for the type Repository.
+func (v *RepositoryValidator) ValidateCreate(ctx context.Context, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
 	if repository == nil {
 		return nil, fmt.Errorf("expected a Repository object but got nil")
 	}
@@ -62,8 +62,8 @@ func (v *RepositoryCustomValidator) ValidateCreate(ctx context.Context, reposito
 	return nil, v.validateRepository(ctx, repository)
 }
 
-// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type Repository.
-func (v *RepositoryCustomValidator) ValidateUpdate(ctx context.Context, _ *githubv1alpha1.Repository, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
+// ValidateUpdate implements admission.Validator so a webhook will be registered for the type Repository.
+func (v *RepositoryValidator) ValidateUpdate(ctx context.Context, _ *githubv1alpha1.Repository, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
 	if repository == nil {
 		return nil, fmt.Errorf("expected a Repository object for the new object but got nil")
 	}
@@ -73,8 +73,8 @@ func (v *RepositoryCustomValidator) ValidateUpdate(ctx context.Context, _ *githu
 
 }
 
-// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type Repository.
-func (v *RepositoryCustomValidator) ValidateDelete(_ context.Context, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
+// ValidateDelete implements admission.Validator so a webhook will be registered for the type Repository.
+func (v *RepositoryValidator) ValidateDelete(_ context.Context, repository *githubv1alpha1.Repository) (admission.Warnings, error) {
 	if repository == nil {
 		return nil, fmt.Errorf("expected a Repository object but got nil")
 	}
@@ -83,7 +83,7 @@ func (v *RepositoryCustomValidator) ValidateDelete(_ context.Context, repository
 	// nothing to do here as deletion validation is not activated
 	return nil, nil
 }
-func (v *RepositoryCustomValidator) validateRepository(ctx context.Context, repo *githubv1alpha1.Repository) error {
+func (v *RepositoryValidator) validateRepository(ctx context.Context, repo *githubv1alpha1.Repository) error {
 	allErrs := make([]*field.Error, 0, 1)
 
 	// TODO find better or cached solution to avoid fetching organization and custom property definitions for every repository validation

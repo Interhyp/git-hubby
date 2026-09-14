@@ -156,9 +156,11 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
+# Override BASE_IMAGE to build from another registry, e.g.
+# make docker-build IMG=<img> BASE_IMAGE=docker.io/library/golang:1.26
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build -t ${IMG} .
+	$(CONTAINER_TOOL) build $(if $(BASE_IMAGE),--build-arg BASE_IMAGE=$(BASE_IMAGE)) -t ${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
@@ -177,7 +179,7 @@ docker-buildx: ## Build and push docker image for the manager for cross-platform
 	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
 	- $(CONTAINER_TOOL) buildx create --name git-hubby-builder
 	$(CONTAINER_TOOL) buildx use git-hubby-builder
-	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
+	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) $(if $(BASE_IMAGE),--build-arg BASE_IMAGE=$(BASE_IMAGE)) --tag ${IMG} -f Dockerfile.cross .
 	- $(CONTAINER_TOOL) buildx rm git-hubby-builder
 	rm Dockerfile.cross
 
@@ -230,20 +232,24 @@ GINKGO ?= $(LOCALBIN)/ginkgo
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.8.1
-CONTROLLER_TOOLS_VERSION ?= v0.21.0
+CONTROLLER_TOOLS_VERSION ?= v0.22.0
 KUBECONFORM_VERSION ?= v0.8.0
 
-#ENVTEST_VERSION is the controller-runtime version to use for setup-envtest, derived from go.mod
+#ENVTEST_VERSION is the controller-runtime release branch to use for setup-envtest, derived from go.mod
+# (i.e. release-0.25). Since controller-runtime v0.24+, tools/setup-envtest is a separate nested Go
+# module; pinning it via an exact semver tag (e.g. v0.25.0) can fail with
+# "module sigs.k8s.io/controller-runtime@vX.Y.Z found, but does not contain package .../setup-envtest"
+# when that same tag also exists on the root module. Using the release branch name avoids that ambiguity.
 ENVTEST_VERSION ?= $(shell v='$(call gomodver,sigs.k8s.io/controller-runtime)'; \
   [ -n "$$v" ] || { echo "Set ENVTEST_VERSION manually (controller-runtime replace has no tag)" >&2; exit 1; }; \
-  printf '%s\n' "$$v")
+  printf '%s\n' "$$v" | awk -F'[v.]' '{printf "release-%d.%d", $$2, $$3}')
 
 #ENVTEST_K8S_VERSION is the version of Kubernetes to use for setting up ENVTEST binaries (i.e. 1.31)
 ENVTEST_K8S_VERSION ?= $(shell v='$(call gomodver,k8s.io/api)'; \
   [ -n "$$v" ] || { echo "Set ENVTEST_K8S_VERSION manually (k8s.io/api replace has no tag)" >&2; exit 1; }; \
   printf '%s\n' "$$v" | sed -E 's/^v?[0-9]+\.([0-9]+).*/1.\1/')
 
-GOLANGCI_LINT_VERSION ?= v2.12.2
+GOLANGCI_LINT_VERSION ?= v2.13.1
 GINKGO_VERSION ?= v2.27.2  # Match the version in go.mod
 OPENAPI2JSONSCHEMA ?= $(LOCALBIN)/openapi2jsonschema
 
