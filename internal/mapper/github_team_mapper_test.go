@@ -10,9 +10,9 @@ import (
 
 var _ = Describe("GitHub Team Mapper", func() {
 
-	Describe("TeamToNewGitHubTeam", func() {
+	Describe("TeamToCreateTeamRequest", func() {
 		Context("when converting a team with manual members", func() {
-			It("should successfully convert to GitHub new team", func() {
+			It("should successfully convert to GitHub create team request", func() {
 				team := &v1alpha1.Team{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-team",
@@ -24,7 +24,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam := TeamToNewGitHubTeam(team)
+				newTeam := TeamToCreateTeamRequest(team)
 
 				Expect(newTeam).NotTo(BeNil())
 				Expect(newTeam.Name).To(Equal("my-team"))
@@ -49,7 +49,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam := TeamToNewGitHubTeam(team)
+				newTeam := TeamToCreateTeamRequest(team)
 
 				Expect(newTeam).NotTo(BeNil())
 				Expect(newTeam.Description).To(Equal(new("IDP synchronized team")))
@@ -68,7 +68,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam := TeamToNewGitHubTeam(team)
+				newTeam := TeamToCreateTeamRequest(team)
 
 				Expect(newTeam).NotTo(BeNil())
 				Expect(*newTeam.Description).To(Equal(""))
@@ -88,7 +88,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam := TeamToNewGitHubTeam(team)
+				newTeam := TeamToCreateTeamRequest(team)
 
 				Expect(newTeam).NotTo(BeNil())
 				Expect(*newTeam.Description).To(Equal(""))
@@ -108,8 +108,8 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam1 := TeamToNewGitHubTeam(team)
-				newTeam2 := TeamToNewGitHubTeam(team)
+				newTeam1 := TeamToCreateTeamRequest(team)
+				newTeam2 := TeamToCreateTeamRequest(team)
 
 				Expect(*newTeam1.Description).To(Equal("Shared team description"))
 				Expect(*newTeam2.Description).To(Equal("Shared team description"))
@@ -129,7 +129,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam := TeamToNewGitHubTeam(team)
+				newTeam := TeamToCreateTeamRequest(team)
 
 				Expect(newTeam.Privacy).To(Equal(new("secret")))
 			})
@@ -148,7 +148,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam := TeamToNewGitHubTeam(team)
+				newTeam := TeamToCreateTeamRequest(team)
 
 				Expect(newTeam.Permission).To(Equal(new("push"))) //nolint:staticcheck
 			})
@@ -167,7 +167,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam := TeamToNewGitHubTeam(team)
+				newTeam := TeamToCreateTeamRequest(team)
 
 				Expect(newTeam.NotificationSetting).To(Equal(new("notifications_enabled")))
 			})
@@ -189,13 +189,203 @@ var _ = Describe("GitHub Team Mapper", func() {
 					},
 				}
 
-				newTeam := TeamToNewGitHubTeam(team)
+				newTeam := TeamToCreateTeamRequest(team)
 
 				Expect(newTeam.Name).To(Equal("my-team"))
 				Expect(newTeam.Description).To(Equal(new("Custom team")))
 				Expect(newTeam.Privacy).To(Equal(new("secret")))
 				Expect(newTeam.Permission).To(Equal(new("push"))) //nolint:staticcheck
 				Expect(newTeam.NotificationSetting).To(Equal(new("notifications_enabled")))
+			})
+		})
+	})
+
+	Describe("TeamToUpdateTeamRequest", func() {
+		Context("when converting a team with manual members", func() {
+			It("should successfully convert to GitHub update team request", func() {
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:        "my-team",
+						Description: "This is a test team",
+						Members:     []string{"user1", "user2"},
+					},
+				}
+
+				updateTeam := TeamToUpdateTeamRequest(team)
+
+				Expect(updateTeam).NotTo(BeNil())
+				Expect(updateTeam.Name).To(Equal(new("my-team")))
+				Expect(updateTeam.Description).To(Equal(new("This is a test team")))
+				Expect(updateTeam.Privacy).To(Equal(new("closed")))
+				Expect(updateTeam.Permission).To(Equal(new("pull"))) //nolint:staticcheck
+				Expect(updateTeam.NotificationSetting).To(Equal(new("notifications_disabled")))
+			})
+		})
+
+		Context("when converting a team with IDP group", func() {
+			It("should use the team description", func() {
+				idpGroup := "engineers"
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:        "idp-team",
+						Description: "IDP synchronized team",
+						IDPGroup:    &idpGroup,
+					},
+				}
+
+				updateTeam := TeamToUpdateTeamRequest(team)
+
+				Expect(updateTeam).NotTo(BeNil())
+				Expect(updateTeam.Description).To(Equal(new("IDP synchronized team")))
+			})
+		})
+
+		Context("when converting a team without description", func() {
+			It("should use empty description", func() {
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:    "my-team",
+						Members: []string{"user1"},
+					},
+				}
+
+				updateTeam := TeamToUpdateTeamRequest(team)
+
+				Expect(updateTeam).NotTo(BeNil())
+				Expect(*updateTeam.Description).To(Equal(""))
+			})
+		})
+
+		Context("when converting a team with empty description", func() {
+			It("should use empty description", func() {
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:        "my-team",
+						Description: "",
+						Members:     []string{"user1"},
+					},
+				}
+
+				updateTeam := TeamToUpdateTeamRequest(team)
+
+				Expect(updateTeam).NotTo(BeNil())
+				Expect(*updateTeam.Description).To(Equal(""))
+			})
+		})
+
+		Context("when converting teams for different organizations", func() {
+			It("should use the same description for both organizations", func() {
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:        "my-team",
+						Description: "Shared team description",
+						Members:     []string{"user1"},
+					},
+				}
+
+				updateTeam1 := TeamToUpdateTeamRequest(team)
+				updateTeam2 := TeamToUpdateTeamRequest(team)
+
+				Expect(*updateTeam1.Description).To(Equal("Shared team description"))
+				Expect(*updateTeam2.Description).To(Equal("Shared team description"))
+			})
+		})
+
+		Context("when custom privacy is specified", func() {
+			It("should use the specified privacy", func() {
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:    "my-team",
+						Privacy: "secret",
+						Members: []string{"user1"},
+					},
+				}
+
+				updateTeam := TeamToUpdateTeamRequest(team)
+
+				Expect(updateTeam.Privacy).To(Equal(new("secret")))
+			})
+		})
+
+		Context("when custom permission is specified", func() {
+			It("should use the specified permission", func() {
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:       "my-team",
+						Permission: "push",
+						Members:    []string{"user1"},
+					},
+				}
+
+				updateTeam := TeamToUpdateTeamRequest(team)
+
+				Expect(updateTeam.Permission).To(Equal(new("push"))) //nolint:staticcheck
+			})
+		})
+
+		Context("when custom notification setting is specified", func() {
+			It("should use the specified notification setting", func() {
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:                "my-team",
+						NotificationSetting: "notifications_enabled",
+						Members:             []string{"user1"},
+					},
+				}
+
+				updateTeam := TeamToUpdateTeamRequest(team)
+
+				Expect(updateTeam.NotificationSetting).To(Equal(new("notifications_enabled")))
+			})
+		})
+
+		Context("when all team settings are customized", func() {
+			It("should use all specified values", func() {
+				team := &v1alpha1.Team{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-team",
+					},
+					Spec: v1alpha1.TeamSpec{
+						Name:                "my-team",
+						Description:         "Custom team",
+						Privacy:             "secret",
+						Permission:          "push",
+						NotificationSetting: "notifications_enabled",
+						Members:             []string{"user1"},
+					},
+				}
+
+				updateTeam := TeamToUpdateTeamRequest(team)
+
+				Expect(updateTeam.Name).To(Equal(new("my-team")))
+				Expect(updateTeam.Description).To(Equal(new("Custom team")))
+				Expect(updateTeam.Privacy).To(Equal(new("secret")))
+				Expect(updateTeam.Permission).To(Equal(new("push"))) //nolint:staticcheck
+				Expect(updateTeam.NotificationSetting).To(Equal(new("notifications_enabled")))
 			})
 		})
 	})

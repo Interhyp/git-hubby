@@ -245,7 +245,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"), // Different enforcement
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -287,7 +287,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -327,7 +327,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -343,7 +343,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(200)),
 					Name:        "orphaned-ruleset",
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions:  &github.RepositoryRulesetConditions{},
 					Rules:       &github.RepositoryRulesetRules{},
 				},
@@ -401,7 +401,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions:  &github.RepositoryRulesetConditions{},
 					Rules:       &github.RepositoryRulesetRules{},
 				},
@@ -452,7 +452,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -486,7 +486,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "orphaned-ruleset",
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions:  &github.RepositoryRulesetConditions{},
 					Rules:       &github.RepositoryRulesetRules{},
 				},
@@ -517,7 +517,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          nil, // Nil ID
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -546,7 +546,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          nil, // Nil ID
 					Name:        "orphaned-ruleset",
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions:  &github.RepositoryRulesetConditions{},
 					Rules:       &github.RepositoryRulesetRules{},
 				},
@@ -568,7 +568,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "", // Empty name
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions:  &github.RepositoryRulesetConditions{},
 					Rules:       &github.RepositoryRulesetRules{},
 				},
@@ -798,7 +798,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -848,7 +848,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -914,7 +914,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(100)),
 					Name:        "ruleset-1",
 					Enforcement: github.RulesetEnforcement("evaluate"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/main"},
@@ -957,7 +957,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(200)),
 					Name:        "ruleset-2",
 					Enforcement: github.RulesetEnforcement("evaluate"), // Different
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{
 							Include: []string{"refs/heads/develop"},
@@ -970,7 +970,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					ID:          new(int64(300)),
 					Name:        "orphaned-ruleset", // Will be deleted
 					Enforcement: github.RulesetEnforcement("active"),
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions:  &github.RepositoryRulesetConditions{},
 					Rules:       &github.RepositoryRulesetRules{},
 				},

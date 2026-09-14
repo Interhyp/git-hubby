@@ -94,7 +94,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 					}
 				}
 
-				mockClient2.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.NewTeam) (*github.Team, error) {
+				mockClient2.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.CreateTeamRequest) (*github.Team, error) {
 					return &github.Team{
 						Name:                &newTeam.Name,
 						Slug:                &newTeam.Name,
@@ -200,7 +200,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 				}
 
 				// org2 and org3 don't have the team yet
-				createTeamFunc := func(ctx context.Context, org string, newTeam *github.NewTeam) (*github.Team, error) {
+				createTeamFunc := func(ctx context.Context, org string, newTeam *github.CreateTeamRequest) (*github.Team, error) {
 					return &github.Team{
 						Name:                &newTeam.Name,
 						Slug:                &newTeam.Name,
@@ -326,7 +326,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 					}
 				}
 
-				mockClient2.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.NewTeam) (*github.Team, error) {
+				mockClient2.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.CreateTeamRequest) (*github.Team, error) {
 					return nil, errors.New("insufficient permissions to create team")
 				}
 
@@ -913,7 +913,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 					return []*github.Team{}, nil // team not found in list
 				}
 
-				mockClient1.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.NewTeam) (*github.Team, error) {
+				mockClient1.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.CreateTeamRequest) (*github.Team, error) {
 					return &github.Team{
 						Name:                &newTeam.Name,
 						Slug:                &newTeam.Name,
@@ -933,7 +933,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 					}
 				}
 
-				mockClient2.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.NewTeam) (*github.Team, error) {
+				mockClient2.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.CreateTeamRequest) (*github.Team, error) {
 					return nil, errors.New("API rate limit exceeded")
 				}
 
@@ -1032,10 +1032,10 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 					}, nil
 				}
 
-				mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+				mockClient1.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 					return &github.Team{
-						Name:                &newTeam.Name,
-						Slug:                &newTeam.Name,
+						Name:                newTeam.Name,
+						Slug:                newTeam.Name,
 						Description:         newTeam.Description,
 						Privacy:             newTeam.Privacy,
 						Permission:          newTeam.Permission, //nolint:staticcheck
@@ -1055,7 +1055,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 					}, nil
 				}
 
-				mockClient2.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.NewTeam) (*github.Team, error) {
+				mockClient2.EditTeamBySlugFunc = func(ctx context.Context, org string, slug string, newTeam *github.UpdateTeamRequest) (*github.Team, error) {
 					return nil, errors.New("conflict: team was modified by another process")
 				}
 
@@ -1273,7 +1273,7 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 					}
 				}
 
-				mockClient3.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.NewTeam) (*github.Team, error) {
+				mockClient3.CreateTeamFunc = func(ctx context.Context, org string, newTeam *github.CreateTeamRequest) (*github.Team, error) {
 					return nil, errors.New("organization has reached team limit")
 				}
 

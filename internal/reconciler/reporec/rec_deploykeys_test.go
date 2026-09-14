@@ -29,7 +29,7 @@ var _ = Describe("ReconcileDeployKeys", func() {
 		currentDeployKeys []*github.Key
 
 		err                       error
-		appliedDeployKeys         []*github.Key
+		appliedDeployKeys         []github.CreateDeployKeyRequest
 		createDeployKeyCalled     bool
 		deletedDeployKeyIDs       []int64
 		deleteDeployKeyCalled     bool
@@ -48,7 +48,7 @@ var _ = Describe("ReconcileDeployKeys", func() {
 		deployKeys = []v1alpha1.DeployKey{}
 
 		// Reset flags and errors
-		appliedDeployKeys = []*github.Key{}
+		appliedDeployKeys = []github.CreateDeployKeyRequest{}
 		createDeployKeyCalled = false
 		deletedDeployKeyIDs = []int64{}
 		deleteDeployKeyCalled = false
@@ -59,7 +59,7 @@ var _ = Describe("ReconcileDeployKeys", func() {
 			return currentDeployKeys, getCurrentDeployKeysError
 		}
 
-		mockClient.CreateDeployKeyFunc = func(ctx context.Context, owner, repo string, key *github.Key) error {
+		mockClient.CreateDeployKeyFunc = func(ctx context.Context, owner, repo string, key github.CreateDeployKeyRequest) error {
 			createDeployKeyCalled = true
 			appliedDeployKeys = append(appliedDeployKeys, key)
 			return nil
@@ -182,12 +182,12 @@ var _ = Describe("ReconcileDeployKeys", func() {
 			Expect(appliedDeployKeys).To(ConsistOf(
 				And(
 					HaveField("Title", Equal(new("foo"))),
-					HaveField("Key", Equal(new("random-foo-key"))),
+					HaveField("Key", Equal("random-foo-key")),
 					HaveField("ReadOnly", Equal(new(false))),
 				),
 				And(
 					HaveField("Title", Equal(new("bar"))),
-					HaveField("Key", Equal(new("random-bar-key"))),
+					HaveField("Key", Equal("random-bar-key")),
 					HaveField("ReadOnly", Equal(new(false))),
 				),
 			))
@@ -229,7 +229,7 @@ var _ = Describe("ReconcileDeployKeys", func() {
 			// Mapper returns all 1 deploy keys
 			Expect(appliedDeployKeys).To(HaveLen(1))
 			Expect(*appliedDeployKeys[0].Title).To(Equal("foo"))
-			Expect(*appliedDeployKeys[0].Key).To(Equal("random-foo-key"))
+			Expect(appliedDeployKeys[0].Key).To(Equal("random-foo-key"))
 			Expect(*appliedDeployKeys[0].ReadOnly).To(BeFalse())
 			Expect(deletedDeployKeyIDs).To(HaveLen(1))
 			Expect(deletedDeployKeyIDs).To(ContainElements(int64(12345)))
@@ -276,7 +276,7 @@ var _ = Describe("ReconcileDeployKeys", func() {
 
 	Context("when CreateDeployKey returns an error", func() {
 		BeforeEach(func() {
-			mockClient.CreateDeployKeyFunc = func(ctx context.Context, owner, repo string, key *github.Key) error {
+			mockClient.CreateDeployKeyFunc = func(ctx context.Context, owner, repo string, key github.CreateDeployKeyRequest) error {
 				createDeployKeyCalled = true
 				return errors.New("add deploy key failed")
 			}

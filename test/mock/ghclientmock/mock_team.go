@@ -30,7 +30,7 @@ func (m *MockGitHubClientWrapper) GetTeamBySlug(ctx context.Context, org string,
 	return nil, nil
 }
 
-func (m *MockGitHubClientWrapper) EditTeamBySlug(ctx context.Context, org string, slug string, team *github.NewTeam) (*github.Team, error) {
+func (m *MockGitHubClientWrapper) EditTeamBySlug(ctx context.Context, org string, slug string, team *github.UpdateTeamRequest) (*github.Team, error) {
 	m.recordTeamCall(TeamCall{Method: "EditTeamBySlug", Org: org, Slug: slug})
 
 	if m.EditTeamBySlugFunc != nil {
@@ -41,7 +41,7 @@ func (m *MockGitHubClientWrapper) EditTeamBySlug(ctx context.Context, org string
 	return nil, nil
 }
 
-func (m *MockGitHubClientWrapper) CreateTeam(ctx context.Context, org string, team *github.NewTeam) (*github.Team, error) {
+func (m *MockGitHubClientWrapper) CreateTeam(ctx context.Context, org string, team *github.CreateTeamRequest) (*github.Team, error) {
 	m.recordTeamCall(TeamCall{Method: "CreateTeam", Org: org, Slug: team.Name, Description: *team.Description})
 
 	if m.CreateTeamFunc != nil {

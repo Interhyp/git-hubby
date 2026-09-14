@@ -64,8 +64,8 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 			By("Setting up mock to return existing organization")
 			mockClient.GetOrganizationFunc = func(ctx context.Context, org string) (*github.Organization, error) {
 				return &github.Organization{
-					Login:       github.Ptr(orgName),
-					Name:        github.Ptr(orgName),
+					Login:       new(orgName),
+					Name:        new(orgName),
 					Description: new("Test organization for unit tests"),
 				}, nil
 			}
@@ -92,8 +92,8 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 			By("Setting up mock to return existing organization")
 			mockClient.GetOrganizationFunc = func(ctx context.Context, org string) (*github.Organization, error) {
 				return &github.Organization{
-					Login:       github.Ptr(orgName),
-					Name:        github.Ptr(orgName),
+					Login:       new(orgName),
+					Name:        new(orgName),
 					Description: new("Test organization for unit tests"),
 				}, nil
 			}
@@ -132,8 +132,8 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 			By("Creating reconciler from factory first (before deletion)")
 			mockClient.GetOrganizationFunc = func(ctx context.Context, org string) (*github.Organization, error) {
 				return &github.Organization{
-					Login:       github.Ptr(orgName),
-					Name:        github.Ptr(orgName),
+					Login:       new(orgName),
+					Name:        new(orgName),
 					Description: new("Test organization for unit tests"),
 				}, nil
 			}
@@ -178,8 +178,8 @@ var _ = Describe("Organization Controller - Integration Tests", func() {
 			By("Setting up mock to return existing organization")
 			mockClient.GetOrganizationFunc = func(ctx context.Context, org string) (*github.Organization, error) {
 				return &github.Organization{
-					Login:       github.Ptr(orgName),
-					Name:        github.Ptr(orgName),
+					Login:       new(orgName),
+					Name:        new(orgName),
 					Description: new("Test organization"),
 				}, nil
 			}

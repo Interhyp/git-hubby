@@ -36,9 +36,19 @@ func teamNotificationSetting(team *v1alpha1.Team) string {
 	return team.Spec.NotificationSetting
 }
 
-func TeamToNewGitHubTeam(team *v1alpha1.Team) *github.NewTeam {
-	return &github.NewTeam{
+func TeamToCreateTeamRequest(team *v1alpha1.Team) *github.CreateTeamRequest {
+	return &github.CreateTeamRequest{
 		Name:                team.Spec.Name,
+		Description:         new(team.Spec.Description),
+		Privacy:             new(teamPrivacy(team)),
+		Permission:          new(teamPermission(team)),
+		NotificationSetting: new(teamNotificationSetting(team)),
+	}
+}
+
+func TeamToUpdateTeamRequest(team *v1alpha1.Team) *github.UpdateTeamRequest {
+	return &github.UpdateTeamRequest{
+		Name:                new(team.Spec.Name),
 		Description:         new(team.Spec.Description),
 		Privacy:             new(teamPrivacy(team)),
 		Permission:          new(teamPermission(team)),

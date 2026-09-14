@@ -14,9 +14,9 @@ func HashDeployKey(key, title string, readonly bool) string {
 	return fmt.Sprintf("%x", h)
 }
 
-func DeployKeyPresetToGitHubDeployKey(preset v1alpha1.DeployKey) *github.Key {
-	return &github.Key{
-		Key:      new(preset.Key),
+func DeployKeyPresetToDeployKeyRequest(preset v1alpha1.DeployKey) github.CreateDeployKeyRequest {
+	return github.CreateDeployKeyRequest{
+		Key:      preset.Key,
 		ReadOnly: utils.WithDefaultAsPtr(preset.ReadOnly, true),
 		Title:    new(preset.Title),
 	}

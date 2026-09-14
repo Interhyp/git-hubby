@@ -373,19 +373,19 @@ var _ = Describe("GitHub Custom Property Mapper", func() {
 		BeforeEach(func() {
 			definitions = []*github.CustomProperty{
 				{
-					PropertyName: github.Ptr(stringProp),
+					PropertyName: new(stringProp),
 					ValueType:    "string",
 				},
 				{
-					PropertyName: github.Ptr(selectProp),
+					PropertyName: new(selectProp),
 					ValueType:    "single_select",
 				},
 				{
-					PropertyName: github.Ptr(multiProp),
+					PropertyName: new(multiProp),
 					ValueType:    "multi_select",
 				},
 				{
-					PropertyName: github.Ptr(boolProp),
+					PropertyName: new(boolProp),
 					ValueType:    "true_false",
 				},
 			}

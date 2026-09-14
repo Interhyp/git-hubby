@@ -621,7 +621,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			githubRuleset = github.RepositoryRuleset{
 				Name:        "test-ruleset",
 				Enforcement: github.RulesetEnforcementActive,
-				Target:      github.Ptr(github.RulesetTargetBranch), // Set target type
+				Target:      new(github.RulesetTargetBranch), // Set target type
 				BypassActors: []*github.BypassActor{
 					{ActorID: new(int64(123)), ActorType: &actorType},
 				},
@@ -672,7 +672,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		})
 
 		It("should return true when bypass actor properties differ", func() {
-			githubRuleset.BypassActors[0].ActorType = github.Ptr(github.BypassActorTypeIntegration)
+			githubRuleset.BypassActors[0].ActorType = new(github.BypassActorTypeIntegration)
 			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
@@ -1247,7 +1247,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				githubRuleset.BypassActors = []*github.BypassActor{
 					{
 						ActorType:  &deployKeyType,
-						BypassMode: github.Ptr(github.BypassMode("always")),
+						BypassMode: new(github.BypassMode("always")),
 						ActorID:    nil,
 					},
 				}
@@ -1263,8 +1263,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: "DeployKey", BypassMode: "pull_request"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorType: &deployKeyType, BypassMode: github.Ptr(github.BypassMode("always"))},
-					{ActorType: &deployKeyType, BypassMode: github.Ptr(github.BypassMode("pull_request"))},
+					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("always"))},
+					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("pull_request"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1277,7 +1277,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: "DeployKey", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorType: &deployKeyType, BypassMode: github.Ptr(github.BypassMode("pull_request"))},
+					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("pull_request"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1290,7 +1290,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: "OrganizationAdmin", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorType: &orgAdminType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorType: &orgAdminType, BypassMode: new(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1303,7 +1303,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: "EnterpriseOwner", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorType: &enterpriseOwnerType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorType: &enterpriseOwnerType, BypassMode: new(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1318,8 +1318,8 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: "DeployKey", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: new(int64(123)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
-					{ActorType: &deployKeyType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorID: new(int64(123)), ActorType: &teamType, BypassMode: new(github.BypassMode("always"))},
+					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1339,10 +1339,10 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(456)), ActorType: "Team", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorType: &deployKeyType, BypassMode: github.Ptr(github.BypassMode("always"))},
-					{ActorType: &orgAdminType, BypassMode: github.Ptr(github.BypassMode("pull_request"))},
-					{ActorType: &enterpriseOwnerType, BypassMode: github.Ptr(github.BypassMode("always"))},
-					{ActorID: new(int64(456)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("always"))},
+					{ActorType: &orgAdminType, BypassMode: new(github.BypassMode("pull_request"))},
+					{ActorType: &enterpriseOwnerType, BypassMode: new(github.BypassMode("always"))},
+					{ActorID: new(int64(456)), ActorType: &teamType, BypassMode: new(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1356,7 +1356,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: "DeployKey", BypassMode: "pull_request"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorType: &deployKeyType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1369,7 +1369,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(123)), ActorType: "Team", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: new(int64(456)), ActorType: &teamType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorID: new(int64(456)), ActorType: &teamType, BypassMode: new(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1382,7 +1382,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(789)), ActorType: "Integration", BypassMode: "always"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: new(int64(789)), ActorType: &integrationType, BypassMode: github.Ptr(github.BypassMode("always"))},
+					{ActorID: new(int64(789)), ActorType: &integrationType, BypassMode: new(github.BypassMode("always"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1395,7 +1395,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(321)), ActorType: "RepositoryRole", BypassMode: "pull_request"},
 				}
 				githubRuleset.BypassActors = []*github.BypassActor{
-					{ActorID: new(int64(321)), ActorType: &roleType, BypassMode: github.Ptr(github.BypassMode("pull_request"))},
+					{ActorID: new(int64(321)), ActorType: &roleType, BypassMode: new(github.BypassMode("pull_request"))},
 				}
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
@@ -1432,7 +1432,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		Context("Target Type comparison", func() {
 			It("should return false when target types match (branch)", func() {
 				rulesetPreset.Spec.Target = TargetTypeBranch
-				githubRuleset.Target = github.Ptr(github.RulesetTargetBranch)
+				githubRuleset.Target = new(github.RulesetTargetBranch)
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
 				Expect(differs).To(BeFalse())
@@ -1440,7 +1440,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return false when target types match (tag)", func() {
 				rulesetPreset.Spec.Target = TargetTypeTag
-				githubRuleset.Target = github.Ptr(github.RulesetTargetTag)
+				githubRuleset.Target = new(github.RulesetTargetTag)
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
 				Expect(differs).To(BeFalse())
@@ -1448,7 +1448,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return false when target types match (push)", func() {
 				rulesetPreset.Spec.Target = "push"
-				githubRuleset.Target = github.Ptr(github.RulesetTargetPush)
+				githubRuleset.Target = new(github.RulesetTargetPush)
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
 				Expect(differs).To(BeFalse())
@@ -1456,7 +1456,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return true when target types differ (branch vs tag)", func() {
 				rulesetPreset.Spec.Target = TargetTypeBranch
-				githubRuleset.Target = github.Ptr(github.RulesetTargetTag)
+				githubRuleset.Target = new(github.RulesetTargetTag)
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
 				Expect(differs).To(BeTrue())
@@ -1464,7 +1464,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return true when target types differ (tag vs push)", func() {
 				rulesetPreset.Spec.Target = TargetTypeTag
-				githubRuleset.Target = github.Ptr(github.RulesetTargetPush)
+				githubRuleset.Target = new(github.RulesetTargetPush)
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
 				Expect(differs).To(BeTrue())
@@ -1472,7 +1472,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return true when target types differ (branch vs push)", func() {
 				rulesetPreset.Spec.Target = TargetTypeBranch
-				githubRuleset.Target = github.Ptr(github.RulesetTargetPush)
+				githubRuleset.Target = new(github.RulesetTargetPush)
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
 				Expect(differs).To(BeTrue())
@@ -1480,7 +1480,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return true when preset has empty target type but GitHub has tag", func() {
 				rulesetPreset.Spec.Target = ""
-				githubRuleset.Target = github.Ptr(github.RulesetTargetTag)
+				githubRuleset.Target = new(github.RulesetTargetTag)
 
 				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
 				Expect(differs).To(BeTrue())
@@ -1520,7 +1520,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				emptyGithubRuleset = github.RepositoryRuleset{
 					Name:        "empty-ruleset",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch), // Set target type
+					Target:      new(github.RulesetTargetBranch), // Set target type
 				}
 			})
 
@@ -1554,7 +1554,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -1586,7 +1586,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -1624,7 +1624,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -1662,7 +1662,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -1701,7 +1701,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -1741,7 +1741,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -1781,7 +1781,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -1820,7 +1820,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -1859,7 +1859,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ghRuleset := github.RepositoryRuleset{
 					Name:        "test",
 					Enforcement: github.RulesetEnforcementActive,
-					Target:      github.Ptr(github.RulesetTargetBranch),
+					Target:      new(github.RulesetTargetBranch),
 					Conditions: &github.RepositoryRulesetConditions{
 						RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 					},
@@ -2031,7 +2031,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			return github.RepositoryRuleset{
 				Name:        "test",
 				Enforcement: github.RulesetEnforcementActive,
-				Target:      github.Ptr(github.RulesetTargetBranch),
+				Target:      new(github.RulesetTargetBranch),
 				Conditions: &github.RepositoryRulesetConditions{
 					RefName: &github.RepositoryRulesetRefConditionParameters{Include: []string{"main"}},
 				},
@@ -2077,7 +2077,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			})
 			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
 				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
-				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: github.Ptr(int64(99)), Type: &teamReviewerType}},
+				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: new(int64(99)), Type: &teamReviewerType}},
 			})
 			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
 		})

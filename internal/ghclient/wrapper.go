@@ -147,8 +147,8 @@ func (g *GitHubClientWrapper) DeleteDeployKey(ctx context.Context, owner, repo s
 	return _handleErrorResponse(response, err)
 }
 
-func (g *GitHubClientWrapper) CreateDeployKey(ctx context.Context, owner, repo string, key *github.Key) error {
-	_, response, err := g.client.Repositories.CreateKey(ctx, owner, repo, key)
+func (g *GitHubClientWrapper) CreateDeployKey(ctx context.Context, owner, repo string, request github.CreateDeployKeyRequest) error {
+	_, response, err := g.client.Repositories.CreateKey(ctx, owner, repo, request)
 	defer _closeBody(response)
 	return _handleErrorResponse(response, err)
 }
@@ -369,14 +369,14 @@ func (g *GitHubClientWrapper) GetTeamBySlug(ctx context.Context, org string, slu
 	return result, _handleErrorResponse(response, err)
 }
 
-func (g *GitHubClientWrapper) EditTeamBySlug(ctx context.Context, org string, slug string, team *github.NewTeam) (*github.Team, error) {
-	result, response, err := g.client.Teams.EditTeamBySlug(ctx, org, slug, *team, false)
+func (g *GitHubClientWrapper) EditTeamBySlug(ctx context.Context, org string, slug string, request *github.UpdateTeamRequest) (*github.Team, error) {
+	result, response, err := g.client.Teams.UpdateTeamBySlug(ctx, org, slug, *request)
 	defer _closeBody(response)
 	return result, _handleErrorResponse(response, err)
 }
 
-func (g *GitHubClientWrapper) CreateTeam(ctx context.Context, org string, team *github.NewTeam) (*github.Team, error) {
-	result, response, err := g.client.Teams.CreateTeam(ctx, org, *team)
+func (g *GitHubClientWrapper) CreateTeam(ctx context.Context, org string, request *github.CreateTeamRequest) (*github.Team, error) {
+	result, response, err := g.client.Teams.CreateTeam(ctx, org, *request)
 	defer _closeBody(response)
 	return result, _handleErrorResponse(response, err)
 }

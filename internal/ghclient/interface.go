@@ -52,7 +52,7 @@ type GitHubClient interface {
 	// DeployKey operations
 	ListAllDeployKeys(ctx context.Context, owner, repo string) ([]*github.Key, error)
 	DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error
-	CreateDeployKey(ctx context.Context, owner, repo string, key *github.Key) error
+	CreateDeployKey(ctx context.Context, owner, repo string, keyRequest github.CreateDeployKeyRequest) error
 
 	// Webhook operations
 	ListHooks(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.Hook, error)
@@ -92,8 +92,8 @@ type GitHubClient interface {
 	// Teams operations
 	GetAllTeamsForOrg(ctx context.Context, org string) ([]*github.Team, error)
 	GetTeamBySlug(ctx context.Context, org string, slug string) (*github.Team, error)
-	EditTeamBySlug(ctx context.Context, org string, slug string, team *github.NewTeam) (*github.Team, error)
-	CreateTeam(ctx context.Context, org string, team *github.NewTeam) (*github.Team, error)
+	EditTeamBySlug(ctx context.Context, org string, slug string, teamRequest *github.UpdateTeamRequest) (*github.Team, error)
+	CreateTeam(ctx context.Context, org string, teamRequest *github.CreateTeamRequest) (*github.Team, error)
 	DeleteTeamBySlug(ctx context.Context, org string, slug string) error
 
 	// Team members operations

@@ -79,7 +79,7 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, repo string) (*github.Repository, error) {
 				return &github.Repository{
 					ID:         new(int64(12345)),
-					Name:       github.Ptr(repoName),
+					Name:       new(repoName),
 					FullName:   new(owner + "/" + repo),
 					Owner:      &github.User{Login: new(owner)},
 					Archived:   new(false),
@@ -176,7 +176,7 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 			mockClient.GetRepositoryFunc = func(ctx context.Context, owner, repo string) (*github.Repository, error) {
 				return &github.Repository{
 					ID:                  new(int64(99999)),
-					Name:                github.Ptr(repoName),
+					Name:                new(repoName),
 					FullName:            new(owner + "/" + repo),
 					Owner:               &github.User{Login: new(owner)},
 					Archived:            new(false),

@@ -48,7 +48,7 @@ func (m *MockGitHubClientWrapper) CreateOrUpdateOrganizationCustomProperties(ctx
 		resultProp := *prop
 		// Set source type to organization if not set
 		if resultProp.SourceType == nil {
-			resultProp.SourceType = github.Ptr(mapper.CustomPropertySourceTypeOrganization)
+			resultProp.SourceType = new(mapper.CustomPropertySourceTypeOrganization)
 		}
 		resultProperties[i] = &resultProp
 	}
