@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v91/github"
+	"github.com/google/go-github/v92/github"
 )
 
 // contextKey is an unexported type used for context keys in this package.
