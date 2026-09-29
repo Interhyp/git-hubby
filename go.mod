@@ -13,6 +13,7 @@ require (
 	github.com/google/go-github/v92 v92.0.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/shurcooL/githubv4 v0.0.0-20260209031235-2402fdf4a9ed
 	go.elastic.co/ecszap v1.0.3
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0
 	go.uber.org/zap v1.28.0
@@ -81,6 +82,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.0 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
+	github.com/shurcooL/graphql v0.0.0-20240915155400-7ee5256398cf // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

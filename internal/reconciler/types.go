@@ -16,9 +16,13 @@ import (
 const FieldOwner = client.FieldOwner("git-hubby")
 
 type GitHubClientManager interface {
-	// GetClient returns a rate-limit-checked GitHub client for the given org.
+	// GetClient returns a rate-limit-checked GitHub REST client for the given org.
 	// It enforces per-org stall thresholds via the OrgRateLimitRegistry when configured.
 	GetClient(ctx context.Context, cacheKey string, app ghclient.AppConfig) (ghclient.GitHubClient, error)
+	// GetGraphQLClient returns a rate-limit-checked GitHub GraphQL client for the given org.
+	// It shares credentials and rate-limit state with the REST client and enforces the same
+	// per-org stall thresholds via the OrgRateLimitRegistry when configured.
+	GetGraphQLClient(ctx context.Context, cacheKey string, app ghclient.AppConfig) (ghclient.GraphQLClient, error)
 }
 
 type SpreadManager interface {

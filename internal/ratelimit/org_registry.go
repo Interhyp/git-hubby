@@ -90,13 +90,15 @@ func DefaultOrgRegistryConfig() OrgRegistryConfig {
 func ConfiguredThresholds(cfg config.Config) map[Category]int {
 	return map[Category]int{
 		CategoryCore: cfg.RateLimitConfig.StallThresholdCore,
-		// Non-core categories are monitored (tracked in the registry and warned about at
-		// runtime) but have no env-configurable threshold yet. When the operator starts
-		// using search/graphql endpoints, add their threshold fields to config.RateLimitConfig
-		// and wire them here.
+		// GraphQL has a dedicated, env-configurable threshold. It defaults to 0 (track only,
+		// never stall) until GraphQL usage is significant enough to warrant a stall guard.
+		CategoryGraphQL: cfg.RateLimitConfig.StallThresholdGraphQL,
+		// The remaining non-core categories are monitored (tracked in the registry and warned
+		// about at runtime) but have no env-configurable threshold yet. When the operator starts
+		// using search endpoints, add their threshold fields to config.RateLimitConfig and wire
+		// them here.
 		CategorySearch:     0,
 		CategoryCodeSearch: 0,
-		CategoryGraphQL:    0,
 	}
 }
 

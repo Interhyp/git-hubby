@@ -18,6 +18,7 @@ import (
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
 	"github.com/google/go-github/v92/github"
+	"github.com/shurcooL/githubv4"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	v1 "k8s.io/api/core/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -83,6 +84,7 @@ func DefaultClientConfig() *ClientConfig {
 // ClientInfo holds metadata about a cached client
 type ClientInfo struct {
 	Client         GitHubClient
+	GraphQLClient  GraphQLClient
 	InstallationID int64
 	CacheKey       string
 	SecretName     string
@@ -182,8 +184,15 @@ func (m *CachingGitHubClientFactory) GetClient(ctx context.Context, cacheKey str
 		clientToCache = NewCachingClient(clientToCache, m.config.ResponseCacheTTL)
 	}
 
+	graphqlClient, err := m.createGraphQLClient(ctx, app.InstallationID, secretName, cacheKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GitHub GraphQL client for key %s: %w", cacheKey, err)
+	}
+	var graphqlToCache GraphQLClient = NewGraphQLClientWrapper(graphqlClient)
+
 	m.clients[cacheKey] = &ClientInfo{
 		Client:         clientToCache,
+		GraphQLClient:  graphqlToCache,
 		InstallationID: app.InstallationID,
 		CacheKey:       cacheKey,
 		SecretName:     secretName,
@@ -238,6 +247,47 @@ func (m *CachingGitHubClientFactory) getCachedClient(cacheKey string, secretName
 	return nil
 }
 
+// getCachedGraphQLClient returns the cached GraphQL client for the given cacheKey, only if the
+// cached ClientInfo was created with the same credential secret.
+func (m *CachingGitHubClientFactory) getCachedGraphQLClient(cacheKey string, secretName string) GraphQLClient {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if info, exists := m.clients[cacheKey]; exists && info.SecretName == secretName {
+		return info.GraphQLClient
+	}
+
+	return nil
+}
+
+// GetGraphQLClient retrieves or creates a GitHub GraphQL client for the given cacheKey and
+// AppConfig, enforcing the same per-org rate-limit gating as GetClient before returning it.
+//
+// REST and GraphQL clients for an org are created together and cached in the same ClientInfo,
+// sharing credentials and rate-limit state. This method delegates client creation and the
+// stall check to GetClient (which is idempotent for an already-cached org), then returns the
+// GraphQL sibling from the cache. A rate-limit stall on the org therefore blocks GraphQL calls
+// exactly as it blocks REST calls.
+func (m *CachingGitHubClientFactory) GetGraphQLClient(ctx context.Context, cacheKey string, app AppConfig) (GraphQLClient, error) {
+	secretName := app.CredentialsSecretName
+	if secretName == "" {
+		secretName = m.legacySecretName
+	}
+
+	// GetClient handles cache lookup, creation (which also builds the GraphQL sibling),
+	// credential-change eviction, and rate-limit gating. We reuse it to avoid duplicating
+	// that logic, then fetch the cached GraphQL client it created.
+	if _, err := m.GetClient(ctx, cacheKey, app); err != nil {
+		return nil, err
+	}
+
+	graphqlClient := m.getCachedGraphQLClient(cacheKey, secretName)
+	if graphqlClient == nil {
+		return nil, fmt.Errorf("GraphQL client unexpectedly missing for key %s", cacheKey)
+	}
+	return graphqlClient, nil
+}
+
 // SetOrgRateLimitRegistry attaches a registry to an already-constructed factory.
 // This allows the registry to be created after the factory (e.g., depending on a feature flag)
 // and injected before the first client is created.
@@ -246,31 +296,16 @@ func (m *CachingGitHubClientFactory) SetOrgRateLimitRegistry(registry *ratelimit
 	m.orgRegistry = registry
 }
 
-// createClient creates a new GitHub client with proper middleware setup.
+// createClient creates a new GitHub REST client with proper middleware setup.
 // orgLogin is used to label the rate limit tracker transport so the registry
 // can attribute response headers to the correct organization.
 func (m *CachingGitHubClientFactory) createClient(ctx context.Context, installationID int64, secretName string, orgLogin string) (*github.Client, error) {
 	log := logf.FromContext(ctx)
 	log.Info("Creating GitHub client with middleware stack")
 
-	creds, ok := m.credentials[secretName]
-	if !ok {
-		// Fetch and parse the secret on first use
-		secret, err := m.secretProvider(ctx, secretName)
-		if err != nil {
-			log.Error(err, "failed to get GitHub app credentials secret", "secretName", secretName)
-			return nil, err
-		}
-		if secret == nil {
-			return nil, errors.New("GitHub app credentials secret cannot be nil")
-		}
-		parsedCreds, err := parseCredentials(*secret)
-		if err != nil {
-			log.Error(err, "failed to prepare GitHub app credentials")
-			return nil, err
-		}
-		m.credentials[secretName] = parsedCreds
-		creds = parsedCreds
+	creds, err := m.resolveCredentials(ctx, secretName)
+	if err != nil {
+		return nil, err
 	}
 
 	ghClient, err := m.buildClientWithMiddleware(installationID, creds, orgLogin)
@@ -279,6 +314,49 @@ func (m *CachingGitHubClientFactory) createClient(ctx context.Context, installat
 		return nil, err
 	}
 	return ghClient, nil
+}
+
+// createGraphQLClient creates a new GitHub GraphQL client sharing the same credentials
+// and middleware behaviour as the REST client for the same org.
+func (m *CachingGitHubClientFactory) createGraphQLClient(ctx context.Context, installationID int64, secretName string, orgLogin string) (*githubv4.Client, error) {
+	log := logf.FromContext(ctx)
+	log.Info("Creating GitHub GraphQL client with middleware stack")
+
+	creds, err := m.resolveCredentials(ctx, secretName)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.buildGraphQLClientWithMiddleware(installationID, creds, orgLogin), nil
+}
+
+// resolveCredentials returns the parsed GitHub App credentials for the given secret name,
+// fetching and parsing the Kubernetes secret on first use and caching the result. It is the
+// shared credential resolution used by both the REST and GraphQL client creation paths.
+// Callers must hold the factory write lock (it is only invoked from the create path).
+func (m *CachingGitHubClientFactory) resolveCredentials(ctx context.Context, secretName string) (*AppCredentials, error) {
+	log := logf.FromContext(ctx)
+
+	if creds, ok := m.credentials[secretName]; ok {
+		return creds, nil
+	}
+
+	// Fetch and parse the secret on first use
+	secret, err := m.secretProvider(ctx, secretName)
+	if err != nil {
+		log.Error(err, "failed to get GitHub app credentials secret", "secretName", secretName)
+		return nil, err
+	}
+	if secret == nil {
+		return nil, errors.New("GitHub app credentials secret cannot be nil")
+	}
+	parsedCreds, err := parseCredentials(*secret)
+	if err != nil {
+		log.Error(err, "failed to prepare GitHub app credentials")
+		return nil, err
+	}
+	m.credentials[secretName] = parsedCreds
+	return parsedCreds, nil
 }
 
 // buildClientWithMiddleware creates a GitHub client with the full middleware stack
@@ -294,10 +372,53 @@ func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID
 	)
 }
 
-// buildMiddlewareStack constructs the HTTP transport middleware stack.
+// buildGraphQLClientWithMiddleware creates a githubv4 GraphQL client that shares the REST
+// client's authentication and rate-limiting behaviour via the common middleware stack.
+// The githubv4 client is configured with an *http.Client whose transport is the GraphQL
+// middleware stack, mirroring how the REST client is wired.
+func (m *CachingGitHubClientFactory) buildGraphQLClientWithMiddleware(appInstallationID int64, creds *AppCredentials, orgLogin string) *githubv4.Client {
+	clientName := fmt.Sprintf("github-graphql-%d", appInstallationID)
+
+	httpClient := &http.Client{
+		Transport: m.buildGraphQLMiddlewareStack(clientName, creds, appInstallationID, orgLogin),
+		Timeout:   m.config.Timeout,
+	}
+	return githubv4.NewClient(httpClient)
+}
+
+// buildMiddlewareStack constructs the HTTP transport middleware stack for the REST client.
 // Rate limit state is shared per GitHub App ID so installations of the same App share a quota bucket.
 // If the factory has an OrgRateLimitRegistry, a tracker transport is inserted to record response headers.
 func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, creds *AppCredentials, appInstallationID int64, orgLogin string) http.RoundTripper {
+	// Shared layers: rate limiting, auth, per-org tracking, retry (identical to GraphQL).
+	rt := m.buildSharedMiddleware(creds, appInstallationID, orgLogin)
+
+	// Pagination handling — REST only. The GraphQL API does not use the Link-header based
+	// pagination that this transport implements, so it is intentionally omitted there.
+	rt = githubpagination.New(rt, githubpagination.WithPerPage(30))
+	// OpenTelemetry instrumentation (top layer)
+	rt = otelhttp.NewTransport(rt, otelhttp.WithServerName(clientName))
+
+	return rt
+}
+
+// buildGraphQLMiddlewareStack constructs the HTTP transport middleware stack for the GraphQL client.
+// It reuses exactly the same shared layers as the REST stack (rate limiting shared per App ID,
+// GitHub App installation auth, per-org rate limit header tracking, and retry), differing only in
+// that it omits the REST Link-header pagination transport. The per-org tracker still classifies
+// responses correctly because GitHub returns X-RateLimit-Resource: graphql for /graphql requests.
+func (m *CachingGitHubClientFactory) buildGraphQLMiddlewareStack(clientName string, creds *AppCredentials, appInstallationID int64, orgLogin string) http.RoundTripper {
+	rt := m.buildSharedMiddleware(creds, appInstallationID, orgLogin)
+	// OpenTelemetry instrumentation (top layer)
+	rt = otelhttp.NewTransport(rt, otelhttp.WithServerName(clientName))
+	return rt
+}
+
+// buildSharedMiddleware builds the transport layers common to both the REST and GraphQL clients,
+// from the base transport upwards: rate limiting (shared per App ID), GitHub App authentication,
+// per-org rate limit header tracking, and retry. Both clients build their protocol-specific
+// layers (pagination, tracing) on top of the returned transport.
+func (m *CachingGitHubClientFactory) buildSharedMiddleware(creds *AppCredentials, appInstallationID int64, orgLogin string) http.RoundTripper {
 	// Start with the base transport
 	rt := http.DefaultTransport
 
@@ -328,11 +449,6 @@ func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, cre
 	)
 	delayFn := rehttp.ExpJitterDelay(5*time.Second, 30*time.Second)
 	rt = rehttp.NewTransport(rt, retryFn, delayFn)
-
-	// Pagination handling
-	rt = githubpagination.New(rt, githubpagination.WithPerPage(30))
-	// OpenTelemetry instrumentation (top layer)
-	rt = otelhttp.NewTransport(rt, otelhttp.WithServerName(clientName))
 
 	return rt
 }

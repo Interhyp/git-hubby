@@ -11,7 +11,8 @@ import (
 )
 
 type GitHubMockClientFactory struct {
-	mockClient ghclient.GitHubClient
+	mockClient        ghclient.GitHubClient
+	mockGraphQLClient ghclient.GraphQLClient
 }
 
 func NewGitHubMockClientFactory(mockClient *MockGitHubClientWrapper) *GitHubMockClientFactory {
@@ -20,11 +21,24 @@ func NewGitHubMockClientFactory(mockClient *MockGitHubClientWrapper) *GitHubMock
 	}
 }
 
+// SetGraphQLClient sets the GraphQL client returned by GetGraphQLClient. It is optional; when
+// unset, GetGraphQLClient returns an error, mirroring the unset REST client behaviour.
+func (m *GitHubMockClientFactory) SetGraphQLClient(mockGraphQLClient ghclient.GraphQLClient) {
+	m.mockGraphQLClient = mockGraphQLClient
+}
+
 func (m *GitHubMockClientFactory) GetClient(_ context.Context, _ string, _ ghclient.AppConfig) (ghclient.GitHubClient, error) {
 	if m.mockClient == nil {
 		return nil, errors.New("mock GitHub client not set")
 	}
 	return m.mockClient, nil
+}
+
+func (m *GitHubMockClientFactory) GetGraphQLClient(_ context.Context, _ string, _ ghclient.AppConfig) (ghclient.GraphQLClient, error) {
+	if m.mockGraphQLClient == nil {
+		return nil, errors.New("mock GitHub GraphQL client not set")
+	}
+	return m.mockGraphQLClient, nil
 }
 
 func (m *GitHubMockClientFactory) GetGitHubClientAndCheckRateLimit(_ context.Context, _ string, _ ghclient.AppConfig, _ int) (ghclient.GitHubClient, error) {

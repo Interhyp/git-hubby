@@ -24,6 +24,10 @@ type Features struct {
 type RateLimitConfig struct {
 	// StallThresholdCore is the minimum core API calls remaining before stalling an org.
 	StallThresholdCore int `env:"RATE_LIMIT_STALL_THRESHOLD_CORE" envDefault:"100"`
+	// StallThresholdGraphQL is the minimum GraphQL API points remaining before stalling an org.
+	// A value of 0 means GraphQL usage is tracked but never causes a stall (the default), which
+	// preserves prior behaviour while GraphQL adoption ramps up.
+	StallThresholdGraphQL int `env:"RATE_LIMIT_STALL_THRESHOLD_GRAPHQL" envDefault:"0"`
 	// ResetGracePeriod is added to the GitHub reset time before allowing reconciliation to resume.
 	ResetGracePeriod int `env:"RATE_LIMIT_RESET_GRACE_PERIOD_SECONDS" envDefault:"10"`
 	// StalenessThresholdMinutes is how many minutes old registry data can be before refreshing.

@@ -1803,6 +1803,7 @@ func (m *mockSpreadManager) Spread(_ context.Context, _ spreading.SpreadableReso
 // mockGitHubClientManager is a mock implementation of reconciler.GitHubClientManager for testing
 type mockGitHubClientManager struct {
 	client          *ghclientmock.MockGitHubClientWrapper
+	graphqlClient   ghclient.GraphQLClient
 	clientByOrg     map[string]*ghclientmock.MockGitHubClientWrapper
 	shouldFailLimit bool
 	shouldFail      bool
@@ -1832,4 +1833,20 @@ func (m *mockGitHubClientManager) GetClient(_ context.Context, orgName string, a
 	}
 
 	return m.client, nil
+}
+
+func (m *mockGitHubClientManager) GetGraphQLClient(_ context.Context, orgName string, app ghclient.AppConfig) (ghclient.GraphQLClient, error) {
+	m.callCount++
+	m.lastOrgName = orgName
+	m.lastAppConfig = app
+
+	if m.shouldFailLimit {
+		return nil, m.rateLimitErr
+	}
+
+	if m.shouldFail {
+		return nil, m.genericErr
+	}
+
+	return m.graphqlClient, nil
 }
