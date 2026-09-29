@@ -65,6 +65,11 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 		return nil, err
 	}
 
+	ghGraphQLClient, err := f.ClientManager.GetGraphQLClient(ctx, org.GetLogin(), appConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	nameResolverOrg, err := reconciler.NewGitHubIDResolver(ctx, ghClient, org.GetLogin())
 	if err != nil {
 		log.Error(err, "Failed to warm name resolver for Organization", "organization", org.GetLogin())
@@ -79,8 +84,9 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 				CurrentSubResourceGenerations: subResourceGenerations,
 			},
 			GitHub: reconciler.GitHub[string]{
-				Client:   ghClient,
-				Resource: org.GetLogin(),
+				Client:        ghClient,
+				GraphQLClient: ghGraphQLClient,
+				Resource:      org.GetLogin(),
 			},
 			Features:   f.Config.Features,
 			IdResolver: nameResolverOrg,

@@ -30,8 +30,9 @@ type SpreadManager interface {
 }
 
 type GitHub[T any] struct {
-	Client   ghclient.GitHubClient
-	Resource T
+	Client        ghclient.GitHubClient
+	GraphQLClient ghclient.GraphQLClient
+	Resource      T
 }
 
 type GitHubTeamIdentifier struct {

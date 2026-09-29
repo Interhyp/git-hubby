@@ -6,6 +6,10 @@ import (
 	"github.com/shurcooL/githubv4"
 )
 
+// GraphQLInput is the input type for GraphQL mutations. It aliases githubv4.Input so callers and
+// mocks do not need to import githubv4 directly for the generic Mutate method.
+type GraphQLInput = githubv4.Input
+
 // GraphQLClientWrapper is the production implementation of GraphQLClient. It wraps a
 // *githubv4.Client and delegates directly to it. Error handling is left to the githubv4
 // client, which already surfaces GraphQL and HTTP transport errors; the HTTP-level concerns
@@ -26,6 +30,6 @@ func (g *GraphQLClientWrapper) Query(ctx context.Context, q any, variables map[s
 }
 
 // Mutate executes a GraphQL mutation against the GitHub GraphQL API.
-func (g *GraphQLClientWrapper) Mutate(ctx context.Context, m any, input githubv4.Input, variables map[string]any) error {
+func (g *GraphQLClientWrapper) Mutate(ctx context.Context, m any, input GraphQLInput, variables map[string]any) error {
 	return g.client.Mutate(ctx, m, input, variables)
 }

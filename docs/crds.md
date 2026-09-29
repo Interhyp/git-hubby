@@ -460,6 +460,55 @@ _Appears in:_
 
 
 
+#### IpAllowListEntry
+
+
+
+IpAllowListEntry defines a single entry in an organization's IP allow list.
+Each entry allows access from a single IP address or a range of addresses in CIDR notation.
+See: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization
+
+
+
+_Appears in:_
+- [IpAllowListSettings](#ipallowlistsettings)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `allowListValue` _string_ | AllowListValue is an IP address or a range of addresses in CIDR notation (e.g. "192.0.2.1" or "192.0.2.0/24").<br />A range covering the entire address space (such as "0.0.0.0/0" or "::/0") is rejected by GitHub;<br />to allow access from anywhere, disable the allow list via Enabled=false instead. |  | MaxLength: 43 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `name` _string_ | Name is an optional human-readable description of the entry, shown in the GitHub UI. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
+| `isActive` _boolean_ | IsActive determines whether this entry is enforced while the IP allow list is enabled.<br />Inactive entries remain configured but are ignored until activated. | true | Optional: \{\} <br /> |
+
+
+#### IpAllowListSettings
+
+
+
+IpAllowListSettings configures the organization-level IP allow list.
+
+Only the organization-owned portion of the effective allow list is managed here. Entries
+inherited from the enterprise account and entries automatically managed by installed GitHub
+Apps (described as "Managed by the <name> GitHub App") are read-only and are never modified,
+deleted, or reported as drift by the reconciler.
+
+IP allow lists are only available on GitHub Enterprise Cloud organizations. If the enterprise
+delegates its allow list to an identity provider (Enterprise Managed Users with Entra ID and
+OIDC), GitHub deactivates the organization IP allow list GraphQL APIs; in that case the
+reconciler surfaces the condition but does not treat it as a hard failure.
+See: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization
+
+
+
+_Appears in:_
+- [OrganizationSpec](#organizationspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `enabled` _boolean_ | Enabled determines whether the IP allow list is enforced for the organization.<br />Entries are always reconciled first, so that enabling enforcement never locks out the<br />currently configured (active) addresses. | false | Optional: \{\} <br /> |
+| `enabledForInstalledApps` _boolean_ | EnabledForInstalledApps determines whether IP addresses configured for installed GitHub Apps<br />are automatically added to the allow list. This takes effect independently of Enabled.<br />The resulting App-managed entries are read-only and are not managed via the Entries field. | false | Optional: \{\} <br /> |
+| `entries` _[IpAllowListEntry](#ipallowlistentry) array_ | Entries is the desired set of organization-owned IP allow list entries, keyed by their<br />AllowListValue. Entries present in GitHub but not listed here are deleted (except read-only<br />enterprise-inherited and App-managed entries, which are always preserved). Omitting this<br />field (nil) manages only the enabled settings and leaves organization-owned entries untouched;<br />provide an empty list to explicitly remove all organization-owned entries. |  | Optional: \{\} <br /> |
+
+
 #### MergeStrategy
 
 
@@ -639,6 +688,7 @@ _Appears in:_
 | `website` _string_ | Website is the organization's website URL.<br />This appears on the organization's GitHub profile page as a clickable link. |  | MaxLength: 255 <br />Optional: \{\} <br /> |
 | `plan` _string_ | Plan indicates the GitHub plan tier for this organization (enterprise, team, or free).<br />Determines whether Enterprise-only features (e.g., custom properties, runner groups) are reconciled or skipped. | enterprise | Enum: [enterprise team free] <br />Optional: \{\} <br /> |
 | `memberPrivileges` _[OrganizationMemberPrivileges](#organizationmemberprivileges)_ | MemberPrivileges configures the privileges and default permissions for members of this organization.<br />Configurability may be restricted by Enterprise policies. |  | Optional: \{\} <br /> |
+| `ipAllowList` _[IpAllowListSettings](#ipallowlistsettings)_ | IpAllowList configures the organization-level IP allow list (GitHub Enterprise Cloud only).<br />When nil, IP allow list reconciliation is skipped entirely, leaving all settings and entries<br />untouched. Only organization-owned entries and settings are managed; enterprise-inherited and<br />GitHub App-managed entries are always preserved.<br />See: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization |  | Optional: \{\} <br /> |
 
 
 #### OrganizationStatus

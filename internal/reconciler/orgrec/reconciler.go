@@ -62,6 +62,7 @@ func (o *GitHubOrgReconciler) RequiredReconciliations() []reconciler.ParallelRec
 			{Function: o.reconcileRulesetPresets, Condition: conditions.TypeRulesetsSynced},
 			{Function: o.reconcileCodeSecurityConfigurations, Condition: conditions.TypeCodeSecurityConfigurationsSynced},
 			{Function: o.reconcileActionsSettings, Condition: conditions.TypeActionsConfigurationSynced},
+			{Function: o.reconcileIpAllowList, Condition: conditions.TypeIpAllowListSynced},
 		},
 	}
 }

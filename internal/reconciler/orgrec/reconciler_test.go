@@ -571,6 +571,6 @@ var _ = Describe("RequiredReconciliations", func() {
 		groups := rec.RequiredReconciliations()
 		Expect(groups).To(HaveLen(1))
 		// All reconcilers run in parallel; plan-based checks are handled within each reconciler
-		Expect(groups[0]).To(HaveLen(5))
+		Expect(groups[0]).To(HaveLen(6))
 	})
 })

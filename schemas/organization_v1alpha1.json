@@ -272,6 +272,57 @@
           "minimum": 1,
           "type": "integer"
         },
+        "ipAllowList": {
+          "description": "IpAllowList configures the organization-level IP allow list (GitHub Enterprise Cloud only).\nWhen nil, IP allow list reconciliation is skipped entirely, leaving all settings and entries\nuntouched. Only organization-owned entries and settings are managed; enterprise-inherited and\nGitHub App-managed entries are always preserved.\nSee: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization",
+          "properties": {
+            "enabled": {
+              "default": false,
+              "description": "Enabled determines whether the IP allow list is enforced for the organization.\nEntries are always reconciled first, so that enabling enforcement never locks out the\ncurrently configured (active) addresses.",
+              "type": "boolean"
+            },
+            "enabledForInstalledApps": {
+              "default": false,
+              "description": "EnabledForInstalledApps determines whether IP addresses configured for installed GitHub Apps\nare automatically added to the allow list. This takes effect independently of Enabled.\nThe resulting App-managed entries are read-only and are not managed via the Entries field.",
+              "type": "boolean"
+            },
+            "entries": {
+              "description": "Entries is the desired set of organization-owned IP allow list entries, keyed by their\nAllowListValue. Entries present in GitHub but not listed here are deleted (except read-only\nenterprise-inherited and App-managed entries, which are always preserved). Omitting this\nfield (nil) manages only the enabled settings and leaves organization-owned entries untouched;\nprovide an empty list to explicitly remove all organization-owned entries.",
+              "items": {
+                "description": "IpAllowListEntry defines a single entry in an organization's IP allow list.\nEach entry allows access from a single IP address or a range of addresses in CIDR notation.\nSee: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization",
+                "properties": {
+                  "allowListValue": {
+                    "description": "AllowListValue is an IP address or a range of addresses in CIDR notation (e.g. \"192.0.2.1\" or \"192.0.2.0/24\").\nA range covering the entire address space (such as \"0.0.0.0/0\" or \"::/0\") is rejected by GitHub;\nto allow access from anywhere, disable the allow list via Enabled=false instead.",
+                    "maxLength": 43,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "isActive": {
+                    "default": true,
+                    "description": "IsActive determines whether this entry is enforced while the IP allow list is enabled.\nInactive entries remain configured but are ignored until activated.",
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "description": "Name is an optional human-readable description of the entry, shown in the GitHub UI.",
+                    "maxLength": 255,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "allowListValue"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "type": "array",
+              "x-kubernetes-list-map-keys": [
+                "allowListValue"
+              ],
+              "x-kubernetes-list-type": "map"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        },
         "location": {
           "description": "Location is the organization's location (e.g., \"Munich, Germany\").\nThis appears on the organization's GitHub profile page.",
           "maxLength": 100,

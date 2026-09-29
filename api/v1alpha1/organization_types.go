@@ -324,6 +324,68 @@ type OrganizationMemberPrivileges struct {
 	MembersCanForkPrivateRepositories *bool `json:"membersCanForkPrivateRepositories,omitempty"`
 }
 
+// IpAllowListEntry defines a single entry in an organization's IP allow list.
+// Each entry allows access from a single IP address or a range of addresses in CIDR notation.
+// See: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization
+type IpAllowListEntry struct {
+	// AllowListValue is an IP address or a range of addresses in CIDR notation (e.g. "192.0.2.1" or "192.0.2.0/24").
+	// A range covering the entire address space (such as "0.0.0.0/0" or "::/0") is rejected by GitHub;
+	// to allow access from anywhere, disable the allow list via Enabled=false instead.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=43
+	AllowListValue string `json:"allowListValue"`
+
+	// Name is an optional human-readable description of the entry, shown in the GitHub UI.
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// IsActive determines whether this entry is enforced while the IP allow list is enabled.
+	// Inactive entries remain configured but are ignored until activated.
+	// +kubebuilder:default=true
+	// +optional
+	IsActive *bool `json:"isActive,omitempty"`
+}
+
+// IpAllowListSettings configures the organization-level IP allow list.
+//
+// Only the organization-owned portion of the effective allow list is managed here. Entries
+// inherited from the enterprise account and entries automatically managed by installed GitHub
+// Apps (described as "Managed by the <name> GitHub App") are read-only and are never modified,
+// deleted, or reported as drift by the reconciler.
+//
+// IP allow lists are only available on GitHub Enterprise Cloud organizations. If the enterprise
+// delegates its allow list to an identity provider (Enterprise Managed Users with Entra ID and
+// OIDC), GitHub deactivates the organization IP allow list GraphQL APIs; in that case the
+// reconciler surfaces the condition but does not treat it as a hard failure.
+// See: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization
+type IpAllowListSettings struct {
+	// Enabled determines whether the IP allow list is enforced for the organization.
+	// Entries are always reconciled first, so that enabling enforcement never locks out the
+	// currently configured (active) addresses.
+	// +kubebuilder:default=false
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// EnabledForInstalledApps determines whether IP addresses configured for installed GitHub Apps
+	// are automatically added to the allow list. This takes effect independently of Enabled.
+	// The resulting App-managed entries are read-only and are not managed via the Entries field.
+	// +kubebuilder:default=false
+	// +optional
+	EnabledForInstalledApps *bool `json:"enabledForInstalledApps,omitempty"`
+
+	// Entries is the desired set of organization-owned IP allow list entries, keyed by their
+	// AllowListValue. Entries present in GitHub but not listed here are deleted (except read-only
+	// enterprise-inherited and App-managed entries, which are always preserved). Omitting this
+	// field (nil) manages only the enabled settings and leaves organization-owned entries untouched;
+	// provide an empty list to explicitly remove all organization-owned entries.
+	// +optional
+	// +listType=map
+	// +listMapKey=allowListValue
+	Entries []IpAllowListEntry `json:"entries,omitempty"`
+}
+
 // OrganizationSpec defines the desired state of Organization.
 // An Organization represents a GitHub organization and its configuration including custom properties,
 // rulesets, code security settings, and Actions permissions.
@@ -425,6 +487,14 @@ type OrganizationSpec struct {
 	// Configurability may be restricted by Enterprise policies.
 	// +optional
 	MemberPrivileges *OrganizationMemberPrivileges `json:"memberPrivileges,omitempty"`
+
+	// IpAllowList configures the organization-level IP allow list (GitHub Enterprise Cloud only).
+	// When nil, IP allow list reconciliation is skipped entirely, leaving all settings and entries
+	// untouched. Only organization-owned entries and settings are managed; enterprise-inherited and
+	// GitHub App-managed entries are always preserved.
+	// See: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization
+	// +optional
+	IpAllowList *IpAllowListSettings `json:"ipAllowList,omitempty"`
 }
 
 // OrganizationStatus defines the observed state of Organization.

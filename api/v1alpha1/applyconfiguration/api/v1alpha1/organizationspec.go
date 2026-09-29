@@ -86,6 +86,12 @@ type OrganizationSpecApplyConfiguration struct {
 	// MemberPrivileges configures the privileges and default permissions for members of this organization.
 	// Configurability may be restricted by Enterprise policies.
 	MemberPrivileges *OrganizationMemberPrivilegesApplyConfiguration `json:"memberPrivileges,omitempty"`
+	// IpAllowList configures the organization-level IP allow list (GitHub Enterprise Cloud only).
+	// When nil, IP allow list reconciliation is skipped entirely, leaving all settings and entries
+	// untouched. Only organization-owned entries and settings are managed; enterprise-inherited and
+	// GitHub App-managed entries are always preserved.
+	// See: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization
+	IpAllowList *IpAllowListSettingsApplyConfiguration `json:"ipAllowList,omitempty"`
 }
 
 // OrganizationSpecApplyConfiguration constructs a declarative configuration of the OrganizationSpec type for use with
@@ -215,5 +221,13 @@ func (b *OrganizationSpecApplyConfiguration) WithPlan(value string) *Organizatio
 // If called multiple times, the MemberPrivileges field is set to the value of the last call.
 func (b *OrganizationSpecApplyConfiguration) WithMemberPrivileges(value *OrganizationMemberPrivilegesApplyConfiguration) *OrganizationSpecApplyConfiguration {
 	b.MemberPrivileges = value
+	return b
+}
+
+// WithIpAllowList sets the IpAllowList field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the IpAllowList field is set to the value of the last call.
+func (b *OrganizationSpecApplyConfiguration) WithIpAllowList(value *IpAllowListSettingsApplyConfiguration) *OrganizationSpecApplyConfiguration {
+	b.IpAllowList = value
 	return b
 }

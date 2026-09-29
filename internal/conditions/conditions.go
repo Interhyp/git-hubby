@@ -23,6 +23,8 @@ const (
 	TypeCustomPropertyDefinitionsSynced ConditionType = "CustomPropertyDefinitionsSynced"
 	// CustomPropertyDefinitionsSynced indicates that organization custom properties are synced
 	TypeCodeSecurityConfigurationsSynced ConditionType = "CodeSecurityConfigurationsSynced"
+	// TypeIpAllowListSynced indicates that the organization IP allow list settings and entries are synced
+	TypeIpAllowListSynced ConditionType = "IpAllowListSynced"
 )
 
 // Repository-specific condition types

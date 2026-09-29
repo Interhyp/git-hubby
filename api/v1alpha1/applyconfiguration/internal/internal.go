@@ -342,6 +342,38 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: installationId
       type:
         scalar: numeric
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.IpAllowListEntry
+  map:
+    fields:
+    - name: allowListValue
+      type:
+        scalar: string
+    - name: isActive
+      type:
+        scalar: boolean
+      default: true
+    - name: name
+      type:
+        scalar: string
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.IpAllowListSettings
+  map:
+    fields:
+    - name: enabled
+      type:
+        scalar: boolean
+      default: false
+    - name: enabledForInstalledApps
+      type:
+        scalar: boolean
+      default: false
+    - name: entries
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.IpAllowListEntry
+          elementRelationship: associative
+          keys:
+          - allowListValue
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.MergeStrategy
   map:
     fields:
@@ -467,6 +499,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: githubAppInstallationId
       type:
         scalar: numeric
+    - name: ipAllowList
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.IpAllowListSettings
     - name: location
       type:
         scalar: string

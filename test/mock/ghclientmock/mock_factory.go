@@ -18,11 +18,14 @@ type GitHubMockClientFactory struct {
 func NewGitHubMockClientFactory(mockClient *MockGitHubClientWrapper) *GitHubMockClientFactory {
 	return &GitHubMockClientFactory{
 		mockClient: mockClient,
+		// Provide a default no-op GraphQL client so callers that only exercise the REST path
+		// (the common case) do not need to set one explicitly. Override via SetGraphQLClient.
+		mockGraphQLClient: NewMockGraphQLClient(),
 	}
 }
 
-// SetGraphQLClient sets the GraphQL client returned by GetGraphQLClient. It is optional; when
-// unset, GetGraphQLClient returns an error, mirroring the unset REST client behaviour.
+// SetGraphQLClient overrides the GraphQL client returned by GetGraphQLClient. By default the
+// factory already provides a no-op MockGraphQLClient; use this to inject a configured one.
 func (m *GitHubMockClientFactory) SetGraphQLClient(mockGraphQLClient ghclient.GraphQLClient) {
 	m.mockGraphQLClient = mockGraphQLClient
 }
