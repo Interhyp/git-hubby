@@ -888,6 +888,13 @@ func (in *OrganizationSpec) DeepCopyInto(out *OrganizationSpec) {
 		*out = make([]corev1.LocalObjectReference, len(*in))
 		copy(*out, *in)
 	}
+	if in.Rulesets != nil {
+		in, out := &in.Rulesets, &out.Rulesets
+		*out = make([]RulesetPresetSpec, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.MemberPrivileges != nil {
 		in, out := &in.MemberPrivileges, &out.MemberPrivileges
 		*out = new(OrganizationMemberPrivileges)
@@ -1265,6 +1272,13 @@ func (in *RepositorySpec) DeepCopyInto(out *RepositorySpec) {
 		in, out := &in.RulesetPresetList, &out.RulesetPresetList
 		*out = make([]corev1.LocalObjectReference, len(*in))
 		copy(*out, *in)
+	}
+	if in.Rulesets != nil {
+		in, out := &in.Rulesets, &out.Rulesets
+		*out = make([]RulesetPresetSpec, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	if in.WebhookPresetList != nil {
 		in, out := &in.WebhookPresetList, &out.WebhookPresetList

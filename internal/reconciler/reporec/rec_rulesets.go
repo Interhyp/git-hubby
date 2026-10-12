@@ -6,6 +6,7 @@ import (
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
+	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/google/go-github/v92/github"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
@@ -30,6 +31,13 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 		return nil
 	}
 
+	// Collect desired rulesets before any GitHub call so that conflicts prevent all ruleset changes.
+	desiredRulesets, err := reconciler.CollectDesiredRulesets(ctx, r.Kubernetes.Client, r.Kubernetes.Resource.Namespace,
+		r.Kubernetes.Resource.Spec.RulesetPresetList, r.Kubernetes.Resource.Spec.Rulesets)
+	if err != nil {
+		return err
+	}
+
 	existingRulesets, err := r.GitHub.Client.GetAllRepositoryRulesets(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, false)
 	if err != nil {
 		log.Error(err, "failed to get existing repository rulesets")
@@ -45,43 +53,35 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 		}
 	}
 
-	for _, rulesetRef := range r.Kubernetes.Resource.Spec.RulesetPresetList {
-		log := log.WithValues("rulesetPreset", rulesetRef.Name)
-		log.V(1).Info("Processing ruleset preset")
+	for _, desired := range desiredRulesets {
+		log := log.WithValues("rulesetSource", desired.Source, "ruleset", desired.Spec.Name)
+		log.V(1).Info("Processing ruleset")
 
-		var rulesetPreset githubv1alpha1.RulesetPreset
-		if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{
-			Name:      rulesetRef.Name,
-			Namespace: r.Kubernetes.Resource.Namespace,
-		}, &rulesetPreset); err != nil {
-			log.Error(err, "unable to get ruleset preset")
-			return fmt.Errorf("failed to get ruleset preset %s: %w", rulesetRef.Name, err)
-		}
-
-		if rulesetPreset.Spec.Target == "repository" {
+		if desired.Spec.Target == "repository" {
 			// target "repository" is only allowed for Organization-level rulesets. We skip these here as documented in the API.
+			log.V(1).Info("Skipping ruleset with target 'repository' as it is only supported at organization level")
 			continue
 		}
 
 		// Strip spec fields for disabled beta features before any processing.
-		if !r.Features.EnableRequiredReviewersRules && rulesetPreset.Spec.Rules.PullRequest != nil {
-			rulesetPreset.Spec.Rules.PullRequest.RequiredReviewers = nil
+		if !r.Features.EnableRequiredReviewersRules && desired.Spec.Rules.PullRequest != nil {
+			desired.Spec.Rules.PullRequest.RequiredReviewers = nil
 		}
 
-		rulesetPreset, err = r.NameResolver.ResolveRuleset(ctx, rulesetPreset)
+		desired.Spec, err = r.NameResolver.ResolveRuleset(ctx, desired.Spec)
 		if err != nil {
 			log.Error(err, "failed to resolve ruleset slugs to IDs")
-			return fmt.Errorf("failed to resolve slugs in ruleset %s to IDs: %w", rulesetRef.Name, err)
+			return fmt.Errorf("failed to resolve slugs in ruleset %s (%s) to IDs: %w", desired.Spec.Name, desired.Source, err)
 		}
 
-		githubRuleset, err := mapper.RulesetPresetToGithubRuleset(rulesetPreset)
+		githubRuleset, err := mapper.RulesetSpecToGithubRuleset(desired.Spec)
 		if err != nil {
-			log.Error(err, "failed to convert ruleset preset to GitHub ruleset")
-			return fmt.Errorf("failed to convert ruleset preset %s to GitHub ruleset: %w", rulesetRef.Name, err)
+			log.Error(err, "failed to convert ruleset to GitHub ruleset")
+			return fmt.Errorf("failed to convert ruleset %s (%s) to GitHub ruleset: %w", desired.Spec.Name, desired.Source, err)
 		}
 
 		// Check if the ruleset already exists
-		if existingRuleset, exists := existingRulesetsByName[rulesetPreset.Spec.Name]; exists {
+		if existingRuleset, exists := existingRulesetsByName[desired.Spec.Name]; exists {
 			// Skip if the existing ruleset has no ID
 			if existingRuleset.ID == nil {
 				log.Info("WARNING: Existing ruleset has nil ID, skipping")
@@ -90,22 +90,22 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 			fullRuleset, getErr := r.GitHub.Client.GetRepositoryRuleset(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, *existingRuleset.ID, false)
 			if getErr != nil {
 				log.Error(getErr, "failed to get existing repository ruleset")
-				return fmt.Errorf("failed to get existing repository ruleset %s: %w", rulesetPreset.Spec.Name, getErr)
+				return fmt.Errorf("failed to get existing repository ruleset %s: %w", desired.Spec.Name, getErr)
 			}
-			delete(rulesetsToDelete, rulesetPreset.Spec.Name)
-			if mapper.RulesetsDiffer(rulesetPreset, *fullRuleset) {
+			delete(rulesetsToDelete, desired.Spec.Name)
+			if mapper.RulesetsDiffer(desired.Spec, *fullRuleset) {
 				rulesetID := fullRuleset.ID
 				if rulesetID == nil {
 					continue
 				}
-				if err := r.updateRuleset(ctx, *rulesetID, githubRuleset, rulesetPreset); err != nil {
+				if err := r.updateRuleset(ctx, *rulesetID, githubRuleset, desired); err != nil {
 					return err
 				}
 			} else {
 				log.V(1).Info("Ruleset already matches desired state, skipping")
 			}
 		} else {
-			if err := r.createRuleset(ctx, githubRuleset, rulesetPreset); err != nil {
+			if err := r.createRuleset(ctx, githubRuleset, desired); err != nil {
 				return err
 			}
 		}
@@ -121,25 +121,25 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 	return nil
 }
 
-func (r *GitHubRepoReconciler) updateRuleset(ctx context.Context, rulesetID int64, githubRuleset *github.RepositoryRuleset, rulesetPreset githubv1alpha1.RulesetPreset) error {
-	log := logPkg.FromContext(ctx).WithValues("rulesetPreset", rulesetPreset.Name, "ruleSet", githubRuleset.Name)
+func (r *GitHubRepoReconciler) updateRuleset(ctx context.Context, rulesetID int64, githubRuleset *github.RepositoryRuleset, desired reconciler.DesiredRuleset) error {
+	log := logPkg.FromContext(ctx).WithValues("rulesetSource", desired.Source, "ruleSet", githubRuleset.Name)
 	log.V(1).Info("Updating existing ruleset")
 	_, err := r.GitHub.Client.UpdateRepositoryRuleset(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, rulesetID, githubRuleset)
 	if err != nil {
 		log.Error(err, "failed to update repository ruleset")
-		return fmt.Errorf("failed to update repository ruleset %s: %w", rulesetPreset.Spec.Name, err)
+		return fmt.Errorf("failed to update repository ruleset %s (%s): %w", desired.Spec.Name, desired.Source, err)
 	}
 	log.V(1).Info("Ruleset updated successfully")
 	return nil
 }
 
-func (r *GitHubRepoReconciler) createRuleset(ctx context.Context, githubRuleset *github.RepositoryRuleset, rulesetPreset githubv1alpha1.RulesetPreset) error {
-	log := logPkg.FromContext(ctx).WithValues("rulesetPreset", rulesetPreset.Name, "ruleSet", githubRuleset.Name)
+func (r *GitHubRepoReconciler) createRuleset(ctx context.Context, githubRuleset *github.RepositoryRuleset, desired reconciler.DesiredRuleset) error {
+	log := logPkg.FromContext(ctx).WithValues("rulesetSource", desired.Source, "ruleSet", githubRuleset.Name)
 	log.V(1).Info("Creating new ruleset")
 	_, err := r.GitHub.Client.CreateRepositoryRuleset(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, githubRuleset)
 	if err != nil {
 		log.Error(err, "failed to create repository ruleset")
-		return fmt.Errorf("failed to create repository ruleset %s: %w", rulesetPreset.Spec.Name, err)
+		return fmt.Errorf("failed to create repository ruleset %s (%s): %w", desired.Spec.Name, desired.Source, err)
 	}
 	log.V(1).Info("Ruleset created successfully")
 	return nil

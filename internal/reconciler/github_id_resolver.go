@@ -91,11 +91,11 @@ func (r *GitHubIDResolver) refreshMaps(ctx context.Context) bool {
 // their numeric IDs. This requires a live API call per unresolved repository and is
 // intentionally kept separate from GitHubIDResolver so that GitHubIDResolver remains a
 // pure map-lookup type with no I/O dependency.
-func (r *GitHubIDResolver) resolveWorkflowRepositoryNames(ctx context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
-	if rs.Spec.Rules.Workflows == nil {
+func (r *GitHubIDResolver) resolveWorkflowRepositoryNames(ctx context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error) {
+	if rs.Rules.Workflows == nil {
 		return rs, nil
 	}
-	for i, wf := range rs.Spec.Rules.Workflows.Workflows {
+	for i, wf := range rs.Rules.Workflows.Workflows {
 		if wf.ResolvedRepositoryID != nil {
 			continue
 		}
@@ -103,7 +103,7 @@ func (r *GitHubIDResolver) resolveWorkflowRepositoryNames(ctx context.Context, r
 		if err != nil {
 			return rs, fmt.Errorf("failed to resolve workflow repository %q to ID: %w", wf.RepositoryName, err)
 		}
-		rs.Spec.Rules.Workflows.Workflows[i].ResolvedRepositoryID = repo.ID
+		rs.Rules.Workflows.Workflows[i].ResolvedRepositoryID = repo.ID
 	}
 	return rs, nil
 }
@@ -111,7 +111,7 @@ func (r *GitHubIDResolver) resolveWorkflowRepositoryNames(ctx context.Context, r
 // ResolveRuleset resolves all slug/name references inside rs to numeric IDs.
 // If a lookup fails (e.g., a newly created team not yet in cache), the resolver
 // invalidates the client cache, refreshes its maps, and retries once.
-func (r *GitHubIDResolver) ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+func (r *GitHubIDResolver) ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error) {
 	result, err := r.doResolveRuleset(ctx, rs)
 	if err != nil {
 		if r.refreshMaps(ctx) {
@@ -121,7 +121,7 @@ func (r *GitHubIDResolver) ResolveRuleset(ctx context.Context, rs v1alpha1.Rules
 	return result, err
 }
 
-func (r *GitHubIDResolver) doResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+func (r *GitHubIDResolver) doResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error) {
 	var err error
 
 	rs, err = r.resolveBypassActors(rs)
@@ -213,9 +213,9 @@ func (r *GitHubIDResolver) resolveAppSlug(slug string) (*int64, error) {
 	return id, nil
 }
 
-func (r *GitHubIDResolver) resolveBypassActors(rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
-	result := make([]v1alpha1.RulesetBypassActor, 0, len(rs.Spec.BypassActors))
-	for _, bypassActor := range rs.Spec.BypassActors {
+func (r *GitHubIDResolver) resolveBypassActors(rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error) {
+	result := make([]v1alpha1.RulesetBypassActor, 0, len(rs.BypassActors))
+	for _, bypassActor := range rs.BypassActors {
 		actorType := github.BypassActorType(bypassActor.ActorType)
 		var err error
 		switch actorType {
@@ -258,34 +258,34 @@ func (r *GitHubIDResolver) resolveBypassActors(rs v1alpha1.RulesetPreset) (v1alp
 		}
 		result = append(result, bypassActor)
 	}
-	rs.Spec.BypassActors = result
+	rs.BypassActors = result
 	return rs, nil
 }
 
 // resolveStatusCheckAppSlugs resolves AppSlug references in required-status-check rules.
 // Errors are silently ignored: a nil IntegrationID means "accept any check source".
-func (r *GitHubIDResolver) resolveStatusCheckAppSlugs(rs v1alpha1.RulesetPreset) v1alpha1.RulesetPreset {
-	if rs.Spec.Rules.RequiredStatusChecks == nil {
+func (r *GitHubIDResolver) resolveStatusCheckAppSlugs(rs v1alpha1.RulesetPresetSpec) v1alpha1.RulesetPresetSpec {
+	if rs.Rules.RequiredStatusChecks == nil {
 		return rs
 	}
-	newChecks := make([]v1alpha1.StatusCheck, len(rs.Spec.Rules.RequiredStatusChecks.Checks))
-	for i, check := range rs.Spec.Rules.RequiredStatusChecks.Checks {
+	newChecks := make([]v1alpha1.StatusCheck, len(rs.Rules.RequiredStatusChecks.Checks))
+	for i, check := range rs.Rules.RequiredStatusChecks.Checks {
 		if check.AppSlug != nil {
 			// Ignore error: nil IntegrationID equals accepting any check source.
 			check.IntegrationID, _ = r.resolveAppSlug(*check.AppSlug)
 		}
 		newChecks[i] = check
 	}
-	rs.Spec.Rules.RequiredStatusChecks.Checks = newChecks
+	rs.Rules.RequiredStatusChecks.Checks = newChecks
 	return rs
 }
 
-func (r *GitHubIDResolver) resolveRequiredReviewerSlugs(rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
-	if rs.Spec.Rules.PullRequest == nil {
+func (r *GitHubIDResolver) resolveRequiredReviewerSlugs(rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error) {
+	if rs.Rules.PullRequest == nil {
 		return rs, nil
 	}
-	updated := make([]v1alpha1.RequiredPullRequestReviewer, len(rs.Spec.Rules.PullRequest.RequiredReviewers))
-	for i, reviewer := range rs.Spec.Rules.PullRequest.RequiredReviewers {
+	updated := make([]v1alpha1.RequiredPullRequestReviewer, len(rs.Rules.PullRequest.RequiredReviewers))
+	for i, reviewer := range rs.Rules.PullRequest.RequiredReviewers {
 		if reviewer.Reviewer.ID == nil && reviewer.Reviewer.Slug != nil {
 			reviewerType := github.RulesetReviewerType(reviewer.Reviewer.Type)
 			switch reviewerType {
@@ -301,7 +301,7 @@ func (r *GitHubIDResolver) resolveRequiredReviewerSlugs(rs v1alpha1.RulesetPrese
 		}
 		updated[i] = reviewer
 	}
-	rs.Spec.Rules.PullRequest.RequiredReviewers = updated
+	rs.Rules.PullRequest.RequiredReviewers = updated
 	return rs, nil
 }
 

@@ -10,7 +10,7 @@ import (
 var _ = Describe("GitHub Ruleset Mapper", func() {
 	const TargetTypeBranch = "branch"
 	const TargetTypeTag = "tag"
-	Context("RulesetPresetToGithubRuleset", func() {
+	Context("RulesetSpecToGithubRuleset", func() {
 		var rulesetPreset githubv1alpha1.RulesetPreset
 
 		BeforeEach(func() {
@@ -77,7 +77,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		})
 
 		It("should successfully convert a complete ruleset preset", func() {
-			githubRuleset, err := RulesetPresetToGithubRuleset(rulesetPreset)
+			githubRuleset, err := RulesetSpecToGithubRuleset(rulesetPreset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Verifying basic properties")
@@ -151,7 +151,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				},
 			}
 
-			githubRuleset, err := RulesetPresetToGithubRuleset(copilotPreset)
+			githubRuleset, err := RulesetSpecToGithubRuleset(copilotPreset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(hasRule(githubRuleset.Rules, "copilot_code_review")).To(BeTrue())
@@ -179,7 +179,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				},
 			}
 
-			githubRuleset, err := RulesetPresetToGithubRuleset(copilotPreset)
+			githubRuleset, err := RulesetSpecToGithubRuleset(copilotPreset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(githubRuleset.Rules.CopilotCodeReview).NotTo(BeNil())
@@ -203,7 +203,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				},
 			}
 
-			githubRuleset, err := RulesetPresetToGithubRuleset(noCopilotPreset)
+			githubRuleset, err := RulesetSpecToGithubRuleset(noCopilotPreset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(githubRuleset.Rules.CopilotCodeReview).To(BeNil())
@@ -225,7 +225,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				},
 			}
 
-			githubRuleset, err := RulesetPresetToGithubRuleset(minimalPreset)
+			githubRuleset, err := RulesetSpecToGithubRuleset(minimalPreset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(githubRuleset.Name).To(Equal("minimal-ruleset"))
@@ -249,7 +249,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				},
 			}
 
-			_, err := RulesetPresetToGithubRuleset(emptyNamePreset)
+			_, err := RulesetSpecToGithubRuleset(emptyNamePreset.Spec)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("ruleset name cannot be empty"))
 		})
@@ -277,7 +277,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(preset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Conditions).NotTo(BeNil())
 				Expect(githubRuleset.Conditions.RefName).NotTo(BeNil())
@@ -314,7 +314,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(preset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Conditions).NotTo(BeNil())
 				Expect(githubRuleset.Conditions.RefName).NotTo(BeNil())
@@ -346,7 +346,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(preset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Conditions).NotTo(BeNil())
 				Expect(githubRuleset.Conditions.RefName).NotTo(BeNil())
@@ -379,7 +379,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(preset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				// mapConditions uses else-if: RepositoryName takes precedence over RepositoryProperty
 				Expect(githubRuleset.Conditions.RepositoryName).NotTo(BeNil())
@@ -406,7 +406,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(preset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Conditions.RepositoryName).NotTo(BeNil())
 				Expect(githubRuleset.Conditions.RepositoryName.Include).To(Equal([]string{"my-repo"}))
@@ -440,7 +440,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(preset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Conditions.RepositoryProperty).NotTo(BeNil())
 				Expect(githubRuleset.Conditions.RepositoryProperty.Include).To(HaveLen(2))
@@ -470,7 +470,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(branchPreset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(branchPreset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Target).NotTo(BeNil())
 				Expect(*githubRuleset.Target).To(Equal(github.RulesetTargetBranch))
@@ -493,7 +493,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(tagPreset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(tagPreset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Target).NotTo(BeNil())
 				Expect(*githubRuleset.Target).To(Equal(github.RulesetTargetTag))
@@ -516,7 +516,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(pushPreset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(pushPreset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Target).NotTo(BeNil())
 				Expect(*githubRuleset.Target).To(Equal(github.RulesetTargetPush))
@@ -539,7 +539,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(emptyTargetTypePreset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(emptyTargetTypePreset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Target).NotTo(BeNil())
 				// Empty string converts to empty RulesetTarget, which GitHub treats as branch by default
@@ -570,7 +570,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				githubRuleset, err := RulesetPresetToGithubRuleset(tagWithPatternPreset)
+				githubRuleset, err := RulesetSpecToGithubRuleset(tagWithPatternPreset.Spec)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(githubRuleset.Target).NotTo(BeNil())
 				Expect(*githubRuleset.Target).To(Equal(github.RulesetTargetTag))
@@ -649,61 +649,61 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		})
 
 		It("should return false when rulesets match", func() {
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeFalse())
 		})
 
 		It("should return true when names differ", func() {
 			githubRuleset.Name = "different-name"
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
 		It("should return true when enforcement differs", func() {
 			githubRuleset.Enforcement = github.RulesetEnforcementEvaluate
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
 		It("should return true when bypass actors count differs", func() {
 			githubRuleset.BypassActors = []*github.BypassActor{}
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
 		It("should return true when bypass actor properties differ", func() {
 			githubRuleset.BypassActors[0].ActorType = new(github.BypassActorTypeIntegration)
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
 		It("should return true when target conditions differ", func() {
 			githubRuleset.Conditions.RefName.Include = []string{"different-branch"}
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
 		It("should return true when boolean rules differ", func() {
 			githubRuleset.Rules.Creation = nil // Remove creation rule
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
 		It("should return true when pull request rules differ", func() {
 			githubRuleset.Rules.PullRequest.RequiredApprovingReviewCount = 5 // Different count
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
 		It("should return true when status checks differ", func() {
 			githubRuleset.Rules.RequiredStatusChecks.RequiredStatusChecks[0].Context = "different-context"
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
 		It("should return true when pattern rules differ", func() {
 			githubRuleset.Rules.CommitMessagePattern.Pattern = "different-pattern"
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
@@ -717,7 +717,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ReviewDraftPullRequests: false,
 			}
 
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeFalse())
 		})
 
@@ -731,7 +731,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ReviewDraftPullRequests: false,
 			}
 
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
@@ -745,7 +745,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ReviewDraftPullRequests: true, // Different
 			}
 
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
@@ -756,7 +756,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			}
 			githubRuleset.Rules.CopilotCodeReview = nil
 
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
@@ -767,7 +767,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				ReviewDraftPullRequests: false,
 			}
 
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue())
 		})
 
@@ -775,19 +775,19 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			rulesetPreset.Spec.Rules.CopilotReview = nil
 			githubRuleset.Rules.CopilotCodeReview = nil
 
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeFalse())
 		})
 
 		It("should handle nil GitHub conditions", func() {
 			githubRuleset.Conditions = nil
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue()) // Should differ since preset has target conditions
 		})
 
 		It("should handle nil GitHub rules", func() {
 			githubRuleset.Rules = nil
-			differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+			differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeTrue()) // Should differ since preset has rules
 		})
 
@@ -797,7 +797,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			emptyTargetPreset.Spec.Conditions = nil
 
 			githubRuleset.Conditions = nil
-			differs := RulesetsDiffer(emptyTargetPreset, githubRuleset)
+			differs := RulesetsDiffer(emptyTargetPreset.Spec, githubRuleset)
 			Expect(differs).To(BeFalse()) // Should not differ since both have no conditions
 		})
 
@@ -822,7 +822,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -844,7 +844,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -868,7 +868,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -887,7 +887,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -906,7 +906,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -922,7 +922,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 		})
@@ -956,7 +956,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -983,7 +983,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1009,7 +1009,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1035,7 +1035,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1056,7 +1056,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1077,7 +1077,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1109,7 +1109,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1125,7 +1125,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1151,7 +1151,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1177,7 +1177,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1203,7 +1203,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1229,7 +1229,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 		})
@@ -1252,7 +1252,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1267,7 +1267,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("pull_request"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1280,7 +1280,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("pull_request"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1293,7 +1293,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: &orgAdminType, BypassMode: new(github.BypassMode("always"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1306,7 +1306,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: &enterpriseOwnerType, BypassMode: new(github.BypassMode("always"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1322,7 +1322,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("always"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1345,7 +1345,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(456)), ActorType: &teamType, BypassMode: new(github.BypassMode("always"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1359,7 +1359,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorType: &deployKeyType, BypassMode: new(github.BypassMode("always"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1372,7 +1372,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(456)), ActorType: &teamType, BypassMode: new(github.BypassMode("always"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1385,7 +1385,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(789)), ActorType: &integrationType, BypassMode: new(github.BypassMode("always"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1398,7 +1398,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(321)), ActorType: &roleType, BypassMode: new(github.BypassMode("pull_request"))},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1411,7 +1411,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(123)), ActorType: &teamType, BypassMode: nil},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1424,7 +1424,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					{ActorID: new(int64(123)), ActorType: &teamType, BypassMode: nil},
 				}
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 		})
@@ -1434,7 +1434,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = TargetTypeBranch
 				githubRuleset.Target = new(github.RulesetTargetBranch)
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1442,7 +1442,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = TargetTypeTag
 				githubRuleset.Target = new(github.RulesetTargetTag)
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1450,7 +1450,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = "push"
 				githubRuleset.Target = new(github.RulesetTargetPush)
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1458,7 +1458,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = TargetTypeBranch
 				githubRuleset.Target = new(github.RulesetTargetTag)
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1466,7 +1466,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = TargetTypeTag
 				githubRuleset.Target = new(github.RulesetTargetPush)
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1474,7 +1474,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = TargetTypeBranch
 				githubRuleset.Target = new(github.RulesetTargetPush)
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1482,7 +1482,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = ""
 				githubRuleset.Target = new(github.RulesetTargetTag)
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 
@@ -1490,7 +1490,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = TargetTypeBranch
 				githubRuleset.Target = nil
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 
@@ -1498,7 +1498,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				rulesetPreset.Spec.Target = TargetTypeTag
 				githubRuleset.Target = nil
 
-				differs := RulesetsDiffer(rulesetPreset, githubRuleset)
+				differs := RulesetsDiffer(rulesetPreset.Spec, githubRuleset)
 				Expect(differs).To(BeTrue())
 			})
 		})
@@ -1525,7 +1525,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			})
 
 			It("should return false when both are empty", func() {
-				differs := RulesetsDiffer(emptyPreset, emptyGithubRuleset)
+				differs := RulesetsDiffer(emptyPreset.Spec, emptyGithubRuleset)
 				Expect(differs).To(BeFalse())
 			})
 		})
@@ -1560,7 +1560,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 					Rules: &github.RepositoryRulesetRules{},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 			})
 
 			It("should return false when workflow rules match", func() {
@@ -1598,7 +1598,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeFalse())
 			})
 
 			It("should return true when workflow repository IDs differ", func() {
@@ -1636,7 +1636,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 			})
 
 			It("should return true when workflow refs differ", func() {
@@ -1674,7 +1674,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 			})
 
 			It("should return true when DoNotEnforceOnCreate differs", func() {
@@ -1714,7 +1714,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 			})
 
 			It("should return false when DoNotEnforceOnCreate matches (both true)", func() {
@@ -1754,7 +1754,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeFalse())
 			})
 
 			It("should return false when DoNotEnforceOnCreate is nil vs false (defaults match)", func() {
@@ -1794,7 +1794,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeFalse())
 			})
 
 			It("should return true when same path exists in different repositories", func() {
@@ -1832,7 +1832,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 			})
 
 			It("should return false when multiple workflows from different repos match", func() {
@@ -1872,12 +1872,12 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 						},
 					},
 				}
-				Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+				Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeFalse())
 			})
 		})
 	})
 
-	Context("RulesetPresetToGithubRuleset with required reviewers", func() {
+	Context("RulesetSpecToGithubRuleset with required reviewers", func() {
 		basePreset := func(reviewers []githubv1alpha1.RequiredPullRequestReviewer) githubv1alpha1.RulesetPreset {
 			return githubv1alpha1.RulesetPreset{
 				Spec: githubv1alpha1.RulesetPresetSpec{
@@ -1900,7 +1900,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should map nil required reviewers to empty slice", func() {
 			preset := basePreset(nil)
-			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			ruleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ruleset.Rules.PullRequest).NotTo(BeNil())
 			Expect(ruleset.Rules.PullRequest.RequiredReviewers).To(BeEmpty())
@@ -1918,7 +1918,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				},
 			})
-			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			ruleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ruleset.Rules.PullRequest.RequiredReviewers).To(HaveLen(1))
 
@@ -1941,7 +1941,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				},
 			})
-			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			ruleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 			r := ruleset.Rules.PullRequest.RequiredReviewers[0]
 			Expect(r.MinimumApprovals).To(Equal(new(0)))
@@ -1958,7 +1958,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				},
 			})
-			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			ruleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 			r := ruleset.Rules.PullRequest.RequiredReviewers[0]
 			Expect(r.FilePatterns).To(BeNil())
@@ -1979,7 +1979,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					Reviewer:         githubv1alpha1.PullRequestReviewerEntity{ID: &teamID2, Type: "Team"},
 				},
 			})
-			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			ruleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ruleset.Rules.PullRequest.RequiredReviewers).To(HaveLen(2))
 
@@ -2000,7 +2000,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					},
 				},
 			})
-			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			ruleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(*ruleset.Rules.PullRequest.RequiredReviewers[0].Reviewer.ID).To(Equal(int64(99)))
 		})
@@ -2046,7 +2046,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		It("should return false when both have no required reviewers", func() {
 			preset := basePresetWithReviewers(nil)
 			ghRuleset := baseGithubWithReviewers(nil)
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeFalse())
 		})
 
 		It("should return false when required reviewers match", func() {
@@ -2066,7 +2066,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 					Reviewer:         &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType},
 				},
 			})
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeFalse())
 		})
 
 		It("should return true when reviewer count differs", func() {
@@ -2079,7 +2079,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
 				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: new(int64(99)), Type: &teamReviewerType}},
 			})
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 		})
 
 		It("should return true when reviewer ID differs", func() {
@@ -2092,7 +2092,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
 				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &differentID, Type: &teamReviewerType}},
 			})
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 		})
 
 		It("should return true when minimum approvals differ", func() {
@@ -2104,7 +2104,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
 				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
 			})
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 		})
 
 		It("should return true when file patterns differ", func() {
@@ -2116,7 +2116,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
 				{MinimumApprovals: &minApprovals, FilePatterns: []string{"*.yaml"}, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
 			})
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 		})
 
 		It("should return false when minimum approvals is nil on GitHub side and 0 in preset", func() {
@@ -2127,7 +2127,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
 				{MinimumApprovals: nil, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
 			})
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeFalse())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeFalse())
 		})
 
 		It("should return true when preset has reviewers but GitHub has none", func() {
@@ -2136,7 +2136,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				{Reviewer: githubv1alpha1.PullRequestReviewerEntity{ID: &teamID, Type: "Team"}},
 			})
 			ghRuleset := baseGithubWithReviewers(nil)
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 		})
 
 		It("should return true when GitHub has reviewers but preset has none", func() {
@@ -2146,11 +2146,11 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 			ghRuleset := baseGithubWithReviewers([]*github.RulesetRequiredReviewer{
 				{MinimumApprovals: &minApprovals, Reviewer: &github.RulesetReviewer{ID: &teamID, Type: &teamReviewerType}},
 			})
-			Expect(RulesetsDiffer(preset, ghRuleset)).To(BeTrue())
+			Expect(RulesetsDiffer(preset.Spec, ghRuleset)).To(BeTrue())
 		})
 	})
 
-	Context("RulesetPresetToGithubRuleset with workflows", func() {
+	Context("RulesetSpecToGithubRuleset with workflows", func() {
 		It("should map workflows rule correctly", func() {
 			preset := githubv1alpha1.RulesetPreset{
 				Spec: githubv1alpha1.RulesetPresetSpec{
@@ -2178,7 +2178,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 				},
 			}
 
-			ruleset, err := RulesetPresetToGithubRuleset(preset)
+			ruleset, err := RulesetSpecToGithubRuleset(preset.Spec)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ruleset.Rules.Workflows).NotTo(BeNil())
 			Expect(ruleset.Rules.Workflows.DoNotEnforceOnCreate).To(Equal(new(true)))

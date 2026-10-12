@@ -897,6 +897,33 @@ var _ = Describe("Organization Webhook", func() {
 			Expect(statusErr.Error()).To(ContainSubstring("rulesetPresets"))
 		})
 
+		It("Should allow inline rulesets on enterprise plan", func() {
+			obj.Spec.Plan = "enterprise"
+			obj.Spec.Rulesets = []githubv1alpha1.RulesetPresetSpec{{Name: "inline", Enforcement: "active"}}
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should allow inline rulesets on team plan", func() {
+			obj.Spec.Plan = "team"
+			obj.Spec.Rulesets = []githubv1alpha1.RulesetPresetSpec{{Name: "inline", Enforcement: "active"}}
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should reject inline rulesets on free plan", func() {
+			obj.Spec.Plan = "free"
+			obj.Spec.Rulesets = []githubv1alpha1.RulesetPresetSpec{{Name: "inline", Enforcement: "active"}}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			var statusErr *errors.StatusError
+			Expect(stderrors.As(err, &statusErr)).To(BeTrue())
+			Expect(statusErr.Error()).To(ContainSubstring("spec.rulesets"))
+			Expect(statusErr.Error()).NotTo(ContainSubstring("rulesetPresets"))
+		})
+
 		It("Should reject codeSecurityConfigurations on team plan", func() {
 			obj.Spec.Plan = "team"
 			obj.Spec.CodeSecurityConfigurations = []githubv1alpha1.AttachableCodeSecurityConfigurationRef{

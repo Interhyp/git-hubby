@@ -157,7 +157,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			return nil
 		}
 
-		err = rec.reconcileRulesetPresets(ctx)
+		err = rec.reconcileRulesets(ctx)
 	})
 
 	Context("when plan is 'free'", func() {
@@ -367,7 +367,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			mockClient.GetAllOrganizationRulesetsFunc = func(ctx context.Context, org string, includesParents bool) ([]*github.RepositoryRuleset, error) {
 				return nil, errors.New("GitHub API error")
 			}
-			err = rec.reconcileRulesetPresets(ctx)
+			err = rec.reconcileRulesets(ctx)
 		})
 
 		It("should return error", func() {
@@ -412,7 +412,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			mockClient.GetOrganizationRulesetFunc = func(ctx context.Context, org string, rulesetID int64) (*github.RepositoryRuleset, error) {
 				return nil, errors.New("GitHub API error getting ruleset")
 			}
-			err = rec.reconcileRulesetPresets(ctx)
+			err = rec.reconcileRulesets(ctx)
 		})
 
 		It("should return error", func() {
@@ -432,7 +432,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			mockClient.CreateOrganizationRulesetFunc = func(ctx context.Context, org string, ruleset *github.RepositoryRuleset) (*github.RepositoryRuleset, error) {
 				return nil, errors.New("GitHub API error creating ruleset")
 			}
-			err = rec.reconcileRulesetPresets(ctx)
+			err = rec.reconcileRulesets(ctx)
 		})
 
 		It("should return error", func() {
@@ -468,7 +468,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			mockClient.UpdateOrganizationRulesetFunc = func(ctx context.Context, org string, rulesetID int64, ruleset *github.RepositoryRuleset) (*github.RepositoryRuleset, error) {
 				return nil, errors.New("GitHub API error updating ruleset")
 			}
-			err = rec.reconcileRulesetPresets(ctx)
+			err = rec.reconcileRulesets(ctx)
 		})
 
 		It("should return error", func() {
@@ -497,7 +497,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			mockClient.DeleteOrganizationRulesetFunc = func(ctx context.Context, org string, rulesetID int64) error {
 				return errors.New("GitHub API error deleting ruleset")
 			}
-			err = rec.reconcileRulesetPresets(ctx)
+			err = rec.reconcileRulesets(ctx)
 		})
 
 		It("should return error", func() {
@@ -594,12 +594,12 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 		JustBeforeEach(func() {
 			// Need to update the object in the k8s client
 			Expect(k8sClient.Update(ctx, rulesetPreset1)).To(Succeed())
-			err = rec.reconcileRulesetPresets(ctx)
+			err = rec.reconcileRulesets(ctx)
 		})
 
 		It("should return error from mapper", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("failed to convert ruleset preset"))
+			Expect(err.Error()).To(ContainSubstring("failed to convert ruleset"))
 		})
 	})
 
@@ -894,7 +894,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					},
 				}
 			}
-			err = rec.reconcileRulesetPresets(ctx)
+			err = rec.reconcileRulesets(ctx)
 		})
 
 		It("should return error", func() {
@@ -935,7 +935,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 					},
 				}
 			}
-			err = rec.reconcileRulesetPresets(ctx)
+			err = rec.reconcileRulesets(ctx)
 		})
 
 		It("should return error", func() {
@@ -1007,8 +1007,8 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(idResolver.ResolveRulesetCalls).To(HaveLen(2))
 			resolvedNames := []string{
-				idResolver.ResolveRulesetCalls[0].Spec.Name,
-				idResolver.ResolveRulesetCalls[1].Spec.Name,
+				idResolver.ResolveRulesetCalls[0].Name,
+				idResolver.ResolveRulesetCalls[1].Name,
 			}
 			Expect(resolvedNames).To(ConsistOf("ruleset-1", "ruleset-2"))
 		})
@@ -1042,7 +1042,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 
 		It("should have called ResolveRuleset once before failing", func() {
 			Expect(idResolver.ResolveRulesetCalls).To(HaveLen(1))
-			Expect(idResolver.ResolveRulesetCalls[0].Spec.Name).To(Equal("ruleset-1"))
+			Expect(idResolver.ResolveRulesetCalls[0].Name).To(Equal("ruleset-1"))
 		})
 	})
 })
@@ -1160,7 +1160,7 @@ var _ = Describe("Helper Functions", func() {
 				updateWasCalled = true
 				return ruleset, nil
 			}
-			err = rec.updateRuleset(ctx, 456, githubRuleset, rulesetPreset)
+			err = rec.updateRuleset(ctx, 456, githubRuleset, reconciler.DesiredRuleset{Source: reconciler.RulesetPresetSource(rulesetPreset.Name), Spec: rulesetPreset.Spec})
 		})
 
 		It("should call UpdateOrganizationRuleset", func() {
@@ -1173,7 +1173,7 @@ var _ = Describe("Helper Functions", func() {
 				mockClient.UpdateOrganizationRulesetFunc = func(ctx context.Context, org string, rulesetID int64, ruleset *github.RepositoryRuleset) (*github.RepositoryRuleset, error) {
 					return nil, errors.New("update failed")
 				}
-				err = rec.updateRuleset(ctx, 456, githubRuleset, rulesetPreset)
+				err = rec.updateRuleset(ctx, 456, githubRuleset, reconciler.DesiredRuleset{Source: reconciler.RulesetPresetSource(rulesetPreset.Name), Spec: rulesetPreset.Spec})
 			})
 
 			It("should return error", func() {
@@ -1214,7 +1214,7 @@ var _ = Describe("Helper Functions", func() {
 				createWasCalled = true
 				return ruleset, nil
 			}
-			err = rec.createRuleset(ctx, githubRuleset, rulesetPreset)
+			err = rec.createRuleset(ctx, githubRuleset, reconciler.DesiredRuleset{Source: reconciler.RulesetPresetSource(rulesetPreset.Name), Spec: rulesetPreset.Spec})
 		})
 
 		It("should call CreateOrganizationRuleset", func() {
@@ -1227,7 +1227,7 @@ var _ = Describe("Helper Functions", func() {
 				mockClient.CreateOrganizationRulesetFunc = func(ctx context.Context, org string, ruleset *github.RepositoryRuleset) (*github.RepositoryRuleset, error) {
 					return nil, errors.New("create failed")
 				}
-				err = rec.createRuleset(ctx, githubRuleset, rulesetPreset)
+				err = rec.createRuleset(ctx, githubRuleset, reconciler.DesiredRuleset{Source: reconciler.RulesetPresetSource(rulesetPreset.Name), Spec: rulesetPreset.Spec})
 			})
 
 			It("should return error", func() {

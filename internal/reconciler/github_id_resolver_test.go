@@ -101,7 +101,7 @@ var _ = Describe("GitHubIDResolver", func() {
 				},
 			}
 			for range 3 {
-				_, err := resolver.ResolveRuleset(ctx, rs)
+				_, err := resolver.ResolveRuleset(ctx, rs.Spec)
 				Expect(err).NotTo(HaveOccurred())
 			}
 			Expect(mockClient.TeamCalls).To(BeEmpty())
@@ -245,7 +245,7 @@ var _ = Describe("GitHubIDResolver", func() {
 		})
 
 		JustBeforeEach(func() {
-			result, err = resolver.ResolveRuleset(ctx, rulesetInput)
+			result.Spec, err = resolver.ResolveRuleset(ctx, rulesetInput.Spec)
 		})
 
 		// ── no bypass actors ────────────────────────────────────────────────

@@ -182,6 +182,35 @@ codeSecurityConfigurations:
     attachmentScope: all               # Apply to all repos
 ```
 
+#### Inline Rulesets
+
+Rulesets can also be defined directly in the organization via `spec.rulesets`, without creating a separate
+`RulesetPreset`. Inline rulesets support exactly the same fields as a `RulesetPreset` spec:
+
+```yaml
+rulesetPresets:
+  - name: default-branch-protection
+rulesets:
+  - name: require-linear-history
+    target: branch
+    enforcement: active
+    conditions:
+      refName:
+        include: ["~DEFAULT_BRANCH"]
+      repositoryName:
+        include: ["~ALL"]
+    rules:
+      requiredLinearHistory: true
+```
+
+- The operator reconciles the **union** of inline rulesets and the referenced `rulesetPresets`.
+- At most **10** inline rulesets are allowed, and their names must be unique. Larger or shared sets of rules belong in `RulesetPreset`s.
+- If an inline ruleset and a referenced preset (or two referenced presets) have the same name:
+    - **identical definitions** are applied once and a warning is written to the operator log;
+    - **different definitions** are a conflict: no rulesets are changed on GitHub, the `RulesetsSynced` condition is set to `False` (reason `SyncFailed`) with the conflict in its message, and `Ready` becomes `False`.
+- `target: repository` is supported for organization-level rulesets.
+- Like presets, inline rulesets require the `team` or `enterprise` plan.
+
 **Attachment Scopes** for security configurations:
 
 | Scope | Description |

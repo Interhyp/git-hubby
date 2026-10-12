@@ -14,3 +14,14 @@ spec:
   githubAppCredentials:
     secretRef:
       name: sample-org-app-credentials
+  # Inline rulesets are reconciled together with the rulesets referenced via rulesetPresets (max. 10 items).
+  rulesets:
+    - name: protect-default-branch
+      target: branch
+      enforcement: active
+      conditions:
+        refName:
+          include: ["~DEFAULT_BRANCH"]
+      rules:
+        deletion: true
+        nonFastForward: true

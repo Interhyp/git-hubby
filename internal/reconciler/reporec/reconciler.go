@@ -32,7 +32,7 @@ func (g *GitHubRepoIdentifier) GetID() int64 {
 }
 
 type RepoResourceNameResolver interface {
-	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error)
+	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error)
 }
 
 type GitHubRepoReconciler struct {

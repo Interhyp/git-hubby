@@ -493,6 +493,12 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             namedType: io.k8s.api.core.v1.LocalObjectReference
           elementRelationship: atomic
+    - name: rulesets
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetSpec
+          elementRelationship: atomic
     - name: website
       type:
         scalar: string
@@ -754,6 +760,12 @@ var schemaYAML = typed.YAMLObject(`types:
         list:
           elementType:
             namedType: io.k8s.api.core.v1.LocalObjectReference
+          elementRelationship: atomic
+    - name: rulesets
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetSpec
           elementRelationship: atomic
     - name: visibility
       type:

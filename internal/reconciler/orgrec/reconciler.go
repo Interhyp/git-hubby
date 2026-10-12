@@ -32,7 +32,7 @@ func OrganizationStillHasTeamsError() error {
 
 type IdResolver interface {
 	ResolveCscBypassReviewers(ctx context.Context, csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error)
-	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error)
+	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error)
 }
 
 type GitHubOrgReconciler struct {
@@ -59,7 +59,7 @@ func (o *GitHubOrgReconciler) RequiredReconciliations() []reconciler.ParallelRec
 		{ // org reconciliations are all independent and can run in parallel as no orgs are created - they need to exist beforehand
 			{Function: o.reconcileOrganization, Condition: conditions.TypeBaseSettingsSynced},
 			{Function: o.reconcileCustomProperties, Condition: conditions.TypeCustomPropertyDefinitionsSynced},
-			{Function: o.reconcileRulesetPresets, Condition: conditions.TypeRulesetsSynced},
+			{Function: o.reconcileRulesets, Condition: conditions.TypeRulesetsSynced},
 			{Function: o.reconcileCodeSecurityConfigurations, Condition: conditions.TypeCodeSecurityConfigurationsSynced},
 			{Function: o.reconcileActionsSettings, Condition: conditions.TypeActionsConfigurationSynced},
 		},

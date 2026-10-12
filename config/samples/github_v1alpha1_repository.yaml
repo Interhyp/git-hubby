@@ -10,3 +10,15 @@ spec:
     name: sample-org
   webhookPresets:
     - name: webhookpreset-sample
+  # Inline rulesets are reconciled together with the rulesets referenced via rulesetPresets (max. 10 items).
+  rulesets:
+    - name: release-branches
+      target: branch
+      enforcement: active
+      conditions:
+        refName:
+          include: ["refs/heads/release/*"]
+      rules:
+        deletion: true
+        pullRequest:
+          requiredApprovingReviewCount: 1

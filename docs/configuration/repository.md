@@ -212,12 +212,21 @@ rulesets:
               slug: security-team   # resolved to ID at reconciliation time
               type: Team
       requiredStatusChecks:
-        requiredStatusChecks:
+        checks:
           - context: "ci/build"
           - context: "ci/test"
       deletion: true           # Prevent branch deletion
       nonFastForward: true     # Prevent force-push
 ```
+
+Inline rulesets support exactly the same fields as a `RulesetPreset` spec. Their behaviour:
+
+- The operator reconciles the **union** of inline `rulesets` and the referenced `rulesetPresets`.
+- At most **10** inline rulesets are allowed, and their names must be unique. Larger or shared sets of rules belong in `RulesetPreset`s.
+- If an inline ruleset and a referenced preset (or two referenced presets) have the same name:
+    - **identical definitions** are applied once and a warning is written to the operator log;
+    - **different definitions** are a conflict: no rulesets are changed on GitHub, the `RulesetsSynced` condition is set to `False` (reason `SyncFailed`) with the conflict in its message, and `Ready` becomes `False`.
+- Rulesets with `target: repository` (inline or from presets) are only supported at organization level. At repository level they are filtered out, i.e. neither checked nor applied.
 
 > **Note**: The `requiredReviewers` field in pull-request rules uses a GitHub API feature that is
 > currently in **beta**. Reconciliation of this field is disabled by default and must be explicitly

@@ -184,6 +184,20 @@ type RepositorySpec struct {
 	// See: https://docs.github.com/en/rest/repos/rules
 	RulesetPresetList []v1.LocalObjectReference `json:"rulesetPresets,omitempty"`
 
+	// Rulesets defines repository rulesets inline, without the need for a separate RulesetPreset CRD.
+	// Inline rulesets support exactly the same fields as a RulesetPreset.
+	// The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.
+	// If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,
+	// identical definitions are applied once (a warning is logged), while differing definitions are treated as a
+	// conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.
+	// At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.
+	// The target 'repository' is only supported at organization level; inline rulesets with target 'repository'
+	// are filtered out (i.e. are not checked nor applied), the same as for RulesetPresets.
+	// +optional
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:XValidation:rule="self.all(x, self.filter(y, y.name == x.name).size() <= 1)",message="ruleset names must be unique"
+	Rulesets []RulesetPresetSpec `json:"rulesets,omitempty"`
+
 	// WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.
 	// Webhooks send HTTP POST payloads to external services when specific events occur.
 	// See: https://docs.github.com/en/rest/webhooks/repos

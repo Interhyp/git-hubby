@@ -18,14 +18,14 @@ import (
 )
 
 // mockRepoResourceNameResolver is a test double for RepoResourceNameResolver.
-// ResolveRulesetCalls records every RulesetPreset argument passed to ResolveRuleset.
+// ResolveRulesetCalls records every RulesetPresetSpec argument passed to ResolveRuleset.
 // Set ResolveRulesetError to make that method return an error.
 type mockRepoResourceNameResolver struct {
 	ResolveRulesetError error
-	ResolveRulesetCalls []v1alpha1.RulesetPreset
+	ResolveRulesetCalls []v1alpha1.RulesetPresetSpec
 }
 
-func (m *mockRepoResourceNameResolver) ResolveRuleset(_ context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error) {
+func (m *mockRepoResourceNameResolver) ResolveRuleset(_ context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error) {
 	m.ResolveRulesetCalls = append(m.ResolveRulesetCalls, rs)
 	return rs, m.ResolveRulesetError
 }
@@ -725,7 +725,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 		It("should return a mapping error", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("failed to convert ruleset preset"))
+			Expect(err.Error()).To(ContainSubstring("failed to convert ruleset"))
 		})
 	})
 
@@ -1681,8 +1681,8 @@ var _ = Describe("ReconcileRuleSets", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(nameResolver.ResolveRulesetCalls).To(HaveLen(2))
 			resolvedNames := []string{
-				nameResolver.ResolveRulesetCalls[0].Spec.Name,
-				nameResolver.ResolveRulesetCalls[1].Spec.Name,
+				nameResolver.ResolveRulesetCalls[0].Name,
+				nameResolver.ResolveRulesetCalls[1].Name,
 			}
 			Expect(resolvedNames).To(ConsistOf("branch-ruleset-a", "branch-ruleset-b"))
 		})
@@ -1690,7 +1690,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 		It("should not call ResolveRuleset for the repository-target preset", func() {
 			Expect(err).NotTo(HaveOccurred())
 			for _, call := range nameResolver.ResolveRulesetCalls {
-				Expect(call.Spec.Target).NotTo(Equal("repository"))
+				Expect(call.Target).NotTo(Equal("repository"))
 			}
 		})
 	})
@@ -1732,7 +1732,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 		It("should have called ResolveRuleset once before failing", func() {
 			Expect(nameResolver.ResolveRulesetCalls).To(HaveLen(1))
-			Expect(nameResolver.ResolveRulesetCalls[0].Spec.Name).To(Equal("main-protection"))
+			Expect(nameResolver.ResolveRulesetCalls[0].Name).To(Equal("main-protection"))
 		})
 	})
 })

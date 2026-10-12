@@ -111,6 +111,12 @@ func validatePlanFeatureCombinations(organization *githubv1alpha1.Organization) 
 			fmt.Sprintf("organization rulesets require the 'enterprise' or 'team' plan, but plan is '%s'", plan),
 		))
 	}
+	if plan != githubv1alpha1.PlanTeam && len(organization.Spec.Rulesets) > 0 {
+		errs = append(errs, field.Forbidden(
+			specPath.Child("rulesets"),
+			fmt.Sprintf("organization rulesets require the 'enterprise' or 'team' plan, but plan is '%s'", plan),
+		))
+	}
 
 	// Code security configurations are only available on the 'enterprise' plan
 	if len(organization.Spec.CodeSecurityConfigurations) > 0 {
