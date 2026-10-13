@@ -35,17 +35,17 @@ var _ = Describe("Inline autolinks, webhooks and webhook ignores CRD validation"
 		}
 		return result
 	}
-	webhooks := func(n int) []githubv1alpha1.WebhookPresetSpec {
-		result := make([]githubv1alpha1.WebhookPresetSpec, 0, n)
+	webhooks := func(n int) []githubv1alpha1.WebhookSpec {
+		result := make([]githubv1alpha1.WebhookSpec, 0, n)
 		for i := range n {
-			result = append(result, githubv1alpha1.WebhookPresetSpec{PayloadURL: fmt.Sprintf("https://example.com/hook-%d", i)})
+			result = append(result, githubv1alpha1.WebhookSpec{PayloadURL: fmt.Sprintf("https://example.com/hook-%d", i)})
 		}
 		return result
 	}
-	ignores := func(n int) []githubv1alpha1.WebhookIgnorePresetSpec {
-		result := make([]githubv1alpha1.WebhookIgnorePresetSpec, 0, n)
+	ignores := func(n int) []githubv1alpha1.WebhookIgnoreSpec {
+		result := make([]githubv1alpha1.WebhookIgnoreSpec, 0, n)
 		for i := range n {
-			result = append(result, githubv1alpha1.WebhookIgnorePresetSpec{IgnoreURLRegex: new(fmt.Sprintf("^https://ignored-%d/.*", i))})
+			result = append(result, githubv1alpha1.WebhookIgnoreSpec{IgnoreURLRegex: new(fmt.Sprintf("^https://ignored-%d/.*", i))})
 		}
 		return result
 	}
@@ -96,7 +96,7 @@ var _ = Describe("Inline autolinks, webhooks and webhook ignores CRD validation"
 
 	It("rejects inline webhook ignores without regex", func() {
 		err := k8sClient.Create(ctx, newRepo("inline-ignores-empty", func(s *githubv1alpha1.RepositorySpec) {
-			s.WebhookIgnores = []githubv1alpha1.WebhookIgnorePresetSpec{{}}
+			s.WebhookIgnores = []githubv1alpha1.WebhookIgnoreSpec{{}}
 		}))
 		expectInvalid(err, "ignoreURLRegex must be set for inline webhook ignores")
 	})

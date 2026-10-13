@@ -401,7 +401,7 @@ type OrganizationSpec struct {
 	// +optional
 	// +kubebuilder:validation:MaxItems=10
 	// +kubebuilder:validation:XValidation:rule="self.all(x, self.filter(y, y.name == x.name).size() <= 1)",message="ruleset names must be unique"
-	Rulesets []RulesetPresetSpec `json:"rulesets,omitempty"`
+	Rulesets []RulesetSpec `json:"rulesets,omitempty"`
 
 	// Description is a human-readable description of the organization.
 	// This appears on the organization's GitHub profile page.

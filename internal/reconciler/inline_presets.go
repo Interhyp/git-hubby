@@ -102,7 +102,7 @@ type DesiredWebhook struct {
 	Inline bool
 	// Spec is a deep copy of the webhook definition (payload URL templated, secret value loaded).
 	// It must never be written back to a Kubernetes object.
-	Spec v1alpha1.WebhookPresetSpec
+	Spec v1alpha1.WebhookSpec
 	// Hash is the identity of the webhook, see mapper.HashWebhookConfig.
 	Hash string
 }
@@ -165,12 +165,12 @@ func DedupeDesiredWebhooks(ctx context.Context, candidates []DesiredWebhook) ([]
 // CollectWebhookIgnoreRegexes returns the compiled union of the ignore regexes referenced via presetRefs and the
 // inline ignore rules. Entries without a regex are skipped, duplicate regexes are compiled only once.
 func CollectWebhookIgnoreRegexes(ctx context.Context, k8sClient client.Client, namespace string,
-	presetRefs []corev1.LocalObjectReference, inline []v1alpha1.WebhookIgnorePresetSpec) ([]*regexp.Regexp, error) {
+	presetRefs []corev1.LocalObjectReference, inline []v1alpha1.WebhookIgnoreSpec) ([]*regexp.Regexp, error) {
 	log := logPkg.FromContext(ctx)
 
 	type entry struct {
 		source string
-		spec   v1alpha1.WebhookIgnorePresetSpec
+		spec   v1alpha1.WebhookIgnoreSpec
 	}
 	entries := make([]entry, 0, len(presetRefs)+len(inline))
 	for _, ref := range presetRefs {

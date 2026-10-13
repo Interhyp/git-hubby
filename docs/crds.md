@@ -634,7 +634,7 @@ _Appears in:_
 | `actionsSettings` _[ActionsSettings](#actionssettings)_ | ActionsSettings configures GitHub Actions permissions and behavior for the organization.<br />This includes which repositories can use Actions, which actions are allowed, and runner group configurations.<br />See: https://docs.github.com/en/rest/actions/permissions |  |  |
 | `codeSecurityConfigurations` _[AttachableCodeSecurityConfigurationRef](#attachablecodesecurityconfigurationref) array_ | CodeSecurityConfigurations lists code security configurations to create and optionally attach to repositories.<br />Each configuration defines security features like dependency scanning, secret scanning, and code scanning.<br />See: https://docs.github.com/en/rest/code-security/configurations |  |  |
 | `rulesetPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | RulesetPresetList references RulesetPreset CRDs that define repository rulesets for this organization.<br />Rulesets enforce policies like branch protection, required reviews, and status checks.<br />See: https://docs.github.com/en/rest/orgs/rules |  |  |
-| `rulesets` _[RulesetPresetSpec](#rulesetpresetspec) array_ | Rulesets defines organization rulesets inline, without the need for a separate RulesetPreset CRD.<br />Inline rulesets support exactly the same fields as a RulesetPreset.<br />The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.<br />If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,<br />identical definitions are applied once (a warning is logged), while differing definitions are treated as a<br />conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.<br />At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.<br />The target 'repository' is supported for organization-level rulesets. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
+| `rulesets` _[RulesetSpec](#rulesetspec) array_ | Rulesets defines organization rulesets inline, without the need for a separate RulesetPreset CRD.<br />Inline rulesets support exactly the same fields as a RulesetPreset.<br />The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.<br />If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,<br />identical definitions are applied once (a warning is logged), while differing definitions are treated as a<br />conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.<br />At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.<br />The target 'repository' is supported for organization-level rulesets. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 | `description` _string_ | Description is a human-readable description of the organization.<br />This appears on the organization's GitHub profile page. |  |  |
 | `location` _string_ | Location is the organization's location (e.g., "Munich, Germany").<br />This appears on the organization's GitHub profile page. |  | MaxLength: 100 <br />Optional: \{\} <br /> |
 | `memberSuffix` _string_ | MemberSuffix defines a suffix appended to each team member username before matching/adding them on GitHub.<br />Useful when GitHub usernames follow a naming convention (e.g. enterprise suffix).<br />Is ignored if environment variable GITHUB_MEMBER_SUFFIX is set. |  | MaxLength: 100 <br />Optional: \{\} <br /> |
@@ -879,11 +879,11 @@ _Appears in:_
 | `availableActionsRunnerGroups` _string array_ | AvailableActionsRunnerGroups lists runner group names that this repository can use.<br />This is only relevant when the organization's runner groups have "selected" visibility.<br />See: https://docs.github.com/en/rest/actions/self-hosted-runner-groups |  |  |
 | `organizationRef` _[OrganizationRef](#organizationref)_ | OrganizationRef references the Organization CRD this repository belongs to. |  | Required: \{\} <br /> |
 | `rulesetPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | RulesetPresetList references RulesetPreset CRDs to apply to this repository.<br />These define branch protection rules, required status checks, and other policies.<br />See: https://docs.github.com/en/rest/repos/rules |  |  |
-| `rulesets` _[RulesetPresetSpec](#rulesetpresetspec) array_ | Rulesets defines repository rulesets inline, without the need for a separate RulesetPreset CRD.<br />Inline rulesets support exactly the same fields as a RulesetPreset.<br />The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.<br />If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,<br />identical definitions are applied once (a warning is logged), while differing definitions are treated as a<br />conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.<br />At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.<br />The target 'repository' is only supported at organization level; inline rulesets with target 'repository'<br />are filtered out (i.e. are not checked nor applied), the same as for RulesetPresets. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
+| `rulesets` _[RulesetSpec](#rulesetspec) array_ | Rulesets defines repository rulesets inline, without the need for a separate RulesetPreset CRD.<br />Inline rulesets support exactly the same fields as a RulesetPreset.<br />The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.<br />If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,<br />identical definitions are applied once (a warning is logged), while differing definitions are treated as a<br />conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.<br />At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.<br />The target 'repository' is only supported at organization level; inline rulesets with target 'repository'<br />are filtered out (i.e. are not checked nor applied), the same as for RulesetPresets. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 | `webhookPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.<br />Webhooks send HTTP POST payloads to external services when specific events occur.<br />See: https://docs.github.com/en/rest/webhooks/repos |  |  |
-| `webhooks` _[WebhookPresetSpec](#webhookpresetspec) array_ | Webhooks defines repository webhooks inline, without the need for a separate WebhookPreset CRD.<br />Inline webhooks support exactly the same fields as a WebhookPreset, including payload URL templating<br />(e.g. "\{\{ .Name \}\}"). Not to be confused with status.webhooks, which tracks the applied webhooks.<br />The operator reconciles the union of inline webhooks and the webhooks referenced via WebhookPresetList.<br />A webhook is identified by its (templated) payload URL, content type and events. If several definitions<br />share the same identity, identical definitions are applied once (a warning is logged), while differing<br />definitions are treated as a conflict: no webhooks are changed on GitHub and the WebhooksSynced condition<br />is set to False.<br />Secrets of inline webhooks must reside in the namespace of the Repository; secret.namespace may only be<br />omitted or set to the Repository's namespace. Prefer secret over secretValue.<br />At most 10 inline webhooks are allowed. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
+| `webhooks` _[WebhookSpec](#webhookspec) array_ | Webhooks defines repository webhooks inline, without the need for a separate WebhookPreset CRD.<br />Inline webhooks support exactly the same fields as a WebhookPreset, including payload URL templating<br />(e.g. "\{\{ .Name \}\}"). Not to be confused with status.webhooks, which tracks the applied webhooks.<br />The operator reconciles the union of inline webhooks and the webhooks referenced via WebhookPresetList.<br />A webhook is identified by its (templated) payload URL, content type and events. If several definitions<br />share the same identity, identical definitions are applied once (a warning is logged), while differing<br />definitions are treated as a conflict: no webhooks are changed on GitHub and the WebhooksSynced condition<br />is set to False.<br />Secrets of inline webhooks must reside in the namespace of the Repository; secret.namespace may only be<br />omitted or set to the Repository's namespace. Prefer secret over secretValue.<br />At most 10 inline webhooks are allowed. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 | `webhookIgnorePresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | WebhookIgnorePresetsList references WebhookIgnorePreset CRDs that define webhooks to ignore.<br />Webhooks matching these patterns will not be created even if they are in WebhookPresetList. |  |  |
-| `webhookIgnores` _[WebhookIgnorePresetSpec](#webhookignorepresetspec) array_ | WebhookIgnores defines webhook ignore rules inline, without the need for a separate WebhookIgnorePreset CRD.<br />The operator uses the union of inline ignore rules and the ones referenced via WebhookIgnorePresetsList.<br />Existing webhooks whose URL matches one of the regexes are left untouched (i.e. never deleted).<br />Every inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
+| `webhookIgnores` _[WebhookIgnoreSpec](#webhookignorespec) array_ | WebhookIgnores defines webhook ignore rules inline, without the need for a separate WebhookIgnorePreset CRD.<br />The operator uses the union of inline ignore rules and the ones referenced via WebhookIgnorePresetsList.<br />Existing webhooks whose URL matches one of the regexes are left untouched (i.e. never deleted).<br />Every inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 | `autolinksPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.<br />Autolinks automatically convert references (like "JIRA-123") into clickable links.<br />See: https://docs.github.com/en/rest/repos/autolinks |  |  |
 | `autolinks` _[Autolink](#autolink) array_ | Autolinks defines autolinks inline, without the need for a separate AutolinksPreset CRD.<br />The operator reconciles the union of inline autolinks and the autolinks referenced via AutolinksPresetList.<br />An autolink is identified by its keyPrefix. If several definitions share the same keyPrefix, identical<br />definitions are applied once (a warning is logged), while differing definitions are treated as a conflict:<br />no autolinks are changed on GitHub and the AutolinksSynced condition is set to False.<br />At most 25 inline autolinks are allowed. |  | MaxItems: 25 <br />Optional: \{\} <br /> |
 | `deployKeys` _[DeployKey](#deploykey) array_ | DeployKeyList defines deploy keys to create for this repository.<br />Deploy keys are SSH keys that grant access to a single repository.<br />See: https://docs.github.com/en/rest/deploy-keys/deploy-keys |  |  |
@@ -981,7 +981,7 @@ _Validation:_
 - AtMostOneOf: [actorId actorSlug]
 
 _Appears in:_
-- [RulesetPresetSpec](#rulesetpresetspec)
+- [RulesetSpec](#rulesetspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1003,7 +1003,7 @@ _Validation:_
 - AtMostOneOf: [repositoryName repositoryProperty]
 
 _Appears in:_
-- [RulesetPresetSpec](#rulesetpresetspec)
+- [RulesetSpec](#rulesetspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1021,7 +1021,7 @@ RulesetEnforcement defines the enforcement level
 
 
 _Appears in:_
-- [RulesetPresetSpec](#rulesetpresetspec)
+- [RulesetSpec](#rulesetspec)
 
 | Field | Description |
 | --- | --- |
@@ -1048,7 +1048,7 @@ _Appears in:_
 | `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
-| `spec` _[RulesetPresetSpec](#rulesetpresetspec)_ | spec defines the desired state of RulesetPreset |  | Required: \{\} <br /> |
+| `spec` _[RulesetSpec](#rulesetspec)_ | spec defines the desired state of RulesetPreset |  | Required: \{\} <br /> |
 | `status` _[RulesetPresetStatus](#rulesetpresetstatus)_ | status defines the observed state of RulesetPreset |  | Optional: \{\} <br /> |
 
 
@@ -1070,32 +1070,6 @@ RulesetPresetList contains a list of RulesetPreset
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
 | `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `items` _[RulesetPreset](#rulesetpreset) array_ |  |  |  |
-
-
-#### RulesetPresetSpec
-
-
-
-RulesetPresetSpec defines the desired state of RulesetPreset.
-A ruleset preset defines reusable repository rules that can be applied to multiple repositories
-or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
-See: https://docs.github.com/en/rest/repos/rules
-
-
-
-_Appears in:_
-- [OrganizationSpec](#organizationspec)
-- [RepositorySpec](#repositoryspec)
-- [RulesetPreset](#rulesetpreset)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `name` _string_ | Name is the display name of the ruleset shown in the GitHub UI. |  | MaxLength: 255 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9][a-zA-Z0-9\s\[\]*/'_.,~-]*[a-zA-Z0-9\[\]]$` <br />Required: \{\} <br /> |
-| `target` _string_ | Target defines which ref types this ruleset applies to.<br />The Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level<br />RulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied). | branch | Enum: [branch tag push repository] <br />Optional: \{\} <br /> |
-| `conditions` _[RulesetConditions](#rulesetconditions)_ | Conditions defines which refs are included or excluded in the list of targets for this Ruleset.<br />They also define which Repositories are targeted by Organization-level Rulesets. |  | AtMostOneOf: [repositoryName repositoryProperty] <br />Optional: \{\} <br /> |
-| `enforcement` _[RulesetEnforcement](#rulesetenforcement)_ | Enforcement determines whether the ruleset is enforced.<br />- "disabled": Ruleset is not enforced<br />- "active": Ruleset is actively enforced; violations block operations<br />- "evaluate": Ruleset is evaluated but violations only generate warnings |  | Enum: [disabled active evaluate] <br />Required: \{\} <br /> |
-| `bypassActors` _[RulesetBypassActor](#rulesetbypassactor) array_ | BypassActors defines actors (users, teams, apps) who can bypass this ruleset.<br />Bypass actors can perform operations that would otherwise be blocked by the ruleset.<br />See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-bypass-mode-for-rulesets |  | AtMostOneOf: [actorId actorSlug] <br />MaxItems: 100 <br />Optional: \{\} <br /> |
-| `rules` _[RulesetRules](#rulesetrules)_ | Rules defines the specific rules to enforce in this ruleset. |  | Required: \{\} <br /> |
 
 
 #### RulesetPresetStatus
@@ -1125,7 +1099,7 @@ See: https://docs.github.com/en/rest/repos/rules#available-rules
 
 
 _Appears in:_
-- [RulesetPresetSpec](#rulesetpresetspec)
+- [RulesetSpec](#rulesetspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1144,6 +1118,33 @@ _Appears in:_
 | `tagNamePattern` _[PatternRule](#patternrule)_ | TagNamePattern enforces a pattern for tag names.<br />Use this to enforce semantic versioning or other tag naming conventions. |  | Optional: \{\} <br /> |
 | `copilotReview` _[CopilotCodeReviewRule](#copilotcodereviewrule)_ | CopilotReview automatically requests a GitHub Copilot pull request review<br />if the author has access to Copilot code review and their premium requests quota has not reached the limit. |  | Optional: \{\} <br /> |
 | `workflows` _[WorkflowsRule](#workflowsrule)_ | Workflows defines required workflow rules that must pass before merging.<br />This rule type is only effective for organization-level rulesets and is ignored<br />when the preset is applied at the repository level.<br />See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-workflows-to-pass-before-merging |  | Optional: \{\} <br /> |
+
+
+#### RulesetSpec
+
+
+
+RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element type of inline rulesets
+in Organization.spec.rulesets and Repository.spec.rulesets.
+A ruleset preset defines reusable repository rules that can be applied to multiple repositories
+or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
+See: https://docs.github.com/en/rest/repos/rules
+
+
+
+_Appears in:_
+- [OrganizationSpec](#organizationspec)
+- [RepositorySpec](#repositoryspec)
+- [RulesetPreset](#rulesetpreset)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the display name of the ruleset shown in the GitHub UI. |  | MaxLength: 255 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9][a-zA-Z0-9\s\[\]*/'_.,~-]*[a-zA-Z0-9\[\]]$` <br />Required: \{\} <br /> |
+| `target` _string_ | Target defines which ref types this ruleset applies to.<br />The Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level<br />RulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied). | branch | Enum: [branch tag push repository] <br />Optional: \{\} <br /> |
+| `conditions` _[RulesetConditions](#rulesetconditions)_ | Conditions defines which refs are included or excluded in the list of targets for this Ruleset.<br />They also define which Repositories are targeted by Organization-level Rulesets. |  | AtMostOneOf: [repositoryName repositoryProperty] <br />Optional: \{\} <br /> |
+| `enforcement` _[RulesetEnforcement](#rulesetenforcement)_ | Enforcement determines whether the ruleset is enforced.<br />- "disabled": Ruleset is not enforced<br />- "active": Ruleset is actively enforced; violations block operations<br />- "evaluate": Ruleset is evaluated but violations only generate warnings |  | Enum: [disabled active evaluate] <br />Required: \{\} <br /> |
+| `bypassActors` _[RulesetBypassActor](#rulesetbypassactor) array_ | BypassActors defines actors (users, teams, apps) who can bypass this ruleset.<br />Bypass actors can perform operations that would otherwise be blocked by the ruleset.<br />See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-bypass-mode-for-rulesets |  | AtMostOneOf: [actorId actorSlug] <br />MaxItems: 100 <br />Optional: \{\} <br /> |
+| `rules` _[RulesetRules](#rulesetrules)_ | Rules defines the specific rules to enforce in this ruleset. |  | Required: \{\} <br /> |
 
 
 #### RunnerGroup
@@ -1350,7 +1351,7 @@ _Appears in:_
 | `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
-| `spec` _[WebhookIgnorePresetSpec](#webhookignorepresetspec)_ | spec defines the desired state of WebhookIgnorePreset |  | Required: \{\} <br /> |
+| `spec` _[WebhookIgnoreSpec](#webhookignorespec)_ | spec defines the desired state of WebhookIgnorePreset |  | Required: \{\} <br /> |
 | `status` _[WebhookIgnorePresetStatus](#webhookignorepresetstatus)_ | status defines the observed state of WebhookIgnorePreset |  | Optional: \{\} <br /> |
 
 
@@ -1374,26 +1375,6 @@ WebhookIgnorePresetList contains a list of WebhookIgnorePreset
 | `items` _[WebhookIgnorePreset](#webhookignorepreset) array_ |  |  |  |
 
 
-#### WebhookIgnorePresetSpec
-
-
-
-WebhookIgnorePresetSpec defines the desired state of WebhookIgnorePreset.
-WebhookIgnorePresets allow you to exclude certain webhooks from being created,
-even if they are referenced in a repository's WebhookPresetList.
-This is useful for globally excluding webhooks based on URL patterns.
-
-
-
-_Appears in:_
-- [RepositorySpec](#repositoryspec)
-- [WebhookIgnorePreset](#webhookignorepreset)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `ignoreURLRegex` _string_ | IgnoreURLRegex is a regular expression pattern to match against webhook payload URLs.<br />Webhooks with URLs matching this pattern will not be created, even if they are<br />referenced in a repository's WebhookPresetList.<br />Example: "^https://deprecated\\.example\\.com/.*" to ignore all webhooks to deprecated.example.com |  | Optional: \{\} <br /> |
-
-
 #### WebhookIgnorePresetStatus
 
 
@@ -1408,6 +1389,27 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#condition-v1-meta) array_ | conditions represent the current state of the WebhookIgnorePreset resource.<br />Each condition has a unique type and reflects the status of a specific aspect of the resource.<br />Standard condition types include:<br />- "Available": the resource is fully functional<br />- "Progressing": the resource is being created or updated<br />- "Degraded": the resource failed to reach or maintain its desired state<br />The status of each condition is one of True, False, or Unknown. |  | Optional: \{\} <br /> |
+
+
+#### WebhookIgnoreSpec
+
+
+
+WebhookIgnoreSpec defines a webhook ignore rule. It is the spec of a WebhookIgnorePreset and the element type
+of inline webhook ignores in Repository.spec.webhookIgnores.
+Ignore rules allow you to exclude certain webhooks from being managed,
+even if they are referenced in a repository's WebhookPresetList.
+This is useful for globally excluding webhooks based on URL patterns.
+
+
+
+_Appears in:_
+- [RepositorySpec](#repositoryspec)
+- [WebhookIgnorePreset](#webhookignorepreset)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ignoreURLRegex` _string_ | IgnoreURLRegex is a regular expression pattern to match against webhook payload URLs.<br />Webhooks with URLs matching this pattern will not be created, even if they are<br />referenced in a repository's WebhookPresetList.<br />Example: "^https://deprecated\\.example\\.com/.*" to ignore all webhooks to deprecated.example.com |  | Optional: \{\} <br /> |
 
 
 #### WebhookPreset
@@ -1428,7 +1430,7 @@ _Appears in:_
 | `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  | Optional: \{\} <br /> |
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  | Optional: \{\} <br /> |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
-| `spec` _[WebhookPresetSpec](#webhookpresetspec)_ | spec defines the desired state of WebhookPreset |  | Required: \{\} <br /> |
+| `spec` _[WebhookSpec](#webhookspec)_ | spec defines the desired state of WebhookPreset |  | Required: \{\} <br /> |
 | `status` _[WebhookPresetStatus](#webhookpresetstatus)_ | status defines the observed state of WebhookPreset |  | Optional: \{\} <br /> |
 
 
@@ -1452,49 +1454,6 @@ WebhookPresetList contains a list of WebhookPreset
 | `items` _[WebhookPreset](#webhookpreset) array_ |  |  |  |
 
 
-#### WebhookPresetSecretSpec
-
-
-
-WebhookPresetSecretSpec references a Kubernetes Secret containing the webhook secret.
-
-
-
-_Appears in:_
-- [WebhookPresetSpec](#webhookpresetspec)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `name` _string_ | Name is the name of the Kubernetes Secret containing the webhook secret. |  | MaxLength: 250 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9.-]+$` <br />Required: \{\} <br />Type: string <br /> |
-| `key` _string_ | Key is the key within the Secret that contains the webhook secret value. |  | MaxLength: 250 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9.-]+$` <br />Required: \{\} <br />Type: string <br /> |
-| `namespace` _string_ | Namespace is the namespace of the Secret.<br />If not specified, the namespace of the WebhookPreset is used. |  | Optional: \{\} <br />Type: string <br /> |
-
-
-#### WebhookPresetSpec
-
-
-
-WebhookPresetSpec defines the desired state of WebhookPreset.
-Webhooks allow external services to be notified when certain events occur in a repository.
-See: https://docs.github.com/en/rest/webhooks/repos
-
-
-
-_Appears in:_
-- [RepositorySpec](#repositoryspec)
-- [WebhookPreset](#webhookpreset)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `payloadUrl` _string_ | PayloadURL is the URL that will receive the webhook POST requests.<br />Must be a publicly accessible HTTP or HTTPS endpoint.<br />GitHub will send HTTP POST requests to this URL when subscribed events occur. |  | MaxLength: 2048 <br />MinLength: 1 <br />Pattern: `^https?://[a-zA-Z0-9.-]+(:[0-9]+)?(/.*)?$` <br />Required: \{\} <br />Type: string <br /> |
-| `secret` _[WebhookPresetSecretSpec](#webhookpresetsecretspec)_ | Secret is a reference to a Kubernetes Secret containing the webhook secret.<br />The webhook secret is used by GitHub to sign webhook payloads.<br />Your service can verify this signature to ensure the request came from GitHub.<br />This field takes precedence over SecretValue if both are provided.<br />See: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries |  |  |
-| `secretValue` _string_ | SecretValue is the plaintext value of the webhook secret.<br />Use this for simple cases, but Secret (referencing a Kubernetes Secret) is more secure.<br />If both Secret and SecretValue are provided, Secret takes precedence. |  | Type: string <br /> |
-| `contentType` _string_ | ContentType specifies the format of the webhook payload.<br />- "json": Send payload as application/json (recommended)<br />- "form": Send payload as application/x-www-form-urlencoded<br />See: https://docs.github.com/en/webhooks/webhook-events-and-payloads |  | Enum: [json form] <br />Type: string <br /> |
-| `active` _boolean_ | Active determines whether the webhook is active and will send events.<br />Set to false to temporarily disable the webhook without deleting it. | true |  |
-| `events` _string array_ | Events is a list of GitHub event types that trigger this webhook.<br />If empty, the webhook subscribes to all events ("*").<br />Common events include "push", "pull_request", "issues", "release".<br />See: https://docs.github.com/en/webhooks/webhook-events-and-payloads |  | MaxItems: 100 <br />MinItems: 0 <br />Type: array <br />items:Enum: [branch_protection_rule check_run check_suite code_scanning_alert commit_comment create delete dependabot_alert deploy_key deployment deployment_status discussion discussion_comment fork github_app_authorization gollum installation installation_repositories issue_comment issues label marketplace_purchase member membership merge_group meta milestone organization org_block package page_build ping project project_card project_column public pull_request pull_request_review pull_request_review_comment pull_request_review_thread push registry_package release repository repository_dispatch repository_import repository_vulnerability_alert secret_scanning_alert security_advisory sponsorship star status team team_add watch workflow_dispatch workflow_job workflow_run] <br /> |
-| `sslVerify` _boolean_ | SSLVerify enables SSL certificate verification for the webhook endpoint.<br />When true, GitHub verifies the SSL certificate of the PayloadURL.<br />Disable only for testing with self-signed certificates; always enable in production. | true |  |
-
-
 #### WebhookPresetStatus
 
 
@@ -1509,6 +1468,50 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#condition-v1-meta) array_ | conditions represent the current state of the WebhookPreset resource.<br />Each condition has a unique type and reflects the status of a specific aspect of the resource.<br />Standard condition types include:<br />- "Available": the resource is fully functional<br />- "Progressing": the resource is being created or updated<br />- "Degraded": the resource failed to reach or maintain its desired state<br />The status of each condition is one of True, False, or Unknown. |  | Optional: \{\} <br /> |
+
+
+#### WebhookSecretSpec
+
+
+
+WebhookSecretSpec references a Kubernetes Secret containing the webhook secret.
+
+
+
+_Appears in:_
+- [WebhookSpec](#webhookspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the name of the Kubernetes Secret containing the webhook secret. |  | MaxLength: 250 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9.-]+$` <br />Required: \{\} <br />Type: string <br /> |
+| `key` _string_ | Key is the key within the Secret that contains the webhook secret value. |  | MaxLength: 250 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9.-]+$` <br />Required: \{\} <br />Type: string <br /> |
+| `namespace` _string_ | Namespace is the namespace of the Secret.<br />If not specified, the namespace of the WebhookPreset is used. |  | Optional: \{\} <br />Type: string <br /> |
+
+
+#### WebhookSpec
+
+
+
+WebhookSpec defines a repository webhook. It is the spec of a WebhookPreset and the element type of
+inline webhooks in Repository.spec.webhooks.
+Webhooks allow external services to be notified when certain events occur in a repository.
+See: https://docs.github.com/en/rest/webhooks/repos
+
+
+
+_Appears in:_
+- [RepositorySpec](#repositoryspec)
+- [WebhookPreset](#webhookpreset)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `payloadUrl` _string_ | PayloadURL is the URL that will receive the webhook POST requests.<br />Must be a publicly accessible HTTP or HTTPS endpoint.<br />GitHub will send HTTP POST requests to this URL when subscribed events occur. |  | MaxLength: 2048 <br />MinLength: 1 <br />Pattern: `^https?://[a-zA-Z0-9.-]+(:[0-9]+)?(/.*)?$` <br />Required: \{\} <br />Type: string <br /> |
+| `secret` _[WebhookSecretSpec](#webhooksecretspec)_ | Secret is a reference to a Kubernetes Secret containing the webhook secret.<br />The webhook secret is used by GitHub to sign webhook payloads.<br />Your service can verify this signature to ensure the request came from GitHub.<br />This field takes precedence over SecretValue if both are provided.<br />See: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries |  |  |
+| `secretValue` _string_ | SecretValue is the plaintext value of the webhook secret.<br />Use this for simple cases, but Secret (referencing a Kubernetes Secret) is more secure.<br />If both Secret and SecretValue are provided, Secret takes precedence. |  | Type: string <br /> |
+| `contentType` _string_ | ContentType specifies the format of the webhook payload.<br />- "json": Send payload as application/json (recommended)<br />- "form": Send payload as application/x-www-form-urlencoded<br />See: https://docs.github.com/en/webhooks/webhook-events-and-payloads |  | Enum: [json form] <br />Type: string <br /> |
+| `active` _boolean_ | Active determines whether the webhook is active and will send events.<br />Set to false to temporarily disable the webhook without deleting it. | true |  |
+| `events` _string array_ | Events is a list of GitHub event types that trigger this webhook.<br />If empty, the webhook subscribes to all events ("*").<br />Common events include "push", "pull_request", "issues", "release".<br />See: https://docs.github.com/en/webhooks/webhook-events-and-payloads |  | MaxItems: 100 <br />MinItems: 0 <br />Type: array <br />items:Enum: [branch_protection_rule check_run check_suite code_scanning_alert commit_comment create delete dependabot_alert deploy_key deployment deployment_status discussion discussion_comment fork github_app_authorization gollum installation installation_repositories issue_comment issues label marketplace_purchase member membership merge_group meta milestone organization org_block package page_build ping project project_card project_column public pull_request pull_request_review pull_request_review_comment pull_request_review_thread push registry_package release repository repository_dispatch repository_import repository_vulnerability_alert secret_scanning_alert security_advisory sponsorship star status team team_add watch workflow_dispatch workflow_job workflow_run] <br /> |
+| `sslVerify` _boolean_ | SSLVerify enables SSL certificate verification for the webhook endpoint.<br />When true, GitHub verifies the SSL certificate of the PayloadURL.<br />Disable only for testing with self-signed certificates; always enable in production. | true |  |
 
 
 #### WebhookStatus

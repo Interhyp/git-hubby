@@ -117,7 +117,7 @@ type RepositorySpecApplyConfiguration struct {
 	// At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.
 	// The target 'repository' is only supported at organization level; inline rulesets with target 'repository'
 	// are filtered out (i.e. are not checked nor applied), the same as for RulesetPresets.
-	Rulesets []RulesetPresetSpecApplyConfiguration `json:"rulesets,omitempty"`
+	Rulesets []RulesetSpecApplyConfiguration `json:"rulesets,omitempty"`
 	// WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.
 	// Webhooks send HTTP POST payloads to external services when specific events occur.
 	// See: https://docs.github.com/en/rest/webhooks/repos
@@ -133,7 +133,7 @@ type RepositorySpecApplyConfiguration struct {
 	// Secrets of inline webhooks must reside in the namespace of the Repository; secret.namespace may only be
 	// omitted or set to the Repository's namespace. Prefer secret over secretValue.
 	// At most 10 inline webhooks are allowed.
-	Webhooks []WebhookPresetSpecApplyConfiguration `json:"webhooks,omitempty"`
+	Webhooks []WebhookSpecApplyConfiguration `json:"webhooks,omitempty"`
 	// WebhookIgnorePresetsList references WebhookIgnorePreset CRDs that define webhooks to ignore.
 	// Webhooks matching these patterns will not be created even if they are in WebhookPresetList.
 	WebhookIgnorePresetsList []v1.LocalObjectReference `json:"webhookIgnorePresets,omitempty"`
@@ -141,7 +141,7 @@ type RepositorySpecApplyConfiguration struct {
 	// The operator uses the union of inline ignore rules and the ones referenced via WebhookIgnorePresetsList.
 	// Existing webhooks whose URL matches one of the regexes are left untouched (i.e. never deleted).
 	// Every inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed.
-	WebhookIgnores []WebhookIgnorePresetSpecApplyConfiguration `json:"webhookIgnores,omitempty"`
+	WebhookIgnores []WebhookIgnoreSpecApplyConfiguration `json:"webhookIgnores,omitempty"`
 	// AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.
 	// Autolinks automatically convert references (like "JIRA-123") into clickable links.
 	// See: https://docs.github.com/en/rest/repos/autolinks
@@ -346,7 +346,7 @@ func (b *RepositorySpecApplyConfiguration) WithRulesetPresetList(values ...v1.Lo
 // WithRulesets adds the given value to the Rulesets field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Rulesets field.
-func (b *RepositorySpecApplyConfiguration) WithRulesets(values ...*RulesetPresetSpecApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithRulesets(values ...*RulesetSpecApplyConfiguration) *RepositorySpecApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithRulesets")
@@ -369,7 +369,7 @@ func (b *RepositorySpecApplyConfiguration) WithWebhookPresetList(values ...v1.Lo
 // WithWebhooks adds the given value to the Webhooks field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Webhooks field.
-func (b *RepositorySpecApplyConfiguration) WithWebhooks(values ...*WebhookPresetSpecApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithWebhooks(values ...*WebhookSpecApplyConfiguration) *RepositorySpecApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithWebhooks")
@@ -392,7 +392,7 @@ func (b *RepositorySpecApplyConfiguration) WithWebhookIgnorePresetsList(values .
 // WithWebhookIgnores adds the given value to the WebhookIgnores field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the WebhookIgnores field.
-func (b *RepositorySpecApplyConfiguration) WithWebhookIgnores(values ...*WebhookIgnorePresetSpecApplyConfiguration) *RepositorySpecApplyConfiguration {
+func (b *RepositorySpecApplyConfiguration) WithWebhookIgnores(values ...*WebhookIgnoreSpecApplyConfiguration) *RepositorySpecApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithWebhookIgnores")

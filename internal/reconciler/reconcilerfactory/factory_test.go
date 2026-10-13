@@ -1114,7 +1114,7 @@ var _ = Describe("Factory", func() {
 							Namespace:  defaultNS,
 							Generation: 5,
 						},
-						Spec: v1alpha1.RulesetPresetSpec{
+						Spec: v1alpha1.RulesetSpec{
 							Name: "test-ruleset",
 						},
 					}
@@ -1180,7 +1180,7 @@ var _ = Describe("Factory", func() {
 							Namespace:  defaultNS,
 							Generation: 1,
 						},
-						Spec: v1alpha1.RulesetPresetSpec{
+						Spec: v1alpha1.RulesetSpec{
 							Name: "ruleset-1",
 						},
 					}
@@ -1192,7 +1192,7 @@ var _ = Describe("Factory", func() {
 							Namespace:  defaultNS,
 							Generation: 1,
 						},
-						Spec: v1alpha1.RulesetPresetSpec{
+						Spec: v1alpha1.RulesetSpec{
 							Name: "ruleset-2",
 						},
 					}
@@ -1311,7 +1311,7 @@ var _ = Describe("Factory", func() {
 							Namespace:  defaultNS,
 							Generation: 8,
 						},
-						Spec: v1alpha1.RulesetPresetSpec{
+						Spec: v1alpha1.RulesetSpec{
 							Name: "repo-ruleset",
 						},
 					}
@@ -1341,7 +1341,7 @@ var _ = Describe("Factory", func() {
 							Namespace:  defaultNS,
 							Generation: 6,
 						},
-						Spec: v1alpha1.WebhookPresetSpec{
+						Spec: v1alpha1.WebhookSpec{
 							PayloadURL: "https://example.com/webhook",
 						},
 					}
@@ -1407,7 +1407,7 @@ var _ = Describe("Factory", func() {
 							Namespace:  defaultNS,
 							Generation: 11,
 						},
-						Spec: v1alpha1.RulesetPresetSpec{
+						Spec: v1alpha1.RulesetSpec{
 							Name: "repo-ruleset",
 						},
 					}
@@ -1419,7 +1419,7 @@ var _ = Describe("Factory", func() {
 							Namespace:  defaultNS,
 							Generation: 13,
 						},
-						Spec: v1alpha1.WebhookPresetSpec{
+						Spec: v1alpha1.WebhookSpec{
 							PayloadURL: "https://example.com/webhook1",
 						},
 					}
@@ -1431,7 +1431,7 @@ var _ = Describe("Factory", func() {
 							Namespace:  defaultNS,
 							Generation: 14,
 						},
-						Spec: v1alpha1.WebhookPresetSpec{
+						Spec: v1alpha1.WebhookSpec{
 							PayloadURL: "https://example.com/webhook2",
 						},
 					}
@@ -1537,7 +1537,7 @@ var _ = Describe("Factory", func() {
 						Namespace:  defaultNS,
 						Generation: 15,
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name: "integration-ruleset",
 					},
 				}
@@ -1637,7 +1637,7 @@ var _ = Describe("Factory", func() {
 						Namespace:  defaultNS,
 						Generation: 1,
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name: "integration-repo-ruleset",
 					},
 				}
@@ -1649,7 +1649,7 @@ var _ = Describe("Factory", func() {
 						Namespace:  defaultNS,
 						Generation: 1,
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/integration",
 					},
 				}

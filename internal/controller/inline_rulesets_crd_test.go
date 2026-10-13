@@ -16,8 +16,8 @@ import (
 var _ = Describe("Inline rulesets CRD validation", func() {
 	const namespace = "default"
 
-	inlineRuleset := func(name string) githubv1alpha1.RulesetPresetSpec {
-		return githubv1alpha1.RulesetPresetSpec{
+	inlineRuleset := func(name string) githubv1alpha1.RulesetSpec {
+		return githubv1alpha1.RulesetSpec{
 			Name:        "ruleset-" + name,
 			Target:      "branch",
 			Enforcement: githubv1alpha1.RulesetEnforcement("active"),
@@ -25,15 +25,15 @@ var _ = Describe("Inline rulesets CRD validation", func() {
 		}
 	}
 
-	inlineRulesets := func(names ...string) []githubv1alpha1.RulesetPresetSpec {
-		result := make([]githubv1alpha1.RulesetPresetSpec, 0, len(names))
+	inlineRulesets := func(names ...string) []githubv1alpha1.RulesetSpec {
+		result := make([]githubv1alpha1.RulesetSpec, 0, len(names))
 		for _, n := range names {
 			result = append(result, inlineRuleset(n))
 		}
 		return result
 	}
 
-	newOrg := func(name string, rulesets []githubv1alpha1.RulesetPresetSpec) *githubv1alpha1.Organization {
+	newOrg := func(name string, rulesets []githubv1alpha1.RulesetSpec) *githubv1alpha1.Organization {
 		return &githubv1alpha1.Organization{
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 			Spec: githubv1alpha1.OrganizationSpec{
@@ -46,7 +46,7 @@ var _ = Describe("Inline rulesets CRD validation", func() {
 		}
 	}
 
-	newRepo := func(name string, rulesets []githubv1alpha1.RulesetPresetSpec) *githubv1alpha1.Repository {
+	newRepo := func(name string, rulesets []githubv1alpha1.RulesetSpec) *githubv1alpha1.Repository {
 		return &githubv1alpha1.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 			Spec: githubv1alpha1.RepositorySpec{

@@ -18,14 +18,14 @@ import (
 )
 
 // mockRepoResourceNameResolver is a test double for RepoResourceNameResolver.
-// ResolveRulesetCalls records every RulesetPresetSpec argument passed to ResolveRuleset.
+// ResolveRulesetCalls records every RulesetSpec argument passed to ResolveRuleset.
 // Set ResolveRulesetError to make that method return an error.
 type mockRepoResourceNameResolver struct {
 	ResolveRulesetError error
-	ResolveRulesetCalls []v1alpha1.RulesetPresetSpec
+	ResolveRulesetCalls []v1alpha1.RulesetSpec
 }
 
-func (m *mockRepoResourceNameResolver) ResolveRuleset(_ context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error) {
+func (m *mockRepoResourceNameResolver) ResolveRuleset(_ context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
 	m.ResolveRulesetCalls = append(m.ResolveRulesetCalls, rs)
 	return rs, m.ResolveRulesetError
 }
@@ -202,7 +202,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -236,7 +236,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -254,7 +254,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "develop-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "develop-protection",
 						Enforcement: v1alpha1.RulesetEnforcementEvaluate,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -287,7 +287,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Target:      "branch",
@@ -338,7 +338,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -391,7 +391,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementEvaluate,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -440,7 +440,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -514,7 +514,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "keep-this",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "keep-this",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -574,7 +574,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "existing-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "existing-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementEvaluate,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -592,7 +592,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "new-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "new-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -645,7 +645,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -707,7 +707,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "invalid-preset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "", // Empty name will cause mapper error
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -739,7 +739,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -780,7 +780,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -814,7 +814,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementEvaluate,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -884,7 +884,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -955,7 +955,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "complex-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "complex-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -1007,7 +1007,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -1068,7 +1068,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "pattern-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "pattern-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -1110,7 +1110,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "preset-1",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "preset-1",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -1128,7 +1128,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "preset-2",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "preset-2",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -1159,7 +1159,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -1209,7 +1209,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "status-check-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "status-check-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -1247,7 +1247,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "copilot-review-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "copilot-review-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Conditions: &v1alpha1.RulesetConditions{
@@ -1286,7 +1286,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "copilot-review-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "copilot-review-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Target:      "branch",
@@ -1342,7 +1342,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "copilot-review-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "copilot-review-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Target:      "branch",
@@ -1401,7 +1401,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "copilot-review-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "copilot-review-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Target:      "branch",
@@ -1456,7 +1456,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "comprehensive-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "comprehensive-ruleset",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
 						Target:      "branch",
@@ -1507,7 +1507,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "repo-target-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "repo-target-ruleset",
 						Target:      "repository",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
@@ -1540,7 +1540,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "repo-target-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "repo-target-ruleset",
 						Target:      "repository",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
@@ -1559,7 +1559,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "branch-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "branch-ruleset",
 						Target:      "branch",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
@@ -1592,7 +1592,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "repo-target-ruleset",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "repo-target-ruleset",
 						Target:      "repository",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
@@ -1636,7 +1636,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "branch-ruleset-a",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "branch-ruleset-a",
 						Target:      "branch",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
@@ -1652,7 +1652,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "branch-ruleset-b",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "branch-ruleset-b",
 						Target:      "branch",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
@@ -1668,7 +1668,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "repo-target-skipped",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "repo-target-skipped",
 						Target:      "repository",
 						Enforcement: v1alpha1.RulesetEnforcementActive,
@@ -1705,7 +1705,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 						Name:      "main-protection",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.RulesetPresetSpec{
+					Spec: v1alpha1.RulesetSpec{
 						Name:        "main-protection",
 						Target:      "branch",
 						Enforcement: v1alpha1.RulesetEnforcementActive,

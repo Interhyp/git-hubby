@@ -35,8 +35,8 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 		deletedIDs       []int64
 	)
 
-	inlineSpec := func(name string) v1alpha1.RulesetPresetSpec {
-		return v1alpha1.RulesetPresetSpec{
+	inlineSpec := func(name string) v1alpha1.RulesetSpec {
+		return v1alpha1.RulesetSpec{
 			Name:        name,
 			Target:      "branch",
 			Enforcement: "active",
@@ -133,7 +133,7 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 
 	Context("when an inline ruleset does not exist on GitHub", func() {
 		BeforeEach(func() {
-			org.Spec.Rulesets = []v1alpha1.RulesetPresetSpec{inlineSpec("inline-1")}
+			org.Spec.Rulesets = []v1alpha1.RulesetSpec{inlineSpec("inline-1")}
 		})
 
 		It("creates it with the default repository name condition", func() {
@@ -155,7 +155,7 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 		BeforeEach(func() {
 			spec := inlineSpec("inline-1")
 			spec.Enforcement = "evaluate"
-			org.Spec.Rulesets = []v1alpha1.RulesetPresetSpec{spec}
+			org.Spec.Rulesets = []v1alpha1.RulesetSpec{spec}
 			existingRulesets = []*github.RepositoryRuleset{matchingGitHubRuleset(100, "inline-1")}
 		})
 
@@ -169,7 +169,7 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 
 	Context("when an inline ruleset matches GitHub", func() {
 		BeforeEach(func() {
-			org.Spec.Rulesets = []v1alpha1.RulesetPresetSpec{inlineSpec("inline-1")}
+			org.Spec.Rulesets = []v1alpha1.RulesetSpec{inlineSpec("inline-1")}
 			existingRulesets = []*github.RepositoryRuleset{matchingGitHubRuleset(100, "inline-1")}
 		})
 
@@ -184,7 +184,7 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 	Context("when inline rulesets and presets are combined", func() {
 		BeforeEach(func() {
 			org.Spec.RulesetPresetList = []corev1.LocalObjectReference{{Name: "preset-1"}}
-			org.Spec.Rulesets = []v1alpha1.RulesetPresetSpec{inlineSpec("inline-1")}
+			org.Spec.Rulesets = []v1alpha1.RulesetSpec{inlineSpec("inline-1")}
 		})
 
 		It("creates the union", func() {
@@ -213,7 +213,7 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 		BeforeEach(func() {
 			spec := inlineSpec("inline-repo")
 			spec.Target = "repository"
-			org.Spec.Rulesets = []v1alpha1.RulesetPresetSpec{spec}
+			org.Spec.Rulesets = []v1alpha1.RulesetSpec{spec}
 		})
 
 		It("applies it at organization level", func() {
@@ -231,7 +231,7 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 					{Reviewer: v1alpha1.PullRequestReviewerEntity{ID: new(int64(1)), Type: "Team"}, FilePatterns: []string{"*"}},
 				},
 			}
-			org.Spec.Rulesets = []v1alpha1.RulesetPresetSpec{spec}
+			org.Spec.Rulesets = []v1alpha1.RulesetSpec{spec}
 		})
 
 		Context("when disabled", func() {
@@ -261,7 +261,7 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 			org.Spec.RulesetPresetList = []corev1.LocalObjectReference{{Name: "preset-1"}}
 			conflicting := inlineSpec("preset-ruleset")
 			conflicting.Enforcement = "evaluate"
-			org.Spec.Rulesets = []v1alpha1.RulesetPresetSpec{conflicting}
+			org.Spec.Rulesets = []v1alpha1.RulesetSpec{conflicting}
 			existingRulesets = []*github.RepositoryRuleset{matchingGitHubRuleset(100, "orphan")}
 		})
 
@@ -280,7 +280,7 @@ var _ = Describe("ReconcileRulesets with inline rulesets", func() {
 	Context("when an inline ruleset is identical to a preset", func() {
 		BeforeEach(func() {
 			org.Spec.RulesetPresetList = []corev1.LocalObjectReference{{Name: "preset-1"}}
-			org.Spec.Rulesets = []v1alpha1.RulesetPresetSpec{inlineSpec("preset-ruleset")}
+			org.Spec.Rulesets = []v1alpha1.RulesetSpec{inlineSpec("preset-ruleset")}
 		})
 
 		It("applies the ruleset once", func() {

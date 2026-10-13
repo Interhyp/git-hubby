@@ -189,7 +189,7 @@ var _ = Describe("DedupeDesiredWebhooks", func() {
 		return DesiredWebhook{
 			Source: source,
 			Hash:   hash,
-			Spec: v1alpha1.WebhookPresetSpec{
+			Spec: v1alpha1.WebhookSpec{
 				PayloadURL:  "https://example.com/hook",
 				ContentType: "json",
 				Active:      new(active),
@@ -231,7 +231,7 @@ var _ = Describe("CollectWebhookIgnoreRegexes", func() {
 	newPreset := func(name string, regex *string) *v1alpha1.WebhookIgnorePreset {
 		return &v1alpha1.WebhookIgnorePreset{
 			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			Spec:       v1alpha1.WebhookIgnorePresetSpec{IgnoreURLRegex: regex},
+			Spec:       v1alpha1.WebhookIgnoreSpec{IgnoreURLRegex: regex},
 		}
 	}
 
@@ -239,7 +239,7 @@ var _ = Describe("CollectWebhookIgnoreRegexes", func() {
 		k8sClient := newFakeClient(newPreset("p1", new("^https://a/.*")), newPreset("p2", nil))
 		regexes, err := CollectWebhookIgnoreRegexes(context.Background(), k8sClient, namespace,
 			[]corev1.LocalObjectReference{{Name: "p1"}, {Name: "p2"}},
-			[]v1alpha1.WebhookIgnorePresetSpec{
+			[]v1alpha1.WebhookIgnoreSpec{
 				{IgnoreURLRegex: new("^https://a/.*")},
 				{IgnoreURLRegex: new("")},
 				{IgnoreURLRegex: new("^https://b/.*")},
@@ -252,7 +252,7 @@ var _ = Describe("CollectWebhookIgnoreRegexes", func() {
 
 	It("returns an error for invalid regexes", func() {
 		_, err := CollectWebhookIgnoreRegexes(context.Background(), newFakeClient(), namespace, nil,
-			[]v1alpha1.WebhookIgnorePresetSpec{{IgnoreURLRegex: new("(")}})
+			[]v1alpha1.WebhookIgnoreSpec{{IgnoreURLRegex: new("(")}})
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("inline[0]"))
 	})

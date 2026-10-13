@@ -219,7 +219,7 @@ func (r *GitHubRepoReconciler) createMissingWebhooks(ctx context.Context, hooksT
 
 // templatePayloadURL renders Go template placeholders in the payload URL of the given spec against the GitHub
 // repository. The spec is modified in place, so callers must pass a copy.
-func (r *GitHubRepoReconciler) templatePayloadURL(ctx context.Context, spec *githubv1alpha1.WebhookPresetSpec) error {
+func (r *GitHubRepoReconciler) templatePayloadURL(ctx context.Context, spec *githubv1alpha1.WebhookSpec) error {
 	log := logf.FromContext(ctx).WithValues(
 		"function", "templatePayloadURL",
 		"payloadUrl", spec.PayloadURL,

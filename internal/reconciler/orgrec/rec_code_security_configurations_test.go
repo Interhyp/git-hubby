@@ -20,13 +20,13 @@ import (
 // mockIdResolver is a test double for IdResolver.
 // ResolveCscBypassReviewersCalls records every CSC argument passed to ResolveCscBypassReviewers.
 // Set ResolveCscBypassReviewersError to make that method return an error.
-// ResolveRulesetCalls records every RulesetPresetSpec argument passed to ResolveRuleset.
+// ResolveRulesetCalls records every RulesetSpec argument passed to ResolveRuleset.
 // Set ResolveRulesetError to make that method return an error.
 type mockIdResolver struct {
 	ResolveCscBypassReviewersError error
 	ResolveCscBypassReviewersCalls []*v1alpha1.CodeSecurityConfiguration
 	ResolveRulesetError            error
-	ResolveRulesetCalls            []v1alpha1.RulesetPresetSpec
+	ResolveRulesetCalls            []v1alpha1.RulesetSpec
 }
 
 func (m *mockIdResolver) ResolveCscBypassReviewers(_ context.Context, csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error) {
@@ -34,7 +34,7 @@ func (m *mockIdResolver) ResolveCscBypassReviewers(_ context.Context, csc *v1alp
 	return csc, m.ResolveCscBypassReviewersError
 }
 
-func (m *mockIdResolver) ResolveRuleset(_ context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error) {
+func (m *mockIdResolver) ResolveRuleset(_ context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
 	m.ResolveRulesetCalls = append(m.ResolveRulesetCalls, rs)
 	return rs, m.ResolveRulesetError
 }

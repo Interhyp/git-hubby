@@ -22,7 +22,7 @@ import (
 )
 
 // SetSecretValue sets the (plaintext) secret value of the webhook. Empty values are ignored.
-func (s *WebhookPresetSpec) SetSecretValue(secret string) {
+func (s *WebhookSpec) SetSecretValue(secret string) {
 	if secret == "" {
 		return
 	}
@@ -30,7 +30,7 @@ func (s *WebhookPresetSpec) SetSecretValue(secret string) {
 }
 
 // GetSecretValueHash returns the SHA-256 hex hash of the secret value, or "" if no secret value is set.
-func (s *WebhookPresetSpec) GetSecretValueHash() string {
+func (s *WebhookSpec) GetSecretValueHash() string {
 	if s.SecretValue == nil || *s.SecretValue == "" {
 		return ""
 	}

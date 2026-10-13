@@ -15,7 +15,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		BeforeEach(func() {
 			rulesetPreset = githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "main-protection",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Conditions: &githubv1alpha1.RulesetConditions{
@@ -134,7 +134,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should convert CopilotCodeReview rule", func() {
 			copilotPreset := githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "copilot-review-ruleset",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Conditions: &githubv1alpha1.RulesetConditions{
@@ -162,7 +162,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should convert CopilotCodeReview rule with both options enabled", func() {
 			copilotPreset := githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "copilot-review-full",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Conditions: &githubv1alpha1.RulesetConditions{
@@ -189,7 +189,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should handle nil CopilotCodeReview rule", func() {
 			noCopilotPreset := githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "no-copilot-ruleset",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Conditions: &githubv1alpha1.RulesetConditions{
@@ -211,7 +211,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should handle minimal ruleset preset", func() {
 			minimalPreset := githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "minimal-ruleset",
 					Enforcement: githubv1alpha1.RulesetEnforcementEvaluate,
 					Conditions: &githubv1alpha1.RulesetConditions{
@@ -237,7 +237,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		It("should return error when name is empty", func() {
 			emptyNamePreset := githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Conditions: &githubv1alpha1.RulesetConditions{
@@ -257,7 +257,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		Context("Conditions mapping", func() {
 			It("should map RepositoryName conditions", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "org-ruleset-with-repo-name",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      "repository",
@@ -291,7 +291,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should map RepositoryProperty conditions", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "org-ruleset-with-repo-property",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      "repository",
@@ -331,7 +331,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should map only RefName when no RepositoryName or RepositoryProperty is set", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "simple-conditions",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Conditions: &githubv1alpha1.RulesetConditions{
@@ -356,7 +356,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should not map RepositoryProperty when RepositoryName is set (mutually exclusive)", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "repo-name-takes-precedence",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      "repository",
@@ -388,7 +388,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should map RepositoryName with nil Protected field", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "repo-name-no-protected",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      "repository",
@@ -416,7 +416,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should map RepositoryProperty with multiple include and exclude targets", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "multi-property-targets",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      "repository",
@@ -455,7 +455,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		Context("Target Type handling", func() {
 			It("should set target type to branch when explicitly specified", func() {
 				branchPreset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "branch-ruleset",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -478,7 +478,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should set target type to tag when specified", func() {
 				tagPreset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "tag-ruleset",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeTag,
@@ -501,7 +501,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should set target type to push when specified", func() {
 				pushPreset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "push-ruleset",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      "push",
@@ -524,7 +524,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should handle empty target type gracefully", func() {
 				emptyTargetTypePreset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "default-target-ruleset",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      "", // Empty target type
@@ -547,7 +547,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should work with tag target type and tag name patterns", func() {
 				tagWithPatternPreset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "tag-protection",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeTag,
@@ -587,7 +587,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		BeforeEach(func() {
 			rulesetPreset = githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "test-ruleset",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Target:      TargetTypeBranch, // Set default target type
@@ -1509,7 +1509,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			BeforeEach(func() {
 				emptyPreset = githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "empty-ruleset",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch, // Set default target type
@@ -1533,7 +1533,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 		Context("when workflow rules differ", func() {
 			It("should return true when preset has workflows but GitHub does not", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1565,7 +1565,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return false when workflow rules match", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1603,7 +1603,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return true when workflow repository IDs differ", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1641,7 +1641,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return true when workflow refs differ", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1679,7 +1679,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return true when DoNotEnforceOnCreate differs", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1719,7 +1719,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return false when DoNotEnforceOnCreate matches (both true)", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1759,7 +1759,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return false when DoNotEnforceOnCreate is nil vs false (defaults match)", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1799,7 +1799,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return true when same path exists in different repositories", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1837,7 +1837,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 			It("should return false when multiple workflows from different repos match", func() {
 				preset := githubv1alpha1.RulesetPreset{
-					Spec: githubv1alpha1.RulesetPresetSpec{
+					Spec: githubv1alpha1.RulesetSpec{
 						Name:        "test",
 						Enforcement: githubv1alpha1.RulesetEnforcementActive,
 						Target:      TargetTypeBranch,
@@ -1880,7 +1880,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 	Context("RulesetSpecToGithubRuleset with required reviewers", func() {
 		basePreset := func(reviewers []githubv1alpha1.RequiredPullRequestReviewer) githubv1alpha1.RulesetPreset {
 			return githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "pr-reviewers-ruleset",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Target:      TargetTypeBranch,
@@ -2011,7 +2011,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 
 		basePresetWithReviewers := func(reviewers []githubv1alpha1.RequiredPullRequestReviewer) githubv1alpha1.RulesetPreset {
 			return githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "test",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Target:      TargetTypeBranch,
@@ -2153,7 +2153,7 @@ var _ = Describe("GitHub Ruleset Mapper", func() {
 	Context("RulesetSpecToGithubRuleset with workflows", func() {
 		It("should map workflows rule correctly", func() {
 			preset := githubv1alpha1.RulesetPreset{
-				Spec: githubv1alpha1.RulesetPresetSpec{
+				Spec: githubv1alpha1.RulesetSpec{
 					Name:        "workflow-ruleset",
 					Enforcement: githubv1alpha1.RulesetEnforcementActive,
 					Target:      TargetTypeBranch,

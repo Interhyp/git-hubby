@@ -17,15 +17,16 @@ limitations under the License.
 
 package v1alpha1
 
-// WebhookPresetSpecApplyConfiguration represents a declarative configuration of the WebhookPresetSpec type for use
+// WebhookSpecApplyConfiguration represents a declarative configuration of the WebhookSpec type for use
 // with apply.
 //
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-// WebhookPresetSpec defines the desired state of WebhookPreset.
+// WebhookSpec defines a repository webhook. It is the spec of a WebhookPreset and the element type of
+// inline webhooks in Repository.spec.webhooks.
 // Webhooks allow external services to be notified when certain events occur in a repository.
 // See: https://docs.github.com/en/rest/webhooks/repos
-type WebhookPresetSpecApplyConfiguration struct {
+type WebhookSpecApplyConfiguration struct {
 	// PayloadURL is the URL that will receive the webhook POST requests.
 	// Must be a publicly accessible HTTP or HTTPS endpoint.
 	// GitHub will send HTTP POST requests to this URL when subscribed events occur.
@@ -35,7 +36,7 @@ type WebhookPresetSpecApplyConfiguration struct {
 	// Your service can verify this signature to ensure the request came from GitHub.
 	// This field takes precedence over SecretValue if both are provided.
 	// See: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
-	Secret *WebhookPresetSecretSpecApplyConfiguration `json:"secret,omitempty"`
+	Secret *WebhookSecretSpecApplyConfiguration `json:"secret,omitempty"`
 	// SecretValue is the plaintext value of the webhook secret.
 	// Use this for simple cases, but Secret (referencing a Kubernetes Secret) is more secure.
 	// If both Secret and SecretValue are provided, Secret takes precedence.
@@ -59,16 +60,16 @@ type WebhookPresetSpecApplyConfiguration struct {
 	SSLVerify *bool `json:"sslVerify,omitempty"`
 }
 
-// WebhookPresetSpecApplyConfiguration constructs a declarative configuration of the WebhookPresetSpec type for use with
+// WebhookSpecApplyConfiguration constructs a declarative configuration of the WebhookSpec type for use with
 // apply.
-func WebhookPresetSpec() *WebhookPresetSpecApplyConfiguration {
-	return &WebhookPresetSpecApplyConfiguration{}
+func WebhookSpec() *WebhookSpecApplyConfiguration {
+	return &WebhookSpecApplyConfiguration{}
 }
 
 // WithPayloadURL sets the PayloadURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the PayloadURL field is set to the value of the last call.
-func (b *WebhookPresetSpecApplyConfiguration) WithPayloadURL(value string) *WebhookPresetSpecApplyConfiguration {
+func (b *WebhookSpecApplyConfiguration) WithPayloadURL(value string) *WebhookSpecApplyConfiguration {
 	b.PayloadURL = &value
 	return b
 }
@@ -76,7 +77,7 @@ func (b *WebhookPresetSpecApplyConfiguration) WithPayloadURL(value string) *Webh
 // WithSecret sets the Secret field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Secret field is set to the value of the last call.
-func (b *WebhookPresetSpecApplyConfiguration) WithSecret(value *WebhookPresetSecretSpecApplyConfiguration) *WebhookPresetSpecApplyConfiguration {
+func (b *WebhookSpecApplyConfiguration) WithSecret(value *WebhookSecretSpecApplyConfiguration) *WebhookSpecApplyConfiguration {
 	b.Secret = value
 	return b
 }
@@ -84,7 +85,7 @@ func (b *WebhookPresetSpecApplyConfiguration) WithSecret(value *WebhookPresetSec
 // WithSecretValue sets the SecretValue field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SecretValue field is set to the value of the last call.
-func (b *WebhookPresetSpecApplyConfiguration) WithSecretValue(value string) *WebhookPresetSpecApplyConfiguration {
+func (b *WebhookSpecApplyConfiguration) WithSecretValue(value string) *WebhookSpecApplyConfiguration {
 	b.SecretValue = &value
 	return b
 }
@@ -92,7 +93,7 @@ func (b *WebhookPresetSpecApplyConfiguration) WithSecretValue(value string) *Web
 // WithContentType sets the ContentType field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ContentType field is set to the value of the last call.
-func (b *WebhookPresetSpecApplyConfiguration) WithContentType(value string) *WebhookPresetSpecApplyConfiguration {
+func (b *WebhookSpecApplyConfiguration) WithContentType(value string) *WebhookSpecApplyConfiguration {
 	b.ContentType = &value
 	return b
 }
@@ -100,7 +101,7 @@ func (b *WebhookPresetSpecApplyConfiguration) WithContentType(value string) *Web
 // WithActive sets the Active field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Active field is set to the value of the last call.
-func (b *WebhookPresetSpecApplyConfiguration) WithActive(value bool) *WebhookPresetSpecApplyConfiguration {
+func (b *WebhookSpecApplyConfiguration) WithActive(value bool) *WebhookSpecApplyConfiguration {
 	b.Active = &value
 	return b
 }
@@ -108,7 +109,7 @@ func (b *WebhookPresetSpecApplyConfiguration) WithActive(value bool) *WebhookPre
 // WithEvents adds the given value to the Events field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Events field.
-func (b *WebhookPresetSpecApplyConfiguration) WithEvents(values ...string) *WebhookPresetSpecApplyConfiguration {
+func (b *WebhookSpecApplyConfiguration) WithEvents(values ...string) *WebhookSpecApplyConfiguration {
 	for i := range values {
 		b.Events = append(b.Events, values[i])
 	}
@@ -118,7 +119,7 @@ func (b *WebhookPresetSpecApplyConfiguration) WithEvents(values ...string) *Webh
 // WithSSLVerify sets the SSLVerify field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SSLVerify field is set to the value of the last call.
-func (b *WebhookPresetSpecApplyConfiguration) WithSSLVerify(value bool) *WebhookPresetSpecApplyConfiguration {
+func (b *WebhookSpecApplyConfiguration) WithSSLVerify(value bool) *WebhookSpecApplyConfiguration {
 	b.SSLVerify = &value
 	return b
 }

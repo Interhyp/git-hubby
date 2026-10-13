@@ -8,10 +8,11 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// WebhookPresetSpec defines the desired state of WebhookPreset.
+// WebhookSpec defines a repository webhook. It is the spec of a WebhookPreset and the element type of
+// inline webhooks in Repository.spec.webhooks.
 // Webhooks allow external services to be notified when certain events occur in a repository.
 // See: https://docs.github.com/en/rest/webhooks/repos
-type WebhookPresetSpec struct {
+type WebhookSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	// The following markers will use OpenAPI v3 schema to validate the value
@@ -32,7 +33,7 @@ type WebhookPresetSpec struct {
 	// Your service can verify this signature to ensure the request came from GitHub.
 	// This field takes precedence over SecretValue if both are provided.
 	// See: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
-	Secret *WebhookPresetSecretSpec `json:"secret,omitempty"`
+	Secret *WebhookSecretSpec `json:"secret,omitempty"`
 
 	// SecretValue is the plaintext value of the webhook secret.
 	// Use this for simple cases, but Secret (referencing a Kubernetes Secret) is more secure.
@@ -72,8 +73,8 @@ type WebhookPresetSpec struct {
 	SSLVerify *bool `json:"sslVerify,omitempty"`
 }
 
-// WebhookPresetSecretSpec references a Kubernetes Secret containing the webhook secret.
-type WebhookPresetSecretSpec struct {
+// WebhookSecretSpec references a Kubernetes Secret containing the webhook secret.
+type WebhookSecretSpec struct {
 	// Name is the name of the Kubernetes Secret containing the webhook secret.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=250
@@ -134,7 +135,7 @@ type WebhookPreset struct {
 
 	// spec defines the desired state of WebhookPreset
 	// +required
-	Spec WebhookPresetSpec `json:"spec"`
+	Spec WebhookSpec `json:"spec"`
 
 	// status defines the observed state of WebhookPreset
 	// +optional

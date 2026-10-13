@@ -31,8 +31,8 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 		deletedIDs   []int64
 	)
 
-	inlineWebhook := func(url string) v1alpha1.WebhookPresetSpec {
-		return v1alpha1.WebhookPresetSpec{
+	inlineWebhook := func(url string) v1alpha1.WebhookSpec {
+		return v1alpha1.WebhookSpec{
 			PayloadURL:  url,
 			ContentType: "json",
 			Active:      new(true),
@@ -109,7 +109,7 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 
 	Context("when an inline webhook does not exist on GitHub", func() {
 		BeforeEach(func() {
-			repo.Spec.Webhooks = []v1alpha1.WebhookPresetSpec{inlineWebhook("https://inline.example.com/hook")}
+			repo.Spec.Webhooks = []v1alpha1.WebhookSpec{inlineWebhook("https://inline.example.com/hook")}
 		})
 
 		It("creates it and tracks it in the status", func() {
@@ -122,7 +122,7 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 
 	Context("when an inline webhook already exists on GitHub", func() {
 		BeforeEach(func() {
-			repo.Spec.Webhooks = []v1alpha1.WebhookPresetSpec{inlineWebhook("https://inline.example.com/hook")}
+			repo.Spec.Webhooks = []v1alpha1.WebhookSpec{inlineWebhook("https://inline.example.com/hook")}
 			existing = []*github.Hook{ghHook(1, "https://inline.example.com/hook")}
 		})
 
@@ -147,7 +147,7 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 	Context("when inline webhooks and presets are combined", func() {
 		BeforeEach(func() {
 			repo.Spec.WebhookPresetList = []corev1.LocalObjectReference{{Name: "preset-1"}}
-			repo.Spec.Webhooks = []v1alpha1.WebhookPresetSpec{inlineWebhook("https://inline.example.com/hook")}
+			repo.Spec.Webhooks = []v1alpha1.WebhookSpec{inlineWebhook("https://inline.example.com/hook")}
 		})
 
 		It("creates the union", func() {
@@ -163,8 +163,8 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 	Context("when an inline webhook uses a templated payload URL and a secret", func() {
 		BeforeEach(func() {
 			hook := inlineWebhook("https://inline.example.com/{{ .Name }}")
-			hook.Secret = &v1alpha1.WebhookPresetSecretSpec{Name: new("hook-secret"), Key: new("token")}
-			repo.Spec.Webhooks = []v1alpha1.WebhookPresetSpec{hook}
+			hook.Secret = &v1alpha1.WebhookSecretSpec{Name: new("hook-secret"), Key: new("token")}
+			repo.Spec.Webhooks = []v1alpha1.WebhookSpec{hook}
 			objects = append(objects, secret("default", "hook-secret", "token", "s3cr3t"))
 		})
 
@@ -187,8 +187,8 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 	Context("when the secret of an inline webhook rotates", func() {
 		BeforeEach(func() {
 			hook := inlineWebhook("https://inline.example.com/hook")
-			hook.Secret = &v1alpha1.WebhookPresetSecretSpec{Name: new("hook-secret"), Key: new("token")}
-			repo.Spec.Webhooks = []v1alpha1.WebhookPresetSpec{hook}
+			hook.Secret = &v1alpha1.WebhookSecretSpec{Name: new("hook-secret"), Key: new("token")}
+			repo.Spec.Webhooks = []v1alpha1.WebhookSpec{hook}
 			objects = append(objects, secret("default", "hook-secret", "token", "new-value"))
 			existing = []*github.Hook{ghHook(1, "https://inline.example.com/hook")}
 			repo.Status.Webhooks[mapper.HashWebhookConfig("https://inline.example.com/hook", "json", []string{"push"})] =
@@ -205,8 +205,8 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 	Context("when an inline webhook references a secret in another namespace", func() {
 		BeforeEach(func() {
 			hook := inlineWebhook("https://inline.example.com/hook")
-			hook.Secret = &v1alpha1.WebhookPresetSecretSpec{Name: new("hook-secret"), Key: new("token"), Namespace: new("other")}
-			repo.Spec.Webhooks = []v1alpha1.WebhookPresetSpec{hook}
+			hook.Secret = &v1alpha1.WebhookSecretSpec{Name: new("hook-secret"), Key: new("token"), Namespace: new("other")}
+			repo.Spec.Webhooks = []v1alpha1.WebhookSpec{hook}
 			objects = append(objects, secret("other", "hook-secret", "token", "s3cr3t"))
 		})
 
@@ -223,7 +223,7 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 			repo.Spec.WebhookPresetList = []corev1.LocalObjectReference{{Name: "preset-1"}}
 			conflicting := inlineWebhook("https://preset.example.com/hook")
 			conflicting.Active = new(false)
-			repo.Spec.Webhooks = []v1alpha1.WebhookPresetSpec{conflicting}
+			repo.Spec.Webhooks = []v1alpha1.WebhookSpec{conflicting}
 			existing = []*github.Hook{ghHook(1, "https://orphan.example.com/hook")}
 		})
 
@@ -240,7 +240,7 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 	Context("when an inline webhook is identical to a preset", func() {
 		BeforeEach(func() {
 			repo.Spec.WebhookPresetList = []corev1.LocalObjectReference{{Name: "preset-1"}}
-			repo.Spec.Webhooks = []v1alpha1.WebhookPresetSpec{inlineWebhook("https://preset.example.com/hook")}
+			repo.Spec.Webhooks = []v1alpha1.WebhookSpec{inlineWebhook("https://preset.example.com/hook")}
 		})
 
 		It("creates it once", func() {
@@ -251,7 +251,7 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 
 	Context("when inline ignore rules match existing webhooks", func() {
 		BeforeEach(func() {
-			repo.Spec.WebhookIgnores = []v1alpha1.WebhookIgnorePresetSpec{{IgnoreURLRegex: new("^https://ignored\\.example\\.com/.*")}}
+			repo.Spec.WebhookIgnores = []v1alpha1.WebhookIgnoreSpec{{IgnoreURLRegex: new("^https://ignored\\.example\\.com/.*")}}
 			existing = []*github.Hook{
 				ghHook(1, "https://ignored.example.com/hook"),
 				ghHook(2, "https://orphan.example.com/hook"),

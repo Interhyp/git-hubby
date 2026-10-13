@@ -17,16 +17,17 @@ limitations under the License.
 
 package v1alpha1
 
-// WebhookIgnorePresetSpecApplyConfiguration represents a declarative configuration of the WebhookIgnorePresetSpec type for use
+// WebhookIgnoreSpecApplyConfiguration represents a declarative configuration of the WebhookIgnoreSpec type for use
 // with apply.
 //
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-// WebhookIgnorePresetSpec defines the desired state of WebhookIgnorePreset.
-// WebhookIgnorePresets allow you to exclude certain webhooks from being created,
+// WebhookIgnoreSpec defines a webhook ignore rule. It is the spec of a WebhookIgnorePreset and the element type
+// of inline webhook ignores in Repository.spec.webhookIgnores.
+// Ignore rules allow you to exclude certain webhooks from being managed,
 // even if they are referenced in a repository's WebhookPresetList.
 // This is useful for globally excluding webhooks based on URL patterns.
-type WebhookIgnorePresetSpecApplyConfiguration struct {
+type WebhookIgnoreSpecApplyConfiguration struct {
 	// IgnoreURLRegex is a regular expression pattern to match against webhook payload URLs.
 	// Webhooks with URLs matching this pattern will not be created, even if they are
 	// referenced in a repository's WebhookPresetList.
@@ -34,16 +35,16 @@ type WebhookIgnorePresetSpecApplyConfiguration struct {
 	IgnoreURLRegex *string `json:"ignoreURLRegex,omitempty"`
 }
 
-// WebhookIgnorePresetSpecApplyConfiguration constructs a declarative configuration of the WebhookIgnorePresetSpec type for use with
+// WebhookIgnoreSpecApplyConfiguration constructs a declarative configuration of the WebhookIgnoreSpec type for use with
 // apply.
-func WebhookIgnorePresetSpec() *WebhookIgnorePresetSpecApplyConfiguration {
-	return &WebhookIgnorePresetSpecApplyConfiguration{}
+func WebhookIgnoreSpec() *WebhookIgnoreSpecApplyConfiguration {
+	return &WebhookIgnoreSpecApplyConfiguration{}
 }
 
 // WithIgnoreURLRegex sets the IgnoreURLRegex field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the IgnoreURLRegex field is set to the value of the last call.
-func (b *WebhookIgnorePresetSpecApplyConfiguration) WithIgnoreURLRegex(value string) *WebhookIgnorePresetSpecApplyConfiguration {
+func (b *WebhookIgnoreSpecApplyConfiguration) WithIgnoreURLRegex(value string) *WebhookIgnoreSpecApplyConfiguration {
 	b.IgnoreURLRegex = &value
 	return b
 }

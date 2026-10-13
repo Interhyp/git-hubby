@@ -29,15 +29,15 @@ var _ = Describe("CollectDesiredRulesets", func() {
 		k8sClient  client.Client
 		presets    []client.Object
 		presetRefs []corev1.LocalObjectReference
-		inline     []v1alpha1.RulesetPresetSpec
+		inline     []v1alpha1.RulesetSpec
 		result     []DesiredRuleset
 		err        error
 		logLines   []string
 		logMu      sync.Mutex
 	)
 
-	newSpec := func(name string, enforcement v1alpha1.RulesetEnforcement) v1alpha1.RulesetPresetSpec {
-		return v1alpha1.RulesetPresetSpec{
+	newSpec := func(name string, enforcement v1alpha1.RulesetEnforcement) v1alpha1.RulesetSpec {
+		return v1alpha1.RulesetSpec{
 			Name:        name,
 			Target:      "branch",
 			Enforcement: enforcement,
@@ -55,7 +55,7 @@ var _ = Describe("CollectDesiredRulesets", func() {
 		}
 	}
 
-	newPreset := func(objName string, spec v1alpha1.RulesetPresetSpec) *v1alpha1.RulesetPreset {
+	newPreset := func(objName string, spec v1alpha1.RulesetSpec) *v1alpha1.RulesetPreset {
 		return &v1alpha1.RulesetPreset{
 			ObjectMeta: metav1.ObjectMeta{Name: objName, Namespace: namespace},
 			Spec:       spec,
@@ -114,7 +114,7 @@ var _ = Describe("CollectDesiredRulesets", func() {
 
 	Context("with inline rulesets only", func() {
 		BeforeEach(func() {
-			inline = []v1alpha1.RulesetPresetSpec{newSpec("inline-a", "active"), newSpec("inline-b", "disabled")}
+			inline = []v1alpha1.RulesetSpec{newSpec("inline-a", "active"), newSpec("inline-b", "disabled")}
 		})
 
 		It("returns all inline rulesets with their sources", func() {
@@ -138,7 +138,7 @@ var _ = Describe("CollectDesiredRulesets", func() {
 		BeforeEach(func() {
 			presets = []client.Object{newPreset("preset-a", newSpec("ruleset-a", "active"))}
 			presetRefs = []corev1.LocalObjectReference{{Name: "preset-a"}}
-			inline = []v1alpha1.RulesetPresetSpec{newSpec("inline-a", "active")}
+			inline = []v1alpha1.RulesetSpec{newSpec("inline-a", "active")}
 		})
 
 		It("returns the union", func() {
@@ -153,7 +153,7 @@ var _ = Describe("CollectDesiredRulesets", func() {
 		BeforeEach(func() {
 			presets = []client.Object{newPreset("preset-a", newSpec("shared", "active"))}
 			presetRefs = []corev1.LocalObjectReference{{Name: "preset-a"}}
-			inline = []v1alpha1.RulesetPresetSpec{newSpec("shared", "active")}
+			inline = []v1alpha1.RulesetSpec{newSpec("shared", "active")}
 		})
 
 		It("returns the ruleset once without error", func() {
@@ -172,7 +172,7 @@ var _ = Describe("CollectDesiredRulesets", func() {
 		BeforeEach(func() {
 			presets = []client.Object{newPreset("preset-a", newSpec("shared", "active"))}
 			presetRefs = []corev1.LocalObjectReference{{Name: "preset-a"}}
-			inline = []v1alpha1.RulesetPresetSpec{newSpec("shared", "evaluate")}
+			inline = []v1alpha1.RulesetSpec{newSpec("shared", "evaluate")}
 		})
 
 		It("returns a RulesetConflictError naming both sources", func() {
@@ -215,7 +215,7 @@ var _ = Describe("CollectDesiredRulesets", func() {
 				newPreset("preset-b", newSpec("two", "active")),
 			}
 			presetRefs = []corev1.LocalObjectReference{{Name: "preset-a"}, {Name: "preset-b"}}
-			inline = []v1alpha1.RulesetPresetSpec{newSpec("one", "evaluate"), newSpec("two", "evaluate")}
+			inline = []v1alpha1.RulesetSpec{newSpec("one", "evaluate"), newSpec("two", "evaluate")}
 		})
 
 		It("reports every conflict", func() {
@@ -228,7 +228,7 @@ var _ = Describe("CollectDesiredRulesets", func() {
 	Context("when a referenced preset does not exist", func() {
 		BeforeEach(func() {
 			presetRefs = []corev1.LocalObjectReference{{Name: "missing"}}
-			inline = []v1alpha1.RulesetPresetSpec{newSpec("inline-a", "active")}
+			inline = []v1alpha1.RulesetSpec{newSpec("inline-a", "active")}
 		})
 
 		It("returns a not found error", func() {
@@ -241,7 +241,7 @@ var _ = Describe("CollectDesiredRulesets", func() {
 
 	Context("when the returned specs are modified", func() {
 		BeforeEach(func() {
-			inline = []v1alpha1.RulesetPresetSpec{newSpec("inline-a", "active")}
+			inline = []v1alpha1.RulesetSpec{newSpec("inline-a", "active")}
 		})
 
 		It("does not modify the original inline spec", func() {

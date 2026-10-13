@@ -18,7 +18,7 @@ type DesiredRuleset struct {
 	// Source describes where the ruleset was defined, e.g. "rulesetPreset/<name>" or "inline[<idx>]".
 	Source string
 	// Spec is a deep copy of the ruleset definition. It may be modified freely by the caller.
-	Spec v1alpha1.RulesetPresetSpec
+	Spec v1alpha1.RulesetSpec
 }
 
 // RulesetConflictError is returned when multiple sources define a ruleset with the same name but different content.
@@ -48,7 +48,7 @@ func InlineRulesetSource(idx int) string {
 //   - identical definitions: a warning is logged and the ruleset is returned only once.
 //   - differing definitions: a RulesetConflictError is returned for every conflicting name (joined via errors.Join).
 func CollectDesiredRulesets(ctx context.Context, k8sClient client.Client, namespace string,
-	presetRefs []corev1.LocalObjectReference, inline []v1alpha1.RulesetPresetSpec) ([]DesiredRuleset, error) {
+	presetRefs []corev1.LocalObjectReference, inline []v1alpha1.RulesetSpec) ([]DesiredRuleset, error) {
 	log := logPkg.FromContext(ctx)
 
 	candidates := make([]DesiredRuleset, 0, len(presetRefs)+len(inline))

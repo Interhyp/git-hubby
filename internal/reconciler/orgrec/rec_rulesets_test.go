@@ -63,7 +63,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 				Name:      "ruleset-1",
 				Namespace: "default",
 			},
-			Spec: v1alpha1.RulesetPresetSpec{
+			Spec: v1alpha1.RulesetSpec{
 				Name: "ruleset-1",
 				Conditions: &v1alpha1.RulesetConditions{
 					RefName: &v1alpha1.RefNameCondition{Include: []string{"refs/heads/main"}},
@@ -82,7 +82,7 @@ var _ = Describe("ReconcileRulesetPresets", func() {
 				Name:      "ruleset-2",
 				Namespace: "default",
 			},
-			Spec: v1alpha1.RulesetPresetSpec{
+			Spec: v1alpha1.RulesetSpec{
 				Name: "ruleset-2",
 				Conditions: &v1alpha1.RulesetConditions{
 					RefName: &v1alpha1.RefNameCondition{Include: []string{"refs/heads/develop"}},
@@ -1142,7 +1142,7 @@ var _ = Describe("Helper Functions", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-preset",
 				},
-				Spec: v1alpha1.RulesetPresetSpec{
+				Spec: v1alpha1.RulesetSpec{
 					Name:        "test-ruleset",
 					Enforcement: "active",
 				},
@@ -1196,7 +1196,7 @@ var _ = Describe("Helper Functions", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-preset",
 				},
-				Spec: v1alpha1.RulesetPresetSpec{
+				Spec: v1alpha1.RulesetSpec{
 					Name:        "test-ruleset",
 					Enforcement: "active",
 				},

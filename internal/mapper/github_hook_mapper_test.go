@@ -17,7 +17,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-webhook",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: contentTypeApplicationJSON,
 						SecretValue: new("secret123"),
@@ -47,7 +47,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "insecure-webhook",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						SSLVerify:  new(false),
 						Active:     new(true),
@@ -67,7 +67,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "default-content-type",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(true),
 					},
@@ -86,7 +86,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "custom-content-type",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: "application/x-www-form-urlencoded",
 						Active:      new(true),
@@ -106,7 +106,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "default-events",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(true),
 					},
@@ -125,7 +125,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "inactive-webhook",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(false),
 					},
@@ -144,7 +144,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "multi-event-webhook",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(true),
 						Events:     []string{"push", "pull_request", "issues", "release"},
@@ -164,7 +164,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "no-secret",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(true),
 					},

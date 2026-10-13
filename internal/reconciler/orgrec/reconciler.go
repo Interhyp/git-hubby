@@ -32,7 +32,7 @@ func OrganizationStillHasTeamsError() error {
 
 type IdResolver interface {
 	ResolveCscBypassReviewers(ctx context.Context, csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error)
-	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPresetSpec) (v1alpha1.RulesetPresetSpec, error)
+	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error)
 }
 
 type GitHubOrgReconciler struct {

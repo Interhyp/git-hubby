@@ -35,7 +35,7 @@ type WebhookPresetApplyConfiguration struct {
 	// metadata is a standard object metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	// spec defines the desired state of WebhookPreset
-	Spec *WebhookPresetSpecApplyConfiguration `json:"spec,omitempty"`
+	Spec *WebhookSpecApplyConfiguration `json:"spec,omitempty"`
 	// status defines the observed state of WebhookPreset
 	Status *WebhookPresetStatusApplyConfiguration `json:"status,omitempty"`
 }
@@ -255,7 +255,7 @@ func (b *WebhookPresetApplyConfiguration) ensureObjectMetaApplyConfigurationExis
 // WithSpec sets the Spec field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Spec field is set to the value of the last call.
-func (b *WebhookPresetApplyConfiguration) WithSpec(value *WebhookPresetSpecApplyConfiguration) *WebhookPresetApplyConfiguration {
+func (b *WebhookPresetApplyConfiguration) WithSpec(value *WebhookSpecApplyConfiguration) *WebhookPresetApplyConfiguration {
 	b.Spec = value
 	return b
 }

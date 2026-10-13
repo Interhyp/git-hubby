@@ -20,7 +20,7 @@ const (
 )
 
 // WebhookSpecToGithubHook maps a webhook spec (from a WebhookPreset or an inline webhook) to a GitHub hook.
-func WebhookSpecToGithubHook(spec v1alpha1.WebhookPresetSpec) *github.Hook {
+func WebhookSpecToGithubHook(spec v1alpha1.WebhookSpec) *github.Hook {
 	conf := &github.HookConfig{
 		URL: &spec.PayloadURL,
 	}

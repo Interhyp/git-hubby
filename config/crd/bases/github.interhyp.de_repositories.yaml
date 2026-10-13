@@ -416,7 +416,8 @@ spec:
                   are filtered out (i.e. are not checked nor applied), the same as for RulesetPresets.
                 items:
                   description: |-
-                    RulesetPresetSpec defines the desired state of RulesetPreset.
+                    RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element type of inline rulesets
+                    in Organization.spec.rulesets and Repository.spec.rulesets.
                     A ruleset preset defines reusable repository rules that can be applied to multiple repositories
                     or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
                     See: https://docs.github.com/en/rest/repos/rules
@@ -1193,8 +1194,9 @@ spec:
                   Every inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed.
                 items:
                   description: |-
-                    WebhookIgnorePresetSpec defines the desired state of WebhookIgnorePreset.
-                    WebhookIgnorePresets allow you to exclude certain webhooks from being created,
+                    WebhookIgnoreSpec defines a webhook ignore rule. It is the spec of a WebhookIgnorePreset and the element type
+                    of inline webhook ignores in Repository.spec.webhookIgnores.
+                    Ignore rules allow you to exclude certain webhooks from being managed,
                     even if they are referenced in a repository's WebhookPresetList.
                     This is useful for globally excluding webhooks based on URL patterns.
                   properties:
@@ -1248,7 +1250,8 @@ spec:
                   At most 10 inline webhooks are allowed.
                 items:
                   description: |-
-                    WebhookPresetSpec defines the desired state of WebhookPreset.
+                    WebhookSpec defines a repository webhook. It is the spec of a WebhookPreset and the element type of
+                    inline webhooks in Repository.spec.webhooks.
                     Webhooks allow external services to be notified when certain events occur in a repository.
                     See: https://docs.github.com/en/rest/webhooks/repos
                   properties:

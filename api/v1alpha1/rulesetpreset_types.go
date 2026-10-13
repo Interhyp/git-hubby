@@ -8,11 +8,12 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// RulesetPresetSpec defines the desired state of RulesetPreset.
+// RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element type of inline rulesets
+// in Organization.spec.rulesets and Repository.spec.rulesets.
 // A ruleset preset defines reusable repository rules that can be applied to multiple repositories
 // or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
 // See: https://docs.github.com/en/rest/repos/rules
-type RulesetPresetSpec struct {
+type RulesetSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	// The following markers will use OpenAPI v3 schema to validate the value
@@ -576,7 +577,7 @@ type RulesetPreset struct {
 
 	// spec defines the desired state of RulesetPreset
 	// +required
-	Spec RulesetPresetSpec `json:"spec"`
+	Spec RulesetSpec `json:"spec"`
 
 	// status defines the observed state of RulesetPreset
 	// +optional

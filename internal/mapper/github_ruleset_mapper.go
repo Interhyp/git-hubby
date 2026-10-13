@@ -9,9 +9,9 @@ import (
 	"github.com/google/go-github/v92/github"
 )
 
-// RulesetSpecToGithubRuleset converts a RulesetPresetSpec (from a RulesetPreset or an inline ruleset) to a GitHub RepositoryRuleset.
+// RulesetSpecToGithubRuleset converts a RulesetSpec (from a RulesetPreset or an inline ruleset) to a GitHub RepositoryRuleset.
 // NameResolver.ResolveRuleset must have been called on spec before passing it here.
-func RulesetSpecToGithubRuleset(spec githubv1alpha1.RulesetPresetSpec) (*github.RepositoryRuleset, error) {
+func RulesetSpecToGithubRuleset(spec githubv1alpha1.RulesetSpec) (*github.RepositoryRuleset, error) {
 	if spec.Name == "" {
 		return nil, fmt.Errorf("ruleset name cannot be empty")
 	}
@@ -266,8 +266,8 @@ func mapPatternRules(rules *githubv1alpha1.RulesetRules, githubRules *github.Rep
 	}
 }
 
-// RulesetsDiffer compares a RulesetPresetSpec with a GitHub RepositoryRuleset to determine if they differ
-func RulesetsDiffer(spec githubv1alpha1.RulesetPresetSpec, githubRuleset github.RepositoryRuleset) bool {
+// RulesetsDiffer compares a RulesetSpec with a GitHub RepositoryRuleset to determine if they differ
+func RulesetsDiffer(spec githubv1alpha1.RulesetSpec, githubRuleset github.RepositoryRuleset) bool {
 	if spec.Name != githubRuleset.Name {
 		return true
 	}

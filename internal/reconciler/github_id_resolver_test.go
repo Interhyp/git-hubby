@@ -92,7 +92,7 @@ var _ = Describe("GitHubIDResolver", func() {
 			mockClient.Reset()
 
 			rs := v1alpha1.RulesetPreset{
-				Spec: v1alpha1.RulesetPresetSpec{
+				Spec: v1alpha1.RulesetSpec{
 					BypassActors: []v1alpha1.RulesetBypassActor{
 						{ActorSlug: new("platform-team"), ActorType: "Team", BypassMode: "always"},
 						{ActorSlug: new("github-actions"), ActorType: "Integration", BypassMode: "pull_request"},
@@ -233,7 +233,7 @@ var _ = Describe("GitHubIDResolver", func() {
 		BeforeEach(func() {
 			resolver = emptyResolver()
 			rulesetInput = v1alpha1.RulesetPreset{
-				Spec: v1alpha1.RulesetPresetSpec{
+				Spec: v1alpha1.RulesetSpec{
 					Name: "test-ruleset",
 					Conditions: &v1alpha1.RulesetConditions{
 						RefName: &v1alpha1.RefNameCondition{Include: []string{"refs/heads/main"}},

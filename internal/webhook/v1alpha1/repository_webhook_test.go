@@ -354,18 +354,18 @@ var _ = Describe("Repository Webhook", func() {
 
 	Context("When validating inline webhooks and webhook ignores", func() {
 		It("Should allow valid inline webhooks and ignore rules", func() {
-			obj.Spec.Webhooks = []githubv1alpha1.WebhookPresetSpec{{
+			obj.Spec.Webhooks = []githubv1alpha1.WebhookSpec{{
 				PayloadURL: "https://example.com/{{ .Name }}",
-				Secret:     &githubv1alpha1.WebhookPresetSecretSpec{Name: new("s"), Key: new("k"), Namespace: new("default")},
+				Secret:     &githubv1alpha1.WebhookSecretSpec{Name: new("s"), Key: new("k"), Namespace: new("default")},
 			}}
-			obj.Spec.WebhookIgnores = []githubv1alpha1.WebhookIgnorePresetSpec{{IgnoreURLRegex: new("^https://ignored/.*")}}
+			obj.Spec.WebhookIgnores = []githubv1alpha1.WebhookIgnoreSpec{{IgnoreURLRegex: new("^https://ignored/.*")}}
 			warnings, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(warnings).To(BeEmpty())
 		})
 
 		It("Should reject an invalid ignore regex", func() {
-			obj.Spec.WebhookIgnores = []githubv1alpha1.WebhookIgnorePresetSpec{{IgnoreURLRegex: new("(")}}
+			obj.Spec.WebhookIgnores = []githubv1alpha1.WebhookIgnoreSpec{{IgnoreURLRegex: new("(")}}
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 			Expect(apierrors.IsInvalid(err)).To(BeTrue())
@@ -373,9 +373,9 @@ var _ = Describe("Repository Webhook", func() {
 		})
 
 		It("Should reject an inline webhook secret in another namespace", func() {
-			obj.Spec.Webhooks = []githubv1alpha1.WebhookPresetSpec{{
+			obj.Spec.Webhooks = []githubv1alpha1.WebhookSpec{{
 				PayloadURL: "https://example.com/hook",
-				Secret:     &githubv1alpha1.WebhookPresetSecretSpec{Name: new("s"), Key: new("k"), Namespace: new("other")},
+				Secret:     &githubv1alpha1.WebhookSecretSpec{Name: new("s"), Key: new("k"), Namespace: new("other")},
 			}}
 			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
 			Expect(err).To(HaveOccurred())
@@ -384,7 +384,7 @@ var _ = Describe("Repository Webhook", func() {
 		})
 
 		It("Should reject an invalid payload URL template", func() {
-			obj.Spec.Webhooks = []githubv1alpha1.WebhookPresetSpec{{PayloadURL: "https://example.com/{{ .Name"}}
+			obj.Spec.Webhooks = []githubv1alpha1.WebhookSpec{{PayloadURL: "https://example.com/{{ .Name"}}
 			_, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).To(HaveOccurred())
 			Expect(apierrors.IsInvalid(err)).To(BeTrue())

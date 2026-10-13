@@ -482,7 +482,8 @@ spec:
                   The target 'repository' is supported for organization-level rulesets.
                 items:
                   description: |-
-                    RulesetPresetSpec defines the desired state of RulesetPreset.
+                    RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element type of inline rulesets
+                    in Organization.spec.rulesets and Repository.spec.rulesets.
                     A ruleset preset defines reusable repository rules that can be applied to multiple repositories
                     or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
                     See: https://docs.github.com/en/rest/repos/rules

@@ -497,7 +497,7 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         list:
           elementType:
-            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetSpec
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetSpec
           elementRelationship: atomic
     - name: website
       type:
@@ -771,7 +771,7 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         list:
           elementType:
-            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetSpec
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetSpec
           elementRelationship: atomic
     - name: visibility
       type:
@@ -787,7 +787,7 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         list:
           elementType:
-            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetSpec
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnoreSpec
           elementRelationship: atomic
     - name: webhookPresets
       type:
@@ -799,7 +799,7 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         list:
           elementType:
-            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSpec
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookSpec
           elementRelationship: atomic
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryStatus
   map:
@@ -911,35 +911,10 @@ var schemaYAML = typed.YAMLObject(`types:
         namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
     - name: spec
       type:
-        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetSpec
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetSpec
     - name: status
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetStatus
-- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetSpec
-  map:
-    fields:
-    - name: bypassActors
-      type:
-        list:
-          elementType:
-            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetBypassActor
-          elementRelationship: atomic
-    - name: conditions
-      type:
-        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetConditions
-    - name: enforcement
-      type:
-        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetEnforcement
-    - name: name
-      type:
-        scalar: string
-    - name: rules
-      type:
-        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetRules
-    - name: target
-      type:
-        scalar: string
-      default: branch
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetPresetStatus
   map:
     fields:
@@ -1005,6 +980,31 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: workflows
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WorkflowsRule
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetSpec
+  map:
+    fields:
+    - name: bypassActors
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetBypassActor
+          elementRelationship: atomic
+    - name: conditions
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetConditions
+    - name: enforcement
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetEnforcement
+    - name: name
+      type:
+        scalar: string
+    - name: rules
+      type:
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetRules
+    - name: target
+      type:
+        scalar: string
+      default: branch
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RunnerGroup
   map:
     fields:
@@ -1164,16 +1164,10 @@ var schemaYAML = typed.YAMLObject(`types:
         namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
     - name: spec
       type:
-        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetSpec
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnoreSpec
     - name: status
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetStatus
-- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetSpec
-  map:
-    fields:
-    - name: ignoreURLRegex
-      type:
-        scalar: string
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetStatus
   map:
     fields:
@@ -1185,6 +1179,12 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - type
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnoreSpec
+  map:
+    fields:
+    - name: ignoreURLRegex
+      type:
+        scalar: string
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPreset
   map:
     fields:
@@ -1199,11 +1199,22 @@ var schemaYAML = typed.YAMLObject(`types:
         namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
     - name: spec
       type:
-        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSpec
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookSpec
     - name: status
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetStatus
-- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSecretSpec
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetStatus
+  map:
+    fields:
+    - name: conditions
+      type:
+        list:
+          elementType:
+            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
+          elementRelationship: associative
+          keys:
+          - type
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookSecretSpec
   map:
     fields:
     - name: key
@@ -1215,7 +1226,7 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: namespace
       type:
         scalar: string
-- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSpec
+- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookSpec
   map:
     fields:
     - name: active
@@ -1236,7 +1247,7 @@ var schemaYAML = typed.YAMLObject(`types:
         scalar: string
     - name: secret
       type:
-        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSecretSpec
+        namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookSecretSpec
     - name: secretValue
       type:
         scalar: string
@@ -1244,17 +1255,6 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         scalar: boolean
       default: true
-- name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetStatus
-  map:
-    fields:
-    - name: conditions
-      type:
-        list:
-          elementType:
-            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
-          elementRelationship: associative
-          keys:
-          - type
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookStatus
   map:
     fields:

@@ -196,7 +196,7 @@ type RepositorySpec struct {
 	// +optional
 	// +kubebuilder:validation:MaxItems=10
 	// +kubebuilder:validation:XValidation:rule="self.all(x, self.filter(y, y.name == x.name).size() <= 1)",message="ruleset names must be unique"
-	Rulesets []RulesetPresetSpec `json:"rulesets,omitempty"`
+	Rulesets []RulesetSpec `json:"rulesets,omitempty"`
 
 	// WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.
 	// Webhooks send HTTP POST payloads to external services when specific events occur.
@@ -216,7 +216,7 @@ type RepositorySpec struct {
 	// At most 10 inline webhooks are allowed.
 	// +optional
 	// +kubebuilder:validation:MaxItems=10
-	Webhooks []WebhookPresetSpec `json:"webhooks,omitempty"`
+	Webhooks []WebhookSpec `json:"webhooks,omitempty"`
 
 	// WebhookIgnorePresetsList references WebhookIgnorePreset CRDs that define webhooks to ignore.
 	// Webhooks matching these patterns will not be created even if they are in WebhookPresetList.
@@ -229,7 +229,7 @@ type RepositorySpec struct {
 	// +optional
 	// +kubebuilder:validation:MaxItems=10
 	// +kubebuilder:validation:XValidation:rule="self.all(x, has(x.ignoreURLRegex) && x.ignoreURLRegex != '')",message="ignoreURLRegex must be set for inline webhook ignores"
-	WebhookIgnores []WebhookIgnorePresetSpec `json:"webhookIgnores,omitempty"`
+	WebhookIgnores []WebhookIgnoreSpec `json:"webhookIgnores,omitempty"`
 
 	// AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.
 	// Autolinks automatically convert references (like "JIRA-123") into clickable links.

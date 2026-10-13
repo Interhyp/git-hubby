@@ -21,16 +21,17 @@ import (
 	apiv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 )
 
-// RulesetPresetSpecApplyConfiguration represents a declarative configuration of the RulesetPresetSpec type for use
+// RulesetSpecApplyConfiguration represents a declarative configuration of the RulesetSpec type for use
 // with apply.
 //
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-// RulesetPresetSpec defines the desired state of RulesetPreset.
+// RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element type of inline rulesets
+// in Organization.spec.rulesets and Repository.spec.rulesets.
 // A ruleset preset defines reusable repository rules that can be applied to multiple repositories
 // or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
 // See: https://docs.github.com/en/rest/repos/rules
-type RulesetPresetSpecApplyConfiguration struct {
+type RulesetSpecApplyConfiguration struct {
 	// Name is the display name of the ruleset shown in the GitHub UI.
 	Name *string `json:"name,omitempty"`
 	// Target defines which ref types this ruleset applies to.
@@ -53,16 +54,16 @@ type RulesetPresetSpecApplyConfiguration struct {
 	Rules *RulesetRulesApplyConfiguration `json:"rules,omitempty"`
 }
 
-// RulesetPresetSpecApplyConfiguration constructs a declarative configuration of the RulesetPresetSpec type for use with
+// RulesetSpecApplyConfiguration constructs a declarative configuration of the RulesetSpec type for use with
 // apply.
-func RulesetPresetSpec() *RulesetPresetSpecApplyConfiguration {
-	return &RulesetPresetSpecApplyConfiguration{}
+func RulesetSpec() *RulesetSpecApplyConfiguration {
+	return &RulesetSpecApplyConfiguration{}
 }
 
 // WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Name field is set to the value of the last call.
-func (b *RulesetPresetSpecApplyConfiguration) WithName(value string) *RulesetPresetSpecApplyConfiguration {
+func (b *RulesetSpecApplyConfiguration) WithName(value string) *RulesetSpecApplyConfiguration {
 	b.Name = &value
 	return b
 }
@@ -70,7 +71,7 @@ func (b *RulesetPresetSpecApplyConfiguration) WithName(value string) *RulesetPre
 // WithTarget sets the Target field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Target field is set to the value of the last call.
-func (b *RulesetPresetSpecApplyConfiguration) WithTarget(value string) *RulesetPresetSpecApplyConfiguration {
+func (b *RulesetSpecApplyConfiguration) WithTarget(value string) *RulesetSpecApplyConfiguration {
 	b.Target = &value
 	return b
 }
@@ -78,7 +79,7 @@ func (b *RulesetPresetSpecApplyConfiguration) WithTarget(value string) *RulesetP
 // WithConditions sets the Conditions field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Conditions field is set to the value of the last call.
-func (b *RulesetPresetSpecApplyConfiguration) WithConditions(value *RulesetConditionsApplyConfiguration) *RulesetPresetSpecApplyConfiguration {
+func (b *RulesetSpecApplyConfiguration) WithConditions(value *RulesetConditionsApplyConfiguration) *RulesetSpecApplyConfiguration {
 	b.Conditions = value
 	return b
 }
@@ -86,7 +87,7 @@ func (b *RulesetPresetSpecApplyConfiguration) WithConditions(value *RulesetCondi
 // WithEnforcement sets the Enforcement field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Enforcement field is set to the value of the last call.
-func (b *RulesetPresetSpecApplyConfiguration) WithEnforcement(value apiv1alpha1.RulesetEnforcement) *RulesetPresetSpecApplyConfiguration {
+func (b *RulesetSpecApplyConfiguration) WithEnforcement(value apiv1alpha1.RulesetEnforcement) *RulesetSpecApplyConfiguration {
 	b.Enforcement = &value
 	return b
 }
@@ -94,7 +95,7 @@ func (b *RulesetPresetSpecApplyConfiguration) WithEnforcement(value apiv1alpha1.
 // WithBypassActors adds the given value to the BypassActors field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the BypassActors field.
-func (b *RulesetPresetSpecApplyConfiguration) WithBypassActors(values ...*RulesetBypassActorApplyConfiguration) *RulesetPresetSpecApplyConfiguration {
+func (b *RulesetSpecApplyConfiguration) WithBypassActors(values ...*RulesetBypassActorApplyConfiguration) *RulesetSpecApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithBypassActors")
@@ -107,7 +108,7 @@ func (b *RulesetPresetSpecApplyConfiguration) WithBypassActors(values ...*Rulese
 // WithRules sets the Rules field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Rules field is set to the value of the last call.
-func (b *RulesetPresetSpecApplyConfiguration) WithRules(value *RulesetRulesApplyConfiguration) *RulesetPresetSpecApplyConfiguration {
+func (b *RulesetSpecApplyConfiguration) WithRules(value *RulesetRulesApplyConfiguration) *RulesetSpecApplyConfiguration {
 	b.Rules = value
 	return b
 }
