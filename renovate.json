@@ -1,6 +1,19 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [":semanticCommitTypeAll(fix)"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "golangci-lint version in the Makefile and the custom (plugin) build config, which must always match",
+      "managerFilePatterns": ["/^Makefile$/", "/^\\.custom-gcl\\.yml$/"],
+      "matchStrings": [
+        "GOLANGCI_LINT_VERSION \\?= (?<currentValue>v\\d+\\.\\d+\\.\\d+)",
+        "(?:^|\\n)version: (?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "github.com/golangci/golangci-lint/v2",
+      "datasourceTemplate": "go"
+    }
+  ],
   "packageRules": [
     {
       "matchPackageNames": ["k8s.io/**", "sigs.k8s.io/**", "github.com/onsi/**"],
@@ -20,6 +33,12 @@
         "devcontainer"
       ],
       "semanticCommitType": "chore"
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["github.com/golangci/golangci-lint/v2"],
+      "groupName": "golangci-lint",
+      "semanticCommitType": "build"
     }
   ],
   "postUpdateOptions": [
