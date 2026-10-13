@@ -1,4 +1,4 @@
-package reconciler
+package idresolver
 
 import (
 	"context"
@@ -11,26 +11,26 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// emptyResolver returns a GitHubIDResolver with empty maps, for tests that don't need
+// emptyResolver returns a Resolver with empty maps, for tests that don't need
 // any pre-loaded data.
-func emptyResolver() *GitHubIDResolver {
-	return &GitHubIDResolver{
+func emptyResolver() *Resolver {
+	return &Resolver{
 		appsBySlug:  map[string]*int64{},
 		teamsBySlug: map[string]int64{},
 		rolesByName: map[string]int64{},
 	}
 }
 
-var _ = Describe("GitHubIDResolver", func() {
+var _ = Describe("Resolver", func() {
 	var ctx context.Context
 
 	BeforeEach(func() {
 		ctx = context.Background()
 	})
 
-	// ── NewGitHubIDResolver ──────────────────────────────────────────────────
+	// ── New ──────────────────────────────────────────────────
 
-	Describe("NewGitHubIDResolver", func() {
+	Describe("New", func() {
 		var mockClient *ghclientmock.MockGitHubClientWrapper
 
 		BeforeEach(func() {
@@ -53,7 +53,7 @@ var _ = Describe("GitHubIDResolver", func() {
 		})
 
 		It("makes exactly three bulk API calls", func() {
-			_, err := NewGitHubIDResolver(ctx, mockClient, "test-org")
+			_, err := New(ctx, mockClient, "test-org")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mockClient.EnterpriseAppsCalls).To(HaveLen(1))
 			Expect(mockClient.TeamCalls).To(HaveLen(1))
@@ -66,7 +66,7 @@ var _ = Describe("GitHubIDResolver", func() {
 			mockClient.GetGitHubAppsInstallationsFunc = func(_ context.Context, _ string) ([]*github.Installation, error) {
 				return nil, errors.New("apps API error")
 			}
-			_, err := NewGitHubIDResolver(ctx, mockClient, "test-org")
+			_, err := New(ctx, mockClient, "test-org")
 			Expect(err).To(MatchError(ContainSubstring("apps API error")))
 		})
 
@@ -74,7 +74,7 @@ var _ = Describe("GitHubIDResolver", func() {
 			mockClient.GetAllTeamsForOrgFunc = func(_ context.Context, _ string) ([]*github.Team, error) {
 				return nil, errors.New("teams API error")
 			}
-			_, err := NewGitHubIDResolver(ctx, mockClient, "test-org")
+			_, err := New(ctx, mockClient, "test-org")
 			Expect(err).To(MatchError(ContainSubstring("teams API error")))
 		})
 
@@ -82,12 +82,12 @@ var _ = Describe("GitHubIDResolver", func() {
 			mockClient.GetAllOrgRolesFunc = func(_ context.Context, _ string) ([]*github.CustomOrgRole, error) {
 				return nil, errors.New("roles API error")
 			}
-			_, err := NewGitHubIDResolver(ctx, mockClient, "test-org")
+			_, err := New(ctx, mockClient, "test-org")
 			Expect(err).To(MatchError(ContainSubstring("roles API error")))
 		})
 
 		It("makes zero further API calls during resolution", func() {
-			resolver, err := NewGitHubIDResolver(ctx, mockClient, "test-org")
+			resolver, err := New(ctx, mockClient, "test-org")
 			Expect(err).NotTo(HaveOccurred())
 			mockClient.Reset()
 
@@ -114,7 +114,7 @@ var _ = Describe("GitHubIDResolver", func() {
 
 	Describe("ResolveTeamSlug", func() {
 		It("resolves a known slug to its ID", func() {
-			resolver := &GitHubIDResolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"platform-team": 42}, rolesByName: map[string]int64{}}
+			resolver := &Resolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"platform-team": 42}, rolesByName: map[string]int64{}}
 			id, err := resolver.ResolveTeamSlug("platform-team")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(id).To(Equal(int64(42)))
@@ -131,7 +131,7 @@ var _ = Describe("GitHubIDResolver", func() {
 
 	Describe("ResolveRoleName", func() {
 		It("resolves a known role name to its ID", func() {
-			resolver := &GitHubIDResolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{}, rolesByName: map[string]int64{"maintain": 99}}
+			resolver := &Resolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{}, rolesByName: map[string]int64{"maintain": 99}}
 			id, err := resolver.ResolveRoleName("maintain")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(id).To(Equal(int64(99)))
@@ -148,7 +148,7 @@ var _ = Describe("GitHubIDResolver", func() {
 
 	Describe("ResolveCscBypassReviewers", func() {
 		It("resolves TEAM and ROLE reviewer names to IDs", func() {
-			resolver := &GitHubIDResolver{
+			resolver := &Resolver{
 				appsBySlug:  map[string]*int64{},
 				teamsBySlug: map[string]int64{"security-team": 42},
 				rolesByName: map[string]int64{"admin": 99},
@@ -224,7 +224,7 @@ var _ = Describe("GitHubIDResolver", func() {
 
 	Describe("ResolveRuleset", func() {
 		var (
-			resolver     *GitHubIDResolver
+			resolver     *Resolver
 			rulesetInput v1alpha1.RulesetPreset
 			result       v1alpha1.RulesetPreset
 			err          error
@@ -280,7 +280,7 @@ var _ = Describe("GitHubIDResolver", func() {
 				rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 					{ActorSlug: new("engineering-team"), ActorType: "Team", BypassMode: "always"},
 				}
-				resolver = &GitHubIDResolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"engineering-team": 98765}, rolesByName: map[string]int64{}}
+				resolver = &Resolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"engineering-team": 98765}, rolesByName: map[string]int64{}}
 			})
 
 			It("resolves the team slug to ActorID", func() {
@@ -325,7 +325,7 @@ var _ = Describe("GitHubIDResolver", func() {
 				rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 					{ActorSlug: new("github-actions"), ActorType: "Integration", BypassMode: "pull_request"},
 				}
-				resolver = &GitHubIDResolver{
+				resolver = &Resolver{
 					appsBySlug:  map[string]*int64{"github-actions": new(int64(15368)), "other-app": new(int64(99999))},
 					teamsBySlug: map[string]int64{},
 					rolesByName: map[string]int64{},
@@ -345,7 +345,7 @@ var _ = Describe("GitHubIDResolver", func() {
 				rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 					{ActorSlug: new("nonexistent-app"), ActorType: "Integration", BypassMode: "always"},
 				}
-				resolver = &GitHubIDResolver{appsBySlug: map[string]*int64{"github-actions": new(int64(15368))}, teamsBySlug: map[string]int64{}, rolesByName: map[string]int64{}}
+				resolver = &Resolver{appsBySlug: map[string]*int64{"github-actions": new(int64(15368))}, teamsBySlug: map[string]int64{}, rolesByName: map[string]int64{}}
 			})
 
 			It("returns an error naming the missing slug", func() {
@@ -374,7 +374,7 @@ var _ = Describe("GitHubIDResolver", func() {
 				rulesetInput.Spec.BypassActors = []v1alpha1.RulesetBypassActor{
 					{ActorSlug: new("maintain"), ActorType: "RepositoryRole", BypassMode: "always"},
 				}
-				resolver = &GitHubIDResolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{}, rolesByName: map[string]int64{"maintain": 54321}}
+				resolver = &Resolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{}, rolesByName: map[string]int64{"maintain": 54321}}
 			})
 
 			It("resolves the role slug to ActorID", func() {
@@ -539,7 +539,7 @@ var _ = Describe("GitHubIDResolver", func() {
 					{ActorSlug: new("renovate"), ActorType: "Integration", BypassMode: "always"},
 					{ActorSlug: new("admin"), ActorType: "RepositoryRole", BypassMode: "always"},
 				}
-				resolver = &GitHubIDResolver{
+				resolver = &Resolver{
 					appsBySlug:  map[string]*int64{"renovate": new(int64(29))},
 					teamsBySlug: map[string]int64{"security-team": 222},
 					rolesByName: map[string]int64{"admin": 333},
@@ -569,7 +569,7 @@ var _ = Describe("GitHubIDResolver", func() {
 					{ActorSlug: new("dependabot"), ActorType: "Integration", BypassMode: "always"},
 					{ActorType: "EnterpriseOwner", BypassMode: "always"},
 				}
-				resolver = &GitHubIDResolver{
+				resolver = &Resolver{
 					appsBySlug:  map[string]*int64{"dependabot": new(int64(29110))},
 					teamsBySlug: map[string]int64{"platform-team": 444},
 					rolesByName: map[string]int64{},
@@ -616,7 +616,7 @@ var _ = Describe("GitHubIDResolver", func() {
 					Checks:       []v1alpha1.StatusCheck{{Context: "ci/build", AppSlug: new("circleci")}},
 					StrictPolicy: new(false),
 				}
-				resolver = &GitHubIDResolver{
+				resolver = &Resolver{
 					appsBySlug:  map[string]*int64{"circleci": new(int64(12345)), "jenkins": new(int64(67890))},
 					teamsBySlug: map[string]int64{},
 					rolesByName: map[string]int64{},
@@ -635,7 +635,7 @@ var _ = Describe("GitHubIDResolver", func() {
 				rulesetInput.Spec.Rules.RequiredStatusChecks = &v1alpha1.RequiredStatusChecks{
 					Checks: []v1alpha1.StatusCheck{{Context: "ci/build", AppSlug: new("nonexistent-ci")}},
 				}
-				resolver = &GitHubIDResolver{appsBySlug: map[string]*int64{"other-app": new(int64(100))}, teamsBySlug: map[string]int64{}, rolesByName: map[string]int64{}}
+				resolver = &Resolver{appsBySlug: map[string]*int64{"other-app": new(int64(100))}, teamsBySlug: map[string]int64{}, rolesByName: map[string]int64{}}
 			})
 
 			It("sets IntegrationID to nil (accept any check source)", func() {
@@ -669,7 +669,7 @@ var _ = Describe("GitHubIDResolver", func() {
 					},
 					StrictPolicy: new(true),
 				}
-				resolver = &GitHubIDResolver{
+				resolver = &Resolver{
 					appsBySlug:  map[string]*int64{"github-actions": new(int64(15368)), "snyk": new(int64(24680))},
 					teamsBySlug: map[string]int64{},
 					rolesByName: map[string]int64{},
@@ -695,7 +695,7 @@ var _ = Describe("GitHubIDResolver", func() {
 				rulesetInput.Spec.Rules.RequiredStatusChecks = &v1alpha1.RequiredStatusChecks{
 					Checks: []v1alpha1.StatusCheck{{Context: "ci/build", AppSlug: new("github-actions")}},
 				}
-				resolver = &GitHubIDResolver{
+				resolver = &Resolver{
 					appsBySlug:  map[string]*int64{"dependabot": new(int64(29110)), "github-actions": new(int64(15368))},
 					teamsBySlug: map[string]int64{},
 					rolesByName: map[string]int64{},
@@ -770,7 +770,7 @@ var _ = Describe("GitHubIDResolver", func() {
 						},
 					},
 				}
-				resolver = &GitHubIDResolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"platform-team": 99}, rolesByName: map[string]int64{}}
+				resolver = &Resolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"platform-team": 99}, rolesByName: map[string]int64{}}
 			})
 
 			It("resolves the slug to an ID and preserves other fields", func() {
@@ -823,7 +823,7 @@ var _ = Describe("GitHubIDResolver", func() {
 						{Reviewer: v1alpha1.PullRequestReviewerEntity{Slug: new("security-team"), Type: "Team"}},
 					},
 				}
-				resolver = &GitHubIDResolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"backend-team": 20, "security-team": 30}, rolesByName: map[string]int64{}}
+				resolver = &Resolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"backend-team": 20, "security-team": 30}, rolesByName: map[string]int64{}}
 			})
 
 			It("resolves slug-based reviewers and preserves ID-based ones", func() {
@@ -844,7 +844,7 @@ var _ = Describe("GitHubIDResolver", func() {
 						{Reviewer: v1alpha1.PullRequestReviewerEntity{Slug: new("security-team"), Type: "Team"}},
 					},
 				}
-				resolver = &GitHubIDResolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"platform-team": 11, "security-team": 22}, rolesByName: map[string]int64{}}
+				resolver = &Resolver{appsBySlug: map[string]*int64{}, teamsBySlug: map[string]int64{"platform-team": 11, "security-team": 22}, rolesByName: map[string]int64{}}
 			})
 
 			It("resolves both bypass actor and reviewer slugs independently", func() {

@@ -1,39 +1,31 @@
-package reconciler
+package rulesets
 
 import (
 	"context"
 	"errors"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/Interhyp/git-hubby/internal/conditions"
-	"github.com/go-logr/logr/funcr"
+	"github.com/Interhyp/git-hubby/test/testutil"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-var _ = Describe("CollectDesiredRulesets", func() {
+var _ = Describe("Collect", func() {
 	const namespace = "test-ns"
 
 	var (
 		ctx        context.Context
-		k8sClient  client.Client
+		logLines   func() []string
 		presets    []client.Object
 		presetRefs []corev1.LocalObjectReference
 		inline     []v1alpha1.RulesetSpec
-		result     []DesiredRuleset
+		result     []Desired
 		err        error
-		logLines   []string
-		logMu      sync.Mutex
 	)
 
 	newSpec := func(name string, enforcement v1alpha1.RulesetEnforcement) v1alpha1.RulesetSpec {
@@ -62,36 +54,25 @@ var _ = Describe("CollectDesiredRulesets", func() {
 		}
 	}
 
-	BeforeEach(func() {
-		logLines = nil
-		logger := funcr.New(func(prefix, args string) {
-			logMu.Lock()
-			defer logMu.Unlock()
-			logLines = append(logLines, args)
-		}, funcr.Options{Verbosity: 1})
-		ctx = logPkg.IntoContext(context.Background(), logger)
-		presets = nil
-		presetRefs = nil
-		inline = nil
-	})
-
-	JustBeforeEach(func() {
-		scheme := runtime.NewScheme()
-		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
-		k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(presets...).Build()
-		result, err = CollectDesiredRulesets(ctx, k8sClient, namespace, presetRefs, inline)
-	})
-
 	logContains := func(s string) bool {
-		logMu.Lock()
-		defer logMu.Unlock()
-		for _, l := range logLines {
+		for _, l := range logLines() {
 			if strings.Contains(l, s) {
 				return true
 			}
 		}
 		return false
 	}
+
+	BeforeEach(func() {
+		ctx, logLines = testutil.CapturingContext()
+		presets = nil
+		presetRefs = nil
+		inline = nil
+	})
+
+	JustBeforeEach(func() {
+		result, err = Collect(ctx, testutil.NewFakeClient(presets...), namespace, presetRefs, inline)
+	})
 
 	Context("with presets only", func() {
 		BeforeEach(func() {
@@ -175,10 +156,10 @@ var _ = Describe("CollectDesiredRulesets", func() {
 			inline = []v1alpha1.RulesetSpec{newSpec("shared", "evaluate")}
 		})
 
-		It("returns a RulesetConflictError naming both sources", func() {
+		It("returns a ConflictError naming both sources", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(result).To(BeNil())
-			var conflictErr *RulesetConflictError
+			var conflictErr *ConflictError
 			Expect(errors.As(err, &conflictErr)).To(BeTrue())
 			Expect(conflictErr.Name).To(Equal("shared"))
 			Expect(conflictErr.Sources).To(ConsistOf("rulesetPreset/preset-a", "inline[0]"))
@@ -200,8 +181,8 @@ var _ = Describe("CollectDesiredRulesets", func() {
 			presetRefs = []corev1.LocalObjectReference{{Name: "preset-a"}, {Name: "preset-b"}}
 		})
 
-		It("returns a RulesetConflictError naming both presets", func() {
-			var conflictErr *RulesetConflictError
+		It("returns a ConflictError naming both presets", func() {
+			var conflictErr *ConflictError
 			Expect(errors.As(err, &conflictErr)).To(BeTrue())
 			Expect(conflictErr.Name).To(Equal("shared"))
 			Expect(conflictErr.Sources).To(ConsistOf("rulesetPreset/preset-a", "rulesetPreset/preset-b"))
@@ -252,22 +233,5 @@ var _ = Describe("CollectDesiredRulesets", func() {
 			Expect(inline[0].Rules.PullRequest.RequiredReviewers).To(HaveLen(1))
 			Expect(inline[0].Conditions.RefName.Include[0]).To(Equal("~DEFAULT_BRANCH"))
 		})
-	})
-})
-
-var _ = Describe("RulesetConflictError in status conditions", func() {
-	It("sets RulesetsSynced to False with the conflict error in the message", func() {
-		conflictErr := &RulesetConflictError{Name: "shared", Sources: []string{"rulesetPreset/preset-a", "inline[0]"}}
-		condition := conditionFromResult(reconciliationResult{
-			Condition:  conditions.TypeRulesetsSynced,
-			Error:      errors.Join(conflictErr),
-			FinishedAt: time.Now(),
-		})
-		Expect(condition.Type).To(Equal(string(conditions.TypeRulesetsSynced)))
-		Expect(condition.Status).To(Equal(metav1.ConditionFalse))
-		Expect(condition.Reason).To(Equal(conditions.ReasonSyncFailed))
-		Expect(condition.Message).To(ContainSubstring(`conflicting ruleset definitions for ruleset "shared"`))
-		Expect(condition.Message).To(ContainSubstring("rulesetPreset/preset-a"))
-		Expect(condition.Message).To(ContainSubstring("inline[0]"))
 	})
 })

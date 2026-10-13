@@ -135,7 +135,7 @@ func (o *GitHubOrgReconciler) BuildMetadataApplyConfig(lbls map[string]string, a
 
 func (o *GitHubOrgReconciler) BuildStatusApplyConfig() runtime.ApplyConfiguration {
 	status := ac.OrganizationStatus().
-		WithConditions(reconciler.ConditionsToApplyConfigs(*o.Kubernetes.Resource.GetConditions())...)
+		WithConditions(conditions.ToApplyConfigs(*o.Kubernetes.Resource.GetConditions())...)
 	if gens := o.Kubernetes.Resource.Status.ObservedSubResourceGenerations; gens != nil {
 		status.WithObservedSubResourceGenerations(gens)
 	}

@@ -1,4 +1,5 @@
-package reconciler
+// Package idresolver resolves GitHub slug/name references (teams, roles, apps) used in CRD specs to numeric GitHub IDs.
+package idresolver
 
 import (
 	"context"
@@ -9,12 +10,12 @@ import (
 	"github.com/google/go-github/v92/github"
 )
 
-// GitHubIDResolver resolves GitHub slug/name references to numeric IDs during reconciliation.
+// Resolver resolves GitHub slug/name references to numeric IDs during reconciliation.
 //
-// Use NewGitHubIDResolver to create a production instance: it pre-loads all GitHub App
+// Use New to create a production instance: it pre-loads all GitHub App
 // installations, org teams, and org roles with three bulk API calls, so that every
 // subsequent resolution is a lock-free in-memory map lookup with no further API calls.
-type GitHubIDResolver struct {
+type Resolver struct {
 	client  ghclient.GitHubClient
 	orgName string
 
@@ -24,8 +25,8 @@ type GitHubIDResolver struct {
 	rolesByName map[string]int64
 }
 
-func NewGitHubIDResolver(ctx context.Context, client ghclient.GitHubClient, orgName string) (*GitHubIDResolver, error) {
-	r := &GitHubIDResolver{client: client, orgName: orgName}
+func New(ctx context.Context, client ghclient.GitHubClient, orgName string) (*Resolver, error) {
+	r := &Resolver{client: client, orgName: orgName}
 	if err := r.loadLookUpMaps(ctx); err != nil {
 		return nil, err
 	}
@@ -35,7 +36,7 @@ func NewGitHubIDResolver(ctx context.Context, client ghclient.GitHubClient, orgN
 // loadLookUpMaps fetches teams, app installations, and org roles from GitHub and populates
 // the resolver's internal lookup maps. It uses a cache-enabled context so that
 // concurrent reconciliations for the same org share cached results.
-func (r *GitHubIDResolver) loadLookUpMaps(ctx context.Context) error {
+func (r *Resolver) loadLookUpMaps(ctx context.Context) error {
 	cacheCtx := ghclient.WithCache(ctx)
 
 	apps, err := r.client.GetGitHubAppsInstallations(cacheCtx, r.orgName)
@@ -79,7 +80,7 @@ func (r *GitHubIDResolver) loadLookUpMaps(ctx context.Context) error {
 // internal maps with fresh data from the API. Returns true if the refresh succeeded.
 // This is called automatically when a slug/name lookup fails, handling the case where
 // a newly created resource is not yet in the cached data.
-func (r *GitHubIDResolver) refreshMaps(ctx context.Context) bool {
+func (r *Resolver) refreshMaps(ctx context.Context) bool {
 	if r.client == nil {
 		return false
 	}
@@ -89,9 +90,9 @@ func (r *GitHubIDResolver) refreshMaps(ctx context.Context) bool {
 
 // resolveWorkflowRepositoryNames resolves RepositoryName fields in workflow rules to
 // their numeric IDs. This requires a live API call per unresolved repository and is
-// intentionally kept separate from GitHubIDResolver so that GitHubIDResolver remains a
+// intentionally kept separate from Resolver so that Resolver remains a
 // pure map-lookup type with no I/O dependency.
-func (r *GitHubIDResolver) resolveWorkflowRepositoryNames(ctx context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
+func (r *Resolver) resolveWorkflowRepositoryNames(ctx context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
 	if rs.Rules.Workflows == nil {
 		return rs, nil
 	}
@@ -111,7 +112,7 @@ func (r *GitHubIDResolver) resolveWorkflowRepositoryNames(ctx context.Context, r
 // ResolveRuleset resolves all slug/name references inside rs to numeric IDs.
 // If a lookup fails (e.g., a newly created team not yet in cache), the resolver
 // invalidates the client cache, refreshes its maps, and retries once.
-func (r *GitHubIDResolver) ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
+func (r *Resolver) ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
 	result, err := r.doResolveRuleset(ctx, rs)
 	if err != nil {
 		if r.refreshMaps(ctx) {
@@ -121,7 +122,7 @@ func (r *GitHubIDResolver) ResolveRuleset(ctx context.Context, rs v1alpha1.Rules
 	return result, err
 }
 
-func (r *GitHubIDResolver) doResolveRuleset(ctx context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
+func (r *Resolver) doResolveRuleset(ctx context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
 	var err error
 
 	rs, err = r.resolveBypassActors(rs)
@@ -147,7 +148,7 @@ func (r *GitHubIDResolver) doResolveRuleset(ctx context.Context, rs v1alpha1.Rul
 // ResolveCscBypassReviewers resolves ReviewerName fields in the BypassReviewers of a
 // CodeSecurityConfiguration to ReviewerId values.
 // If a lookup fails, the resolver invalidates the client cache, refreshes its maps, and retries once.
-func (r *GitHubIDResolver) ResolveCscBypassReviewers(ctx context.Context, csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error) {
+func (r *Resolver) ResolveCscBypassReviewers(ctx context.Context, csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error) {
 	result, err := r.doResolveCscBypassReviewers(csc)
 	if err != nil {
 		if r.refreshMaps(ctx) {
@@ -157,7 +158,7 @@ func (r *GitHubIDResolver) ResolveCscBypassReviewers(ctx context.Context, csc *v
 	return result, err
 }
 
-func (r *GitHubIDResolver) doResolveCscBypassReviewers(csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error) {
+func (r *Resolver) doResolveCscBypassReviewers(csc *v1alpha1.CodeSecurityConfiguration) (*v1alpha1.CodeSecurityConfiguration, error) {
 	if csc.Spec.SecretScanningDelegatedBypassOptions == nil {
 		return csc, nil
 	}
@@ -186,7 +187,7 @@ func (r *GitHubIDResolver) doResolveCscBypassReviewers(csc *v1alpha1.CodeSecurit
 }
 
 // ResolveTeamSlug resolves a team slug to its numeric ID from the pre-loaded map.
-func (r *GitHubIDResolver) ResolveTeamSlug(slug string) (int64, error) {
+func (r *Resolver) ResolveTeamSlug(slug string) (int64, error) {
 	id, ok := r.teamsBySlug[slug]
 	if !ok {
 		return 0, fmt.Errorf("team with slug %q not found in org %s", slug, r.orgName)
@@ -195,7 +196,7 @@ func (r *GitHubIDResolver) ResolveTeamSlug(slug string) (int64, error) {
 }
 
 // ResolveRoleName resolves an org role name to its numeric ID from the pre-loaded map.
-func (r *GitHubIDResolver) ResolveRoleName(name string) (int64, error) {
+func (r *Resolver) ResolveRoleName(name string) (int64, error) {
 	id, ok := r.rolesByName[name]
 	if !ok {
 		return 0, fmt.Errorf("org role with name %q not found in org %s", name, r.orgName)
@@ -205,7 +206,7 @@ func (r *GitHubIDResolver) ResolveRoleName(name string) (int64, error) {
 
 // resolveAppSlug resolves a GitHub App slug to its AppID from the pre-loaded map.
 // Returns nil, nil if not found (nil IntegrationID = accept any check source).
-func (r *GitHubIDResolver) resolveAppSlug(slug string) (*int64, error) {
+func (r *Resolver) resolveAppSlug(slug string) (*int64, error) {
 	id, ok := r.appsBySlug[slug]
 	if !ok {
 		return nil, fmt.Errorf("no GitHub App with slug %s installed on org %s", slug, r.orgName)
@@ -213,7 +214,7 @@ func (r *GitHubIDResolver) resolveAppSlug(slug string) (*int64, error) {
 	return id, nil
 }
 
-func (r *GitHubIDResolver) resolveBypassActors(rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
+func (r *Resolver) resolveBypassActors(rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
 	result := make([]v1alpha1.RulesetBypassActor, 0, len(rs.BypassActors))
 	for _, bypassActor := range rs.BypassActors {
 		actorType := github.BypassActorType(bypassActor.ActorType)
@@ -264,7 +265,7 @@ func (r *GitHubIDResolver) resolveBypassActors(rs v1alpha1.RulesetSpec) (v1alpha
 
 // resolveStatusCheckAppSlugs resolves AppSlug references in required-status-check rules.
 // Errors are silently ignored: a nil IntegrationID means "accept any check source".
-func (r *GitHubIDResolver) resolveStatusCheckAppSlugs(rs v1alpha1.RulesetSpec) v1alpha1.RulesetSpec {
+func (r *Resolver) resolveStatusCheckAppSlugs(rs v1alpha1.RulesetSpec) v1alpha1.RulesetSpec {
 	if rs.Rules.RequiredStatusChecks == nil {
 		return rs
 	}
@@ -280,7 +281,7 @@ func (r *GitHubIDResolver) resolveStatusCheckAppSlugs(rs v1alpha1.RulesetSpec) v
 	return rs
 }
 
-func (r *GitHubIDResolver) resolveRequiredReviewerSlugs(rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
+func (r *Resolver) resolveRequiredReviewerSlugs(rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error) {
 	if rs.Rules.PullRequest == nil {
 		return rs, nil
 	}

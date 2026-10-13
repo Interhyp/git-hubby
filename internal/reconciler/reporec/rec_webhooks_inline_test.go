@@ -228,7 +228,7 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 		})
 
 		It("returns a conflict error and makes no GitHub calls", func() {
-			var conflictErr *reconciler.WebhookConflictError
+			var conflictErr *WebhookConflictError
 			Expect(errors.As(err, &conflictErr)).To(BeTrue())
 			Expect(conflictErr.Sources).To(ConsistOf("webhookPreset/preset-1", "inline[0]"))
 			Expect(listCalled).To(BeFalse())

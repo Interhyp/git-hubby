@@ -154,7 +154,7 @@ var _ = Describe("ReconcileAutolinks with inline autolinks", func() {
 		})
 
 		It("returns a conflict error and makes no GitHub calls", func() {
-			var conflictErr *reconciler.AutolinkConflictError
+			var conflictErr *AutolinkConflictError
 			Expect(errors.As(err, &conflictErr)).To(BeTrue())
 			Expect(conflictErr.Sources).To(ConsistOf("autolinksPreset/preset-1[0]", "inline[0]"))
 			Expect(listCalled).To(BeFalse())

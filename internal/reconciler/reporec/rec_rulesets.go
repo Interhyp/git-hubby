@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/Interhyp/git-hubby/internal/mapper"
-	"github.com/Interhyp/git-hubby/internal/reconciler"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/rulesets"
 	"github.com/google/go-github/v92/github"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
@@ -32,96 +31,47 @@ func (r *GitHubRepoReconciler) reconcileRuleSets(ctx context.Context) error {
 	}
 
 	// Collect desired rulesets before any GitHub call so that conflicts prevent all ruleset changes.
-	desiredRulesets, err := reconciler.CollectDesiredRulesets(ctx, r.Kubernetes.Client, r.Kubernetes.Resource.Namespace,
+	desiredRulesets, err := rulesets.Collect(ctx, r.Kubernetes.Client, r.Kubernetes.Resource.Namespace,
 		r.Kubernetes.Resource.Spec.RulesetPresetList, r.Kubernetes.Resource.Spec.Rulesets)
 	if err != nil {
 		return err
 	}
 
-	existingRulesets, err := r.GitHub.Client.GetAllRepositoryRulesets(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, false)
-	if err != nil {
-		log.Error(err, "failed to get existing repository rulesets")
-		return fmt.Errorf("failed to get existing repository rulesets: %w", err)
+	owner, name := r.GitHub.Resource.Owner, r.GitHub.Resource.Name
+	target := rulesets.Target{
+		Scope: "repository",
+		List: func(ctx context.Context) ([]*github.RepositoryRuleset, error) {
+			return r.GitHub.Client.GetAllRepositoryRulesets(ctx, owner, name, false)
+		},
+		Get: func(ctx context.Context, id int64) (*github.RepositoryRuleset, error) {
+			return r.GitHub.Client.GetRepositoryRuleset(ctx, owner, name, id, false)
+		},
+		Create: r.createRuleset,
+		Update: r.updateRuleset,
+		Delete: r.deleteRuleset,
 	}
-
-	rulesetsToDelete := make(map[string]*github.RepositoryRuleset)
-	existingRulesetsByName := make(map[string]*github.RepositoryRuleset)
-	for _, ruleset := range existingRulesets {
-		if ruleset.Name != "" && ruleset.ID != nil {
-			existingRulesetsByName[ruleset.Name] = ruleset
-			rulesetsToDelete[ruleset.Name] = ruleset
-		}
-	}
-
-	for _, desired := range desiredRulesets {
-		log := log.WithValues("rulesetSource", desired.Source, "ruleset", desired.Spec.Name)
-		log.V(1).Info("Processing ruleset")
-
-		if desired.Spec.Target == "repository" {
+	opts := rulesets.SyncOptions{
+		Resolver:                     r.NameResolver,
+		EnableRequiredReviewersRules: r.Features.EnableRequiredReviewersRules,
+		Skip: func(ctx context.Context, desired rulesets.Desired) bool {
+			if desired.Spec.Target != "repository" {
+				return false
+			}
 			// target "repository" is only allowed for Organization-level rulesets. We skip these here as documented in the API.
-			log.V(1).Info("Skipping ruleset with target 'repository' as it is only supported at organization level")
-			continue
-		}
-
-		// Strip spec fields for disabled beta features before any processing.
-		if !r.Features.EnableRequiredReviewersRules && desired.Spec.Rules.PullRequest != nil {
-			desired.Spec.Rules.PullRequest.RequiredReviewers = nil
-		}
-
-		desired.Spec, err = r.NameResolver.ResolveRuleset(ctx, desired.Spec)
-		if err != nil {
-			log.Error(err, "failed to resolve ruleset slugs to IDs")
-			return fmt.Errorf("failed to resolve slugs in ruleset %s (%s) to IDs: %w", desired.Spec.Name, desired.Source, err)
-		}
-
-		githubRuleset, err := mapper.RulesetSpecToGithubRuleset(desired.Spec)
-		if err != nil {
-			log.Error(err, "failed to convert ruleset to GitHub ruleset")
-			return fmt.Errorf("failed to convert ruleset %s (%s) to GitHub ruleset: %w", desired.Spec.Name, desired.Source, err)
-		}
-
-		// Check if the ruleset already exists
-		if existingRuleset, exists := existingRulesetsByName[desired.Spec.Name]; exists {
-			// Skip if the existing ruleset has no ID
-			if existingRuleset.ID == nil {
-				log.Info("WARNING: Existing ruleset has nil ID, skipping")
-				continue
-			}
-			fullRuleset, getErr := r.GitHub.Client.GetRepositoryRuleset(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, *existingRuleset.ID, false)
-			if getErr != nil {
-				log.Error(getErr, "failed to get existing repository ruleset")
-				return fmt.Errorf("failed to get existing repository ruleset %s: %w", desired.Spec.Name, getErr)
-			}
-			delete(rulesetsToDelete, desired.Spec.Name)
-			if mapper.RulesetsDiffer(desired.Spec, *fullRuleset) {
-				rulesetID := fullRuleset.ID
-				if rulesetID == nil {
-					continue
-				}
-				if err := r.updateRuleset(ctx, *rulesetID, githubRuleset, desired); err != nil {
-					return err
-				}
-			} else {
-				log.V(1).Info("Ruleset already matches desired state, skipping")
-			}
-		} else {
-			if err := r.createRuleset(ctx, githubRuleset, desired); err != nil {
-				return err
-			}
-		}
+			logPkg.FromContext(ctx).V(1).Info("Skipping ruleset with target 'repository' as it is only supported at organization level",
+				"rulesetSource", desired.Source, "ruleset", desired.Spec.Name)
+			return true
+		},
 	}
-
-	for _, ruleset := range rulesetsToDelete {
-		if err := r.deleteRuleset(ctx, ruleset); err != nil {
-			return err
-		}
+	if err := rulesets.Sync(ctx, target, desiredRulesets, opts); err != nil {
+		return err
 	}
 
 	log.V(1).Info("Successfully reconciled repository rule sets on GitHub")
 	return nil
 }
 
-func (r *GitHubRepoReconciler) updateRuleset(ctx context.Context, rulesetID int64, githubRuleset *github.RepositoryRuleset, desired reconciler.DesiredRuleset) error {
+func (r *GitHubRepoReconciler) updateRuleset(ctx context.Context, rulesetID int64, githubRuleset *github.RepositoryRuleset, desired rulesets.Desired) error {
 	log := logPkg.FromContext(ctx).WithValues("rulesetSource", desired.Source, "ruleSet", githubRuleset.Name)
 	log.V(1).Info("Updating existing ruleset")
 	_, err := r.GitHub.Client.UpdateRepositoryRuleset(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, rulesetID, githubRuleset)
@@ -133,7 +83,7 @@ func (r *GitHubRepoReconciler) updateRuleset(ctx context.Context, rulesetID int6
 	return nil
 }
 
-func (r *GitHubRepoReconciler) createRuleset(ctx context.Context, githubRuleset *github.RepositoryRuleset, desired reconciler.DesiredRuleset) error {
+func (r *GitHubRepoReconciler) createRuleset(ctx context.Context, githubRuleset *github.RepositoryRuleset, desired rulesets.Desired) error {
 	log := logPkg.FromContext(ctx).WithValues("rulesetSource", desired.Source, "ruleSet", githubRuleset.Name)
 	log.V(1).Info("Creating new ruleset")
 	_, err := r.GitHub.Client.CreateRepositoryRuleset(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, githubRuleset)
@@ -145,12 +95,12 @@ func (r *GitHubRepoReconciler) createRuleset(ctx context.Context, githubRuleset 
 	return nil
 }
 
-func (r *GitHubRepoReconciler) deleteRuleset(ctx context.Context, ruleset *github.RepositoryRuleset) error {
-	log := logPkg.FromContext(ctx).WithValues("ruleset", ruleset.Name)
+func (r *GitHubRepoReconciler) deleteRuleset(ctx context.Context, rulesetID int64, rulesetName string) error {
+	log := logPkg.FromContext(ctx).WithValues("ruleset", rulesetName)
 	log.V(1).Info("Deleting unused ruleset")
-	if err := r.GitHub.Client.DeleteRepositoryRuleset(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, *ruleset.ID); err != nil {
+	if err := r.GitHub.Client.DeleteRepositoryRuleset(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, rulesetID); err != nil {
 		log.Error(err, "failed to delete repository ruleset")
-		return fmt.Errorf("failed to delete repository ruleset %s: %w", ruleset.Name, err)
+		return fmt.Errorf("failed to delete repository ruleset %s: %w", rulesetName, err)
 	}
 	log.V(1).Info("Ruleset deleted successfully")
 	return nil

@@ -119,7 +119,7 @@ func (t *GitHubTeamReconciler) BuildMetadataApplyConfig(lbls map[string]string, 
 
 func (t *GitHubTeamReconciler) BuildStatusApplyConfig() runtime.ApplyConfiguration {
 	status := ac.TeamStatus().
-		WithConditions(reconciler.ConditionsToApplyConfigs(*t.Kubernetes.Resource.GetConditions())...)
+		WithConditions(conditions.ToApplyConfigs(*t.Kubernetes.Resource.GetConditions())...)
 	if slug := t.Kubernetes.Resource.Status.Slug; slug != nil {
 		status.WithSlug(*slug)
 	}

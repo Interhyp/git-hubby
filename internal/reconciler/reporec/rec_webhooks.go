@@ -9,24 +9,55 @@ import (
 	"strings"
 	"text/template"
 
-	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
+	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
-	"github.com/Interhyp/git-hubby/internal/reconciler"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/merge"
 	"github.com/google/go-github/v92/github"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+// DesiredWebhook is a webhook that should exist on GitHub, together with the source it was defined in.
+type DesiredWebhook struct {
+	// Source describes where the webhook was defined, e.g. "webhookPreset/<name>" or "inline[<idx>]".
+	Source string
+	// Inline is true if the webhook was defined inline in the Repository spec.
+	Inline bool
+	// Spec is a deep copy of the webhook definition (payload URL templated, secret value loaded).
+	// It must never be written back to a Kubernetes object.
+	Spec v1alpha1.WebhookSpec
+	// Hash is the identity of the webhook, see mapper.HashWebhookConfig.
+	Hash string
+}
+
+// WebhookConflictError is returned when multiple sources define a webhook with the same identity
+// (payload URL, content type and events) but different content.
+type WebhookConflictError struct {
+	URL     string
+	Hash    string
+	Sources []string
+}
+
+func (e *WebhookConflictError) Error() string {
+	return fmt.Sprintf("conflicting webhook definitions for payload URL %q in sources [%s]", e.URL, strings.Join(e.Sources, ", "))
+}
+
+// WebhookPresetSource returns the source description of a webhook defined by a WebhookPreset.
+func WebhookPresetSource(name string) string {
+	return "webhookPreset/" + name
+}
+
 func (r *GitHubRepoReconciler) reconcileWebhooks(ctx context.Context) error {
-	log := logf.FromContext(ctx,
+	log := logPkg.FromContext(ctx,
 		"function", "applyWebhookPresets",
 	)
 	log.V(1).Info("Reconciling repository webhooks on GitHub")
 
 	// Collect ignore rules and desired webhooks first, so that misconfigurations and conflicts are detected before
 	// any webhook is changed on GitHub.
-	ignoreRegexes, err := reconciler.CollectWebhookIgnoreRegexes(ctx, r.Kubernetes.Client, r.Kubernetes.Resource.Namespace,
+	ignoreRegexes, err := collectWebhookIgnoreRegexes(ctx, r.Kubernetes.Client, r.Kubernetes.Resource.Namespace,
 		r.Kubernetes.Resource.Spec.WebhookIgnorePresetsList, r.Kubernetes.Resource.Spec.WebhookIgnores)
 	if err != nil {
 		log.Error(err, "Failed to collect webhook ignore rules")
@@ -79,9 +110,9 @@ func (r *GitHubRepoReconciler) reconcileWebhooks(ctx context.Context) error {
 	}
 
 	// desiredWebhooks is the total set of webhooks we want to have
-	desiredWebhooks := make(map[string]*reconciler.DesiredWebhook, len(desired))
+	desiredWebhooks := make(map[string]*DesiredWebhook, len(desired))
 	// hooksToAdd will contain the webhooks that need to be created or updated
-	hooksToAdd := make(map[string]*reconciler.DesiredWebhook)
+	hooksToAdd := make(map[string]*DesiredWebhook)
 
 	for i := range desired {
 		d := &desired[i]
@@ -124,28 +155,28 @@ func (r *GitHubRepoReconciler) reconcileWebhooks(ctx context.Context) error {
 
 // collectDesiredWebhooks returns the union of the webhooks referenced via WebhookPresetList and the inline webhooks.
 // All specs are deep copies with templated payload URLs and loaded secrets; they are never written back to Kubernetes.
-// Duplicates are resolved via reconciler.DedupeDesiredWebhooks before secrets are loaded.
-func (r *GitHubRepoReconciler) collectDesiredWebhooks(ctx context.Context) ([]reconciler.DesiredWebhook, error) {
-	log := logf.FromContext(ctx).WithValues(
+// Duplicates are resolved via dedupeDesiredWebhooks before secrets are loaded.
+func (r *GitHubRepoReconciler) collectDesiredWebhooks(ctx context.Context) ([]DesiredWebhook, error) {
+	log := logPkg.FromContext(ctx).WithValues(
 		"function", "collectDesiredWebhooks",
 	)
 	repo := r.Kubernetes.Resource
 
-	candidates := make([]reconciler.DesiredWebhook, 0, len(repo.Spec.WebhookPresetList)+len(repo.Spec.Webhooks))
+	candidates := make([]DesiredWebhook, 0, len(repo.Spec.WebhookPresetList)+len(repo.Spec.Webhooks))
 	for _, wp := range repo.Spec.WebhookPresetList {
-		webhookPreset := &githubv1alpha1.WebhookPreset{}
+		webhookPreset := &v1alpha1.WebhookPreset{}
 		if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{Name: wp.Name, Namespace: repo.Namespace}, webhookPreset); err != nil {
 			log.Error(err, "unable to get webhook preset", "preset", wp.Name)
 			return nil, fmt.Errorf("failed to get webhook preset %s: %w", wp.Name, err)
 		}
-		candidates = append(candidates, reconciler.DesiredWebhook{
-			Source: reconciler.WebhookPresetSource(wp.Name),
+		candidates = append(candidates, DesiredWebhook{
+			Source: WebhookPresetSource(wp.Name),
 			Spec:   *webhookPreset.Spec.DeepCopy(),
 		})
 	}
 	for i := range repo.Spec.Webhooks {
-		candidates = append(candidates, reconciler.DesiredWebhook{
-			Source: reconciler.InlineSource(i),
+		candidates = append(candidates, DesiredWebhook{
+			Source: merge.InlineSource(i),
 			Inline: true,
 			Spec:   *repo.Spec.Webhooks[i].DeepCopy(),
 		})
@@ -160,7 +191,7 @@ func (r *GitHubRepoReconciler) collectDesiredWebhooks(ctx context.Context) ([]re
 		c.Hash = mapper.HashWebhookConfig(c.Spec.PayloadURL, c.Spec.ContentType, c.Spec.Events)
 	}
 
-	desired, err := reconciler.DedupeDesiredWebhooks(ctx, candidates)
+	desired, err := dedupeDesiredWebhooks(ctx, candidates)
 	if err != nil {
 		return nil, err
 	}
@@ -173,9 +204,43 @@ func (r *GitHubRepoReconciler) collectDesiredWebhooks(ctx context.Context) ([]re
 	return desired, nil
 }
 
+// dedupeDesiredWebhooks de-duplicates webhooks by their Hash. The Hash must already be set and the payload URL
+// templated. It must be called before secrets are loaded so that plaintext secrets loaded from Kubernetes Secrets
+// are never compared or logged.
+//
+//   - identical definitions: a warning is logged and the webhook is returned only once.
+//   - differing definitions: a WebhookConflictError is returned for every conflicting webhook (joined via errors.Join).
+func dedupeDesiredWebhooks(ctx context.Context, candidates []DesiredWebhook) ([]DesiredWebhook, error) {
+	log := logPkg.FromContext(ctx)
+
+	urls := make(map[string]string, len(candidates))
+	for _, c := range candidates {
+		urls[c.Hash] = c.Spec.PayloadURL
+	}
+
+	result, conflicts := merge.Dedupe(candidates,
+		func(d DesiredWebhook) string { return d.Hash },
+		func(a, b DesiredWebhook) bool { return equality.Semantic.DeepEqual(a.Spec, b.Spec) },
+		func(d DesiredWebhook) string { return d.Source },
+		func(kept, dup DesiredWebhook) {
+			log.Info("WARNING: duplicate webhook definition with identical content, applying once",
+				"payloadUrl", dup.Spec.PayloadURL, "sources", []string{kept.Source, dup.Source})
+		})
+	if len(conflicts) > 0 {
+		errs := make([]error, 0, len(conflicts))
+		for _, c := range conflicts {
+			conflictErr := &WebhookConflictError{URL: urls[c.Key], Hash: c.Key, Sources: c.Sources}
+			log.Error(conflictErr, "conflicting webhook definitions", "payloadUrl", conflictErr.URL, "sources", c.Sources)
+			errs = append(errs, conflictErr)
+		}
+		return nil, errors.Join(errs...)
+	}
+	return result, nil
+}
+
 // cleanupUnusedWebhooks removes webhooks that are no longer in the desired state
 func (r *GitHubRepoReconciler) cleanupUnusedWebhooks(ctx context.Context, hooksToRemove map[string]*github.Hook) error {
-	log := logf.FromContext(ctx).WithValues(
+	log := logPkg.FromContext(ctx).WithValues(
 		"function", "cleanupUnusedWebhooks",
 	)
 
@@ -194,8 +259,8 @@ func (r *GitHubRepoReconciler) cleanupUnusedWebhooks(ctx context.Context, hooksT
 	return nil
 }
 
-func (r *GitHubRepoReconciler) createMissingWebhooks(ctx context.Context, hooksToAdd map[string]*reconciler.DesiredWebhook) error {
-	log := logf.FromContext(ctx).WithValues(
+func (r *GitHubRepoReconciler) createMissingWebhooks(ctx context.Context, hooksToAdd map[string]*DesiredWebhook) error {
+	log := logPkg.FromContext(ctx).WithValues(
 		"function", "createMissingWebhooks",
 	)
 
@@ -219,8 +284,8 @@ func (r *GitHubRepoReconciler) createMissingWebhooks(ctx context.Context, hooksT
 
 // templatePayloadURL renders Go template placeholders in the payload URL of the given spec against the GitHub
 // repository. The spec is modified in place, so callers must pass a copy.
-func (r *GitHubRepoReconciler) templatePayloadURL(ctx context.Context, spec *githubv1alpha1.WebhookSpec) error {
-	log := logf.FromContext(ctx).WithValues(
+func (r *GitHubRepoReconciler) templatePayloadURL(ctx context.Context, spec *v1alpha1.WebhookSpec) error {
+	log := logPkg.FromContext(ctx).WithValues(
 		"function", "templatePayloadURL",
 		"payloadUrl", spec.PayloadURL,
 	)
@@ -249,18 +314,18 @@ func (r *GitHubRepoReconciler) templatePayloadURL(ctx context.Context, spec *git
 	return nil
 }
 
-func (r *GitHubRepoReconciler) updateWebhooksStatus(ctx context.Context, allWebhooks map[string]*reconciler.DesiredWebhook) error {
-	log := logf.FromContext(ctx).WithValues(
+func (r *GitHubRepoReconciler) updateWebhooksStatus(ctx context.Context, allWebhooks map[string]*DesiredWebhook) error {
+	log := logPkg.FromContext(ctx).WithValues(
 		"function", "updateWebhooksStatus",
 	)
 
-	r.Kubernetes.Resource.Status.Webhooks = make(map[string]githubv1alpha1.WebhookStatus)
+	r.Kubernetes.Resource.Status.Webhooks = make(map[string]v1alpha1.WebhookStatus)
 	for hash, desired := range allWebhooks {
 		if desired == nil {
 			log.Info("WARNING: Skipping nil webhook", "hash", hash)
 			continue
 		}
-		r.Kubernetes.Resource.Status.Webhooks[hash] = githubv1alpha1.WebhookStatus{
+		r.Kubernetes.Resource.Status.Webhooks[hash] = v1alpha1.WebhookStatus{
 			SecretHash: desired.Spec.GetSecretValueHash(),
 		}
 	}
@@ -283,8 +348,8 @@ func isIgnoredHook(hook *github.Hook, ignoreRegexes []*regexp.Regexp) bool {
 
 // loadWebhookSecret loads the secret value referenced by desired.Spec.Secret into desired.Spec.SecretValue.
 // Inline webhooks may only reference secrets in the namespace of the Repository.
-func (r *GitHubRepoReconciler) loadWebhookSecret(ctx context.Context, desired *reconciler.DesiredWebhook) error {
-	log := logf.FromContext(ctx).WithValues(
+func (r *GitHubRepoReconciler) loadWebhookSecret(ctx context.Context, desired *DesiredWebhook) error {
+	log := logPkg.FromContext(ctx).WithValues(
 		"function", "loadWebhookSecret",
 		"source", desired.Source,
 	)
@@ -320,4 +385,49 @@ func (r *GitHubRepoReconciler) loadWebhookSecret(ctx context.Context, desired *r
 	}
 	desired.Spec.SetSecretValue(string(tokenData))
 	return nil
+}
+
+// collectWebhookIgnoreRegexes returns the compiled union of the ignore regexes referenced via presetRefs and the
+// inline ignore rules. Entries without a regex are skipped, duplicate regexes are compiled only once.
+func collectWebhookIgnoreRegexes(ctx context.Context, k8sClient client.Client, namespace string,
+	presetRefs []corev1.LocalObjectReference, inline []v1alpha1.WebhookIgnoreSpec) ([]*regexp.Regexp, error) {
+	log := logPkg.FromContext(ctx)
+
+	type entry struct {
+		source string
+		spec   v1alpha1.WebhookIgnoreSpec
+	}
+	entries := make([]entry, 0, len(presetRefs)+len(inline))
+	for _, ref := range presetRefs {
+		var preset v1alpha1.WebhookIgnorePreset
+		if err := k8sClient.Get(ctx, client.ObjectKey{Name: ref.Name, Namespace: namespace}, &preset); err != nil {
+			log.Error(err, "unable to get webhook ignore preset", "preset", ref.Name)
+			return nil, fmt.Errorf("failed to get webhook ignore preset %s: %w", ref.Name, err)
+		}
+		entries = append(entries, entry{source: "webhookIgnorePreset/" + ref.Name, spec: preset.Spec})
+	}
+	for i, spec := range inline {
+		entries = append(entries, entry{source: merge.InlineSource(i), spec: spec})
+	}
+
+	seen := make(map[string]struct{}, len(entries))
+	result := make([]*regexp.Regexp, 0, len(entries))
+	for _, e := range entries {
+		if e.spec.IgnoreURLRegex == nil || *e.spec.IgnoreURLRegex == "" {
+			log.V(1).Info("Skipping webhook ignore rule without regex", "source", e.source)
+			continue
+		}
+		expr := *e.spec.IgnoreURLRegex
+		if _, ok := seen[expr]; ok {
+			continue
+		}
+		seen[expr] = struct{}{}
+		re, err := regexp.Compile(expr)
+		if err != nil {
+			log.Error(err, "unable to compile webhook ignore regex", "source", e.source)
+			return nil, fmt.Errorf("failed to compile webhook ignore regex of %s: %w", e.source, err)
+		}
+		result = append(result, re)
+	}
+	return result, nil
 }

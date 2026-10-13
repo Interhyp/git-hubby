@@ -1,51 +1,12 @@
-package reconciler
+package conditions
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("IsActionsDisabledForOrgSpec", func() {
-	It("returns true when EnabledRepositories is nil", func() {
-		org := &v1alpha1.Organization{}
-		Expect(IsActionsDisabledForOrgSpec(org)).To(BeTrue())
-	})
-
-	It("returns true when EnabledRepositories is \"none\"", func() {
-		none := "none"
-		org := &v1alpha1.Organization{
-			Spec: v1alpha1.OrganizationSpec{
-				ActionsSettings: v1alpha1.ActionsSettings{EnabledRepositories: &none},
-			},
-		}
-		Expect(IsActionsDisabledForOrgSpec(org)).To(BeTrue())
-	})
-
-	It("returns false when EnabledRepositories is \"all\"", func() {
-		all := "all"
-		org := &v1alpha1.Organization{
-			Spec: v1alpha1.OrganizationSpec{
-				ActionsSettings: v1alpha1.ActionsSettings{EnabledRepositories: &all},
-			},
-		}
-		Expect(IsActionsDisabledForOrgSpec(org)).To(BeFalse())
-	})
-
-	It("returns false when EnabledRepositories is \"selected\"", func() {
-		selected := "selected"
-		org := &v1alpha1.Organization{
-			Spec: v1alpha1.OrganizationSpec{
-				ActionsSettings: v1alpha1.ActionsSettings{EnabledRepositories: &selected},
-			},
-		}
-		Expect(IsActionsDisabledForOrgSpec(org)).To(BeFalse())
-	})
-})
-
-var _ = Describe("ConditionToApplyConfig", func() {
+var _ = Describe("ToApplyConfig", func() {
 	It("copies all fields from the source condition", func() {
 		t := metav1.Now()
 		c := metav1.Condition{
@@ -57,7 +18,7 @@ var _ = Describe("ConditionToApplyConfig", func() {
 			Message:            "all good",
 		}
 
-		result := ConditionToApplyConfig(c)
+		result := ToApplyConfig(c)
 
 		Expect(result).NotTo(BeNil())
 		Expect(*result.Type).To(Equal("Ready"))
@@ -69,10 +30,9 @@ var _ = Describe("ConditionToApplyConfig", func() {
 	})
 })
 
-var _ = Describe("ConditionsToApplyConfigs", func() {
+var _ = Describe("ToApplyConfigs", func() {
 	It("returns an empty slice for an empty input", func() {
-		result := ConditionsToApplyConfigs(nil)
-		Expect(result).To(BeEmpty())
+		Expect(ToApplyConfigs(nil)).To(BeEmpty())
 	})
 
 	It("converts every condition in the slice", func() {
@@ -81,7 +41,7 @@ var _ = Describe("ConditionsToApplyConfigs", func() {
 			{Type: "GitHubSynced", Status: metav1.ConditionFalse, Reason: "Error", Message: "boom"},
 		}
 
-		result := ConditionsToApplyConfigs(conditions)
+		result := ToApplyConfigs(conditions)
 
 		Expect(result).To(HaveLen(2))
 		Expect(*result[0].Type).To(Equal("Ready"))
@@ -97,7 +57,7 @@ var _ = Describe("ConditionsToApplyConfigs", func() {
 			{Type: "B", Status: metav1.ConditionFalse, Reason: "r"},
 			{Type: "C", Status: metav1.ConditionUnknown, Reason: "r"},
 		}
-		result := ConditionsToApplyConfigs(conditions)
+		result := ToApplyConfigs(conditions)
 		Expect(*result[0].Type).To(Equal("A"))
 		Expect(*result[1].Type).To(Equal("B"))
 		Expect(*result[2].Type).To(Equal("C"))

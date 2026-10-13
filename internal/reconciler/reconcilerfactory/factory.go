@@ -8,6 +8,7 @@ import (
 	"github.com/Interhyp/git-hubby/internal/config"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/idresolver"
 	"github.com/Interhyp/git-hubby/internal/reconciler/orgrec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/teamrec"
@@ -65,7 +66,7 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 		return nil, err
 	}
 
-	nameResolverOrg, err := reconciler.NewGitHubIDResolver(ctx, ghClient, org.GetLogin())
+	nameResolverOrg, err := idresolver.New(ctx, ghClient, org.GetLogin())
 	if err != nil {
 		log.Error(err, "Failed to warm name resolver for Organization", "organization", org.GetLogin())
 		return nil, err
@@ -128,7 +129,7 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 		return nil, err
 	}
 
-	nameResolverRepo, err := reconciler.NewGitHubIDResolver(ctx, ghClient, org.GetLogin())
+	nameResolverRepo, err := idresolver.New(ctx, ghClient, org.GetLogin())
 	if err != nil {
 		log.Error(err, "Failed to warm name resolver for Repository", "organization", org.GetLogin())
 		return nil, err
