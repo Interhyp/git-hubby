@@ -11,6 +11,7 @@ import (
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
+	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/google/go-github/v92/github"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -23,6 +24,20 @@ func (r *GitHubRepoReconciler) reconcileWebhooks(ctx context.Context) error {
 	)
 	log.V(1).Info("Reconciling repository webhooks on GitHub")
 
+	// Collect ignore rules and desired webhooks first, so that misconfigurations and conflicts are detected before
+	// any webhook is changed on GitHub.
+	ignoreRegexes, err := reconciler.CollectWebhookIgnoreRegexes(ctx, r.Kubernetes.Client, r.Kubernetes.Resource.Namespace,
+		r.Kubernetes.Resource.Spec.WebhookIgnorePresetsList, r.Kubernetes.Resource.Spec.WebhookIgnores)
+	if err != nil {
+		log.Error(err, "Failed to collect webhook ignore rules")
+		return err
+	}
+
+	desired, err := r.collectDesiredWebhooks(ctx)
+	if err != nil {
+		return err
+	}
+
 	// List existing webhooks
 	hooks, err := r.GitHub.Client.ListHooks(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, &github.ListOptions{})
 	if err != nil {
@@ -34,18 +49,12 @@ func (r *GitHubRepoReconciler) reconcileWebhooks(ctx context.Context) error {
 		return fmt.Errorf("failed to list webhooks: %w", err)
 	}
 
-	hooks, err = r.filterIgnoredHooks(ctx, hooks)
-	if err != nil {
-		log.Error(err, "Failed to filter webhooks")
-		return err
-	}
-
 	// existingHookMap is the total set of webhooks currently present in the repository
 	existingHookMap := make(map[string]*github.Hook)
 	// hooksToRemove includes webhooks that are present in the repository but not in the desired state
 	hooksToRemove := make(map[string]*github.Hook)
 	for _, hook := range hooks {
-		log = log.WithValues(
+		log := log.WithValues(
 			"hookID", hook.GetID(),
 		)
 		if hook.Config == nil || hook.ID == nil {
@@ -60,34 +69,25 @@ func (r *GitHubRepoReconciler) reconcileWebhooks(ctx context.Context) error {
 			log.Info("WARNING: Skipping webhook with missing ContentType")
 			continue
 		}
+		if isIgnoredHook(hook, ignoreRegexes) {
+			log.V(1).Info("Ignoring webhook matching an ignore rule")
+			continue
+		}
 		h := mapper.HashWebhookConfig(*hook.Config.URL, *hook.Config.ContentType, hook.Events)
 		existingHookMap[h] = hook
 		hooksToRemove[h] = hook
 	}
 
-	// desiredWebhooks is the total set of webhooks we want to have based on the presets
-	desiredWebhooks := make(map[string]*githubv1alpha1.WebhookPreset)
+	// desiredWebhooks is the total set of webhooks we want to have
+	desiredWebhooks := make(map[string]*reconciler.DesiredWebhook, len(desired))
 	// hooksToAdd will contain the webhooks that need to be created or updated
-	hooksToAdd := make(map[string]*githubv1alpha1.WebhookPreset)
+	hooksToAdd := make(map[string]*reconciler.DesiredWebhook)
 
-	for _, wp := range r.Kubernetes.Resource.Spec.WebhookPresetList {
-		webhookPreset := &githubv1alpha1.WebhookPreset{}
-		if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{Name: wp.Name, Namespace: r.Kubernetes.Resource.Namespace}, webhookPreset); err != nil {
-			log.Error(err, "unable to get webhook preset", "preset", wp.Name)
-			return fmt.Errorf("failed to get webhook preset %s: %w", wp.Name, err)
-		}
-		webhookPreset, err := r.templatePayloadURL(ctx, webhookPreset)
-		if err != nil {
-			log.Error(err, "failed to template webhook payload URL")
-			return fmt.Errorf("failed to template webhook payload URL: %w", err)
-		}
-		h := mapper.HashWebhookConfig(webhookPreset.Spec.PayloadURL, webhookPreset.Spec.ContentType, webhookPreset.Spec.Events)
-
-		if err := r.loadWebhookPresetSecret(ctx, wp, webhookPreset); err != nil {
-			return err
-		}
-		desiredWebhooks[h] = webhookPreset
-		wantSecretHash := webhookPreset.GetSecretValueHash()
+	for i := range desired {
+		d := &desired[i]
+		h := d.Hash
+		desiredWebhooks[h] = d
+		wantSecretHash := d.Spec.GetSecretValueHash()
 		_, exists := existingHookMap[h]
 		haveSecretHash := ""
 		existingStatus, ok := r.Kubernetes.Resource.Status.Webhooks[h]
@@ -96,11 +96,11 @@ func (r *GitHubRepoReconciler) reconcileWebhooks(ctx context.Context) error {
 		}
 
 		if exists && wantSecretHash == haveSecretHash {
-			log.V(1).Info("Webhook exists and secret is correct")
+			log.V(1).Info("Webhook exists and secret is correct", "source", d.Source)
 			delete(hooksToRemove, h)
 			continue
 		}
-		hooksToAdd[h] = webhookPreset
+		hooksToAdd[h] = d
 	}
 
 	if err := r.cleanupUnusedWebhooks(ctx, hooksToRemove); err != nil {
@@ -120,6 +120,57 @@ func (r *GitHubRepoReconciler) reconcileWebhooks(ctx context.Context) error {
 
 	log.V(1).Info("Successfully reconciled repository webhooks on GitHub")
 	return nil
+}
+
+// collectDesiredWebhooks returns the union of the webhooks referenced via WebhookPresetList and the inline webhooks.
+// All specs are deep copies with templated payload URLs and loaded secrets; they are never written back to Kubernetes.
+// Duplicates are resolved via reconciler.DedupeDesiredWebhooks before secrets are loaded.
+func (r *GitHubRepoReconciler) collectDesiredWebhooks(ctx context.Context) ([]reconciler.DesiredWebhook, error) {
+	log := logf.FromContext(ctx).WithValues(
+		"function", "collectDesiredWebhooks",
+	)
+	repo := r.Kubernetes.Resource
+
+	candidates := make([]reconciler.DesiredWebhook, 0, len(repo.Spec.WebhookPresetList)+len(repo.Spec.Webhooks))
+	for _, wp := range repo.Spec.WebhookPresetList {
+		webhookPreset := &githubv1alpha1.WebhookPreset{}
+		if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{Name: wp.Name, Namespace: repo.Namespace}, webhookPreset); err != nil {
+			log.Error(err, "unable to get webhook preset", "preset", wp.Name)
+			return nil, fmt.Errorf("failed to get webhook preset %s: %w", wp.Name, err)
+		}
+		candidates = append(candidates, reconciler.DesiredWebhook{
+			Source: reconciler.WebhookPresetSource(wp.Name),
+			Spec:   *webhookPreset.Spec.DeepCopy(),
+		})
+	}
+	for i := range repo.Spec.Webhooks {
+		candidates = append(candidates, reconciler.DesiredWebhook{
+			Source: reconciler.InlineSource(i),
+			Inline: true,
+			Spec:   *repo.Spec.Webhooks[i].DeepCopy(),
+		})
+	}
+
+	for i := range candidates {
+		c := &candidates[i]
+		if err := r.templatePayloadURL(ctx, &c.Spec); err != nil {
+			log.Error(err, "failed to template webhook payload URL", "source", c.Source)
+			return nil, fmt.Errorf("failed to template webhook payload URL of %s: %w", c.Source, err)
+		}
+		c.Hash = mapper.HashWebhookConfig(c.Spec.PayloadURL, c.Spec.ContentType, c.Spec.Events)
+	}
+
+	desired, err := reconciler.DedupeDesiredWebhooks(ctx, candidates)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range desired {
+		if err := r.loadWebhookSecret(ctx, &desired[i]); err != nil {
+			return nil, err
+		}
+	}
+	return desired, nil
 }
 
 // cleanupUnusedWebhooks removes webhooks that are no longer in the desired state
@@ -143,21 +194,21 @@ func (r *GitHubRepoReconciler) cleanupUnusedWebhooks(ctx context.Context, hooksT
 	return nil
 }
 
-func (r *GitHubRepoReconciler) createMissingWebhooks(ctx context.Context, hooksToAdd map[string]*githubv1alpha1.WebhookPreset) error {
+func (r *GitHubRepoReconciler) createMissingWebhooks(ctx context.Context, hooksToAdd map[string]*reconciler.DesiredWebhook) error {
 	log := logf.FromContext(ctx).WithValues(
 		"function", "createMissingWebhooks",
 	)
 
-	for _, preset := range hooksToAdd {
-		if preset == nil {
-			log.Info("WARNING: Skipping nil webhook preset")
+	for _, desired := range hooksToAdd {
+		if desired == nil {
+			log.Info("WARNING: Skipping nil webhook")
 			continue
 		}
-		log := log.WithValues("preset", preset.Name)
+		log := log.WithValues("source", desired.Source)
 
 		log.V(1).Info("Creating new webhook")
 
-		hook := mapper.WebhookPresetToGithubHook(*preset)
+		hook := mapper.WebhookSpecToGithubHook(desired.Spec)
 		if _, err := r.GitHub.Client.CreateHook(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, hook); err != nil {
 			log.Error(err, "failed to create webhook")
 			return fmt.Errorf("failed to create webhook via GitHub API: %w", err)
@@ -166,121 +217,107 @@ func (r *GitHubRepoReconciler) createMissingWebhooks(ctx context.Context, hooksT
 	return nil
 }
 
-func (r *GitHubRepoReconciler) templatePayloadURL(ctx context.Context, preset *githubv1alpha1.WebhookPreset) (*githubv1alpha1.WebhookPreset, error) {
+// templatePayloadURL renders Go template placeholders in the payload URL of the given spec against the GitHub
+// repository. The spec is modified in place, so callers must pass a copy.
+func (r *GitHubRepoReconciler) templatePayloadURL(ctx context.Context, spec *githubv1alpha1.WebhookPresetSpec) error {
 	log := logf.FromContext(ctx).WithValues(
 		"function", "templatePayloadURL",
-		"payloadUrl", preset.Spec.PayloadURL,
+		"payloadUrl", spec.PayloadURL,
 	)
 	templateChecker := regexp.MustCompile(`.*\{\{.+}}.*`)
-	if !templateChecker.MatchString(preset.Spec.PayloadURL) {
-		return preset, nil
+	if !templateChecker.MatchString(spec.PayloadURL) {
+		return nil
 	}
-	tmpl, err := template.New("payloadURL").Parse(preset.Spec.PayloadURL)
+	tmpl, err := template.New("payloadURL").Parse(spec.PayloadURL)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	repo, err := r.GitHub.Client.GetRepository(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name)
 	if err != nil {
 		log.Error(err, "failed to get repository for webhook creation")
-		return nil, fmt.Errorf("failed to get repository for webhook creation: %w", err)
+		return fmt.Errorf("failed to get repository for webhook creation: %w", err)
 	}
 	var buf strings.Builder
 
 	err = tmpl.Execute(&buf, repo)
 	if err != nil {
 		log.Error(err, "failed to template webhook url")
-		return nil, fmt.Errorf("failed to template webhook url: %w", err)
+		return fmt.Errorf("failed to template webhook url: %w", err)
 	}
-	preset.Spec.PayloadURL = buf.String()
-	log.V(1).Info("Successfully templated webhook payload URL", "payloadUrl", preset.Spec.PayloadURL)
-	return preset, nil
+	spec.PayloadURL = buf.String()
+	log.V(1).Info("Successfully templated webhook payload URL", "payloadUrl", spec.PayloadURL)
+	return nil
 }
 
-func (r *GitHubRepoReconciler) updateWebhooksStatus(ctx context.Context, allWebhooks map[string]*githubv1alpha1.WebhookPreset) error {
+func (r *GitHubRepoReconciler) updateWebhooksStatus(ctx context.Context, allWebhooks map[string]*reconciler.DesiredWebhook) error {
 	log := logf.FromContext(ctx).WithValues(
 		"function", "updateWebhooksStatus",
 	)
 
 	r.Kubernetes.Resource.Status.Webhooks = make(map[string]githubv1alpha1.WebhookStatus)
-	for hash, preset := range allWebhooks {
-		if preset == nil {
-			log.Info("WARNING: Skipping nil webhook preset", "hash", hash)
+	for hash, desired := range allWebhooks {
+		if desired == nil {
+			log.Info("WARNING: Skipping nil webhook", "hash", hash)
 			continue
 		}
 		r.Kubernetes.Resource.Status.Webhooks[hash] = githubv1alpha1.WebhookStatus{
-			SecretHash: preset.GetSecretValueHash(),
+			SecretHash: desired.Spec.GetSecretValueHash(),
 		}
 	}
 
 	return nil
 }
 
-func (r *GitHubRepoReconciler) filterIgnoredHooks(ctx context.Context, hooks []*github.Hook) ([]*github.Hook, error) {
-	log := logf.FromContext(ctx).WithValues(
-		"function", "filterIgnoredHooks",
-	)
-
-	if len(r.Kubernetes.Resource.Spec.WebhookIgnorePresetsList) == 0 {
-		return hooks, nil
+// isIgnoredHook returns true if the URL of the given hook matches one of the ignore regexes.
+func isIgnoredHook(hook *github.Hook, ignoreRegexes []*regexp.Regexp) bool {
+	if hook == nil || hook.Config == nil || hook.Config.URL == nil {
+		return false
 	}
-
-	filteredHooks := make(map[string]*github.Hook)
-	for _, hook := range hooks {
-		h := mapper.HashWebhookConfig(*hook.Config.URL, *hook.Config.ContentType, hook.Events)
-		filteredHooks[h] = hook
-	}
-
-	for _, ip := range r.Kubernetes.Resource.Spec.WebhookIgnorePresetsList {
-		ignoreWebhookPresets := &githubv1alpha1.WebhookIgnorePreset{}
-		if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{Name: ip.Name, Namespace: r.Kubernetes.Resource.Namespace}, ignoreWebhookPresets); err != nil {
-			log.Error(err, "unable to get webhook ignore preset", "preset", ip.Name)
-			return hooks, fmt.Errorf("failed to get webhook ignore preset %s: %w", ip.Name, err)
-		}
-
-		regex, err := regexp.Compile(*ignoreWebhookPresets.Spec.IgnoreURLRegex)
-		if err != nil {
-			log.Error(err, "unable to compile webhook ignore preset regex", "preset", ip.Name)
-			return hooks, err
-		}
-
-		for _, hook := range filteredHooks {
-			if regex.MatchString(*hook.Config.URL) {
-				h := mapper.HashWebhookConfig(*hook.Config.URL, *hook.Config.ContentType, hook.Events)
-				delete(filteredHooks, h)
-			}
+	for _, re := range ignoreRegexes {
+		if re.MatchString(*hook.Config.URL) {
+			return true
 		}
 	}
-
-	var result []*github.Hook
-	for _, hook := range filteredHooks {
-		result = append(result, hook)
-	}
-	return result, nil
+	return false
 }
 
-func (r *GitHubRepoReconciler) loadWebhookPresetSecret(ctx context.Context, wp corev1.LocalObjectReference, webhookPreset *githubv1alpha1.WebhookPreset) error {
+// loadWebhookSecret loads the secret value referenced by desired.Spec.Secret into desired.Spec.SecretValue.
+// Inline webhooks may only reference secrets in the namespace of the Repository.
+func (r *GitHubRepoReconciler) loadWebhookSecret(ctx context.Context, desired *reconciler.DesiredWebhook) error {
 	log := logf.FromContext(ctx).WithValues(
-		"function", "loadWebhookPresetSecret",
+		"function", "loadWebhookSecret",
+		"source", desired.Source,
 	)
 
-	if webhookPreset.Spec.Secret != nil {
-		secretPreset := webhookPreset.Spec.Secret
-		namespace := r.Kubernetes.Resource.Namespace
-		if secretPreset.Namespace != nil {
-			namespace = *secretPreset.Namespace
-		}
-		var secret corev1.Secret
-		if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{Name: *secretPreset.Name, Namespace: namespace}, &secret); err != nil {
-			log.Error(err, "unable to get secret", "secret", wp.Name)
-			return fmt.Errorf("failed to get secret %s/%s: %w", namespace, *secretPreset.Name, err)
-		}
-		if tokenData, tokenExists := secret.Data[*secretPreset.Key]; tokenExists {
-			token := string(tokenData)
-			webhookPreset.SetSecretValue(token)
-		} else {
-			log.Info("WARNING: Unable to find key in secret", "secret", wp.Name, "key", *secretPreset.Key)
-			return fmt.Errorf("failed to find key %s in secret %s/%s", *secretPreset.Key, namespace, *secretPreset.Name)
-		}
+	secretRef := desired.Spec.Secret
+	if secretRef == nil {
+		return nil
 	}
+	if secretRef.Name == nil || secretRef.Key == nil {
+		return fmt.Errorf("webhook secret reference of %s must define name and key", desired.Source)
+	}
+	repoNamespace := r.Kubernetes.Resource.Namespace
+	namespace := repoNamespace
+	if secretRef.Namespace != nil && *secretRef.Namespace != "" {
+		namespace = *secretRef.Namespace
+	}
+	if desired.Inline && namespace != repoNamespace {
+		err := fmt.Errorf("inline webhook %s references secret %s/%s outside of the repository namespace %s",
+			desired.Source, namespace, *secretRef.Name, repoNamespace)
+		log.Error(err, "rejecting cross-namespace secret reference of inline webhook")
+		return err
+	}
+
+	var secret corev1.Secret
+	if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{Name: *secretRef.Name, Namespace: namespace}, &secret); err != nil {
+		log.Error(err, "unable to get secret", "secret", *secretRef.Name)
+		return fmt.Errorf("failed to get secret %s/%s: %w", namespace, *secretRef.Name, err)
+	}
+	tokenData, tokenExists := secret.Data[*secretRef.Key]
+	if !tokenExists {
+		log.Info("WARNING: Unable to find key in secret", "secret", *secretRef.Name, "key", *secretRef.Key)
+		return fmt.Errorf("failed to find key %s in secret %s/%s", *secretRef.Key, namespace, *secretRef.Name)
+	}
+	desired.Spec.SetSecretValue(string(tokenData))
 	return nil
 }

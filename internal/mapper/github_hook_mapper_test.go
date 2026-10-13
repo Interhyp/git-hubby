@@ -10,7 +10,7 @@ import (
 var _ = Describe("GitHub Hook Mapper", func() {
 
 	const contentTypeApplicationJSON = "application/json"
-	Describe("WebhookPresetToGithubHook", func() {
+	Describe("WebhookSpecToGithubHook", func() {
 		Context("when converting a webhook preset with all fields set", func() {
 			It("should successfully convert to GitHub hook", func() {
 				preset := v1alpha1.WebhookPreset{
@@ -27,7 +27,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 				}
 
-				hook := WebhookPresetToGithubHook(preset)
+				hook := WebhookSpecToGithubHook(preset.Spec)
 
 				Expect(hook).NotTo(BeNil())
 				Expect(hook.Name).To(Equal(new("web")))
@@ -54,7 +54,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 				}
 
-				hook := WebhookPresetToGithubHook(preset)
+				hook := WebhookSpecToGithubHook(preset.Spec)
 
 				Expect(hook).NotTo(BeNil())
 				Expect(hook.Config.InsecureSSL).To(Equal(new("0")))
@@ -73,7 +73,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 				}
 
-				hook := WebhookPresetToGithubHook(preset)
+				hook := WebhookSpecToGithubHook(preset.Spec)
 
 				Expect(hook).NotTo(BeNil())
 				Expect(hook.Config.ContentType).To(Equal(new(contentTypeApplicationJSON)))
@@ -93,7 +93,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 				}
 
-				hook := WebhookPresetToGithubHook(preset)
+				hook := WebhookSpecToGithubHook(preset.Spec)
 
 				Expect(hook).NotTo(BeNil())
 				Expect(hook.Config.ContentType).To(Equal(new("application/x-www-form-urlencoded")))
@@ -112,7 +112,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 				}
 
-				hook := WebhookPresetToGithubHook(preset)
+				hook := WebhookSpecToGithubHook(preset.Spec)
 
 				Expect(hook).NotTo(BeNil())
 				Expect(hook.Events).To(ConsistOf("push"))
@@ -131,7 +131,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 				}
 
-				hook := WebhookPresetToGithubHook(preset)
+				hook := WebhookSpecToGithubHook(preset.Spec)
 
 				Expect(hook).NotTo(BeNil())
 				Expect(hook.Active).To(Equal(new(false)))
@@ -151,7 +151,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 				}
 
-				hook := WebhookPresetToGithubHook(preset)
+				hook := WebhookSpecToGithubHook(preset.Spec)
 
 				Expect(hook).NotTo(BeNil())
 				Expect(hook.Events).To(ConsistOf("push", "pull_request", "issues", "release"))
@@ -170,7 +170,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 					},
 				}
 
-				hook := WebhookPresetToGithubHook(preset)
+				hook := WebhookSpecToGithubHook(preset.Spec)
 
 				Expect(hook).NotTo(BeNil())
 				Expect(hook.Config.Secret).To(BeNil())

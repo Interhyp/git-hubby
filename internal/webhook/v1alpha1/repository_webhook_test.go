@@ -352,6 +352,46 @@ var _ = Describe("Repository Webhook", func() {
 		})
 	})
 
+	Context("When validating inline webhooks and webhook ignores", func() {
+		It("Should allow valid inline webhooks and ignore rules", func() {
+			obj.Spec.Webhooks = []githubv1alpha1.WebhookPresetSpec{{
+				PayloadURL: "https://example.com/{{ .Name }}",
+				Secret:     &githubv1alpha1.WebhookPresetSecretSpec{Name: new("s"), Key: new("k"), Namespace: new("default")},
+			}}
+			obj.Spec.WebhookIgnores = []githubv1alpha1.WebhookIgnorePresetSpec{{IgnoreURLRegex: new("^https://ignored/.*")}}
+			warnings, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(warnings).To(BeEmpty())
+		})
+
+		It("Should reject an invalid ignore regex", func() {
+			obj.Spec.WebhookIgnores = []githubv1alpha1.WebhookIgnorePresetSpec{{IgnoreURLRegex: new("(")}}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(apierrors.IsInvalid(err)).To(BeTrue())
+			Expect(err.Error()).To(ContainSubstring("spec.webhookIgnores[0].ignoreURLRegex"))
+		})
+
+		It("Should reject an inline webhook secret in another namespace", func() {
+			obj.Spec.Webhooks = []githubv1alpha1.WebhookPresetSpec{{
+				PayloadURL: "https://example.com/hook",
+				Secret:     &githubv1alpha1.WebhookPresetSecretSpec{Name: new("s"), Key: new("k"), Namespace: new("other")},
+			}}
+			_, err := validator.ValidateUpdate(ctx, oldObj, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(apierrors.IsInvalid(err)).To(BeTrue())
+			Expect(err.Error()).To(ContainSubstring("spec.webhooks[0].secret.namespace"))
+		})
+
+		It("Should reject an invalid payload URL template", func() {
+			obj.Spec.Webhooks = []githubv1alpha1.WebhookPresetSpec{{PayloadURL: "https://example.com/{{ .Name"}}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(apierrors.IsInvalid(err)).To(BeTrue())
+			Expect(err.Error()).To(ContainSubstring("spec.webhooks[0].payloadUrl"))
+		})
+	})
+
 	Context("When validating Repository deletion", func() {
 		It("Should allow deletion", func() {
 			warnings, err := validator.ValidateDelete(ctx, obj)

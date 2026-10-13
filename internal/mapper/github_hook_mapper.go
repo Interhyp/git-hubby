@@ -19,35 +19,36 @@ const (
 	disabledSSLVerify = "0"
 )
 
-func WebhookPresetToGithubHook(preset v1alpha1.WebhookPreset) *github.Hook {
+// WebhookSpecToGithubHook maps a webhook spec (from a WebhookPreset or an inline webhook) to a GitHub hook.
+func WebhookSpecToGithubHook(spec v1alpha1.WebhookPresetSpec) *github.Hook {
 	conf := &github.HookConfig{
-		URL: &preset.Spec.PayloadURL,
+		URL: &spec.PayloadURL,
 	}
 
-	conf.Secret = preset.Spec.SecretValue
+	conf.Secret = spec.SecretValue
 
 	// Set content type
 	contentType := defaultContentType
-	if preset.Spec.ContentType != "" {
-		contentType = preset.Spec.ContentType
+	if spec.ContentType != "" {
+		contentType = spec.ContentType
 	}
 	conf.ContentType = &contentType
 
 	// Set SSL verification
 	sslVerify := defaultSSLVerify
-	if !utils.WithDefault(preset.Spec.SSLVerify, true) {
+	if !utils.WithDefault(spec.SSLVerify, true) {
 		sslVerify = disabledSSLVerify
 	}
 	conf.InsecureSSL = &sslVerify
 	hook := &github.Hook{
 		Name:   new("web"),
-		Active: utils.WithDefaultAsPtr(preset.Spec.Active, true),
+		Active: utils.WithDefaultAsPtr(spec.Active, true),
 		Config: conf,
 	}
 
 	// Set events
-	if len(preset.Spec.Events) > 0 {
-		hook.Events = preset.Spec.Events
+	if len(spec.Events) > 0 {
+		hook.Events = spec.Events
 	} else {
 		hook.Events = []string{"push"}
 	}

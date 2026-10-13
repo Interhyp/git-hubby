@@ -102,6 +102,7 @@ See: https://docs.github.com/en/rest/repos/autolinks
 
 _Appears in:_
 - [AutolinksPresetSpec](#autolinkspresetspec)
+- [RepositorySpec](#repositoryspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -880,8 +881,11 @@ _Appears in:_
 | `rulesetPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | RulesetPresetList references RulesetPreset CRDs to apply to this repository.<br />These define branch protection rules, required status checks, and other policies.<br />See: https://docs.github.com/en/rest/repos/rules |  |  |
 | `rulesets` _[RulesetPresetSpec](#rulesetpresetspec) array_ | Rulesets defines repository rulesets inline, without the need for a separate RulesetPreset CRD.<br />Inline rulesets support exactly the same fields as a RulesetPreset.<br />The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.<br />If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,<br />identical definitions are applied once (a warning is logged), while differing definitions are treated as a<br />conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.<br />At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.<br />The target 'repository' is only supported at organization level; inline rulesets with target 'repository'<br />are filtered out (i.e. are not checked nor applied), the same as for RulesetPresets. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 | `webhookPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.<br />Webhooks send HTTP POST payloads to external services when specific events occur.<br />See: https://docs.github.com/en/rest/webhooks/repos |  |  |
+| `webhooks` _[WebhookPresetSpec](#webhookpresetspec) array_ | Webhooks defines repository webhooks inline, without the need for a separate WebhookPreset CRD.<br />Inline webhooks support exactly the same fields as a WebhookPreset, including payload URL templating<br />(e.g. "\{\{ .Name \}\}"). Not to be confused with status.webhooks, which tracks the applied webhooks.<br />The operator reconciles the union of inline webhooks and the webhooks referenced via WebhookPresetList.<br />A webhook is identified by its (templated) payload URL, content type and events. If several definitions<br />share the same identity, identical definitions are applied once (a warning is logged), while differing<br />definitions are treated as a conflict: no webhooks are changed on GitHub and the WebhooksSynced condition<br />is set to False.<br />Secrets of inline webhooks must reside in the namespace of the Repository; secret.namespace may only be<br />omitted or set to the Repository's namespace. Prefer secret over secretValue.<br />At most 10 inline webhooks are allowed. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 | `webhookIgnorePresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | WebhookIgnorePresetsList references WebhookIgnorePreset CRDs that define webhooks to ignore.<br />Webhooks matching these patterns will not be created even if they are in WebhookPresetList. |  |  |
+| `webhookIgnores` _[WebhookIgnorePresetSpec](#webhookignorepresetspec) array_ | WebhookIgnores defines webhook ignore rules inline, without the need for a separate WebhookIgnorePreset CRD.<br />The operator uses the union of inline ignore rules and the ones referenced via WebhookIgnorePresetsList.<br />Existing webhooks whose URL matches one of the regexes are left untouched (i.e. never deleted).<br />Every inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed. |  | MaxItems: 10 <br />Optional: \{\} <br /> |
 | `autolinksPresets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#localobjectreference-v1-core) array_ | AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.<br />Autolinks automatically convert references (like "JIRA-123") into clickable links.<br />See: https://docs.github.com/en/rest/repos/autolinks |  |  |
+| `autolinks` _[Autolink](#autolink) array_ | Autolinks defines autolinks inline, without the need for a separate AutolinksPreset CRD.<br />The operator reconciles the union of inline autolinks and the autolinks referenced via AutolinksPresetList.<br />An autolink is identified by its keyPrefix. If several definitions share the same keyPrefix, identical<br />definitions are applied once (a warning is logged), while differing definitions are treated as a conflict:<br />no autolinks are changed on GitHub and the AutolinksSynced condition is set to False.<br />At most 25 inline autolinks are allowed. |  | MaxItems: 25 <br />Optional: \{\} <br /> |
 | `deployKeys` _[DeployKey](#deploykey) array_ | DeployKeyList defines deploy keys to create for this repository.<br />Deploy keys are SSH keys that grant access to a single repository.<br />See: https://docs.github.com/en/rest/deploy-keys/deploy-keys |  |  |
 | `attachedCodeSecurityConfiguration` _[CodeSecurityConfigurationRef](#codesecurityconfigurationref)_ | AttachedCodeSecurityConfiguration references a CodeSecurityConfiguration to attach to this repository.<br />This is only used when the organization's configuration has "selected" attachment scope.<br />See: https://docs.github.com/en/rest/code-security/configurations |  |  |
 
@@ -1382,6 +1386,7 @@ This is useful for globally excluding webhooks based on URL patterns.
 
 
 _Appears in:_
+- [RepositorySpec](#repositoryspec)
 - [WebhookIgnorePreset](#webhookignorepreset)
 
 | Field | Description | Default | Validation |
@@ -1476,6 +1481,7 @@ See: https://docs.github.com/en/rest/webhooks/repos
 
 
 _Appears in:_
+- [RepositorySpec](#repositoryspec)
 - [WebhookPreset](#webhookpreset)
 
 | Field | Description | Default | Validation |

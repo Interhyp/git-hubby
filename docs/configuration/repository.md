@@ -166,19 +166,54 @@ webhookPresets:
 
 ```yaml
 webhooks:
-  - name: deploy-trigger
-    config:
-      url: "https://deploy.acme-corp.com/webhook"
-      contentType: json
-      secret:
-        secretRef:
-          name: webhook-secrets
-          key: deploy-secret
+  - payloadUrl: "https://deploy.acme-corp.com/webhook/{{ .Name }}"   # Go templates are rendered against the GitHub repository
+    contentType: json
+    secret:
+      name: webhook-secrets      # Secret in the Repository's namespace
+      key: deploy-secret
     events:
       - push
       - release
     active: true
 ```
+
+Inline webhooks support exactly the same fields as a `WebhookPreset` spec. Their behaviour:
+
+- The operator reconciles the **union** of inline `webhooks` and the referenced `webhookPresets`. At most **10** inline webhooks are allowed.
+- A webhook is identified by its (templated) payload URL, content type and events. If several definitions (inline or from presets) share this identity:
+    - **identical definitions** are applied once and a warning is written to the operator log;
+    - **different definitions** (e.g. a different `active`, `sslVerify` or secret) are a conflict: no webhooks are changed on GitHub, the `WebhooksSynced` condition is set to `False` (reason `SyncFailed`) with the conflict in its message, and `Ready` becomes `False`.
+- **Secrets of inline webhooks must live in the Repository's namespace.** `secret.namespace` may only be omitted or set to the Repository's namespace; other values are rejected by the validation webhook and by the reconciler. Prefer `secret` over the plaintext `secretValue`.
+- A rotated secret is picked up on the next reconciliation (at the latest with the periodic success requeue); referenced Secrets are not watched.
+
+### Webhook Ignores
+
+Existing webhooks whose URL matches an ignore rule are never deleted by the operator, e.g. webhooks managed by other tools.
+
+```yaml
+webhookIgnorePresets:
+  - name: ignore-legacy-hooks    # References a WebhookIgnorePreset CR
+webhookIgnores:
+  - ignoreURLRegex: "^https://legacy\\.acme-corp\\.com/.*"
+```
+
+The operator uses the **union** of inline `webhookIgnores` and the referenced `webhookIgnorePresets`. At most **10** inline ignore rules are allowed; each must define a valid `ignoreURLRegex`.
+
+### Autolinks
+
+```yaml
+autolinksPresets:
+  - name: jira-autolinks         # References an AutolinksPreset CR
+autolinks:
+  - keyPrefix: "TICKET-"
+    urlTemplate: "https://tickets.acme-corp.com/browse/TICKET-<num>"
+    isAlphanumeric: false
+```
+
+- The operator reconciles the **union** of inline `autolinks` and the autolinks of the referenced `autolinksPresets`. At most **25** inline autolinks are allowed, and their `keyPrefix`es must be unique.
+- An autolink is identified by its `keyPrefix` (GitHub requires unique key prefixes per repository). If several definitions share a `keyPrefix`:
+    - **identical definitions** are applied once and a warning is written to the operator log;
+    - **different definitions** are a conflict: no autolinks are changed on GitHub and the `AutolinksSynced` condition is set to `False` (reason `SyncFailed`). This also applies to conflicts between two `AutolinksPreset`s.
 
 ### Rulesets
 

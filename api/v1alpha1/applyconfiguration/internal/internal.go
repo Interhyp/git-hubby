@@ -689,6 +689,12 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: attachedCodeSecurityConfiguration
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.CodeSecurityConfigurationRef
+    - name: autolinks
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.Autolink
+          elementRelationship: atomic
     - name: autolinksPresets
       type:
         list:
@@ -777,11 +783,23 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             namedType: io.k8s.api.core.v1.LocalObjectReference
           elementRelationship: atomic
+    - name: webhookIgnores
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookIgnorePresetSpec
+          elementRelationship: atomic
     - name: webhookPresets
       type:
         list:
           elementType:
             namedType: io.k8s.api.core.v1.LocalObjectReference
+          elementRelationship: atomic
+    - name: webhooks
+      type:
+        list:
+          elementType:
+            namedType: com.github.Interhyp.git-hubby.api.v1alpha1.WebhookPresetSpec
           elementRelationship: atomic
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RepositoryStatus
   map:

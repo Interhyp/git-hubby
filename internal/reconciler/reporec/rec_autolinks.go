@@ -2,18 +2,24 @@ package reporec
 
 import (
 	"context"
-	"fmt"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
+	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/google/go-github/v92/github"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func (r *GitHubRepoReconciler) reconcileAutolinks(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
 	log.V(1).Info("Reconciling repository autolinks on GitHub")
+
+	// Collect the desired autolinks first, so that conflicts are detected before any GitHub API call is made.
+	desiredAutolinks, err := reconciler.CollectDesiredAutolinks(ctx, r.Kubernetes.Client, r.Kubernetes.Resource.Namespace,
+		r.Kubernetes.Resource.Spec.AutolinksPresetList, r.Kubernetes.Resource.Spec.Autolinks)
+	if err != nil {
+		return err
+	}
 
 	autolinks, err := r.GitHub.Client.ListAllAutolinks(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name)
 	if err != nil {
@@ -45,25 +51,15 @@ func (r *GitHubRepoReconciler) reconcileAutolinks(ctx context.Context) error {
 	}
 
 	autolinksToAdd := make(map[string]*githubv1alpha1.Autolink)
-	for _, autolinkRef := range r.Kubernetes.Resource.Spec.AutolinksPresetList {
-		var autolinksPreset githubv1alpha1.AutolinksPreset
-		if err := r.Kubernetes.Client.Get(ctx, client.ObjectKey{
-			Name:      autolinkRef.Name,
-			Namespace: r.Kubernetes.Resource.Namespace,
-		}, &autolinksPreset); err != nil {
-			log.Error(err, "unable to get ruleset preset")
-			return fmt.Errorf("failed to get autolinks preset %s: %w", autolinkRef.Name, err)
+	for _, desired := range desiredAutolinks {
+		autolink := desired.Spec
+		h := mapper.HashAutolink(autolink.KeyPrefix, autolink.URLTemplate, autolink.IsAlphanumeric)
+		if _, exists := existingAutolinks[h]; exists {
+			log.V(1).Info("Autolink exists", "source", desired.Source)
+			delete(autolinksToRemove, h)
+			continue
 		}
-		for _, autolink := range autolinksPreset.Spec.AutolinkList {
-			h := mapper.HashAutolink(autolink.KeyPrefix, autolink.URLTemplate, autolink.IsAlphanumeric)
-			_, exists := existingAutolinks[h]
-			if exists {
-				log.V(1).Info("Autolink exists")
-				delete(autolinksToRemove, h)
-				continue
-			}
-			autolinksToAdd[h] = &autolink
-		}
+		autolinksToAdd[h] = &autolink
 	}
 
 	if err := r.cleanupUnusedAutolinks(ctx, autolinksToRemove); err != nil {

@@ -1190,25 +1190,14 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			err = rec.reconcileAutolinks(ctx)
 		})
 
-		It("should treat them as different autolinks and create both", func() {
-			Expect(err).NotTo(HaveOccurred())
-			Expect(createAutolinkCalled).To(BeTrue())
-			Expect(appliedAutolinks).To(HaveLen(2))
-
-			// Both should be created because IsAlphanumeric differs
-			alphaCount := 0
-			nonAlphaCount := 0
-			for _, autolink := range appliedAutolinks {
-				Expect(autolink.KeyPrefix).To(Equal("TICKET-"))
-				Expect(autolink.URLTemplate).To(Equal("https://example.com/ticket/<num>"))
-				if *autolink.IsAlphanumeric {
-					alphaCount++
-				} else {
-					nonAlphaCount++
-				}
-			}
-			Expect(alphaCount).To(Equal(1))
-			Expect(nonAlphaCount).To(Equal(1))
+		It("should report a conflict and not create any autolink", func() {
+			Expect(err).To(HaveOccurred())
+			var conflictErr *reconciler.AutolinkConflictError
+			Expect(errors.As(err, &conflictErr)).To(BeTrue())
+			Expect(conflictErr.KeyPrefix).To(Equal("TICKET-"))
+			Expect(conflictErr.Sources).To(ConsistOf("autolinksPreset/preset-alpha[0]", "autolinksPreset/preset-nonalpha[0]"))
+			Expect(createAutolinkCalled).To(BeFalse())
+			Expect(deleteAutolinkCalled).To(BeFalse())
 		})
 	})
 
@@ -1360,18 +1349,14 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			err = rec.reconcileAutolinks(ctx)
 		})
 
-		It("should treat different URLs as different autolinks even with same keyPrefix", func() {
-			Expect(err).NotTo(HaveOccurred())
-			Expect(createAutolinkCalled).To(BeTrue())
-			Expect(appliedAutolinks).To(HaveLen(2))
-
-			// Both should be created because URLs differ
-			urls := make([]string, 0, 2)
-			for _, autolink := range appliedAutolinks {
-				Expect(autolink.KeyPrefix).To(Equal("TICKET-"))
-				urls = append(urls, autolink.URLTemplate)
-			}
-			Expect(urls).To(ConsistOf("https://first.example.com/<num>", "https://second.example.com/<num>"))
+		It("should report a conflict for the same keyPrefix with different URLs", func() {
+			Expect(err).To(HaveOccurred())
+			var conflictErr *reconciler.AutolinkConflictError
+			Expect(errors.As(err, &conflictErr)).To(BeTrue())
+			Expect(conflictErr.KeyPrefix).To(Equal("TICKET-"))
+			Expect(createAutolinkCalled).To(BeFalse())
+			Expect(deleteAutolinkCalled).To(BeFalse())
+			Expect(appliedAutolinks).To(BeEmpty())
 		})
 	})
 })

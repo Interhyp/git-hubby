@@ -1911,7 +1911,7 @@ var _ = Describe("createMissingWebhooks", func() {
 		rec          *GitHubRepoReconciler
 		scheme       *runtime.Scheme
 		repo         *v1alpha1.Repository
-		hooksToAdd   map[string]*v1alpha1.WebhookPreset
+		hooksToAdd   map[string]*reconciler.DesiredWebhook
 		createdHooks []*github.Hook
 		createError  error
 		err          error
@@ -1940,7 +1940,7 @@ var _ = Describe("createMissingWebhooks", func() {
 
 		createdHooks = []*github.Hook{}
 		createError = nil
-		hooksToAdd = make(map[string]*v1alpha1.WebhookPreset)
+		hooksToAdd = make(map[string]*reconciler.DesiredWebhook)
 
 		mockClient.CreateHookFunc = func(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
 			createdHooks = append(createdHooks, hook)
@@ -1980,11 +1980,9 @@ var _ = Describe("createMissingWebhooks", func() {
 
 	Context("when creating single hook", func() {
 		BeforeEach(func() {
-			hooksToAdd = map[string]*v1alpha1.WebhookPreset{
+			hooksToAdd = map[string]*reconciler.DesiredWebhook{
 				"hash1": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "ci-webhook",
-					},
+					Source: "ci-webhook",
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
@@ -2009,11 +2007,9 @@ var _ = Describe("createMissingWebhooks", func() {
 
 	Context("when creating multiple hooks", func() {
 		BeforeEach(func() {
-			hooksToAdd = map[string]*v1alpha1.WebhookPreset{
+			hooksToAdd = map[string]*reconciler.DesiredWebhook{
 				"hash1": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "ci-webhook",
-					},
+					Source: "ci-webhook",
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook1",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
@@ -2027,9 +2023,7 @@ var _ = Describe("createMissingWebhooks", func() {
 					},
 				},
 				"hash2": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "slack-webhook",
-					},
+					Source: "slack-webhook",
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://slack.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
@@ -2053,7 +2047,7 @@ var _ = Describe("createMissingWebhooks", func() {
 
 	Context("when preset is nil", func() {
 		BeforeEach(func() {
-			hooksToAdd = map[string]*v1alpha1.WebhookPreset{
+			hooksToAdd = map[string]*reconciler.DesiredWebhook{
 				"hash1": nil,
 			}
 		})
@@ -2066,11 +2060,9 @@ var _ = Describe("createMissingWebhooks", func() {
 
 	Context("when CreateHook fails", func() {
 		BeforeEach(func() {
-			hooksToAdd = map[string]*v1alpha1.WebhookPreset{
+			hooksToAdd = map[string]*reconciler.DesiredWebhook{
 				"hash1": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "ci-webhook",
-					},
+					Source: "ci-webhook",
 					Spec: v1alpha1.WebhookPresetSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookPresetSecretSpec{
@@ -2101,7 +2093,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 		rec         *GitHubRepoReconciler
 		scheme      *runtime.Scheme
 		repo        *v1alpha1.Repository
-		allWebhooks map[string]*v1alpha1.WebhookPreset
+		allWebhooks map[string]*reconciler.DesiredWebhook
 		err         error
 	)
 
@@ -2128,7 +2120,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 			},
 		}
 
-		allWebhooks = make(map[string]*v1alpha1.WebhookPreset)
+		allWebhooks = make(map[string]*reconciler.DesiredWebhook)
 	})
 
 	JustBeforeEach(func() {
@@ -2164,10 +2156,8 @@ var _ = Describe("updateWebhooksStatus", func() {
 
 	Context("when single webhook is present", func() {
 		BeforeEach(func() {
-			preset := &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ci-webhook",
-				},
+			preset := &reconciler.DesiredWebhook{
+				Source: "ci-webhook",
 				Spec: v1alpha1.WebhookPresetSpec{
 					PayloadURL: "https://example.com/webhook",
 					Secret: &v1alpha1.WebhookPresetSecretSpec{
@@ -2179,7 +2169,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 				},
 			}
 			hash := mapper.HashWebhookConfig("https://example.com/webhook", "application/json", []string{"push"})
-			allWebhooks = map[string]*v1alpha1.WebhookPreset{
+			allWebhooks = map[string]*reconciler.DesiredWebhook{
 				hash: preset,
 			}
 		})
@@ -2189,17 +2179,15 @@ var _ = Describe("updateWebhooksStatus", func() {
 			Expect(repo.Status.Webhooks).To(HaveLen(1))
 
 			hash := mapper.HashWebhookConfig("https://example.com/webhook", "application/json", []string{"push"})
-			secretHash := allWebhooks[hash].GetSecretValueHash()
+			secretHash := allWebhooks[hash].Spec.GetSecretValueHash()
 			Expect(repo.Status.Webhooks[hash].SecretHash).To(Equal(secretHash))
 		})
 	})
 
 	Context("when multiple webhooks are present", func() {
 		BeforeEach(func() {
-			preset1 := &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ci-webhook",
-				},
+			preset1 := &reconciler.DesiredWebhook{
+				Source: "ci-webhook",
 				Spec: v1alpha1.WebhookPresetSpec{
 					PayloadURL: "https://example.com/webhook1",
 					Secret: &v1alpha1.WebhookPresetSecretSpec{
@@ -2210,10 +2198,8 @@ var _ = Describe("updateWebhooksStatus", func() {
 					Events:      []string{"push"},
 				},
 			}
-			preset2 := &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "slack-webhook",
-				},
+			preset2 := &reconciler.DesiredWebhook{
+				Source: "slack-webhook",
 				Spec: v1alpha1.WebhookPresetSpec{
 					PayloadURL: "https://slack.com/webhook",
 					Secret: &v1alpha1.WebhookPresetSecretSpec{
@@ -2228,7 +2214,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 			hash1 := mapper.HashWebhookConfig("https://example.com/webhook1", "application/json", []string{"push"})
 			hash2 := mapper.HashWebhookConfig("https://slack.com/webhook", "application/json", []string{"issues"})
 
-			allWebhooks = map[string]*v1alpha1.WebhookPreset{
+			allWebhooks = map[string]*reconciler.DesiredWebhook{
 				hash1: preset1,
 				hash2: preset2,
 			}
@@ -2242,7 +2228,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 
 	Context("when preset is nil", func() {
 		BeforeEach(func() {
-			allWebhooks = map[string]*v1alpha1.WebhookPreset{
+			allWebhooks = map[string]*reconciler.DesiredWebhook{
 				"hash1": nil,
 			}
 		})
@@ -2255,10 +2241,8 @@ var _ = Describe("updateWebhooksStatus", func() {
 
 	Context("when webhook has no secret", func() {
 		BeforeEach(func() {
-			preset := &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ci-webhook",
-				},
+			preset := &reconciler.DesiredWebhook{
+				Source: "ci-webhook",
 				Spec: v1alpha1.WebhookPresetSpec{
 					PayloadURL:  "https://example.com/webhook",
 					ContentType: "application/json",
@@ -2266,7 +2250,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 				},
 			}
 			hash := mapper.HashWebhookConfig("https://example.com/webhook", "application/json", []string{"push"})
-			allWebhooks = map[string]*v1alpha1.WebhookPreset{
+			allWebhooks = map[string]*reconciler.DesiredWebhook{
 				hash: preset,
 			}
 		})
@@ -2337,7 +2321,8 @@ var _ = Describe("templatePayloadURL", func() {
 	})
 
 	JustBeforeEach(func() {
-		result, templatedErr = rec.templatePayloadURL(ctx, preset)
+		templatedErr = rec.templatePayloadURL(ctx, &preset.Spec)
+		result = preset
 	})
 
 	Context("when PayloadURL contains no template", func() {

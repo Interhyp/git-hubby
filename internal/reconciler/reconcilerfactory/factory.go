@@ -284,7 +284,7 @@ func (f *Factory) fetchSubResourceGenerationsForRepo(ctx context.Context, repo v
 	for _, autolinksRef := range repo.Spec.AutolinksPresetList {
 		var autolinksPresetList v1alpha1.AutolinksPreset
 		if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: autolinksRef.Name, Namespace: repo.Namespace}, &autolinksPresetList); err != nil {
-			log.Error(err, "failed to get AttachedCodeSecurityConfiguration for Repository")
+			log.Error(err, "failed to get AutolinksPreset for Repository", "autolinksPreset", autolinksRef.Name)
 			return nil, err
 		}
 		result[getSubResourceKey(&autolinksPresetList)] = autolinksPresetList.GetGeneration()

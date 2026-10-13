@@ -142,6 +142,54 @@ spec:
                 required:
                 - name
                 type: object
+              autolinks:
+                description: |-
+                  Autolinks defines autolinks inline, without the need for a separate AutolinksPreset CRD.
+                  The operator reconciles the union of inline autolinks and the autolinks referenced via AutolinksPresetList.
+                  An autolink is identified by its keyPrefix. If several definitions share the same keyPrefix, identical
+                  definitions are applied once (a warning is logged), while differing definitions are treated as a conflict:
+                  no autolinks are changed on GitHub and the AutolinksSynced condition is set to False.
+                  At most 25 inline autolinks are allowed.
+                items:
+                  description: |-
+                    Autolink defines an automatic link reference for external resources.
+                    When a reference matching KeyPrefix is found in issues, pull requests, or commit messages,
+                    GitHub automatically converts it to a clickable link using the URLTemplate.
+                    See: https://docs.github.com/en/rest/repos/autolinks
+                  properties:
+                    isAlphanumeric:
+                      default: false
+                      description: |-
+                        IsAlphanumeric determines whether the reference must be alphanumeric.
+                        - true: the <num> parameter of the url_template matches alphanumeric characters `A-Z` (case insensitive), `0-9`, and `-`
+                        - false: reference only matches numeric characters.
+                      type: boolean
+                    keyPrefix:
+                      description: |-
+                        KeyPrefix is the text prefix that triggers autolink creation.
+                        When text starts with this prefix followed by a reference, it becomes a link.
+                        Examples: "JIRA-", "TICKET-", "BUG-"
+                      maxLength: 20
+                      pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]{0,19}$
+                      type: string
+                    urlTemplate:
+                      description: |-
+                        URLTemplate is the URL pattern used to generate links.
+                        Use <num> as a placeholder for the reference number/ID.
+                        Example: "https://jira.example.com/browse/<num>" converts "JIRA-123" to "https://jira.example.com/browse/123"
+                      maxLength: 200
+                      type: string
+                  required:
+                  - isAlphanumeric
+                  - keyPrefix
+                  - urlTemplate
+                  type: object
+                maxItems: 25
+                type: array
+                x-kubernetes-validations:
+                - message: autolink keyPrefixes must be unique
+                  rule: self.all(x, self.filter(y, y.keyPrefix == x.keyPrefix).size()
+                    <= 1)
               autolinksPresets:
                 description: |-
                   AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.
@@ -1137,6 +1185,32 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              webhookIgnores:
+                description: |-
+                  WebhookIgnores defines webhook ignore rules inline, without the need for a separate WebhookIgnorePreset CRD.
+                  The operator uses the union of inline ignore rules and the ones referenced via WebhookIgnorePresetsList.
+                  Existing webhooks whose URL matches one of the regexes are left untouched (i.e. never deleted).
+                  Every inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed.
+                items:
+                  description: |-
+                    WebhookIgnorePresetSpec defines the desired state of WebhookIgnorePreset.
+                    WebhookIgnorePresets allow you to exclude certain webhooks from being created,
+                    even if they are referenced in a repository's WebhookPresetList.
+                    This is useful for globally excluding webhooks based on URL patterns.
+                  properties:
+                    ignoreURLRegex:
+                      description: |-
+                        IgnoreURLRegex is a regular expression pattern to match against webhook payload URLs.
+                        Webhooks with URLs matching this pattern will not be created, even if they are
+                        referenced in a repository's WebhookPresetList.
+                        Example: "^https://deprecated\\.example\\.com/.*" to ignore all webhooks to deprecated.example.com
+                      type: string
+                  type: object
+                maxItems: 10
+                type: array
+                x-kubernetes-validations:
+                - message: ignoreURLRegex must be set for inline webhook ignores
+                  rule: self.all(x, has(x.ignoreURLRegex) && x.ignoreURLRegex != '')
               webhookPresets:
                 description: |-
                   WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.
@@ -1158,6 +1232,169 @@ spec:
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
+                type: array
+              webhooks:
+                description: |-
+                  Webhooks defines repository webhooks inline, without the need for a separate WebhookPreset CRD.
+                  Inline webhooks support exactly the same fields as a WebhookPreset, including payload URL templating
+                  (e.g. "{{ .Name }}"). Not to be confused with status.webhooks, which tracks the applied webhooks.
+                  The operator reconciles the union of inline webhooks and the webhooks referenced via WebhookPresetList.
+                  A webhook is identified by its (templated) payload URL, content type and events. If several definitions
+                  share the same identity, identical definitions are applied once (a warning is logged), while differing
+                  definitions are treated as a conflict: no webhooks are changed on GitHub and the WebhooksSynced condition
+                  is set to False.
+                  Secrets of inline webhooks must reside in the namespace of the Repository; secret.namespace may only be
+                  omitted or set to the Repository's namespace. Prefer secret over secretValue.
+                  At most 10 inline webhooks are allowed.
+                items:
+                  description: |-
+                    WebhookPresetSpec defines the desired state of WebhookPreset.
+                    Webhooks allow external services to be notified when certain events occur in a repository.
+                    See: https://docs.github.com/en/rest/webhooks/repos
+                  properties:
+                    active:
+                      default: true
+                      description: |-
+                        Active determines whether the webhook is active and will send events.
+                        Set to false to temporarily disable the webhook without deleting it.
+                      type: boolean
+                    contentType:
+                      description: |-
+                        ContentType specifies the format of the webhook payload.
+                        - "json": Send payload as application/json (recommended)
+                        - "form": Send payload as application/x-www-form-urlencoded
+                        See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+                      enum:
+                      - json
+                      - form
+                      type: string
+                    events:
+                      description: |-
+                        Events is a list of GitHub event types that trigger this webhook.
+                        If empty, the webhook subscribes to all events ("*").
+                        Common events include "push", "pull_request", "issues", "release".
+                        See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+                      items:
+                        enum:
+                        - branch_protection_rule
+                        - check_run
+                        - check_suite
+                        - code_scanning_alert
+                        - commit_comment
+                        - create
+                        - delete
+                        - dependabot_alert
+                        - deploy_key
+                        - deployment
+                        - deployment_status
+                        - discussion
+                        - discussion_comment
+                        - fork
+                        - github_app_authorization
+                        - gollum
+                        - installation
+                        - installation_repositories
+                        - issue_comment
+                        - issues
+                        - label
+                        - marketplace_purchase
+                        - member
+                        - membership
+                        - merge_group
+                        - meta
+                        - milestone
+                        - organization
+                        - org_block
+                        - package
+                        - page_build
+                        - ping
+                        - project
+                        - project_card
+                        - project_column
+                        - public
+                        - pull_request
+                        - pull_request_review
+                        - pull_request_review_comment
+                        - pull_request_review_thread
+                        - push
+                        - registry_package
+                        - release
+                        - repository
+                        - repository_dispatch
+                        - repository_import
+                        - repository_vulnerability_alert
+                        - secret_scanning_alert
+                        - security_advisory
+                        - sponsorship
+                        - star
+                        - status
+                        - team
+                        - team_add
+                        - watch
+                        - workflow_dispatch
+                        - workflow_job
+                        - workflow_run
+                        type: string
+                      maxItems: 100
+                      minItems: 0
+                      type: array
+                    payloadUrl:
+                      description: |-
+                        PayloadURL is the URL that will receive the webhook POST requests.
+                        Must be a publicly accessible HTTP or HTTPS endpoint.
+                        GitHub will send HTTP POST requests to this URL when subscribed events occur.
+                      maxLength: 2048
+                      minLength: 1
+                      pattern: ^https?://[a-zA-Z0-9.-]+(:[0-9]+)?(/.*)?$
+                      type: string
+                    secret:
+                      description: |-
+                        Secret is a reference to a Kubernetes Secret containing the webhook secret.
+                        The webhook secret is used by GitHub to sign webhook payloads.
+                        Your service can verify this signature to ensure the request came from GitHub.
+                        This field takes precedence over SecretValue if both are provided.
+                        See: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+                      properties:
+                        key:
+                          description: Key is the key within the Secret that contains
+                            the webhook secret value.
+                          maxLength: 250
+                          minLength: 1
+                          pattern: ^[a-zA-Z0-9.-]+$
+                          type: string
+                        name:
+                          description: Name is the name of the Kubernetes Secret containing
+                            the webhook secret.
+                          maxLength: 250
+                          minLength: 1
+                          pattern: ^[a-zA-Z0-9.-]+$
+                          type: string
+                        namespace:
+                          description: |-
+                            Namespace is the namespace of the Secret.
+                            If not specified, the namespace of the WebhookPreset is used.
+                          type: string
+                      required:
+                      - key
+                      - name
+                      type: object
+                    secretValue:
+                      description: |-
+                        SecretValue is the plaintext value of the webhook secret.
+                        Use this for simple cases, but Secret (referencing a Kubernetes Secret) is more secure.
+                        If both Secret and SecretValue are provided, Secret takes precedence.
+                      type: string
+                    sslVerify:
+                      default: true
+                      description: |-
+                        SSLVerify enables SSL certificate verification for the webhook endpoint.
+                        When true, GitHub verifies the SSL certificate of the PayloadURL.
+                        Disable only for testing with self-signed certificates; always enable in production.
+                      type: boolean
+                  required:
+                  - payloadUrl
+                  type: object
+                maxItems: 10
                 type: array
             required:
             - name

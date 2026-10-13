@@ -203,14 +203,49 @@ type RepositorySpec struct {
 	// See: https://docs.github.com/en/rest/webhooks/repos
 	WebhookPresetList []v1.LocalObjectReference `json:"webhookPresets,omitempty"`
 
+	// Webhooks defines repository webhooks inline, without the need for a separate WebhookPreset CRD.
+	// Inline webhooks support exactly the same fields as a WebhookPreset, including payload URL templating
+	// (e.g. "{{ .Name }}"). Not to be confused with status.webhooks, which tracks the applied webhooks.
+	// The operator reconciles the union of inline webhooks and the webhooks referenced via WebhookPresetList.
+	// A webhook is identified by its (templated) payload URL, content type and events. If several definitions
+	// share the same identity, identical definitions are applied once (a warning is logged), while differing
+	// definitions are treated as a conflict: no webhooks are changed on GitHub and the WebhooksSynced condition
+	// is set to False.
+	// Secrets of inline webhooks must reside in the namespace of the Repository; secret.namespace may only be
+	// omitted or set to the Repository's namespace. Prefer secret over secretValue.
+	// At most 10 inline webhooks are allowed.
+	// +optional
+	// +kubebuilder:validation:MaxItems=10
+	Webhooks []WebhookPresetSpec `json:"webhooks,omitempty"`
+
 	// WebhookIgnorePresetsList references WebhookIgnorePreset CRDs that define webhooks to ignore.
 	// Webhooks matching these patterns will not be created even if they are in WebhookPresetList.
 	WebhookIgnorePresetsList []v1.LocalObjectReference `json:"webhookIgnorePresets,omitempty"`
+
+	// WebhookIgnores defines webhook ignore rules inline, without the need for a separate WebhookIgnorePreset CRD.
+	// The operator uses the union of inline ignore rules and the ones referenced via WebhookIgnorePresetsList.
+	// Existing webhooks whose URL matches one of the regexes are left untouched (i.e. never deleted).
+	// Every inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed.
+	// +optional
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:XValidation:rule="self.all(x, has(x.ignoreURLRegex) && x.ignoreURLRegex != '')",message="ignoreURLRegex must be set for inline webhook ignores"
+	WebhookIgnores []WebhookIgnorePresetSpec `json:"webhookIgnores,omitempty"`
 
 	// AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.
 	// Autolinks automatically convert references (like "JIRA-123") into clickable links.
 	// See: https://docs.github.com/en/rest/repos/autolinks
 	AutolinksPresetList []v1.LocalObjectReference `json:"autolinksPresets,omitempty"`
+
+	// Autolinks defines autolinks inline, without the need for a separate AutolinksPreset CRD.
+	// The operator reconciles the union of inline autolinks and the autolinks referenced via AutolinksPresetList.
+	// An autolink is identified by its keyPrefix. If several definitions share the same keyPrefix, identical
+	// definitions are applied once (a warning is logged), while differing definitions are treated as a conflict:
+	// no autolinks are changed on GitHub and the AutolinksSynced condition is set to False.
+	// At most 25 inline autolinks are allowed.
+	// +optional
+	// +kubebuilder:validation:MaxItems=25
+	// +kubebuilder:validation:XValidation:rule="self.all(x, self.filter(y, y.keyPrefix == x.keyPrefix).size() <= 1)",message="autolink keyPrefixes must be unique"
+	Autolinks []Autolink `json:"autolinks,omitempty"`
 
 	// DeployKeyList defines deploy keys to create for this repository.
 	// Deploy keys are SSH keys that grant access to a single repository.

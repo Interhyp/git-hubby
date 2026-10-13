@@ -113,6 +113,45 @@
           "type": "object",
           "additionalProperties": false
         },
+        "autolinks": {
+          "description": "Autolinks defines autolinks inline, without the need for a separate AutolinksPreset CRD.\nThe operator reconciles the union of inline autolinks and the autolinks referenced via AutolinksPresetList.\nAn autolink is identified by its keyPrefix. If several definitions share the same keyPrefix, identical\ndefinitions are applied once (a warning is logged), while differing definitions are treated as a conflict:\nno autolinks are changed on GitHub and the AutolinksSynced condition is set to False.\nAt most 25 inline autolinks are allowed.",
+          "items": {
+            "description": "Autolink defines an automatic link reference for external resources.\nWhen a reference matching KeyPrefix is found in issues, pull requests, or commit messages,\nGitHub automatically converts it to a clickable link using the URLTemplate.\nSee: https://docs.github.com/en/rest/repos/autolinks",
+            "properties": {
+              "isAlphanumeric": {
+                "default": false,
+                "description": "IsAlphanumeric determines whether the reference must be alphanumeric.\n- true: the <num> parameter of the url_template matches alphanumeric characters `A-Z` (case insensitive), `0-9`, and `-`\n- false: reference only matches numeric characters.",
+                "type": "boolean"
+              },
+              "keyPrefix": {
+                "description": "KeyPrefix is the text prefix that triggers autolink creation.\nWhen text starts with this prefix followed by a reference, it becomes a link.\nExamples: \"JIRA-\", \"TICKET-\", \"BUG-\"",
+                "maxLength": 20,
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,19}$",
+                "type": "string"
+              },
+              "urlTemplate": {
+                "description": "URLTemplate is the URL pattern used to generate links.\nUse <num> as a placeholder for the reference number/ID.\nExample: \"https://jira.example.com/browse/<num>\" converts \"JIRA-123\" to \"https://jira.example.com/browse/123\"",
+                "maxLength": 200,
+                "type": "string"
+              }
+            },
+            "required": [
+              "isAlphanumeric",
+              "keyPrefix",
+              "urlTemplate"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "maxItems": 25,
+          "type": "array",
+          "x-kubernetes-validations": [
+            {
+              "message": "autolink keyPrefixes must be unique",
+              "rule": "self.all(x, self.filter(y, y.keyPrefix == x.keyPrefix).size() <= 1)"
+            }
+          ]
+        },
         "autolinksPresets": {
           "description": "AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.\nAutolinks automatically convert references (like \"JIRA-123\") into clickable links.\nSee: https://docs.github.com/en/rest/repos/autolinks",
           "items": {
@@ -1010,6 +1049,28 @@
           },
           "type": "array"
         },
+        "webhookIgnores": {
+          "description": "WebhookIgnores defines webhook ignore rules inline, without the need for a separate WebhookIgnorePreset CRD.\nThe operator uses the union of inline ignore rules and the ones referenced via WebhookIgnorePresetsList.\nExisting webhooks whose URL matches one of the regexes are left untouched (i.e. never deleted).\nEvery inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed.",
+          "items": {
+            "description": "WebhookIgnorePresetSpec defines the desired state of WebhookIgnorePreset.\nWebhookIgnorePresets allow you to exclude certain webhooks from being created,\neven if they are referenced in a repository's WebhookPresetList.\nThis is useful for globally excluding webhooks based on URL patterns.",
+            "properties": {
+              "ignoreURLRegex": {
+                "description": "IgnoreURLRegex is a regular expression pattern to match against webhook payload URLs.\nWebhooks with URLs matching this pattern will not be created, even if they are\nreferenced in a repository's WebhookPresetList.\nExample: \"^https://deprecated\\\\.example\\\\.com/.*\" to ignore all webhooks to deprecated.example.com",
+                "type": "string"
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          },
+          "maxItems": 10,
+          "type": "array",
+          "x-kubernetes-validations": [
+            {
+              "message": "ignoreURLRegex must be set for inline webhook ignores",
+              "rule": "self.all(x, has(x.ignoreURLRegex) && x.ignoreURLRegex != '')"
+            }
+          ]
+        },
         "webhookPresets": {
           "description": "WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.\nWebhooks send HTTP POST payloads to external services when specific events occur.\nSee: https://docs.github.com/en/rest/webhooks/repos",
           "items": {
@@ -1025,6 +1086,148 @@
             "x-kubernetes-map-type": "atomic",
             "additionalProperties": false
           },
+          "type": "array"
+        },
+        "webhooks": {
+          "description": "Webhooks defines repository webhooks inline, without the need for a separate WebhookPreset CRD.\nInline webhooks support exactly the same fields as a WebhookPreset, including payload URL templating\n(e.g. \"{{ .Name }}\"). Not to be confused with status.webhooks, which tracks the applied webhooks.\nThe operator reconciles the union of inline webhooks and the webhooks referenced via WebhookPresetList.\nA webhook is identified by its (templated) payload URL, content type and events. If several definitions\nshare the same identity, identical definitions are applied once (a warning is logged), while differing\ndefinitions are treated as a conflict: no webhooks are changed on GitHub and the WebhooksSynced condition\nis set to False.\nSecrets of inline webhooks must reside in the namespace of the Repository; secret.namespace may only be\nomitted or set to the Repository's namespace. Prefer secret over secretValue.\nAt most 10 inline webhooks are allowed.",
+          "items": {
+            "description": "WebhookPresetSpec defines the desired state of WebhookPreset.\nWebhooks allow external services to be notified when certain events occur in a repository.\nSee: https://docs.github.com/en/rest/webhooks/repos",
+            "properties": {
+              "active": {
+                "default": true,
+                "description": "Active determines whether the webhook is active and will send events.\nSet to false to temporarily disable the webhook without deleting it.",
+                "type": "boolean"
+              },
+              "contentType": {
+                "description": "ContentType specifies the format of the webhook payload.\n- \"json\": Send payload as application/json (recommended)\n- \"form\": Send payload as application/x-www-form-urlencoded\nSee: https://docs.github.com/en/webhooks/webhook-events-and-payloads",
+                "enum": [
+                  "json",
+                  "form"
+                ],
+                "type": "string"
+              },
+              "events": {
+                "description": "Events is a list of GitHub event types that trigger this webhook.\nIf empty, the webhook subscribes to all events (\"*\").\nCommon events include \"push\", \"pull_request\", \"issues\", \"release\".\nSee: https://docs.github.com/en/webhooks/webhook-events-and-payloads",
+                "items": {
+                  "enum": [
+                    "branch_protection_rule",
+                    "check_run",
+                    "check_suite",
+                    "code_scanning_alert",
+                    "commit_comment",
+                    "create",
+                    "delete",
+                    "dependabot_alert",
+                    "deploy_key",
+                    "deployment",
+                    "deployment_status",
+                    "discussion",
+                    "discussion_comment",
+                    "fork",
+                    "github_app_authorization",
+                    "gollum",
+                    "installation",
+                    "installation_repositories",
+                    "issue_comment",
+                    "issues",
+                    "label",
+                    "marketplace_purchase",
+                    "member",
+                    "membership",
+                    "merge_group",
+                    "meta",
+                    "milestone",
+                    "organization",
+                    "org_block",
+                    "package",
+                    "page_build",
+                    "ping",
+                    "project",
+                    "project_card",
+                    "project_column",
+                    "public",
+                    "pull_request",
+                    "pull_request_review",
+                    "pull_request_review_comment",
+                    "pull_request_review_thread",
+                    "push",
+                    "registry_package",
+                    "release",
+                    "repository",
+                    "repository_dispatch",
+                    "repository_import",
+                    "repository_vulnerability_alert",
+                    "secret_scanning_alert",
+                    "security_advisory",
+                    "sponsorship",
+                    "star",
+                    "status",
+                    "team",
+                    "team_add",
+                    "watch",
+                    "workflow_dispatch",
+                    "workflow_job",
+                    "workflow_run"
+                  ],
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "minItems": 0,
+                "type": "array"
+              },
+              "payloadUrl": {
+                "description": "PayloadURL is the URL that will receive the webhook POST requests.\nMust be a publicly accessible HTTP or HTTPS endpoint.\nGitHub will send HTTP POST requests to this URL when subscribed events occur.",
+                "maxLength": 2048,
+                "minLength": 1,
+                "pattern": "^https?://[a-zA-Z0-9.-]+(:[0-9]+)?(/.*)?$",
+                "type": "string"
+              },
+              "secret": {
+                "description": "Secret is a reference to a Kubernetes Secret containing the webhook secret.\nThe webhook secret is used by GitHub to sign webhook payloads.\nYour service can verify this signature to ensure the request came from GitHub.\nThis field takes precedence over SecretValue if both are provided.\nSee: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries",
+                "properties": {
+                  "key": {
+                    "description": "Key is the key within the Secret that contains the webhook secret value.",
+                    "maxLength": 250,
+                    "minLength": 1,
+                    "pattern": "^[a-zA-Z0-9.-]+$",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Name is the name of the Kubernetes Secret containing the webhook secret.",
+                    "maxLength": 250,
+                    "minLength": 1,
+                    "pattern": "^[a-zA-Z0-9.-]+$",
+                    "type": "string"
+                  },
+                  "namespace": {
+                    "description": "Namespace is the namespace of the Secret.\nIf not specified, the namespace of the WebhookPreset is used.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "key",
+                  "name"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "secretValue": {
+                "description": "SecretValue is the plaintext value of the webhook secret.\nUse this for simple cases, but Secret (referencing a Kubernetes Secret) is more secure.\nIf both Secret and SecretValue are provided, Secret takes precedence.",
+                "type": "string"
+              },
+              "sslVerify": {
+                "default": true,
+                "description": "SSLVerify enables SSL certificate verification for the webhook endpoint.\nWhen true, GitHub verifies the SSL certificate of the PayloadURL.\nDisable only for testing with self-signed certificates; always enable in production.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "payloadUrl"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "maxItems": 10,
           "type": "array"
         }
       },

@@ -21,19 +21,27 @@ import (
 	"fmt"
 )
 
-func (p *WebhookPreset) SetSecretValue(secret string) {
+// SetSecretValue sets the (plaintext) secret value of the webhook. Empty values are ignored.
+func (s *WebhookPresetSpec) SetSecretValue(secret string) {
 	if secret == "" {
 		return
 	}
-	p.Spec.SecretValue = &secret
+	s.SecretValue = &secret
+}
+
+// GetSecretValueHash returns the SHA-256 hex hash of the secret value, or "" if no secret value is set.
+func (s *WebhookPresetSpec) GetSecretValueHash() string {
+	if s.SecretValue == nil || *s.SecretValue == "" {
+		return ""
+	}
+	hash := sha256.Sum256([]byte(*s.SecretValue))
+	return fmt.Sprintf("%x", hash)
+}
+
+func (p *WebhookPreset) SetSecretValue(secret string) {
+	p.Spec.SetSecretValue(secret)
 }
 
 func (p *WebhookPreset) GetSecretValueHash() string {
-	if p.Spec.SecretValue == nil || *p.Spec.SecretValue == "" {
-		return ""
-	}
-	// Use SHA-256 to hash the secret
-	hash := sha256.Sum256([]byte(*p.Spec.SecretValue))
-	hashValue := fmt.Sprintf("%x", hash)
-	return hashValue
+	return p.Spec.GetSecretValueHash()
 }

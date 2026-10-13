@@ -1285,14 +1285,33 @@ func (in *RepositorySpec) DeepCopyInto(out *RepositorySpec) {
 		*out = make([]corev1.LocalObjectReference, len(*in))
 		copy(*out, *in)
 	}
+	if in.Webhooks != nil {
+		in, out := &in.Webhooks, &out.Webhooks
+		*out = make([]WebhookPresetSpec, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.WebhookIgnorePresetsList != nil {
 		in, out := &in.WebhookIgnorePresetsList, &out.WebhookIgnorePresetsList
 		*out = make([]corev1.LocalObjectReference, len(*in))
 		copy(*out, *in)
 	}
+	if in.WebhookIgnores != nil {
+		in, out := &in.WebhookIgnores, &out.WebhookIgnores
+		*out = make([]WebhookIgnorePresetSpec, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.AutolinksPresetList != nil {
 		in, out := &in.AutolinksPresetList, &out.AutolinksPresetList
 		*out = make([]corev1.LocalObjectReference, len(*in))
+		copy(*out, *in)
+	}
+	if in.Autolinks != nil {
+		in, out := &in.Autolinks, &out.Autolinks
+		*out = make([]Autolink, len(*in))
 		copy(*out, *in)
 	}
 	if in.DeployKeyList != nil {
