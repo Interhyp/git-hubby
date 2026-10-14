@@ -157,6 +157,18 @@ var _ = Describe("Factory", func() {
 			})
 		})
 
+		Context("when a referenced ruleset preset no longer exists", func() {
+			BeforeEach(func() {
+				org.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "deleted-preset"}}
+				Expect(k8sClient.Create(ctx, org)).To(Succeed())
+			})
+
+			It("should still create the executor so the reconciler can report the missing preset", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(executor).NotTo(BeNil())
+			})
+		})
+
 		Context("when organization does not exist", func() {
 			It("should return nil executor and nil error", func() {
 				Expect(err).NotTo(HaveOccurred())
@@ -296,6 +308,19 @@ var _ = Describe("Factory", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(mockClientMgr.lastOrgName).To(Equal(defaultOrgName))
 				Expect(mockClientMgr.lastAppConfig.InstallationID).To(Equal(defaultAppID))
+			})
+		})
+
+		Context("when a referenced ruleset preset no longer exists", func() {
+			BeforeEach(func() {
+				repo.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "deleted-preset"}}
+				Expect(k8sClient.Create(ctx, org)).To(Succeed())
+				Expect(k8sClient.Create(ctx, repo)).To(Succeed())
+			})
+
+			It("should still create the executor so the reconciler can report the missing preset", func() {
+				Expect(err).NotTo(HaveOccurred())
+				Expect(executor).NotTo(BeNil())
 			})
 		})
 
@@ -1253,10 +1278,30 @@ var _ = Describe("Factory", func() {
 					}
 				})
 
-				It("should return error", func() {
+				It("should skip the missing preset without error", func() {
 					generations, err := factory.fetchSubResourceGenerationsForOrg(ctx, *org)
-					Expect(err).To(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(generations).To(BeNil())
+				})
+			})
+
+			Context("when one of several ruleset presets does not exist", func() {
+				BeforeEach(func() {
+					Expect(k8sClient.Create(ctx, &v1alpha1.RulesetPreset{
+						ObjectMeta: metav1.ObjectMeta{Name: "existing", Namespace: defaultNS, Generation: 2},
+						Spec:       v1alpha1.RulesetSpec{Name: "existing"},
+					})).To(Succeed())
+					org.Spec.RulesetPresetList = []v1.LocalObjectReference{
+						{Name: "non-existent"},
+						{Name: "existing"},
+					}
+				})
+
+				It("should only collect the generations of existing presets", func() {
+					generations, err := factory.fetchSubResourceGenerationsForOrg(ctx, *org)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(generations).To(HaveLen(1))
+					Expect(generations["/"+defaultNS+"/existing"]).To(Equal(int64(2)))
 				})
 			})
 
@@ -1267,9 +1312,9 @@ var _ = Describe("Factory", func() {
 					}
 				})
 
-				It("should return error", func() {
+				It("should skip the missing configuration without error", func() {
 					generations, err := factory.fetchSubResourceGenerationsForOrg(ctx, *org)
-					Expect(err).To(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(generations).To(BeNil())
 				})
 			})
@@ -1481,9 +1526,9 @@ var _ = Describe("Factory", func() {
 					}
 				})
 
-				It("should return error", func() {
+				It("should skip the missing sub-resource without error", func() {
 					generations, err := factory.fetchSubResourceGenerationsForRepo(ctx, *repo)
-					Expect(err).To(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(generations).To(BeNil())
 				})
 			})
@@ -1495,9 +1540,22 @@ var _ = Describe("Factory", func() {
 					}
 				})
 
-				It("should return error", func() {
+				It("should skip the missing preset without error", func() {
 					generations, err := factory.fetchSubResourceGenerationsForRepo(ctx, *repo)
-					Expect(err).To(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
+					Expect(generations).To(BeNil())
+				})
+			})
+
+			Context("when webhook ignore and autolinks presets do not exist", func() {
+				BeforeEach(func() {
+					repo.Spec.WebhookIgnorePresetsList = []v1.LocalObjectReference{{Name: "non-existent"}}
+					repo.Spec.AutolinksPresetList = []v1.LocalObjectReference{{Name: "non-existent"}}
+				})
+
+				It("should skip the missing presets without error", func() {
+					generations, err := factory.fetchSubResourceGenerationsForRepo(ctx, *repo)
+					Expect(err).NotTo(HaveOccurred())
 					Expect(generations).To(BeNil())
 				})
 			})
@@ -1509,9 +1567,9 @@ var _ = Describe("Factory", func() {
 					}
 				})
 
-				It("should return error", func() {
+				It("should skip the missing sub-resource without error", func() {
 					generations, err := factory.fetchSubResourceGenerationsForRepo(ctx, *repo)
-					Expect(err).To(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(generations).To(BeNil())
 				})
 			})
