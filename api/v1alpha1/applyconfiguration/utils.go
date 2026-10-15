@@ -115,12 +115,12 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.RulesetConditionsApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RulesetPreset"):
 		return &apiv1alpha1.RulesetPresetApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("RulesetPresetSpec"):
-		return &apiv1alpha1.RulesetPresetSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RulesetPresetStatus"):
 		return &apiv1alpha1.RulesetPresetStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RulesetRules"):
 		return &apiv1alpha1.RulesetRulesApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RulesetSpec"):
+		return &apiv1alpha1.RulesetSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RuleWorkflow"):
 		return &apiv1alpha1.RuleWorkflowApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RunnerGroup"):
@@ -141,18 +141,18 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1alpha1.TopicApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("WebhookIgnorePreset"):
 		return &apiv1alpha1.WebhookIgnorePresetApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("WebhookIgnorePresetSpec"):
-		return &apiv1alpha1.WebhookIgnorePresetSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("WebhookIgnorePresetStatus"):
 		return &apiv1alpha1.WebhookIgnorePresetStatusApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("WebhookIgnoreSpec"):
+		return &apiv1alpha1.WebhookIgnoreSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("WebhookPreset"):
 		return &apiv1alpha1.WebhookPresetApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("WebhookPresetSecretSpec"):
-		return &apiv1alpha1.WebhookPresetSecretSpecApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("WebhookPresetSpec"):
-		return &apiv1alpha1.WebhookPresetSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("WebhookPresetStatus"):
 		return &apiv1alpha1.WebhookPresetStatusApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("WebhookSecretSpec"):
+		return &apiv1alpha1.WebhookSecretSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("WebhookSpec"):
+		return &apiv1alpha1.WebhookSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("WebhookStatus"):
 		return &apiv1alpha1.WebhookStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("WorkflowsRule"):

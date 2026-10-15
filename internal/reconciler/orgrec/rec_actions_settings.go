@@ -8,7 +8,6 @@ import (
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
-	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/internal/utils"
 	"github.com/google/go-github/v92/github"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
@@ -20,7 +19,7 @@ func (o *GitHubOrgReconciler) reconcileActionsSettings(ctx context.Context) erro
 	log := logPkg.FromContext(ctx)
 	log.V(1).Info("Reconciling organization GitHub actions configurations on GitHub")
 
-	if reconciler.IsActionsDisabledForOrgSpec(o.Kubernetes.Resource) {
+	if o.Kubernetes.Resource.IsActionsDisabled() {
 		err := o.disableActionsForGHOrg(ctx)
 		if err != nil {
 			return err
@@ -208,7 +207,7 @@ func (o *GitHubOrgReconciler) reconcileRetention(ctx context.Context) error {
 func (o *GitHubOrgReconciler) reconcileAllowedActions(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
 
-	if reconciler.IsActionsDisabledForOrgSpec(o.Kubernetes.Resource) {
+	if o.Kubernetes.Resource.IsActionsDisabled() {
 		// If Actions are disabled for all repositories, skip reconciling allowed actions
 		return nil
 	}

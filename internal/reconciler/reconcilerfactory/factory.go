@@ -8,10 +8,12 @@ import (
 	"github.com/Interhyp/git-hubby/internal/config"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/idresolver"
 	"github.com/Interhyp/git-hubby/internal/reconciler/orgrec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/teamrec"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
@@ -65,7 +67,7 @@ func (f *Factory) CreateForOrg(ctx context.Context, namespacedOrgName types.Name
 		return nil, err
 	}
 
-	nameResolverOrg, err := reconciler.NewGitHubIDResolver(ctx, ghClient, org.GetLogin())
+	nameResolverOrg, err := idresolver.New(ctx, ghClient, org.GetLogin())
 	if err != nil {
 		log.Error(err, "Failed to warm name resolver for Organization", "organization", org.GetLogin())
 		return nil, err
@@ -128,7 +130,7 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 		return nil, err
 	}
 
-	nameResolverRepo, err := reconciler.NewGitHubIDResolver(ctx, ghClient, org.GetLogin())
+	nameResolverRepo, err := idresolver.New(ctx, ghClient, org.GetLogin())
 	if err != nil {
 		log.Error(err, "Failed to warm name resolver for Repository", "organization", org.GetLogin())
 		return nil, err
@@ -218,25 +220,19 @@ func (f *Factory) getOrgByRef(ctx context.Context, orgRef, namespace string) (v1
 }
 
 func (f *Factory) fetchSubResourceGenerationsForOrg(ctx context.Context, org v1alpha1.Organization) (map[string]int64, error) {
-	log := logPkg.FromContext(ctx).WithValues("method", "fetchSubResourceGenerationsForOrg")
+	ctx = logPkg.IntoContext(ctx, logPkg.FromContext(ctx).WithValues("method", "fetchSubResourceGenerationsForOrg"))
 
 	result := make(map[string]int64)
 
 	for _, ruleSetPresetRef := range org.Spec.RulesetPresetList {
-		var rulesetPreset v1alpha1.RulesetPreset
-		if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: ruleSetPresetRef.Name, Namespace: org.Namespace}, &rulesetPreset); err != nil {
-			log.Error(err, "failed to get RuleSetPreset for Organization")
+		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.RulesetPreset{}, ruleSetPresetRef.Name, org.Namespace); err != nil {
 			return nil, err
 		}
-		result[getSubResourceKey(&rulesetPreset)] = rulesetPreset.GetGeneration()
 	}
 	for _, cscRef := range org.Spec.CodeSecurityConfigurations {
-		var csc v1alpha1.CodeSecurityConfiguration
-		if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: cscRef.Name, Namespace: org.Namespace}, &csc); err != nil {
-			log.Error(err, "failed to get CodeSecurityConfiguration for Organization")
+		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.CodeSecurityConfiguration{}, cscRef.Name, org.Namespace); err != nil {
 			return nil, err
 		}
-		result[getSubResourceKey(&csc)] = csc.GetGeneration()
 	}
 	if len(result) == 0 {
 		return nil, nil
@@ -245,54 +241,61 @@ func (f *Factory) fetchSubResourceGenerationsForOrg(ctx context.Context, org v1a
 }
 
 func (f *Factory) fetchSubResourceGenerationsForRepo(ctx context.Context, repo v1alpha1.Repository) (map[string]int64, error) {
-	log := logPkg.FromContext(ctx).WithValues("method", "fetchSubResourceGenerationsForRepo")
+	ctx = logPkg.IntoContext(ctx, logPkg.FromContext(ctx).WithValues("method", "fetchSubResourceGenerationsForRepo"))
 
 	result := make(map[string]int64)
 
 	for _, ruleSetPresetRef := range repo.Spec.RulesetPresetList {
-		var rulesetPreset v1alpha1.RulesetPreset
-		if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: ruleSetPresetRef.Name, Namespace: repo.Namespace}, &rulesetPreset); err != nil {
-			log.Error(err, "failed to get RuleSetPreset for Repository")
+		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.RulesetPreset{}, ruleSetPresetRef.Name, repo.Namespace); err != nil {
 			return nil, err
 		}
-		result[getSubResourceKey(&rulesetPreset)] = rulesetPreset.GetGeneration()
 	}
-	for _, webhookPresetRefs := range repo.Spec.WebhookPresetList {
-		var webhookPreset v1alpha1.WebhookPreset
-		if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: webhookPresetRefs.Name, Namespace: repo.Namespace}, &webhookPreset); err != nil {
-			log.Error(err, "failed to get WebhookPreset for Repository")
+	for _, webhookPresetRef := range repo.Spec.WebhookPresetList {
+		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.WebhookPreset{}, webhookPresetRef.Name, repo.Namespace); err != nil {
 			return nil, err
 		}
-		result[getSubResourceKey(&webhookPreset)] = webhookPreset.GetGeneration()
 	}
-	for _, webhookIgnoreRefs := range repo.Spec.WebhookIgnorePresetsList {
-		var webhookIgnorePreset v1alpha1.WebhookIgnorePreset
-		if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: webhookIgnoreRefs.Name, Namespace: repo.Namespace}, &webhookIgnorePreset); err != nil {
-			log.Error(err, "failed to get WebhookIgnorePreset for Repository")
+	for _, webhookIgnoreRef := range repo.Spec.WebhookIgnorePresetsList {
+		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.WebhookIgnorePreset{}, webhookIgnoreRef.Name, repo.Namespace); err != nil {
 			return nil, err
 		}
-		result[getSubResourceKey(&webhookIgnorePreset)] = webhookIgnorePreset.GetGeneration()
 	}
 	if repo.Spec.AttachedCodeSecurityConfiguration != nil {
-		var csc v1alpha1.CodeSecurityConfiguration
-		if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: repo.Spec.AttachedCodeSecurityConfiguration.Name, Namespace: repo.Namespace}, &csc); err != nil {
-			log.Error(err, "failed to get AttachedCodeSecurityConfiguration for Repository")
+		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.CodeSecurityConfiguration{}, repo.Spec.AttachedCodeSecurityConfiguration.Name, repo.Namespace); err != nil {
 			return nil, err
 		}
-		result[getSubResourceKey(&csc)] = csc.GetGeneration()
 	}
 	for _, autolinksRef := range repo.Spec.AutolinksPresetList {
-		var autolinksPresetList v1alpha1.AutolinksPreset
-		if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: autolinksRef.Name, Namespace: repo.Namespace}, &autolinksPresetList); err != nil {
-			log.Error(err, "failed to get AttachedCodeSecurityConfiguration for Repository")
+		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.AutolinksPreset{}, autolinksRef.Name, repo.Namespace); err != nil {
 			return nil, err
 		}
-		result[getSubResourceKey(&autolinksPresetList)] = autolinksPresetList.GetGeneration()
 	}
 	if len(result) == 0 {
 		return nil, nil
 	}
 	return result, nil
+}
+
+// collectSubResourceGeneration fetches the referenced sub-resource and records its generation in result.
+//
+// Sub-resource generations are only used for startup spreading / change detection. A missing sub-resource
+// (e.g. a preset that was deleted after its content was moved inline, possibly before the referencing resource
+// was updated) must therefore not block the reconciliation: it is skipped here and reported by the responsible
+// reconciliation via its status condition instead. Any other error is returned.
+func (f *Factory) collectSubResourceGeneration(ctx context.Context, result map[string]int64, obj client.Object, name, namespace string) error {
+	log := logPkg.FromContext(ctx)
+	kind := fmt.Sprintf("%T", obj)
+
+	if err := f.K8sClient.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, obj); err != nil {
+		if apierrors.IsNotFound(err) {
+			log.Info("referenced sub-resource not found, skipping generation tracking", "kind", kind, "name", name)
+			return nil
+		}
+		log.Error(err, "failed to get referenced sub-resource", "kind", kind, "name", name)
+		return err
+	}
+	result[getSubResourceKey(obj)] = obj.GetGeneration()
+	return nil
 }
 
 func getSubResourceKey(obj client.Object) string {

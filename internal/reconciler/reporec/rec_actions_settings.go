@@ -4,7 +4,6 @@ import (
 	"context"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/internal/utils"
 	"github.com/google/go-github/v92/github"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -21,7 +20,7 @@ func (r *GitHubRepoReconciler) reconcileActionsSettings(ctx context.Context) err
 		return err
 	}
 
-	if reconciler.IsActionsDisabledForOrgSpec(&org) {
+	if org.IsActionsDisabled() {
 		// If actions are disabled for the organization, we skip further reconciliation of action settings for repos
 		return nil
 	}

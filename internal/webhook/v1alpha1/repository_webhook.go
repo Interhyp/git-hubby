@@ -4,6 +4,9 @@ import (
 	"context"
 	baseerrors "errors"
 	"fmt"
+	"regexp"
+	"strings"
+	"text/template"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
@@ -84,6 +87,11 @@ func (v *RepositoryValidator) ValidateDelete(_ context.Context, repository *gith
 	return nil, nil
 }
 func (v *RepositoryValidator) validateRepository(ctx context.Context, repo *githubv1alpha1.Repository) error {
+	// Static checks that need no client lookups are done first.
+	if staticErrs := validateInlinePresets(repo); len(staticErrs) > 0 {
+		return errors.NewInvalid(repo.GroupVersionKind().GroupKind(), repo.Name, staticErrs)
+	}
+
 	allErrs := make([]*field.Error, 0, 1)
 
 	// TODO find better or cached solution to avoid fetching organization and custom property definitions for every repository validation
@@ -117,6 +125,39 @@ func (v *RepositoryValidator) validateRepository(ctx context.Context, repo *gith
 	return errors.NewInvalid(
 		repo.GroupVersionKind().GroupKind(),
 		repo.Name, allErrs)
+}
+
+// validateInlinePresets validates inline webhooks and webhook ignores. It needs no client lookups.
+// Collisions with referenced presets are only detected by the reconciler.
+func validateInlinePresets(repo *githubv1alpha1.Repository) field.ErrorList {
+	var errs field.ErrorList
+	specPath := field.NewPath("spec")
+
+	for i, ignore := range repo.Spec.WebhookIgnores {
+		fldPath := specPath.Child("webhookIgnores").Index(i).Child("ignoreURLRegex")
+		if ignore.IgnoreURLRegex == nil || *ignore.IgnoreURLRegex == "" {
+			errs = append(errs, field.Required(fldPath, "ignoreURLRegex must be set for inline webhook ignores"))
+			continue
+		}
+		if _, err := regexp.Compile(*ignore.IgnoreURLRegex); err != nil {
+			errs = append(errs, field.Invalid(fldPath, *ignore.IgnoreURLRegex, fmt.Sprintf("invalid regular expression: %v", err)))
+		}
+	}
+
+	for i, webhook := range repo.Spec.Webhooks {
+		webhookPath := specPath.Child("webhooks").Index(i)
+		if webhook.Secret != nil && webhook.Secret.Namespace != nil && *webhook.Secret.Namespace != "" &&
+			*webhook.Secret.Namespace != repo.Namespace {
+			errs = append(errs, field.Forbidden(webhookPath.Child("secret", "namespace"),
+				fmt.Sprintf("inline webhooks may only reference secrets in the repository namespace %q", repo.Namespace)))
+		}
+		if strings.Contains(webhook.PayloadURL, "{{") {
+			if _, err := template.New("payloadURL").Parse(webhook.PayloadURL); err != nil {
+				errs = append(errs, field.Invalid(webhookPath.Child("payloadUrl"), webhook.PayloadURL, fmt.Sprintf("invalid template: %v", err)))
+			}
+		}
+	}
+	return errs
 }
 
 func validateCustomPropertyValuesHaveCorrectTypes(customPropertyDefinitions []*github.CustomProperty, rawValues []githubv1alpha1.CustomPropertyValue, fldPath *field.Path) field.ErrorList {

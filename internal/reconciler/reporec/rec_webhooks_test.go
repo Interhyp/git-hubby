@@ -6,15 +6,18 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
+	"github.com/Interhyp/git-hubby/test/testutil"
 	"github.com/google/go-github/v92/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -178,9 +181,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret123"),
 							Key:  new("newkey456"),
 						},
@@ -230,9 +233,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook1",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("newkey456"),
 						},
@@ -247,9 +250,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "slack-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://slack.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret2"),
 							Key:  new("newkey456"),
 						},
@@ -304,9 +307,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 					Name:      "ci-webhook",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.WebhookPresetSpec{
+				Spec: v1alpha1.WebhookSpec{
 					PayloadURL: "https://example.com/webhook",
-					Secret: &v1alpha1.WebhookPresetSecretSpec{
+					Secret: &v1alpha1.WebhookSecretSpec{
 						Name: new("secret123"),
 						Key:  new("newkey456"),
 					},
@@ -375,9 +378,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("newsecret456"),
 							Key:  new("newkey456"),
 						},
@@ -518,9 +521,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret123"),
 							Key:  new("newkey456"),
 						},
@@ -661,9 +664,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret123"),
 							Key:  new("newkey456"),
 						},
@@ -719,9 +722,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret123"),
 							Key:  new("newkey456"),
 						},
@@ -777,7 +780,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: "application/json",
 						Active:      new(true),
@@ -805,9 +808,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook1",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("newkey456"),
 						},
@@ -848,9 +851,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "ci-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook1",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("newkey456"),
 						},
@@ -902,7 +905,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "foo-bar-ignore",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookIgnorePresetSpec{
+					Spec: v1alpha1.WebhookIgnoreSpec{
 						IgnoreURLRegex: new("https:\\/\\/foo\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
 				},
@@ -951,7 +954,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "foo-bar-ignore",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookIgnorePresetSpec{
+					Spec: v1alpha1.WebhookIgnoreSpec{
 						IgnoreURLRegex: new("https:\\/\\/foo\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
 				},
@@ -960,7 +963,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "bar-bar-ignore",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookIgnorePresetSpec{
+					Spec: v1alpha1.WebhookIgnoreSpec{
 						IgnoreURLRegex: new("https:\\/\\/bar\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
 				},
@@ -993,7 +996,7 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "foo-bar-ignore",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookIgnorePresetSpec{
+					Spec: v1alpha1.WebhookIgnoreSpec{
 						IgnoreURLRegex: new("("),
 					},
 				},
@@ -1015,9 +1018,9 @@ var _ = Describe("ReconcileWebhooks", func() {
 						Name:      "templated-webhook",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/hooks/{{.SSHURL}}",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("webhook-secret"),
 							Key:  new("token"),
 						},
@@ -1192,9 +1195,9 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 						Name:      "webhook-json",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("key1"),
 						},
@@ -1209,9 +1212,9 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 						Name:      "webhook-form",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("key1"),
 						},
@@ -1276,9 +1279,9 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 						Name:      "webhook-push",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("key1"),
 						},
@@ -1293,9 +1296,9 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 						Name:      "webhook-pr",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("key1"),
 						},
@@ -1352,9 +1355,9 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 						Name:      "webhook-1",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("key1"),
 						},
@@ -1453,9 +1456,9 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 						Name:      "webhook-templated",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/hooks/{{.SSHURL}}",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("key1"),
 						},
@@ -1567,9 +1570,9 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 						Name:      "webhook-1",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("key1"),
 						},
@@ -1651,9 +1654,9 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 						Name:      "webhook-push",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("key1"),
 						},
@@ -1911,7 +1914,7 @@ var _ = Describe("createMissingWebhooks", func() {
 		rec          *GitHubRepoReconciler
 		scheme       *runtime.Scheme
 		repo         *v1alpha1.Repository
-		hooksToAdd   map[string]*v1alpha1.WebhookPreset
+		hooksToAdd   map[string]*DesiredWebhook
 		createdHooks []*github.Hook
 		createError  error
 		err          error
@@ -1940,7 +1943,7 @@ var _ = Describe("createMissingWebhooks", func() {
 
 		createdHooks = []*github.Hook{}
 		createError = nil
-		hooksToAdd = make(map[string]*v1alpha1.WebhookPreset)
+		hooksToAdd = make(map[string]*DesiredWebhook)
 
 		mockClient.CreateHookFunc = func(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
 			createdHooks = append(createdHooks, hook)
@@ -1980,14 +1983,12 @@ var _ = Describe("createMissingWebhooks", func() {
 
 	Context("when creating single hook", func() {
 		BeforeEach(func() {
-			hooksToAdd = map[string]*v1alpha1.WebhookPreset{
+			hooksToAdd = map[string]*DesiredWebhook{
 				"hash1": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "ci-webhook",
-					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Source: "ci-webhook",
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret123"),
 							Key:  new("newkey456"),
 						},
@@ -2009,14 +2010,12 @@ var _ = Describe("createMissingWebhooks", func() {
 
 	Context("when creating multiple hooks", func() {
 		BeforeEach(func() {
-			hooksToAdd = map[string]*v1alpha1.WebhookPreset{
+			hooksToAdd = map[string]*DesiredWebhook{
 				"hash1": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "ci-webhook",
-					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Source: "ci-webhook",
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook1",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret1"),
 							Key:  new("newkey456"),
 						},
@@ -2027,12 +2026,10 @@ var _ = Describe("createMissingWebhooks", func() {
 					},
 				},
 				"hash2": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "slack-webhook",
-					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Source: "slack-webhook",
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://slack.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret2"),
 							Key:  new("newkey456"),
 						},
@@ -2053,7 +2050,7 @@ var _ = Describe("createMissingWebhooks", func() {
 
 	Context("when preset is nil", func() {
 		BeforeEach(func() {
-			hooksToAdd = map[string]*v1alpha1.WebhookPreset{
+			hooksToAdd = map[string]*DesiredWebhook{
 				"hash1": nil,
 			}
 		})
@@ -2066,14 +2063,12 @@ var _ = Describe("createMissingWebhooks", func() {
 
 	Context("when CreateHook fails", func() {
 		BeforeEach(func() {
-			hooksToAdd = map[string]*v1alpha1.WebhookPreset{
+			hooksToAdd = map[string]*DesiredWebhook{
 				"hash1": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "ci-webhook",
-					},
-					Spec: v1alpha1.WebhookPresetSpec{
+					Source: "ci-webhook",
+					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
-						Secret: &v1alpha1.WebhookPresetSecretSpec{
+						Secret: &v1alpha1.WebhookSecretSpec{
 							Name: new("secret123"),
 							Key:  new("newkey456"),
 						},
@@ -2101,7 +2096,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 		rec         *GitHubRepoReconciler
 		scheme      *runtime.Scheme
 		repo        *v1alpha1.Repository
-		allWebhooks map[string]*v1alpha1.WebhookPreset
+		allWebhooks map[string]*DesiredWebhook
 		err         error
 	)
 
@@ -2128,7 +2123,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 			},
 		}
 
-		allWebhooks = make(map[string]*v1alpha1.WebhookPreset)
+		allWebhooks = make(map[string]*DesiredWebhook)
 	})
 
 	JustBeforeEach(func() {
@@ -2164,13 +2159,11 @@ var _ = Describe("updateWebhooksStatus", func() {
 
 	Context("when single webhook is present", func() {
 		BeforeEach(func() {
-			preset := &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ci-webhook",
-				},
-				Spec: v1alpha1.WebhookPresetSpec{
+			preset := &DesiredWebhook{
+				Source: "ci-webhook",
+				Spec: v1alpha1.WebhookSpec{
 					PayloadURL: "https://example.com/webhook",
-					Secret: &v1alpha1.WebhookPresetSecretSpec{
+					Secret: &v1alpha1.WebhookSecretSpec{
 						Name: new("secret123"),
 						Key:  new("newkey456"),
 					},
@@ -2179,7 +2172,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 				},
 			}
 			hash := mapper.HashWebhookConfig("https://example.com/webhook", "application/json", []string{"push"})
-			allWebhooks = map[string]*v1alpha1.WebhookPreset{
+			allWebhooks = map[string]*DesiredWebhook{
 				hash: preset,
 			}
 		})
@@ -2189,20 +2182,18 @@ var _ = Describe("updateWebhooksStatus", func() {
 			Expect(repo.Status.Webhooks).To(HaveLen(1))
 
 			hash := mapper.HashWebhookConfig("https://example.com/webhook", "application/json", []string{"push"})
-			secretHash := allWebhooks[hash].GetSecretValueHash()
+			secretHash := allWebhooks[hash].Spec.GetSecretValueHash()
 			Expect(repo.Status.Webhooks[hash].SecretHash).To(Equal(secretHash))
 		})
 	})
 
 	Context("when multiple webhooks are present", func() {
 		BeforeEach(func() {
-			preset1 := &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ci-webhook",
-				},
-				Spec: v1alpha1.WebhookPresetSpec{
+			preset1 := &DesiredWebhook{
+				Source: "ci-webhook",
+				Spec: v1alpha1.WebhookSpec{
 					PayloadURL: "https://example.com/webhook1",
-					Secret: &v1alpha1.WebhookPresetSecretSpec{
+					Secret: &v1alpha1.WebhookSecretSpec{
 						Name: new("secret1"),
 						Key:  new("newkey456"),
 					},
@@ -2210,13 +2201,11 @@ var _ = Describe("updateWebhooksStatus", func() {
 					Events:      []string{"push"},
 				},
 			}
-			preset2 := &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "slack-webhook",
-				},
-				Spec: v1alpha1.WebhookPresetSpec{
+			preset2 := &DesiredWebhook{
+				Source: "slack-webhook",
+				Spec: v1alpha1.WebhookSpec{
 					PayloadURL: "https://slack.com/webhook",
-					Secret: &v1alpha1.WebhookPresetSecretSpec{
+					Secret: &v1alpha1.WebhookSecretSpec{
 						Name: new("secret2"),
 						Key:  new("newkey456"),
 					},
@@ -2228,7 +2217,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 			hash1 := mapper.HashWebhookConfig("https://example.com/webhook1", "application/json", []string{"push"})
 			hash2 := mapper.HashWebhookConfig("https://slack.com/webhook", "application/json", []string{"issues"})
 
-			allWebhooks = map[string]*v1alpha1.WebhookPreset{
+			allWebhooks = map[string]*DesiredWebhook{
 				hash1: preset1,
 				hash2: preset2,
 			}
@@ -2242,7 +2231,7 @@ var _ = Describe("updateWebhooksStatus", func() {
 
 	Context("when preset is nil", func() {
 		BeforeEach(func() {
-			allWebhooks = map[string]*v1alpha1.WebhookPreset{
+			allWebhooks = map[string]*DesiredWebhook{
 				"hash1": nil,
 			}
 		})
@@ -2255,18 +2244,16 @@ var _ = Describe("updateWebhooksStatus", func() {
 
 	Context("when webhook has no secret", func() {
 		BeforeEach(func() {
-			preset := &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "ci-webhook",
-				},
-				Spec: v1alpha1.WebhookPresetSpec{
+			preset := &DesiredWebhook{
+				Source: "ci-webhook",
+				Spec: v1alpha1.WebhookSpec{
 					PayloadURL:  "https://example.com/webhook",
 					ContentType: "application/json",
 					Events:      []string{"push"},
 				},
 			}
 			hash := mapper.HashWebhookConfig("https://example.com/webhook", "application/json", []string{"push"})
-			allWebhooks = map[string]*v1alpha1.WebhookPreset{
+			allWebhooks = map[string]*DesiredWebhook{
 				hash: preset,
 			}
 		})
@@ -2300,7 +2287,7 @@ var _ = Describe("templatePayloadURL", func() {
 				Name:      "test-webhook",
 				Namespace: "default",
 			},
-			Spec: v1alpha1.WebhookPresetSpec{
+			Spec: v1alpha1.WebhookSpec{
 				PayloadURL:  "https://example.com/webhook",
 				ContentType: "application/json",
 				Active:      new(true),
@@ -2337,7 +2324,8 @@ var _ = Describe("templatePayloadURL", func() {
 	})
 
 	JustBeforeEach(func() {
-		result, templatedErr = rec.templatePayloadURL(ctx, preset)
+		templatedErr = rec.templatePayloadURL(ctx, &preset.Spec)
+		result = preset
 	})
 
 	Context("when PayloadURL contains no template", func() {
@@ -2531,6 +2519,91 @@ var _ = Describe("templatePayloadURL", func() {
 			Expect(result).NotTo(BeNil())
 			Expect(result.Spec.PayloadURL).To(Equal("https://github.com/test-org/test-repo"))
 		})
+	})
+})
+
+var _ = Describe("dedupeDesiredWebhooks", func() {
+	var (
+		ctx  context.Context
+		logs func() []string
+	)
+
+	webhook := func(source, hash string, active bool) DesiredWebhook {
+		return DesiredWebhook{
+			Source: source,
+			Hash:   hash,
+			Spec: v1alpha1.WebhookSpec{
+				PayloadURL:  "https://example.com/hook",
+				ContentType: "json",
+				Active:      new(active),
+			},
+		}
+	}
+
+	BeforeEach(func() {
+		ctx, logs = testutil.CapturingContext()
+	})
+
+	It("keeps webhooks with different hashes", func() {
+		result, err := dedupeDesiredWebhooks(ctx, []DesiredWebhook{webhook("a", "h1", true), webhook("b", "h2", true)})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(result).To(HaveLen(2))
+	})
+
+	It("applies identical duplicates once and logs a warning", func() {
+		result, err := dedupeDesiredWebhooks(ctx, []DesiredWebhook{webhook("webhookPreset/p1", "h1", true), webhook("inline[0]", "h1", true)})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(result).To(HaveLen(1))
+		Expect(result[0].Source).To(Equal("webhookPreset/p1"))
+		Expect(strings.Join(logs(), "\n")).To(ContainSubstring("duplicate webhook definition with identical content"))
+	})
+
+	It("reports conflicting duplicates", func() {
+		result, err := dedupeDesiredWebhooks(ctx, []DesiredWebhook{webhook("webhookPreset/p1", "h1", true), webhook("inline[0]", "h1", false)})
+		Expect(result).To(BeNil())
+		var conflictErr *WebhookConflictError
+		Expect(errors.As(err, &conflictErr)).To(BeTrue())
+		Expect(conflictErr.URL).To(Equal("https://example.com/hook"))
+		Expect(conflictErr.Sources).To(ConsistOf("webhookPreset/p1", "inline[0]"))
+	})
+})
+
+var _ = Describe("collectWebhookIgnoreRegexes", func() {
+	const namespace = "test-ns"
+
+	newPreset := func(name string, regex *string) *v1alpha1.WebhookIgnorePreset {
+		return &v1alpha1.WebhookIgnorePreset{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+			Spec:       v1alpha1.WebhookIgnoreSpec{IgnoreURLRegex: regex},
+		}
+	}
+
+	It("returns the union of preset and inline regexes, compiling duplicates once and skipping empty entries", func() {
+		k8sClient := testutil.NewFakeClient(newPreset("p1", new("^https://a/.*")), newPreset("p2", nil))
+		regexes, err := collectWebhookIgnoreRegexes(context.Background(), k8sClient, namespace,
+			[]corev1.LocalObjectReference{{Name: "p1"}, {Name: "p2"}},
+			[]v1alpha1.WebhookIgnoreSpec{
+				{IgnoreURLRegex: new("^https://a/.*")},
+				{IgnoreURLRegex: new("")},
+				{IgnoreURLRegex: new("^https://b/.*")},
+			})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(regexes).To(HaveLen(2))
+		Expect(regexes[0].String()).To(Equal("^https://a/.*"))
+		Expect(regexes[1].String()).To(Equal("^https://b/.*"))
+	})
+
+	It("returns an error for invalid regexes", func() {
+		_, err := collectWebhookIgnoreRegexes(context.Background(), testutil.NewFakeClient(), namespace, nil,
+			[]v1alpha1.WebhookIgnoreSpec{{IgnoreURLRegex: new("(")}})
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("inline[0]"))
+	})
+
+	It("returns an error for missing presets", func() {
+		_, err := collectWebhookIgnoreRegexes(context.Background(), testutil.NewFakeClient(), namespace,
+			[]corev1.LocalObjectReference{{Name: "missing"}}, nil)
+		Expect(apierrors.IsNotFound(err)).To(BeTrue())
 	})
 })
 

@@ -8,11 +8,12 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// WebhookIgnorePresetSpec defines the desired state of WebhookIgnorePreset.
-// WebhookIgnorePresets allow you to exclude certain webhooks from being created,
+// WebhookIgnoreSpec defines a webhook ignore rule. It is the spec of a WebhookIgnorePreset and the element type
+// of inline webhook ignores in Repository.spec.webhookIgnores.
+// Ignore rules allow you to exclude certain webhooks from being managed,
 // even if they are referenced in a repository's WebhookPresetList.
 // This is useful for globally excluding webhooks based on URL patterns.
-type WebhookIgnorePresetSpec struct {
+type WebhookIgnoreSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	// The following markers will use OpenAPI v3 schema to validate the value
@@ -63,7 +64,7 @@ type WebhookIgnorePreset struct {
 
 	// spec defines the desired state of WebhookIgnorePreset
 	// +required
-	Spec WebhookIgnorePresetSpec `json:"spec"`
+	Spec WebhookIgnoreSpec `json:"spec"`
 
 	// status defines the observed state of WebhookIgnorePreset
 	// +optional

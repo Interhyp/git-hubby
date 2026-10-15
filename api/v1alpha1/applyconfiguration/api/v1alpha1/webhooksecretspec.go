@@ -17,11 +17,11 @@ limitations under the License.
 
 package v1alpha1
 
-// WebhookPresetSecretSpecApplyConfiguration represents a declarative configuration of the WebhookPresetSecretSpec type for use
+// WebhookSecretSpecApplyConfiguration represents a declarative configuration of the WebhookSecretSpec type for use
 // with apply.
 //
-// WebhookPresetSecretSpec references a Kubernetes Secret containing the webhook secret.
-type WebhookPresetSecretSpecApplyConfiguration struct {
+// WebhookSecretSpec references a Kubernetes Secret containing the webhook secret.
+type WebhookSecretSpecApplyConfiguration struct {
 	// Name is the name of the Kubernetes Secret containing the webhook secret.
 	Name *string `json:"name,omitempty"`
 	// Key is the key within the Secret that contains the webhook secret value.
@@ -31,16 +31,16 @@ type WebhookPresetSecretSpecApplyConfiguration struct {
 	Namespace *string `json:"namespace,omitempty"`
 }
 
-// WebhookPresetSecretSpecApplyConfiguration constructs a declarative configuration of the WebhookPresetSecretSpec type for use with
+// WebhookSecretSpecApplyConfiguration constructs a declarative configuration of the WebhookSecretSpec type for use with
 // apply.
-func WebhookPresetSecretSpec() *WebhookPresetSecretSpecApplyConfiguration {
-	return &WebhookPresetSecretSpecApplyConfiguration{}
+func WebhookSecretSpec() *WebhookSecretSpecApplyConfiguration {
+	return &WebhookSecretSpecApplyConfiguration{}
 }
 
 // WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Name field is set to the value of the last call.
-func (b *WebhookPresetSecretSpecApplyConfiguration) WithName(value string) *WebhookPresetSecretSpecApplyConfiguration {
+func (b *WebhookSecretSpecApplyConfiguration) WithName(value string) *WebhookSecretSpecApplyConfiguration {
 	b.Name = &value
 	return b
 }
@@ -48,7 +48,7 @@ func (b *WebhookPresetSecretSpecApplyConfiguration) WithName(value string) *Webh
 // WithKey sets the Key field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Key field is set to the value of the last call.
-func (b *WebhookPresetSecretSpecApplyConfiguration) WithKey(value string) *WebhookPresetSecretSpecApplyConfiguration {
+func (b *WebhookSecretSpecApplyConfiguration) WithKey(value string) *WebhookSecretSpecApplyConfiguration {
 	b.Key = &value
 	return b
 }
@@ -56,7 +56,7 @@ func (b *WebhookPresetSecretSpecApplyConfiguration) WithKey(value string) *Webho
 // WithNamespace sets the Namespace field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Namespace field is set to the value of the last call.
-func (b *WebhookPresetSecretSpecApplyConfiguration) WithNamespace(value string) *WebhookPresetSecretSpecApplyConfiguration {
+func (b *WebhookSecretSpecApplyConfiguration) WithNamespace(value string) *WebhookSecretSpecApplyConfiguration {
 	b.Namespace = &value
 	return b
 }

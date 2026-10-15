@@ -80,6 +80,16 @@ func (o *Organization) HasEnterpriseFeatures() bool {
 	return o.GetPlan() != PlanFree
 }
 
+// IsActionsDisabled returns true if GitHub Actions are disabled for all repositories of the organization,
+// i.e. spec.actionsSettings.enabledRepositories is unset or "none".
+func (o *Organization) IsActionsDisabled() bool {
+	if o == nil {
+		return true
+	}
+	return o.Spec.ActionsSettings.EnabledRepositories == nil ||
+		*o.Spec.ActionsSettings.EnabledRepositories == "none"
+}
+
 func (o *Organization) SetObservedSubResourceGeneration(new map[string]int64) {
 	if o == nil {
 		return

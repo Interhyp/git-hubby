@@ -35,7 +35,7 @@ type RulesetPresetApplyConfiguration struct {
 	// metadata is a standard object metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	// spec defines the desired state of RulesetPreset
-	Spec *RulesetPresetSpecApplyConfiguration `json:"spec,omitempty"`
+	Spec *RulesetSpecApplyConfiguration `json:"spec,omitempty"`
 	// status defines the observed state of RulesetPreset
 	Status *RulesetPresetStatusApplyConfiguration `json:"status,omitempty"`
 }
@@ -255,7 +255,7 @@ func (b *RulesetPresetApplyConfiguration) ensureObjectMetaApplyConfigurationExis
 // WithSpec sets the Spec field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Spec field is set to the value of the last call.
-func (b *RulesetPresetApplyConfiguration) WithSpec(value *RulesetPresetSpecApplyConfiguration) *RulesetPresetApplyConfiguration {
+func (b *RulesetPresetApplyConfiguration) WithSpec(value *RulesetSpecApplyConfiguration) *RulesetPresetApplyConfiguration {
 	b.Spec = value
 	return b
 }

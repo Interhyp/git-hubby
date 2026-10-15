@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Interhyp/git-hubby/internal/conditions"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/rulesets"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	applyconfiguration "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration"
@@ -73,7 +74,7 @@ func (m MockReconciler) BuildMetadataApplyConfig(lbls map[string]string, annotat
 func (m MockReconciler) BuildStatusApplyConfig() runtime.ApplyConfiguration {
 	conds := *m.k8s.Resource.GetConditions()
 	status := ac.OrganizationStatus().
-		WithConditions(ConditionsToApplyConfigs(conds)...)
+		WithConditions(conditions.ToApplyConfigs(conds)...)
 	if gens := m.k8s.Resource.Status.ObservedSubResourceGenerations; gens != nil {
 		status.WithObservedSubResourceGenerations(gens)
 	}
@@ -1004,4 +1005,21 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 		})
 	})
 
+})
+
+var _ = Describe("rulesets.ConflictError in status conditions", func() {
+	It("sets RulesetsSynced to False with the conflict error in the message", func() {
+		conflictErr := &rulesets.ConflictError{Name: "shared", Sources: []string{"rulesetPreset/preset-a", "inline[0]"}}
+		condition := conditionFromResult(reconciliationResult{
+			Condition:  conditions.TypeRulesetsSynced,
+			Error:      errors.Join(conflictErr),
+			FinishedAt: time.Now(),
+		})
+		Expect(condition.Type).To(Equal(string(conditions.TypeRulesetsSynced)))
+		Expect(condition.Status).To(Equal(metav1.ConditionFalse))
+		Expect(condition.Reason).To(Equal(conditions.ReasonSyncFailed))
+		Expect(condition.Message).To(ContainSubstring(`conflicting ruleset definitions for ruleset "shared"`))
+		Expect(condition.Message).To(ContainSubstring("rulesetPreset/preset-a"))
+		Expect(condition.Message).To(ContainSubstring("inline[0]"))
+	})
 })

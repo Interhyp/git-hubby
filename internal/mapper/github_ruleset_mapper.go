@@ -9,25 +9,25 @@ import (
 	"github.com/google/go-github/v92/github"
 )
 
-// RulesetPresetToGithubRuleset converts a RulesetPreset to a GitHub RepositoryRuleset.
-// NameResolver.ResolveRuleset must have been called on preset before passing it here.
-func RulesetPresetToGithubRuleset(preset githubv1alpha1.RulesetPreset) (*github.RepositoryRuleset, error) {
-	if preset.Spec.Name == "" {
+// RulesetSpecToGithubRuleset converts a RulesetSpec (from a RulesetPreset or an inline ruleset) to a GitHub RepositoryRuleset.
+// NameResolver.ResolveRuleset must have been called on spec before passing it here.
+func RulesetSpecToGithubRuleset(spec githubv1alpha1.RulesetSpec) (*github.RepositoryRuleset, error) {
+	if spec.Name == "" {
 		return nil, fmt.Errorf("ruleset name cannot be empty")
 	}
 
 	ruleset := &github.RepositoryRuleset{
-		Name:        preset.Spec.Name,
-		Enforcement: github.RulesetEnforcement(preset.Spec.Enforcement),
-		Target:      new(github.RulesetTarget(preset.Spec.Target)),
+		Name:        spec.Name,
+		Enforcement: github.RulesetEnforcement(spec.Enforcement),
+		Target:      new(github.RulesetTarget(spec.Target)),
 	}
 
-	ruleset.Conditions = mapConditions(preset.Spec.Conditions)
+	ruleset.Conditions = mapConditions(spec.Conditions)
 
 	// Map bypass actors
-	if len(preset.Spec.BypassActors) > 0 {
-		bypassActors := make([]*github.BypassActor, len(preset.Spec.BypassActors))
-		for i, actor := range preset.Spec.BypassActors {
+	if len(spec.BypassActors) > 0 {
+		bypassActors := make([]*github.BypassActor, len(spec.BypassActors))
+		for i, actor := range spec.BypassActors {
 			actorType := github.BypassActorType(actor.ActorType)
 			bypassActors[i] = &github.BypassActor{
 				ActorID:   actor.ActorID,
@@ -42,7 +42,7 @@ func RulesetPresetToGithubRuleset(preset githubv1alpha1.RulesetPreset) (*github.
 	}
 
 	// Map rules
-	mapRules(&preset.Spec.Rules, ruleset)
+	mapRules(&spec.Rules, ruleset)
 
 	return ruleset, nil
 }
@@ -266,30 +266,30 @@ func mapPatternRules(rules *githubv1alpha1.RulesetRules, githubRules *github.Rep
 	}
 }
 
-// RulesetsDiffer compares a RulesetPreset with a GitHub RepositoryRuleset to determine if they differ
-func RulesetsDiffer(preset githubv1alpha1.RulesetPreset, githubRuleset github.RepositoryRuleset) bool {
-	if preset.Spec.Name != githubRuleset.Name {
+// RulesetsDiffer compares a RulesetSpec with a GitHub RepositoryRuleset to determine if they differ
+func RulesetsDiffer(spec githubv1alpha1.RulesetSpec, githubRuleset github.RepositoryRuleset) bool {
+	if spec.Name != githubRuleset.Name {
 		return true
 	}
 
-	if preset.Spec.Target != string(*utils.WithDefaultAsPtr(githubRuleset.Target, github.RulesetTargetBranch)) {
+	if spec.Target != string(*utils.WithDefaultAsPtr(githubRuleset.Target, github.RulesetTargetBranch)) {
 		return true
 	}
 
-	if string(preset.Spec.Enforcement) != string(githubRuleset.Enforcement) {
+	if string(spec.Enforcement) != string(githubRuleset.Enforcement) {
 		return true
 	}
 
-	if bypassActorsDiffer(preset.Spec.BypassActors, githubRuleset.BypassActors) {
+	if bypassActorsDiffer(spec.BypassActors, githubRuleset.BypassActors) {
 		return true
 	}
 
-	if conditionsDiffer(preset.Spec.Conditions, githubRuleset.Conditions) {
+	if conditionsDiffer(spec.Conditions, githubRuleset.Conditions) {
 		return true
 	}
 
 	// Compare rules
-	if rulesetRulesDiffer(preset.Spec.Rules, githubRuleset.Rules) {
+	if rulesetRulesDiffer(spec.Rules, githubRuleset.Rules) {
 		return true
 	}
 

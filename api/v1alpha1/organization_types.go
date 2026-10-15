@@ -390,6 +390,19 @@ type OrganizationSpec struct {
 	// See: https://docs.github.com/en/rest/orgs/rules
 	RulesetPresetList []v1.LocalObjectReference `json:"rulesetPresets,omitempty"`
 
+	// Rulesets defines organization rulesets inline, without the need for a separate RulesetPreset CRD.
+	// Inline rulesets support exactly the same fields as a RulesetPreset.
+	// The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.
+	// If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,
+	// identical definitions are applied once (a warning is logged), while differing definitions are treated as a
+	// conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.
+	// At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.
+	// The target 'repository' is supported for organization-level rulesets.
+	// +optional
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:XValidation:rule="self.all(x, self.filter(y, y.name == x.name).size() <= 1)",message="ruleset names must be unique"
+	Rulesets []RulesetSpec `json:"rulesets,omitempty"`
+
 	// Description is a human-readable description of the organization.
 	// This appears on the organization's GitHub profile page.
 	Description string `json:"description"`

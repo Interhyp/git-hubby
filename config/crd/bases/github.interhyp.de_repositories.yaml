@@ -142,6 +142,54 @@ spec:
                 required:
                 - name
                 type: object
+              autolinks:
+                description: |-
+                  Autolinks defines autolinks inline, without the need for a separate AutolinksPreset CRD.
+                  The operator reconciles the union of inline autolinks and the autolinks referenced via AutolinksPresetList.
+                  An autolink is identified by its keyPrefix. If several definitions share the same keyPrefix, identical
+                  definitions are applied once (a warning is logged), while differing definitions are treated as a conflict:
+                  no autolinks are changed on GitHub and the AutolinksSynced condition is set to False.
+                  At most 25 inline autolinks are allowed.
+                items:
+                  description: |-
+                    Autolink defines an automatic link reference for external resources.
+                    When a reference matching KeyPrefix is found in issues, pull requests, or commit messages,
+                    GitHub automatically converts it to a clickable link using the URLTemplate.
+                    See: https://docs.github.com/en/rest/repos/autolinks
+                  properties:
+                    isAlphanumeric:
+                      default: false
+                      description: |-
+                        IsAlphanumeric determines whether the reference must be alphanumeric.
+                        - true: the <num> parameter of the url_template matches alphanumeric characters `A-Z` (case insensitive), `0-9`, and `-`
+                        - false: reference only matches numeric characters.
+                      type: boolean
+                    keyPrefix:
+                      description: |-
+                        KeyPrefix is the text prefix that triggers autolink creation.
+                        When text starts with this prefix followed by a reference, it becomes a link.
+                        Examples: "JIRA-", "TICKET-", "BUG-"
+                      maxLength: 20
+                      pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]{0,19}$
+                      type: string
+                    urlTemplate:
+                      description: |-
+                        URLTemplate is the URL pattern used to generate links.
+                        Use <num> as a placeholder for the reference number/ID.
+                        Example: "https://jira.example.com/browse/<num>" converts "JIRA-123" to "https://jira.example.com/browse/123"
+                      maxLength: 200
+                      type: string
+                  required:
+                  - isAlphanumeric
+                  - keyPrefix
+                  - urlTemplate
+                  type: object
+                maxItems: 25
+                type: array
+                x-kubernetes-validations:
+                - message: autolink keyPrefixes must be unique
+                  rule: self.all(x, self.filter(y, y.keyPrefix == x.keyPrefix).size()
+                    <= 1)
               autolinksPresets:
                 description: |-
                   AutolinksPresetList references AutolinksPreset CRDs to create autolinks for this repository.
@@ -355,6 +403,755 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              rulesets:
+                description: |-
+                  Rulesets defines repository rulesets inline, without the need for a separate RulesetPreset CRD.
+                  Inline rulesets support exactly the same fields as a RulesetPreset.
+                  The operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.
+                  If an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,
+                  identical definitions are applied once (a warning is logged), while differing definitions are treated as a
+                  conflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.
+                  At most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.
+                  The target 'repository' is only supported at organization level; inline rulesets with target 'repository'
+                  are filtered out (i.e. are not checked nor applied), the same as for RulesetPresets.
+                items:
+                  description: |-
+                    RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element type of inline rulesets
+                    in Organization.spec.rulesets and Repository.spec.rulesets.
+                    A ruleset preset defines reusable repository rules that can be applied to multiple repositories
+                    or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
+                    See: https://docs.github.com/en/rest/repos/rules
+                  properties:
+                    bypassActors:
+                      description: |-
+                        BypassActors defines actors (users, teams, apps) who can bypass this ruleset.
+                        Bypass actors can perform operations that would otherwise be blocked by the ruleset.
+                        See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-bypass-mode-for-rulesets
+                      items:
+                        description: |-
+                          RulesetBypassActor defines an actor (user, team, or integration) who can bypass ruleset enforcement.
+                          Either ActorID (for direct specification) or ActorSlug (for name-based resolution) must be provided for
+                          ActorTypes "Integration" and "Team". ActorID must be provided for ActorType "RepositoryRole".
+                          Both must be empty for ActorType "DeployKey".
+                          See: https://docs.github.com/en/rest/repos/rules#create-an-organization-repository-ruleset
+                        properties:
+                          actorId:
+                            description: |-
+                              ActorID is the numeric ID of the bypass actor.
+                              This field is mutually exclusive with ActorSlug.
+                            format: int64
+                            type: integer
+                          actorSlug:
+                            description: |-
+                              ActorSlug is the slug or name of the actor, which will be resolved to an ID.
+                              This field is mutually exclusive with ActorID.
+                              Only supported for ActorType "Integration" (GitHub Apps) and "Team" (organization teams).
+                              For Integration, use the app slug (e.g., "my-github-app").
+                              For Team, use the team slug (e.g., "platform-engineers").
+                            type: string
+                          actorType:
+                            description: |-
+                              ActorType specifies the type of actor that can bypass the ruleset.
+                              - "Integration": A GitHub App
+                              - "OrganizationAdmin": Organization administrators
+                              - "RepositoryRole": Users with a specific repository role
+                              - "Team": An organization team
+                              - "DeployKey": A deploy key
+                              - "EnterpriseOwner": Enterprise owners (GitHub Enterprise only)
+                            enum:
+                            - Integration
+                            - OrganizationAdmin
+                            - RepositoryRole
+                            - Team
+                            - DeployKey
+                            - EnterpriseOwner
+                            type: string
+                          bypassMode:
+                            description: |-
+                              BypassMode determines when and how the actor can bypass the ruleset.
+                              - "always": Actor can always bypass the ruleset
+                              - "pull_request": Actor can bypass only when submitting via pull request
+                            enum:
+                            - always
+                            - pull_request
+                            type: string
+                        required:
+                        - actorType
+                        type: object
+                        x-kubernetes-validations:
+                        - message: at most one of the fields in [actorId actorSlug]
+                            may be set
+                          rule: (has(self.actorId)?1:0)+(has(self.actorSlug)?1:0)
+                            <= 1
+                      maxItems: 100
+                      type: array
+                    conditions:
+                      description: |-
+                        Conditions defines which refs are included or excluded in the list of targets for this Ruleset.
+                        They also define which Repositories are targeted by Organization-level Rulesets.
+                      properties:
+                        refName:
+                          description: RefName defines which git refs (branches or
+                            tags) a ruleset applies to.
+                          minProperties: 1
+                          properties:
+                            exclude:
+                              description: |-
+                                Exclude defines ref patterns to exempt from the ruleset.
+                                Refs matching exclude patterns will not be subject to the ruleset rules.
+                                Useful for exempting release branches or other special refs.
+                              items:
+                                pattern: ^(~DEFAULT_BRANCH|~ALL|refs/(heads|tags)(/?[*a-zA-Z0-9][a-zA-Z0-9*_.-]*)*)$
+                                type: string
+                              maxItems: 50
+                              type: array
+                            include:
+                              description: |-
+                                Include defines ref patterns that the ruleset applies to.
+                                Patterns can use wildcards (*) and must start with refs/heads/ (branches) or refs/tags/ (tags).
+                                Use "~DEFAULT_BRANCH" to target the default branch.
+                                Use "~ALL" to target all branches.
+                                Examples: "refs/heads/main", "refs/heads/feature/*", "refs/tags/v*", "~DEFAULT_BRANCH", "~ALL"
+                              items:
+                                pattern: ^(~DEFAULT_BRANCH|~ALL|refs/(heads|tags)(/?[*a-zA-Z0-9][a-zA-Z0-9*_.-]*)*)$
+                                type: string
+                              maxItems: 50
+                              minItems: 1
+                              type: array
+                          type: object
+                        repositoryName:
+                          description: |-
+                            RepositoryName targets repositories for Organization-level rulesets by their name.
+                            The field is ignored for Repository-level rulesets.
+                          properties:
+                            exclude:
+                              description: Exclude defines repository name patterns
+                                to exempt from the ruleset.
+                              items:
+                                type: string
+                              maxItems: 50
+                              type: array
+                            include:
+                              description: |-
+                                Include defines repository name patterns that the ruleset applies to.
+                                Use "~ALL" to target all repositories. Supports wildcards (*).
+                                Examples: "~ALL", "my-repo-*", "backend-*"
+                              items:
+                                type: string
+                              maxItems: 50
+                              minItems: 1
+                              type: array
+                            protected:
+                              default: false
+                              description: Protected determines whether renaming a
+                                targeted repository is prevented.
+                              type: boolean
+                          required:
+                          - include
+                          type: object
+                        repositoryProperty:
+                          description: |-
+                            RepositoryProperty targets repositories for Organization-level rulesets by matching against custom properties.
+                            The field is ignored for Repository-level rulesets.
+                          properties:
+                            exclude:
+                              description: |-
+                                Exclude defines repository property conditions that exempt repositories from the ruleset.
+                                A repository matching any of the conditions is excluded from the rule.
+                                The names of the properties in the slice are validated to be unique.
+                              items:
+                                description: |-
+                                  RepositoryPropertyTarget defines a single repository property condition for ruleset targeting.
+                                  The repository must have the specified property set to one of the given values.
+                                properties:
+                                  name:
+                                    description: |-
+                                      Name is the name of the repository custom property to match against.
+                                      Must match a custom property defined at the organization level.
+                                      Note: restrict name length to be able to validate within budget
+                                    maxLength: 100
+                                    minLength: 1
+                                    type: string
+                                  propertyValues:
+                                    description: |-
+                                      PropertyValues is the list of values to match against the custom property.
+                                      The repository's property value must be one of these values for the condition to match.
+                                    items:
+                                      type: string
+                                    minItems: 1
+                                    type: array
+                                  source:
+                                    description: Source defines where the property
+                                      is defined. Defaults to "custom" for organization-defined
+                                      properties.
+                                    type: string
+                                required:
+                                - name
+                                - propertyValues
+                                type: object
+                              maxItems: 50
+                              type: array
+                              x-kubernetes-validations:
+                              - message: property names must be unique
+                                rule: self.all(x, self.filter(y, y.name == x.name).size()
+                                  <= 1)
+                            include:
+                              description: |-
+                                Include defines repository property conditions that must match for the ruleset to apply.
+                                A repository must match all included property conditions. The names of the properties in the slice are
+                                validated to be unique.
+                              items:
+                                description: |-
+                                  RepositoryPropertyTarget defines a single repository property condition for ruleset targeting.
+                                  The repository must have the specified property set to one of the given values.
+                                properties:
+                                  name:
+                                    description: |-
+                                      Name is the name of the repository custom property to match against.
+                                      Must match a custom property defined at the organization level.
+                                      Note: restrict name length to be able to validate within budget
+                                    maxLength: 100
+                                    minLength: 1
+                                    type: string
+                                  propertyValues:
+                                    description: |-
+                                      PropertyValues is the list of values to match against the custom property.
+                                      The repository's property value must be one of these values for the condition to match.
+                                    items:
+                                      type: string
+                                    minItems: 1
+                                    type: array
+                                  source:
+                                    description: Source defines where the property
+                                      is defined. Defaults to "custom" for organization-defined
+                                      properties.
+                                    type: string
+                                required:
+                                - name
+                                - propertyValues
+                                type: object
+                              maxItems: 50
+                              minItems: 1
+                              type: array
+                              x-kubernetes-validations:
+                              - message: property names must be unique
+                                rule: self.all(x, self.filter(y, y.name == x.name).size()
+                                  <= 1)
+                          required:
+                          - include
+                          type: object
+                      type: object
+                      x-kubernetes-validations:
+                      - message: at most one of the fields in [repositoryName repositoryProperty]
+                          may be set
+                        rule: (has(self.repositoryName)?1:0)+(has(self.repositoryProperty)?1:0)
+                          <= 1
+                    enforcement:
+                      description: |-
+                        Enforcement determines whether the ruleset is enforced.
+                        - "disabled": Ruleset is not enforced
+                        - "active": Ruleset is actively enforced; violations block operations
+                        - "evaluate": Ruleset is evaluated but violations only generate warnings
+                      enum:
+                      - disabled
+                      - active
+                      - evaluate
+                      type: string
+                    name:
+                      description: Name is the display name of the ruleset shown in
+                        the GitHub UI.
+                      maxLength: 255
+                      minLength: 1
+                      pattern: ^[a-zA-Z0-9][a-zA-Z0-9\s\[\]*/'_.,~-]*[a-zA-Z0-9\[\]]$
+                      type: string
+                    rules:
+                      description: Rules defines the specific rules to enforce in
+                        this ruleset.
+                      properties:
+                        branchNamePattern:
+                          description: |-
+                            BranchNamePattern enforces a pattern for branch names.
+                            Use this to enforce branch naming conventions like "feature/*" or "hotfix/*".
+                          properties:
+                            negate:
+                              default: false
+                              description: |-
+                                Negate inverts the pattern matching logic.
+                                When true, the rule passes if the pattern does NOT match.
+                                Example: Use with "contains" to prevent certain words in commit messages.
+                              type: boolean
+                            operator:
+                              description: |-
+                                Operator defines how the pattern is evaluated.
+                                - "starts_with": String must start with the pattern
+                                - "ends_with": String must end with the pattern
+                                - "contains": String must contain the pattern
+                                - "regex": String must match the pattern as a regular expression
+                              enum:
+                              - starts_with
+                              - ends_with
+                              - contains
+                              - regex
+                              type: string
+                            pattern:
+                              description: |-
+                                Pattern is the pattern to match against.
+                                For regex operator, this is a regular expression.
+                                For other operators, this is a literal string or substring.
+                              maxLength: 1024
+                              minLength: 1
+                              type: string
+                          required:
+                          - operator
+                          - pattern
+                          type: object
+                        commitAuthorEmailPattern:
+                          description: |-
+                            CommitAuthorEmailPattern enforces a pattern for commit author email addresses.
+                            Use this to ensure commits come from verified email domains.
+                          properties:
+                            negate:
+                              default: false
+                              description: |-
+                                Negate inverts the pattern matching logic.
+                                When true, the rule passes if the pattern does NOT match.
+                                Example: Use with "contains" to prevent certain words in commit messages.
+                              type: boolean
+                            operator:
+                              description: |-
+                                Operator defines how the pattern is evaluated.
+                                - "starts_with": String must start with the pattern
+                                - "ends_with": String must end with the pattern
+                                - "contains": String must contain the pattern
+                                - "regex": String must match the pattern as a regular expression
+                              enum:
+                              - starts_with
+                              - ends_with
+                              - contains
+                              - regex
+                              type: string
+                            pattern:
+                              description: |-
+                                Pattern is the pattern to match against.
+                                For regex operator, this is a regular expression.
+                                For other operators, this is a literal string or substring.
+                              maxLength: 1024
+                              minLength: 1
+                              type: string
+                          required:
+                          - operator
+                          - pattern
+                          type: object
+                        commitMessagePattern:
+                          description: |-
+                            CommitMessagePattern enforces a pattern for commit messages.
+                            Use this to enforce commit message conventions like Conventional Commits.
+                          properties:
+                            negate:
+                              default: false
+                              description: |-
+                                Negate inverts the pattern matching logic.
+                                When true, the rule passes if the pattern does NOT match.
+                                Example: Use with "contains" to prevent certain words in commit messages.
+                              type: boolean
+                            operator:
+                              description: |-
+                                Operator defines how the pattern is evaluated.
+                                - "starts_with": String must start with the pattern
+                                - "ends_with": String must end with the pattern
+                                - "contains": String must contain the pattern
+                                - "regex": String must match the pattern as a regular expression
+                              enum:
+                              - starts_with
+                              - ends_with
+                              - contains
+                              - regex
+                              type: string
+                            pattern:
+                              description: |-
+                                Pattern is the pattern to match against.
+                                For regex operator, this is a regular expression.
+                                For other operators, this is a literal string or substring.
+                              maxLength: 1024
+                              minLength: 1
+                              type: string
+                          required:
+                          - operator
+                          - pattern
+                          type: object
+                        committerEmailPattern:
+                          description: CommitterEmailPattern enforces a pattern for
+                            committer email addresses.
+                          properties:
+                            negate:
+                              default: false
+                              description: |-
+                                Negate inverts the pattern matching logic.
+                                When true, the rule passes if the pattern does NOT match.
+                                Example: Use with "contains" to prevent certain words in commit messages.
+                              type: boolean
+                            operator:
+                              description: |-
+                                Operator defines how the pattern is evaluated.
+                                - "starts_with": String must start with the pattern
+                                - "ends_with": String must end with the pattern
+                                - "contains": String must contain the pattern
+                                - "regex": String must match the pattern as a regular expression
+                              enum:
+                              - starts_with
+                              - ends_with
+                              - contains
+                              - regex
+                              type: string
+                            pattern:
+                              description: |-
+                                Pattern is the pattern to match against.
+                                For regex operator, this is a regular expression.
+                                For other operators, this is a literal string or substring.
+                              maxLength: 1024
+                              minLength: 1
+                              type: string
+                          required:
+                          - operator
+                          - pattern
+                          type: object
+                        copilotReview:
+                          description: |-
+                            CopilotReview automatically requests a GitHub Copilot pull request review
+                            if the author has access to Copilot code review and their premium requests quota has not reached the limit.
+                          properties:
+                            reviewDraftPullRequests:
+                              default: true
+                              description: ReviewDraftPullRequests configures Copilot
+                                to automatically review draft pull requests before
+                                they are marked as ready for review.
+                              type: boolean
+                            reviewOnPush:
+                              default: true
+                              description: ReviewOnPush configures Copilot to automatically
+                                review each new push to the pull request.
+                              type: boolean
+                          type: object
+                        creation:
+                          default: false
+                          description: |-
+                            Creation prevents the creation of matching refs.
+                            When enabled, users cannot create branches or tags matching the ruleset target.
+                          type: boolean
+                        deletion:
+                          default: false
+                          description: |-
+                            Deletion prevents deletion of matching refs.
+                            When enabled, users cannot delete matching branches or tags.
+                          type: boolean
+                        nonFastForward:
+                          default: false
+                          description: |-
+                            NonFastForward prevents non-fast-forward updates.
+                            When enabled, only fast-forward pushes are allowed, preventing force pushes.
+                          type: boolean
+                        pullRequest:
+                          description: |-
+                            PullRequest defines pull request requirements for merging.
+                            See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-pull-request-reviews-before-merging
+                          properties:
+                            allowedMergeMethods:
+                              description: |-
+                                AllowedMergeMethods specifies which merge methods are allowed for pull requests.
+                                - "squash": Squash all commits into a single commit
+                                - "merge": Create a merge commit (preserves all commits)
+                                - "rebase": Rebase commits onto the base branch
+                              items:
+                                enum:
+                                - squash
+                                - merge
+                                - rebase
+                                type: string
+                              type: array
+                            dismissStaleReviewsOnPush:
+                              default: false
+                              description: |-
+                                DismissStaleReviewsOnPush automatically dismisses approved reviews when new commits are pushed.
+                                This ensures reviewers see the latest changes before approval.
+                              type: boolean
+                            requireCodeOwnerReviews:
+                              default: false
+                              description: |-
+                                RequireCodeOwnerReviews requires approval from code owners before merging.
+                                Code owners are defined in a CODEOWNERS file in the repository.
+                                See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+                              type: boolean
+                            requireLastPushApproval:
+                              default: false
+                              description: |-
+                                RequireLastPushApproval requires that the most recent push be approved.
+                                This prevents merging if new commits are pushed after the last approval.
+                              type: boolean
+                            requiredApprovingReviewCount:
+                              description: |-
+                                RequiredApprovingReviewCount specifies the minimum number of approving reviews required.
+                                Must be between 1 and 10.
+                              maximum: 10
+                              minimum: 1
+                              type: integer
+                            requiredReviewThreadResolution:
+                              default: false
+                              description: |-
+                                RequiredReviewThreadResolution requires all review comment threads to be resolved before merging.
+                                This ensures all feedback is addressed.
+                              type: boolean
+                            requiredReviewers:
+                              description: |-
+                                RequiredReviewers forces pull request approval by the configured reviewers
+                                on all pull requests changing files that match the configured file patterns.
+                              items:
+                                description: |-
+                                  RequiredPullRequestReviewer is the configuration for a required review on all pull request changing files that match
+                                  the configured file patterns.
+                                properties:
+                                  filePatterns:
+                                    default:
+                                    - '*'
+                                    description: |-
+                                      FilePatterns are fnmatch syntax patterns that pull request changes are matched against.
+                                      If a pull request changes any matching file it must be approved by the configured reviewers.
+                                      Defaults to "*" representing all files.
+                                    items:
+                                      type: string
+                                    maxItems: 10
+                                    type: array
+                                  minimumApprovals:
+                                    default: 0
+                                    description: |-
+                                      MinimumApprovals is the minimum number of approvals required before a matching pull request
+                                      can be merged. If set to zero, the team will be added to the pull request but approval is optional.
+                                      Requires a non-negative value. Defaults to 0.
+                                    minimum: 0
+                                    type: integer
+                                  reviewer:
+                                    description: Reviewer defines who is required
+                                      to review.
+                                    properties:
+                                      id:
+                                        description: ID of the required reviewer.
+                                          This field is exclusive with Slug.
+                                        format: int64
+                                        type: integer
+                                      slug:
+                                        description: |-
+                                          Slug identifying the required reviewer. This field is exclusive with ID.
+                                          Slug will be resolved to the id during reconciliation.
+                                        type: string
+                                      type:
+                                        description: Type of the required reviewer.
+                                          Currently only Teams are supported.
+                                        enum:
+                                        - Team
+                                        type: string
+                                    required:
+                                    - type
+                                    type: object
+                                    x-kubernetes-validations:
+                                    - message: exactly one of the fields in [id slug]
+                                        must be set
+                                      rule: (has(self.id)?1:0)+(has(self.slug)?1:0)
+                                        == 1
+                                required:
+                                - reviewer
+                                type: object
+                              maxItems: 10
+                              type: array
+                          required:
+                          - allowedMergeMethods
+                          type: object
+                        requiredLinearHistory:
+                          default: false
+                          description: |-
+                            RequiredLinearHistory requires branches to have a linear commit history.
+                            When enabled, merge commits are not allowed; only rebasing and fast-forward merges are permitted.
+                          type: boolean
+                        requiredSignatures:
+                          default: false
+                          description: |-
+                            RequiredSignatures requires commits to be signed with a verified signature.
+                            When enabled, only commits signed with GPG, SSH, or S/MIME are allowed.
+                            See: https://docs.github.com/en/authentication/managing-commit-signature-verification
+                          type: boolean
+                        requiredStatusChecks:
+                          description: |-
+                            RequiredStatusChecks defines status checks that must pass before merging.
+                            See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging
+                          properties:
+                            checks:
+                              description: Checks lists the required status checks
+                                that must pass.
+                              items:
+                                description: |-
+                                  StatusCheck defines a required status check that must pass before merging.
+                                  A status check can be provided by a GitHub App or CI/CD integration.
+                                  See: https://docs.github.com/en/rest/repos/rules#required-status-checks
+                                properties:
+                                  appSlug:
+                                    description: |-
+                                      AppSlug is the slug of the GitHub App integration providing the status check.
+                                      This field is mutually exclusive with IntegrationID.
+                                      The slug will be resolved to the corresponding integration ID.
+                                      Only supported for GitHub App integrations.
+                                      Example: "my-ci-app"
+                                    type: string
+                                  context:
+                                    description: |-
+                                      Context is the name of the status check as reported by the CI/CD system or app.
+                                      Examples: "ci/circleci: build", "Security Scan", "Unit Tests"
+                                    maxLength: 255
+                                    minLength: 1
+                                    type: string
+                                  integrationId:
+                                    description: |-
+                                      IntegrationID is the numeric ID of the GitHub App integration providing the status check.
+                                      This field is mutually exclusive with AppSlug.
+                                    format: int64
+                                    minimum: 1
+                                    type: integer
+                                required:
+                                - context
+                                type: object
+                                x-kubernetes-validations:
+                                - message: at most one of the fields in [integrationId
+                                    appSlug] may be set
+                                  rule: (has(self.integrationId)?1:0)+(has(self.appSlug)?1:0)
+                                    <= 1
+                              maxItems: 100
+                              minItems: 1
+                              type: array
+                            strictPolicy:
+                              default: false
+                              description: |-
+                                StrictPolicy requires branches to be up to date with the base branch before merging.
+                                When enabled, branches must include the latest changes from the base branch.
+                                This prevents merge conflicts but may require additional merges/rebases.
+                              type: boolean
+                          required:
+                          - checks
+                          type: object
+                        tagNamePattern:
+                          description: |-
+                            TagNamePattern enforces a pattern for tag names.
+                            Use this to enforce semantic versioning or other tag naming conventions.
+                          properties:
+                            negate:
+                              default: false
+                              description: |-
+                                Negate inverts the pattern matching logic.
+                                When true, the rule passes if the pattern does NOT match.
+                                Example: Use with "contains" to prevent certain words in commit messages.
+                              type: boolean
+                            operator:
+                              description: |-
+                                Operator defines how the pattern is evaluated.
+                                - "starts_with": String must start with the pattern
+                                - "ends_with": String must end with the pattern
+                                - "contains": String must contain the pattern
+                                - "regex": String must match the pattern as a regular expression
+                              enum:
+                              - starts_with
+                              - ends_with
+                              - contains
+                              - regex
+                              type: string
+                            pattern:
+                              description: |-
+                                Pattern is the pattern to match against.
+                                For regex operator, this is a regular expression.
+                                For other operators, this is a literal string or substring.
+                              maxLength: 1024
+                              minLength: 1
+                              type: string
+                          required:
+                          - operator
+                          - pattern
+                          type: object
+                        update:
+                          default: false
+                          description: |-
+                            Update prevents updates to matching refs.
+                            When enabled, users cannot push commits to matching branches.
+                          type: boolean
+                        workflows:
+                          description: |-
+                            Workflows defines required workflow rules that must pass before merging.
+                            This rule type is only effective for organization-level rulesets and is ignored
+                            when the preset is applied at the repository level.
+                            See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-workflows-to-pass-before-merging
+                          properties:
+                            doNotEnforceOnCreate:
+                              default: false
+                              description: |-
+                                DoNotEnforceOnCreate disables enforcement of this rule for newly created refs.
+                                When true, the workflow requirement is not enforced on the first push creating the ref.
+                              type: boolean
+                            workflows:
+                              description: Workflows lists the required workflows
+                                that must pass.
+                              items:
+                                description: |-
+                                  RuleWorkflow defines a single required workflow for the workflows rule.
+                                  The workflow is referenced by its path in a repository. The repository is identified by name
+                                  (resolved to a numeric ID at reconciliation time via the GitHub API).
+                                properties:
+                                  path:
+                                    description: |-
+                                      Path is the path to the workflow file relative to the repository root.
+                                      Example: ".github/workflows/ci.yaml"
+                                    maxLength: 500
+                                    minLength: 1
+                                    type: string
+                                  ref:
+                                    description: |-
+                                      Ref is the git ref (branch, tag, or SHA) to use for the workflow file.
+                                      Example: "refs/heads/main"
+                                    type: string
+                                  repositoryName:
+                                    description: |-
+                                      RepositoryName is the name of the repository containing the workflow.
+                                      Must be a repository within the same organization. The name will be resolved
+                                      to a numeric repository ID at reconciliation time via the GitHub API.
+                                    maxLength: 100
+                                    minLength: 1
+                                    type: string
+                                required:
+                                - path
+                                - repositoryName
+                                type: object
+                              maxItems: 100
+                              minItems: 1
+                              type: array
+                          required:
+                          - workflows
+                          type: object
+                      type: object
+                    target:
+                      default: branch
+                      description: |-
+                        Target defines which ref types this ruleset applies to.
+                        The Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level
+                        RulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied).
+                      enum:
+                      - branch
+                      - tag
+                      - push
+                      - repository
+                      type: string
+                  required:
+                  - enforcement
+                  - name
+                  - rules
+                  type: object
+                maxItems: 10
+                type: array
+                x-kubernetes-validations:
+                - message: ruleset names must be unique
+                  rule: self.all(x, self.filter(y, y.name == x.name).size() <= 1)
               visibility:
                 default: private
                 description: |-
@@ -389,6 +1186,33 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              webhookIgnores:
+                description: |-
+                  WebhookIgnores defines webhook ignore rules inline, without the need for a separate WebhookIgnorePreset CRD.
+                  The operator uses the union of inline ignore rules and the ones referenced via WebhookIgnorePresetsList.
+                  Existing webhooks whose URL matches one of the regexes are left untouched (i.e. never deleted).
+                  Every inline entry must define a valid ignoreURLRegex. At most 10 inline ignore rules are allowed.
+                items:
+                  description: |-
+                    WebhookIgnoreSpec defines a webhook ignore rule. It is the spec of a WebhookIgnorePreset and the element type
+                    of inline webhook ignores in Repository.spec.webhookIgnores.
+                    Ignore rules allow you to exclude certain webhooks from being managed,
+                    even if they are referenced in a repository's WebhookPresetList.
+                    This is useful for globally excluding webhooks based on URL patterns.
+                  properties:
+                    ignoreURLRegex:
+                      description: |-
+                        IgnoreURLRegex is a regular expression pattern to match against webhook payload URLs.
+                        Webhooks with URLs matching this pattern will not be created, even if they are
+                        referenced in a repository's WebhookPresetList.
+                        Example: "^https://deprecated\\.example\\.com/.*" to ignore all webhooks to deprecated.example.com
+                      type: string
+                  type: object
+                maxItems: 10
+                type: array
+                x-kubernetes-validations:
+                - message: ignoreURLRegex must be set for inline webhook ignores
+                  rule: self.all(x, has(x.ignoreURLRegex) && x.ignoreURLRegex != '')
               webhookPresets:
                 description: |-
                   WebhookPresetList references WebhookPreset CRDs to create webhooks for this repository.
@@ -410,6 +1234,170 @@ spec:
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
+                type: array
+              webhooks:
+                description: |-
+                  Webhooks defines repository webhooks inline, without the need for a separate WebhookPreset CRD.
+                  Inline webhooks support exactly the same fields as a WebhookPreset, including payload URL templating
+                  (e.g. "{{ .Name }}"). Not to be confused with status.webhooks, which tracks the applied webhooks.
+                  The operator reconciles the union of inline webhooks and the webhooks referenced via WebhookPresetList.
+                  A webhook is identified by its (templated) payload URL, content type and events. If several definitions
+                  share the same identity, identical definitions are applied once (a warning is logged), while differing
+                  definitions are treated as a conflict: no webhooks are changed on GitHub and the WebhooksSynced condition
+                  is set to False.
+                  Secrets of inline webhooks must reside in the namespace of the Repository; secret.namespace may only be
+                  omitted or set to the Repository's namespace. Prefer secret over secretValue.
+                  At most 10 inline webhooks are allowed.
+                items:
+                  description: |-
+                    WebhookSpec defines a repository webhook. It is the spec of a WebhookPreset and the element type of
+                    inline webhooks in Repository.spec.webhooks.
+                    Webhooks allow external services to be notified when certain events occur in a repository.
+                    See: https://docs.github.com/en/rest/webhooks/repos
+                  properties:
+                    active:
+                      default: true
+                      description: |-
+                        Active determines whether the webhook is active and will send events.
+                        Set to false to temporarily disable the webhook without deleting it.
+                      type: boolean
+                    contentType:
+                      description: |-
+                        ContentType specifies the format of the webhook payload.
+                        - "json": Send payload as application/json (recommended)
+                        - "form": Send payload as application/x-www-form-urlencoded
+                        See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+                      enum:
+                      - json
+                      - form
+                      type: string
+                    events:
+                      description: |-
+                        Events is a list of GitHub event types that trigger this webhook.
+                        If empty, the webhook subscribes to all events ("*").
+                        Common events include "push", "pull_request", "issues", "release".
+                        See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+                      items:
+                        enum:
+                        - branch_protection_rule
+                        - check_run
+                        - check_suite
+                        - code_scanning_alert
+                        - commit_comment
+                        - create
+                        - delete
+                        - dependabot_alert
+                        - deploy_key
+                        - deployment
+                        - deployment_status
+                        - discussion
+                        - discussion_comment
+                        - fork
+                        - github_app_authorization
+                        - gollum
+                        - installation
+                        - installation_repositories
+                        - issue_comment
+                        - issues
+                        - label
+                        - marketplace_purchase
+                        - member
+                        - membership
+                        - merge_group
+                        - meta
+                        - milestone
+                        - organization
+                        - org_block
+                        - package
+                        - page_build
+                        - ping
+                        - project
+                        - project_card
+                        - project_column
+                        - public
+                        - pull_request
+                        - pull_request_review
+                        - pull_request_review_comment
+                        - pull_request_review_thread
+                        - push
+                        - registry_package
+                        - release
+                        - repository
+                        - repository_dispatch
+                        - repository_import
+                        - repository_vulnerability_alert
+                        - secret_scanning_alert
+                        - security_advisory
+                        - sponsorship
+                        - star
+                        - status
+                        - team
+                        - team_add
+                        - watch
+                        - workflow_dispatch
+                        - workflow_job
+                        - workflow_run
+                        type: string
+                      maxItems: 100
+                      minItems: 0
+                      type: array
+                    payloadUrl:
+                      description: |-
+                        PayloadURL is the URL that will receive the webhook POST requests.
+                        Must be a publicly accessible HTTP or HTTPS endpoint.
+                        GitHub will send HTTP POST requests to this URL when subscribed events occur.
+                      maxLength: 2048
+                      minLength: 1
+                      pattern: ^https?://[a-zA-Z0-9.-]+(:[0-9]+)?(/.*)?$
+                      type: string
+                    secret:
+                      description: |-
+                        Secret is a reference to a Kubernetes Secret containing the webhook secret.
+                        The webhook secret is used by GitHub to sign webhook payloads.
+                        Your service can verify this signature to ensure the request came from GitHub.
+                        This field takes precedence over SecretValue if both are provided.
+                        See: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+                      properties:
+                        key:
+                          description: Key is the key within the Secret that contains
+                            the webhook secret value.
+                          maxLength: 250
+                          minLength: 1
+                          pattern: ^[a-zA-Z0-9.-]+$
+                          type: string
+                        name:
+                          description: Name is the name of the Kubernetes Secret containing
+                            the webhook secret.
+                          maxLength: 250
+                          minLength: 1
+                          pattern: ^[a-zA-Z0-9.-]+$
+                          type: string
+                        namespace:
+                          description: |-
+                            Namespace is the namespace of the Secret.
+                            If not specified, the namespace of the WebhookPreset is used.
+                          type: string
+                      required:
+                      - key
+                      - name
+                      type: object
+                    secretValue:
+                      description: |-
+                        SecretValue is the plaintext value of the webhook secret.
+                        Use this for simple cases, but Secret (referencing a Kubernetes Secret) is more secure.
+                        If both Secret and SecretValue are provided, Secret takes precedence.
+                      type: string
+                    sslVerify:
+                      default: true
+                      description: |-
+                        SSLVerify enables SSL certificate verification for the webhook endpoint.
+                        When true, GitHub verifies the SSL certificate of the PayloadURL.
+                        Disable only for testing with self-signed certificates; always enable in production.
+                      type: boolean
+                  required:
+                  - payloadUrl
+                  type: object
+                maxItems: 10
                 type: array
             required:
             - name

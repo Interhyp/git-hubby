@@ -10,3 +10,29 @@ spec:
     name: sample-org
   webhookPresets:
     - name: webhookpreset-sample
+  # Inline webhooks are reconciled together with the webhooks referenced via webhookPresets (max. 10 items).
+  # Secrets of inline webhooks must reside in the Repository's namespace.
+  webhooks:
+    - payloadUrl: "https://ci.example.com/hooks/{{ .Name }}"
+      contentType: json
+      events: ["push", "pull_request"]
+  # Inline webhook ignores are combined with webhookIgnorePresets (max. 10 items).
+  webhookIgnores:
+    - ignoreURLRegex: "^https://legacy\\.example\\.com/.*"
+  # Inline autolinks are reconciled together with the autolinks of autolinksPresets (max. 25 items).
+  autolinks:
+    - keyPrefix: "TICKET-"
+      urlTemplate: "https://tickets.example.com/browse/TICKET-<num>"
+      isAlphanumeric: false
+  # Inline rulesets are reconciled together with the rulesets referenced via rulesetPresets (max. 10 items).
+  rulesets:
+    - name: release-branches
+      target: branch
+      enforcement: active
+      conditions:
+        refName:
+          include: ["refs/heads/release/*"]
+      rules:
+        deletion: true
+        pullRequest:
+          requiredApprovingReviewCount: 1

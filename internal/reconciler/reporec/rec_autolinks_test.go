@@ -3,14 +3,17 @@ package reporec
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
+	"github.com/Interhyp/git-hubby/test/testutil"
 	"github.com/google/go-github/v92/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -1190,25 +1193,14 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			err = rec.reconcileAutolinks(ctx)
 		})
 
-		It("should treat them as different autolinks and create both", func() {
-			Expect(err).NotTo(HaveOccurred())
-			Expect(createAutolinkCalled).To(BeTrue())
-			Expect(appliedAutolinks).To(HaveLen(2))
-
-			// Both should be created because IsAlphanumeric differs
-			alphaCount := 0
-			nonAlphaCount := 0
-			for _, autolink := range appliedAutolinks {
-				Expect(autolink.KeyPrefix).To(Equal("TICKET-"))
-				Expect(autolink.URLTemplate).To(Equal("https://example.com/ticket/<num>"))
-				if *autolink.IsAlphanumeric {
-					alphaCount++
-				} else {
-					nonAlphaCount++
-				}
-			}
-			Expect(alphaCount).To(Equal(1))
-			Expect(nonAlphaCount).To(Equal(1))
+		It("should report a conflict and not create any autolink", func() {
+			Expect(err).To(HaveOccurred())
+			var conflictErr *AutolinkConflictError
+			Expect(errors.As(err, &conflictErr)).To(BeTrue())
+			Expect(conflictErr.KeyPrefix).To(Equal("TICKET-"))
+			Expect(conflictErr.Sources).To(ConsistOf("autolinksPreset/preset-alpha[0]", "autolinksPreset/preset-nonalpha[0]"))
+			Expect(createAutolinkCalled).To(BeFalse())
+			Expect(deleteAutolinkCalled).To(BeFalse())
 		})
 	})
 
@@ -1360,18 +1352,150 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			err = rec.reconcileAutolinks(ctx)
 		})
 
-		It("should treat different URLs as different autolinks even with same keyPrefix", func() {
-			Expect(err).NotTo(HaveOccurred())
-			Expect(createAutolinkCalled).To(BeTrue())
-			Expect(appliedAutolinks).To(HaveLen(2))
+		It("should report a conflict for the same keyPrefix with different URLs", func() {
+			Expect(err).To(HaveOccurred())
+			var conflictErr *AutolinkConflictError
+			Expect(errors.As(err, &conflictErr)).To(BeTrue())
+			Expect(conflictErr.KeyPrefix).To(Equal("TICKET-"))
+			Expect(createAutolinkCalled).To(BeFalse())
+			Expect(deleteAutolinkCalled).To(BeFalse())
+			Expect(appliedAutolinks).To(BeEmpty())
+		})
+	})
+})
 
-			// Both should be created because URLs differ
-			urls := make([]string, 0, 2)
-			for _, autolink := range appliedAutolinks {
-				Expect(autolink.KeyPrefix).To(Equal("TICKET-"))
-				urls = append(urls, autolink.URLTemplate)
+var _ = Describe("collectDesiredAutolinks", func() {
+	const namespace = "test-ns"
+
+	var (
+		ctx        context.Context
+		logs       func() []string
+		presets    []client.Object
+		presetRefs []v1.LocalObjectReference
+		inline     []v1alpha1.Autolink
+		result     []DesiredAutolink
+		err        error
+	)
+
+	autolink := func(prefix, url string) v1alpha1.Autolink {
+		return v1alpha1.Autolink{KeyPrefix: prefix, URLTemplate: url, IsAlphanumeric: true}
+	}
+	newPreset := func(name string, autolinks ...v1alpha1.Autolink) *v1alpha1.AutolinksPreset {
+		return &v1alpha1.AutolinksPreset{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+			Spec:       v1alpha1.AutolinksPresetSpec{AutolinkList: autolinks},
+		}
+	}
+
+	BeforeEach(func() {
+		ctx, logs = testutil.CapturingContext()
+		presets = nil
+		presetRefs = nil
+		inline = nil
+	})
+
+	JustBeforeEach(func() {
+		result, err = collectDesiredAutolinks(ctx, testutil.NewFakeClient(presets...), namespace, presetRefs, inline)
+	})
+
+	Context("with presets only", func() {
+		BeforeEach(func() {
+			presets = []client.Object{newPreset("p1", autolink("A-", "https://a/<num>"), autolink("B-", "https://b/<num>"))}
+			presetRefs = []v1.LocalObjectReference{{Name: "p1"}}
+		})
+
+		It("returns all autolinks with their sources", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(2))
+			Expect(result[0].Source).To(Equal("autolinksPreset/p1[0]"))
+			Expect(result[1].Source).To(Equal("autolinksPreset/p1[1]"))
+		})
+	})
+
+	Context("with inline autolinks only", func() {
+		BeforeEach(func() {
+			inline = []v1alpha1.Autolink{autolink("A-", "https://a/<num>")}
+		})
+
+		It("returns the inline autolinks", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+			Expect(result[0].Source).To(Equal("inline[0]"))
+			Expect(result[0].Spec.KeyPrefix).To(Equal("A-"))
+		})
+	})
+
+	Context("with presets and inline autolinks", func() {
+		BeforeEach(func() {
+			presets = []client.Object{newPreset("p1", autolink("A-", "https://a/<num>"))}
+			presetRefs = []v1.LocalObjectReference{{Name: "p1"}}
+			inline = []v1alpha1.Autolink{autolink("B-", "https://b/<num>")}
+		})
+
+		It("returns the union", func() {
+			Expect(err).NotTo(HaveOccurred())
+			prefixes := []string{}
+			for _, r := range result {
+				prefixes = append(prefixes, r.Spec.KeyPrefix)
 			}
-			Expect(urls).To(ConsistOf("https://first.example.com/<num>", "https://second.example.com/<num>"))
+			Expect(prefixes).To(ConsistOf("A-", "B-"))
+		})
+	})
+
+	Context("with an identical duplicate", func() {
+		BeforeEach(func() {
+			presets = []client.Object{newPreset("p1", autolink("A-", "https://a/<num>"))}
+			presetRefs = []v1.LocalObjectReference{{Name: "p1"}}
+			inline = []v1alpha1.Autolink{autolink("A-", "https://a/<num>")}
+		})
+
+		It("returns the autolink once and logs a warning", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+			Expect(strings.Join(logs(), "\n")).To(ContainSubstring("duplicate autolink definition with identical content"))
+		})
+	})
+
+	Context("with a conflicting inline autolink", func() {
+		BeforeEach(func() {
+			presets = []client.Object{newPreset("p1", autolink("A-", "https://a/<num>"))}
+			presetRefs = []v1.LocalObjectReference{{Name: "p1"}}
+			inline = []v1alpha1.Autolink{autolink("A-", "https://other/<num>")}
+		})
+
+		It("returns a conflict error naming both sources", func() {
+			Expect(result).To(BeNil())
+			var conflictErr *AutolinkConflictError
+			Expect(errors.As(err, &conflictErr)).To(BeTrue())
+			Expect(conflictErr.KeyPrefix).To(Equal("A-"))
+			Expect(conflictErr.Sources).To(ConsistOf("autolinksPreset/p1[0]", "inline[0]"))
+		})
+	})
+
+	Context("with conflicting presets", func() {
+		BeforeEach(func() {
+			presets = []client.Object{
+				newPreset("p1", autolink("A-", "https://a/<num>")),
+				newPreset("p2", autolink("A-", "https://other/<num>")),
+			}
+			presetRefs = []v1.LocalObjectReference{{Name: "p1"}, {Name: "p2"}}
+		})
+
+		It("returns a conflict error naming both presets", func() {
+			var conflictErr *AutolinkConflictError
+			Expect(errors.As(err, &conflictErr)).To(BeTrue())
+			Expect(conflictErr.Sources).To(ConsistOf("autolinksPreset/p1[0]", "autolinksPreset/p2[0]"))
+		})
+	})
+
+	Context("with a missing preset", func() {
+		BeforeEach(func() {
+			presetRefs = []v1.LocalObjectReference{{Name: "missing"}}
+		})
+
+		It("returns a not found error", func() {
+			Expect(apierrors.IsNotFound(err)).To(BeTrue())
+			Expect(err.Error()).To(ContainSubstring("missing"))
 		})
 	})
 })

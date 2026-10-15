@@ -32,7 +32,7 @@ func (g *GitHubRepoIdentifier) GetID() int64 {
 }
 
 type RepoResourceNameResolver interface {
-	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetPreset) (v1alpha1.RulesetPreset, error)
+	ResolveRuleset(ctx context.Context, rs v1alpha1.RulesetSpec) (v1alpha1.RulesetSpec, error)
 }
 
 type GitHubRepoReconciler struct {
@@ -182,7 +182,7 @@ func (r *GitHubRepoReconciler) BuildMetadataApplyConfig(lbls map[string]string, 
 
 func (r *GitHubRepoReconciler) BuildStatusApplyConfig() runtime.ApplyConfiguration {
 	status := ac.RepositoryStatus().
-		WithConditions(reconciler.ConditionsToApplyConfigs(*r.Kubernetes.Resource.GetConditions())...)
+		WithConditions(conditions.ToApplyConfigs(*r.Kubernetes.Resource.GetConditions())...)
 	if id := r.Kubernetes.Resource.Status.ID; id != nil {
 		status.WithID(*id)
 	}
