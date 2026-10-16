@@ -376,10 +376,16 @@ func main() {
 		Config:           cfg,
 	}
 
+	rulesetPresetIndex, err := controller.SetupRulesetPresetIndex(context.Background(), mgr)
+	if err != nil {
+		setupLog.Error(err, "Failed to set up RulesetPreset index")
+		os.Exit(1)
+	}
 	if err := (&controller.OrganizationCtl{
 		Scheme:                 mgr.GetScheme(),
 		ReconcilerFactory:      reconcilerFactory,
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
+		RulesetPresetIndex:     rulesetPresetIndex,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
 		os.Exit(1)
@@ -388,6 +394,7 @@ func main() {
 		Scheme:                 mgr.GetScheme(),
 		ReconcilerFactory:      reconcilerFactory,
 		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
+		RulesetPresetIndex:     rulesetPresetIndex,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Repository")
 		os.Exit(1)

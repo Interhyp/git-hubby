@@ -25,7 +25,7 @@ A Kubernetes operator for managing GitHub organizations and repositories as code
 
 - **Organization** (`github.interhyp.de/v1alpha1`): GitHub organization settings, custom properties, and rulesets
 - **Repository** (`github.interhyp.de/v1alpha1`): GitHub repositories with webhooks, rulesets, and configurations
-- **RulesetPreset** (`github.interhyp.de/v1alpha1`): Reusable ruleset templates for organizations and repositories
+- **RulesetPreset** (`github.interhyp.de/v1alpha1`): Reusable ruleset templates for organizations and repositories (can extend other presets via `extends`)
 - **WebhookPreset** (`github.interhyp.de/v1alpha1`): Reusable webhook configurations for repositories
 - **Team** (`github.interhyp.de/v1alpha1`): GitHub team management with IDP group sync
 - **CodeSecurityConfiguration** (`github.interhyp.de/v1alpha1`): Security settings like dependency and secret scanning

@@ -9,10 +9,12 @@ import (
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/internal/reconciler/common/idresolver"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/rulesets"
 	"github.com/Interhyp/git-hubby/internal/reconciler/orgrec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/teamrec"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -224,10 +226,8 @@ func (f *Factory) fetchSubResourceGenerationsForOrg(ctx context.Context, org v1a
 
 	result := make(map[string]int64)
 
-	for _, ruleSetPresetRef := range org.Spec.RulesetPresetList {
-		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.RulesetPreset{}, ruleSetPresetRef.Name, org.Namespace); err != nil {
-			return nil, err
-		}
+	if err := f.collectRulesetPresetGenerations(ctx, result, org.Namespace, org.Spec.RulesetPresetList, org.Spec.Rulesets); err != nil {
+		return nil, err
 	}
 	for _, cscRef := range org.Spec.CodeSecurityConfigurations {
 		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.CodeSecurityConfiguration{}, cscRef.Name, org.Namespace); err != nil {
@@ -245,10 +245,8 @@ func (f *Factory) fetchSubResourceGenerationsForRepo(ctx context.Context, repo v
 
 	result := make(map[string]int64)
 
-	for _, ruleSetPresetRef := range repo.Spec.RulesetPresetList {
-		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.RulesetPreset{}, ruleSetPresetRef.Name, repo.Namespace); err != nil {
-			return nil, err
-		}
+	if err := f.collectRulesetPresetGenerations(ctx, result, repo.Namespace, repo.Spec.RulesetPresetList, repo.Spec.Rulesets); err != nil {
+		return nil, err
 	}
 	for _, webhookPresetRef := range repo.Spec.WebhookPresetList {
 		if err := f.collectSubResourceGeneration(ctx, result, &v1alpha1.WebhookPreset{}, webhookPresetRef.Name, repo.Namespace); err != nil {
@@ -295,6 +293,39 @@ func (f *Factory) collectSubResourceGeneration(ctx context.Context, result map[s
 		return err
 	}
 	result[getSubResourceKey(obj)] = obj.GetGeneration()
+	return nil
+}
+
+// collectRulesetPresetGenerations records the generations of the referenced RulesetPresets and of all presets their
+// extends chains (and those of the inline rulesets) consist of, so a change anywhere in a chain is detected.
+func (f *Factory) collectRulesetPresetGenerations(ctx context.Context, result map[string]int64, namespace string,
+	refs []corev1.LocalObjectReference, inline []v1alpha1.RulesetSpec) error {
+	resolver := rulesets.NewChainResolver(f.K8sClient, namespace)
+	collectAncestors := func(extends, self string) error {
+		ancestors, err := resolver.Ancestors(ctx, extends, self)
+		if err != nil {
+			logPkg.FromContext(ctx).Error(err, "failed to get extended RulesetPresets", "extends", extends)
+			return err
+		}
+		for _, preset := range ancestors {
+			result[getSubResourceKey(preset)] = preset.GetGeneration()
+		}
+		return nil
+	}
+	for _, ref := range refs {
+		preset := &v1alpha1.RulesetPreset{}
+		if err := f.collectSubResourceGeneration(ctx, result, preset, ref.Name, namespace); err != nil {
+			return err
+		}
+		if err := collectAncestors(preset.Spec.Extends, ref.Name); err != nil {
+			return err
+		}
+	}
+	for i := range inline {
+		if err := collectAncestors(inline[i].Extends, ""); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

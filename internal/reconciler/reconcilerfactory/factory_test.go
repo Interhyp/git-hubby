@@ -1159,6 +1159,40 @@ var _ = Describe("Factory", func() {
 				})
 			})
 
+			Context("when ruleset presets extend other presets", func() {
+				BeforeEach(func() {
+					for _, p := range []struct {
+						name, extends string
+						generation    int64
+					}{
+						{"base", "", 2},
+						{"middle", "base", 3},
+						{"child", "middle", 4},
+						{"inline-parent", "", 6},
+						{"dangling", "missing", 7},
+					} {
+						Expect(k8sClient.Create(ctx, &v1alpha1.RulesetPreset{
+							ObjectMeta: metav1.ObjectMeta{Name: p.name, Namespace: defaultNS, Generation: p.generation},
+							Spec:       v1alpha1.RulesetSpec{Name: p.name, Extends: p.extends},
+						})).To(Succeed())
+					}
+					org.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "child"}, {Name: "dangling"}}
+					org.Spec.Rulesets = []v1alpha1.RulesetSpec{{Name: "inline", Extends: "inline-parent"}}
+				})
+
+				It("should collect the generations of the whole chain and tolerate missing parents", func() {
+					generations, err := factory.fetchSubResourceGenerationsForOrg(ctx, *org)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(generations).To(Equal(map[string]int64{
+						"/" + defaultNS + "/child":         4,
+						"/" + defaultNS + "/middle":        3,
+						"/" + defaultNS + "/base":          2,
+						"/" + defaultNS + "/inline-parent": 6,
+						"/" + defaultNS + "/dangling":      7,
+					}))
+				})
+			})
+
 			Context("when organization has code security configurations", func() {
 				var csc *v1alpha1.CodeSecurityConfiguration
 

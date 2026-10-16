@@ -12,7 +12,10 @@ import (
 // in Organization.spec.rulesets and Repository.spec.rulesets.
 // A ruleset preset defines reusable repository rules that can be applied to multiple repositories
 // or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
+// A ruleset can extend a RulesetPreset via Extends; see docs/configuration/repository.md#extending-rulesets for the merge rules.
 // See: https://docs.github.com/en/rest/repos/rules
+// +kubebuilder:validation:XValidation:rule="has(self.extends) || has(self.enforcement)",message="enforcement is required unless extends is set"
+// +kubebuilder:validation:XValidation:rule="has(self.extends) || has(self.rules)",message="rules is required unless extends is set"
 type RulesetSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -26,11 +29,24 @@ type RulesetSpec struct {
 	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9][a-zA-Z0-9\s\[\]*/'_.,~-]*[a-zA-Z0-9\[\]]$`
 	Name string `json:"name"`
 
-	// Target defines which ref types this ruleset applies to.
+	// Extends names a RulesetPreset in the same namespace this ruleset inherits from. The effective ruleset is the
+	// fully resolved parent with the fields of this ruleset merged on top: scalar and boolean fields override the
+	// parent's value if set, rules are merged recursively, bypassActors, status checks, required reviewers and
+	// workflows are merged by key (a child entry replaces the parent entry with the same key), while conditions,
+	// allowedMergeMethods and pattern rules replace the parent's value completely. Name is never inherited, and
+	// inherited entries cannot be removed. Chains may be at most 5 levels deep.
+	// If the chain cannot be resolved (missing parent, cycle, too deep), this ruleset is neither created, updated
+	// nor deleted on GitHub, and the RulesetsSynced condition is set to False.
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
+	Extends string `json:"extends,omitempty"`
+
+	// Target defines which ref types this ruleset applies to. Defaults to 'branch' (after resolving Extends).
 	// The Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level
 	// RulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied).
 	// +kubebuilder:validation:Enum=branch;tag;push;repository
-	// +default:value="branch"
 	// +optional
 	Target string `json:"target,omitempty"`
 
@@ -43,9 +59,10 @@ type RulesetSpec struct {
 	// - "disabled": Ruleset is not enforced
 	// - "active": Ruleset is actively enforced; violations block operations
 	// - "evaluate": Ruleset is evaluated but violations only generate warnings
-	// +kubebuilder:validation:Required
+	// Required unless Extends is set.
+	// +optional
 	// +kubebuilder:validation:Enum=disabled;active;evaluate
-	Enforcement RulesetEnforcement `json:"enforcement"`
+	Enforcement RulesetEnforcement `json:"enforcement,omitempty"`
 
 	// BypassActors defines actors (users, teams, apps) who can bypass this ruleset.
 	// Bypass actors can perform operations that would otherwise be blocked by the ruleset.
@@ -54,9 +71,9 @@ type RulesetSpec struct {
 	// +kubebuilder:validation:MaxItems=100
 	BypassActors []RulesetBypassActor `json:"bypassActors,omitempty"`
 
-	// Rules defines the specific rules to enforce in this ruleset.
-	// +kubebuilder:validation:Required
-	Rules RulesetRules `json:"rules"`
+	// Rules defines the specific rules to enforce in this ruleset. Required unless Extends is set.
+	// +optional
+	Rules RulesetRules `json:"rules,omitzero"`
 }
 
 // RulesetConditions define which refs are targeted by the Ruleset. For Organization-level rules they additionally define
@@ -568,6 +585,7 @@ type RulesetPresetStatus struct {
 // +kubebuilder:resource
 
 // RulesetPreset is the Schema for the rulesetpresets API
+// +kubebuilder:validation:XValidation:rule="!has(self.spec.extends) || self.spec.extends != self.metadata.name",message="a RulesetPreset cannot extend itself"
 type RulesetPreset struct {
 	metav1.TypeMeta `json:",inline"`
 

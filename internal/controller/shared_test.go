@@ -3,9 +3,11 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Interhyp/git-hubby/internal/ghclient"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/rulesets"
 	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
 	. "github.com/onsi/ginkgo/v2"
@@ -246,6 +248,30 @@ var _ = Describe("Shared Controller Functions", func() {
 			// The getRequeueDuration function is straightforward and tested via
 			// integration tests where reconciliation loops verify proper requeue behavior
 			Skip("Covered by controller integration tests")
+		})
+	})
+
+	Describe("handleUnresolvedRulesets", func() {
+		It("returns the success requeue interval for rulesets waiting for a RulesetPreset change", func() {
+			err := fmt.Errorf("rulesets: %w", errors.Join(
+				&rulesets.UnresolvedError{Ruleset: "a", Reason: rulesets.ReasonParentNotFound},
+				&rulesets.UnresolvedError{Ruleset: "b", Reason: rulesets.ReasonExtendsCycle},
+			))
+			result, ok := handleUnresolvedRulesets(ctx, err, 3*time.Hour)
+			Expect(ok).To(BeTrue())
+			Expect(result).To(Equal(controllerruntime.Result{RequeueAfter: 3 * time.Hour}))
+		})
+
+		It("does not handle other errors", func() {
+			for _, err := range []error{
+				nil,
+				errors.New("boom"),
+				&rulesets.UnresolvedError{Ruleset: "a", Reason: rulesets.ReasonParentUnavailable},
+				errors.Join(&rulesets.UnresolvedError{Ruleset: "a", Reason: rulesets.ReasonParentNotFound}, errors.New("boom")),
+			} {
+				_, ok := handleUnresolvedRulesets(ctx, err, time.Hour)
+				Expect(ok).To(BeFalse(), "error: %v", err)
+			}
 		})
 	})
 })

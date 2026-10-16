@@ -98,4 +98,34 @@ var _ = Describe("Inline rulesets CRD validation", func() {
 			expectInvalid(err, "spec.rulesets")
 		})
 	})
+
+	Context("RulesetPreset extends", func() {
+		newPreset := func(name string, spec githubv1alpha1.RulesetSpec) *githubv1alpha1.RulesetPreset {
+			return &githubv1alpha1.RulesetPreset{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}, Spec: spec}
+		}
+
+		It("accepts a preset that only sets extends and name", func() {
+			preset := newPreset("extends-only", githubv1alpha1.RulesetSpec{Name: "child", Extends: "base"})
+			Expect(k8sClient.Create(ctx, preset)).To(Succeed())
+			DeferCleanup(func() { Expect(k8sClient.Delete(ctx, preset)).To(Succeed()) })
+			Expect(preset.Spec.Target).To(BeEmpty(), "target must not be defaulted, it is inherited")
+		})
+
+		It("requires enforcement and rules without extends", func() {
+			err := k8sClient.Create(ctx, newPreset("no-enforcement", githubv1alpha1.RulesetSpec{Name: "x"}))
+			expectInvalid(err, "enforcement is required unless extends is set")
+			expectInvalid(err, "rules is required unless extends is set")
+		})
+
+		It("rejects a preset extending itself", func() {
+			err := k8sClient.Create(ctx, newPreset("self", githubv1alpha1.RulesetSpec{Name: "x", Extends: "self"}))
+			expectInvalid(err, "a RulesetPreset cannot extend itself")
+		})
+
+		It("accepts inline rulesets with extends", func() {
+			repo := newRepo("inline-extends", []githubv1alpha1.RulesetSpec{{Name: "child", Extends: "base"}})
+			Expect(k8sClient.Create(ctx, repo)).To(Succeed())
+			DeferCleanup(func() { Expect(k8sClient.Delete(ctx, repo)).To(Succeed()) })
+		})
+	})
 })

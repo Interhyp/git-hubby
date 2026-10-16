@@ -2,6 +2,7 @@ package rulesets
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
@@ -39,6 +40,8 @@ type SyncOptions struct {
 
 // Sync applies the desired rulesets to the given target: missing rulesets are created, differing rulesets
 // are updated and existing rulesets that are not desired are deleted.
+// Desired rulesets with Unresolved set are left untouched on GitHub (in particular, they are not deleted) while all
+// other rulesets are synced; their UnresolvedErrors are returned afterwards.
 func Sync(ctx context.Context, target Target, desiredRulesets []Desired, opts SyncOptions) error {
 	log := logPkg.FromContext(ctx)
 	existingRulesets, err := target.List(ctx)
@@ -55,8 +58,16 @@ func Sync(ctx context.Context, target Target, desiredRulesets []Desired, opts Sy
 		existingRulesetsByName[ruleset.Name] = ruleset
 		rulesetsToDelete[ruleset.Name] = ruleset
 	}
+	var unresolved []error
 	for _, desired := range desiredRulesets {
 		log := log.WithValues("rulesetSource", desired.Source, "ruleset", desired.Spec.Name)
+		if desired.Unresolved != nil {
+			log.Info("Keeping existing ruleset unchanged because its extends chain could not be resolved",
+				"scope", target.Scope, "reason", desired.Unresolved.Reason)
+			delete(rulesetsToDelete, desired.Spec.Name)
+			unresolved = append(unresolved, desired.Unresolved)
+			continue
+		}
 		log.V(1).Info("Processing ruleset")
 		if opts.Skip != nil && opts.Skip(ctx, desired) {
 			continue
@@ -115,5 +126,5 @@ func Sync(ctx context.Context, target Target, desiredRulesets []Desired, opts Sy
 			return err
 		}
 	}
-	return nil
+	return errors.Join(unresolved...)
 }
