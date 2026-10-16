@@ -9,7 +9,7 @@ import (
 	orgac "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )

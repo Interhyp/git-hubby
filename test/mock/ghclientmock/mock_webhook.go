@@ -3,7 +3,7 @@ package ghclientmock
 import (
 	"context"
 
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 )
 
 // Webhook operations
