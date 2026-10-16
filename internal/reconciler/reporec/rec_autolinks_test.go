@@ -9,7 +9,7 @@ import (
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
 	"github.com/Interhyp/git-hubby/test/testutil"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
