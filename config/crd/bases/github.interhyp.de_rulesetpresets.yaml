@@ -266,10 +266,25 @@ spec:
                   - "disabled": Ruleset is not enforced
                   - "active": Ruleset is actively enforced; violations block operations
                   - "evaluate": Ruleset is evaluated but violations only generate warnings
+                  Required unless Extends is set.
                 enum:
                 - disabled
                 - active
                 - evaluate
+                type: string
+              extends:
+                description: |-
+                  Extends names a RulesetPreset in the same namespace this ruleset inherits from. The effective ruleset is the
+                  fully resolved parent with the fields of this ruleset merged on top: scalar and boolean fields override the
+                  parent's value if set, rules are merged recursively, bypassActors, status checks, required reviewers and
+                  workflows are merged by key (a child entry replaces the parent entry with the same key), while conditions,
+                  allowedMergeMethods and pattern rules replace the parent's value completely. Name is never inherited, and
+                  inherited entries cannot be removed. Chains may be at most 5 levels deep.
+                  If the chain cannot be resolved (missing parent, cycle, too deep), this ruleset is neither created, updated
+                  nor deleted on GitHub, and the RulesetsSynced condition is set to False.
+                maxLength: 253
+                minLength: 1
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                 type: string
               name:
                 description: Name is the display name of the ruleset shown in the
@@ -280,6 +295,7 @@ spec:
                 type: string
               rules:
                 description: Rules defines the specific rules to enforce in this ruleset.
+                  Required unless Extends is set.
                 properties:
                   branchNamePattern:
                     description: |-
@@ -742,9 +758,8 @@ spec:
                     type: object
                 type: object
               target:
-                default: branch
                 description: |-
-                  Target defines which ref types this ruleset applies to.
+                  Target defines which ref types this ruleset applies to. Defaults to 'branch' (after resolving Extends).
                   The Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level
                   RulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied).
                 enum:
@@ -754,10 +769,13 @@ spec:
                 - repository
                 type: string
             required:
-            - enforcement
             - name
-            - rules
             type: object
+            x-kubernetes-validations:
+            - message: enforcement is required unless extends is set
+              rule: has(self.extends) || has(self.enforcement)
+            - message: rules is required unless extends is set
+              rule: has(self.extends) || has(self.rules)
           status:
             description: status defines the observed state of RulesetPreset
             properties:
@@ -834,6 +852,9 @@ spec:
         required:
         - spec
         type: object
+        x-kubernetes-validations:
+        - message: a RulesetPreset cannot extend itself
+          rule: '!has(self.spec.extends) || self.spec.extends != self.metadata.name'
     served: true
     storage: true
     subresources:

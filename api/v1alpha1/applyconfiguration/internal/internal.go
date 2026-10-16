@@ -995,6 +995,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: enforcement
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetEnforcement
+    - name: extends
+      type:
+        scalar: string
     - name: name
       type:
         scalar: string
@@ -1004,7 +1007,6 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: target
       type:
         scalar: string
-      default: branch
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.RunnerGroup
   map:
     fields:

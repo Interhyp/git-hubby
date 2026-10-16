@@ -335,7 +335,7 @@
         "rulesets": {
           "description": "Rulesets defines repository rulesets inline, without the need for a separate RulesetPreset CRD.\nInline rulesets support exactly the same fields as a RulesetPreset.\nThe operator reconciles the union of inline rulesets and the rulesets referenced via RulesetPresetList.\nIf an inline ruleset and a referenced RulesetPreset (or two referenced RulesetPresets) share the same name,\nidentical definitions are applied once (a warning is logged), while differing definitions are treated as a\nconflict: no rulesets are changed on GitHub and the RulesetsSynced condition is set to False.\nAt most 10 inline rulesets are allowed; larger or shared sets of rules belong in RulesetPresets.\nThe target 'repository' is only supported at organization level; inline rulesets with target 'repository'\nare filtered out (i.e. are not checked nor applied), the same as for RulesetPresets.",
           "items": {
-            "description": "RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element type of inline rulesets\nin Organization.spec.rulesets and Repository.spec.rulesets.\nA ruleset preset defines reusable repository rules that can be applied to multiple repositories\nor organizations. Rulesets enforce policies like branch protection, required reviews, and more.\nSee: https://docs.github.com/en/rest/repos/rules",
+            "description": "RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element type of inline rulesets\nin Organization.spec.rulesets and Repository.spec.rulesets.\nA ruleset preset defines reusable repository rules that can be applied to multiple repositories\nor organizations. Rulesets enforce policies like branch protection, required reviews, and more.\nA ruleset can extend a RulesetPreset via Extends; see docs/configuration/repository.md#extending-rulesets for the merge rules.\nSee: https://docs.github.com/en/rest/repos/rules",
             "properties": {
               "bypassActors": {
                 "description": "BypassActors defines actors (users, teams, apps) who can bypass this ruleset.\nBypass actors can perform operations that would otherwise be blocked by the ruleset.\nSee: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-bypass-mode-for-rulesets",
@@ -551,12 +551,19 @@
                 "additionalProperties": false
               },
               "enforcement": {
-                "description": "Enforcement determines whether the ruleset is enforced.\n- \"disabled\": Ruleset is not enforced\n- \"active\": Ruleset is actively enforced; violations block operations\n- \"evaluate\": Ruleset is evaluated but violations only generate warnings",
+                "description": "Enforcement determines whether the ruleset is enforced.\n- \"disabled\": Ruleset is not enforced\n- \"active\": Ruleset is actively enforced; violations block operations\n- \"evaluate\": Ruleset is evaluated but violations only generate warnings\nRequired unless Extends is set.",
                 "enum": [
                   "disabled",
                   "active",
                   "evaluate"
                 ],
+                "type": "string"
+              },
+              "extends": {
+                "description": "Extends names a RulesetPreset in the same namespace this ruleset inherits from. The effective ruleset is the\nfully resolved parent with the fields of this ruleset merged on top: scalar and boolean fields override the\nparent's value if set, rules are merged recursively, bypassActors, status checks, required reviewers and\nworkflows are merged by key (a child entry replaces the parent entry with the same key), while conditions,\nallowedMergeMethods and pattern rules replace the parent's value completely. Name is never inherited, and\ninherited entries cannot be removed. Chains may be at most 5 levels deep.\nIf the chain cannot be resolved (missing parent, cycle, too deep), this ruleset is neither created, updated\nnor deleted on GitHub, and the RulesetsSynced condition is set to False.",
+                "maxLength": 253,
+                "minLength": 1,
+                "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
                 "type": "string"
               },
               "name": {
@@ -567,7 +574,7 @@
                 "type": "string"
               },
               "rules": {
-                "description": "Rules defines the specific rules to enforce in this ruleset.",
+                "description": "Rules defines the specific rules to enforce in this ruleset. Required unless Extends is set.",
                 "properties": {
                   "branchNamePattern": {
                     "description": "BranchNamePattern enforces a pattern for branch names.\nUse this to enforce branch naming conventions like \"feature/*\" or \"hotfix/*\".",
@@ -994,8 +1001,7 @@
                 "additionalProperties": false
               },
               "target": {
-                "default": "branch",
-                "description": "Target defines which ref types this ruleset applies to.\nThe Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level\nRulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied).",
+                "description": "Target defines which ref types this ruleset applies to. Defaults to 'branch' (after resolving Extends).\nThe Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level\nRulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied).",
                 "enum": [
                   "branch",
                   "tag",
@@ -1006,11 +1012,19 @@
               }
             },
             "required": [
-              "enforcement",
-              "name",
-              "rules"
+              "name"
             ],
             "type": "object",
+            "x-kubernetes-validations": [
+              {
+                "message": "enforcement is required unless extends is set",
+                "rule": "has(self.extends) || has(self.enforcement)"
+              },
+              {
+                "message": "rules is required unless extends is set",
+                "rule": "has(self.extends) || has(self.rules)"
+              }
+            ],
             "additionalProperties": false
           },
           "maxItems": 10,

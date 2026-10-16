@@ -210,6 +210,7 @@ rulesets:
     - **different definitions** are a conflict: no rulesets are changed on GitHub, the `RulesetsSynced` condition is set to `False` (reason `SyncFailed`) with the conflict in its message, and `Ready` becomes `False`.
 - `target: repository` is supported for organization-level rulesets.
 - Like presets, inline rulesets require the `team` or `enterprise` plan.
+- Presets and inline rulesets can build on another `RulesetPreset` via `extends` and only state their differences, see [Extending rulesets](repository.md#extending-rulesets).
 
 **Attachment Scopes** for security configurations:
 

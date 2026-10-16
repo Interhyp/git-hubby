@@ -30,11 +30,21 @@ import (
 // in Organization.spec.rulesets and Repository.spec.rulesets.
 // A ruleset preset defines reusable repository rules that can be applied to multiple repositories
 // or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
+// A ruleset can extend a RulesetPreset via Extends; see docs/configuration/repository.md#extending-rulesets for the merge rules.
 // See: https://docs.github.com/en/rest/repos/rules
 type RulesetSpecApplyConfiguration struct {
 	// Name is the display name of the ruleset shown in the GitHub UI.
 	Name *string `json:"name,omitempty"`
-	// Target defines which ref types this ruleset applies to.
+	// Extends names a RulesetPreset in the same namespace this ruleset inherits from. The effective ruleset is the
+	// fully resolved parent with the fields of this ruleset merged on top: scalar and boolean fields override the
+	// parent's value if set, rules are merged recursively, bypassActors, status checks, required reviewers and
+	// workflows are merged by key (a child entry replaces the parent entry with the same key), while conditions,
+	// allowedMergeMethods and pattern rules replace the parent's value completely. Name is never inherited, and
+	// inherited entries cannot be removed. Chains may be at most 5 levels deep.
+	// If the chain cannot be resolved (missing parent, cycle, too deep), this ruleset is neither created, updated
+	// nor deleted on GitHub, and the RulesetsSynced condition is set to False.
+	Extends *string `json:"extends,omitempty"`
+	// Target defines which ref types this ruleset applies to. Defaults to 'branch' (after resolving Extends).
 	// The Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level
 	// RulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied).
 	Target *string `json:"target,omitempty"`
@@ -45,12 +55,13 @@ type RulesetSpecApplyConfiguration struct {
 	// - "disabled": Ruleset is not enforced
 	// - "active": Ruleset is actively enforced; violations block operations
 	// - "evaluate": Ruleset is evaluated but violations only generate warnings
+	// Required unless Extends is set.
 	Enforcement *apiv1alpha1.RulesetEnforcement `json:"enforcement,omitempty"`
 	// BypassActors defines actors (users, teams, apps) who can bypass this ruleset.
 	// Bypass actors can perform operations that would otherwise be blocked by the ruleset.
 	// See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-bypass-mode-for-rulesets
 	BypassActors []RulesetBypassActorApplyConfiguration `json:"bypassActors,omitempty"`
-	// Rules defines the specific rules to enforce in this ruleset.
+	// Rules defines the specific rules to enforce in this ruleset. Required unless Extends is set.
 	Rules *RulesetRulesApplyConfiguration `json:"rules,omitempty"`
 }
 
@@ -65,6 +76,14 @@ func RulesetSpec() *RulesetSpecApplyConfiguration {
 // If called multiple times, the Name field is set to the value of the last call.
 func (b *RulesetSpecApplyConfiguration) WithName(value string) *RulesetSpecApplyConfiguration {
 	b.Name = &value
+	return b
+}
+
+// WithExtends sets the Extends field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Extends field is set to the value of the last call.
+func (b *RulesetSpecApplyConfiguration) WithExtends(value string) *RulesetSpecApplyConfiguration {
+	b.Extends = &value
 	return b
 }
 
