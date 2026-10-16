@@ -7,6 +7,7 @@ import (
 
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/rulesets"
 	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -46,6 +47,18 @@ func handleRequeueError(ctx context.Context, err error) (controllerruntime.Resul
 	}
 
 	return controllerruntime.Result{}, err // normal error requeue with exponential backoff
+}
+
+// handleUnresolvedRulesets returns the regular success result if err only consists of rulesets whose extends chain
+// cannot be resolved until a RulesetPreset changes (see rulesets.AwaitsPresetChange). The RulesetsSynced condition
+// has already been set to False by the executor; the RulesetPreset watch reconciles the resource once the chain is
+// fixed, so the error is not retried with backoff.
+func handleUnresolvedRulesets(ctx context.Context, err error, successRequeueInterval time.Duration) (controllerruntime.Result, bool) {
+	if !rulesets.AwaitsPresetChange(err) {
+		return controllerruntime.Result{}, false
+	}
+	logPkg.FromContext(ctx).Info("Rulesets could not be resolved, waiting for a RulesetPreset change", "reason", err.Error())
+	return controllerruntime.Result{RequeueAfter: successRequeueInterval}, true
 }
 
 func resourceWasDeleted[T reconciler.ReconcilableResource](r reconciler.Reconciler[T]) bool {

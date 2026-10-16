@@ -263,6 +263,57 @@ Inline rulesets support exactly the same fields as a `RulesetPreset` spec. Their
     - **different definitions** are a conflict: no rulesets are changed on GitHub, the `RulesetsSynced` condition is set to `False` (reason `SyncFailed`) with the conflict in its message, and `Ready` becomes `False`.
 - Rulesets with `target: repository` (inline or from presets) are only supported at organization level. At repository level they are filtered out, i.e. neither checked nor applied.
 
+#### Extending rulesets
+
+A `RulesetPreset` or an inline ruleset can **extend** another `RulesetPreset` (in the same namespace) via
+`extends` and only state its differences. This avoids copying a whole preset just to add a bypass actor or a
+status check:
+
+```yaml
+apiVersion: github.interhyp.de/v1alpha1
+kind: RulesetPreset
+metadata:
+  name: default-branch-protection-release-bot
+spec:
+  name: default-branch-protection-release-bot
+  extends: default-branch-protection    # parent preset, all its settings are inherited
+  bypassActors:                         # added to the parent's bypass actors
+    - actorType: Integration
+      actorSlug: release-bot
+      bypassMode: always
+  rules:
+    requiredStatusChecks:
+      checks:                           # added to the parent's checks
+        - context: "build / build"
+```
+
+The resolved ruleset is computed with fixed rules per field; there is no way to remove inherited values
+(restructure the chain instead, e.g. extract a smaller base):
+
+| Field | Merge behaviour |
+|-------|-----------------|
+| `name`, `extends` | Always the child's own value, never inherited |
+| `target`, `enforcement`, boolean rules, `requiredApprovingReviewCount`, `strictPolicy`, … | Inherited unless set by the child (`0`/unset counts as "not set") |
+| `conditions`, `allowedMergeMethods`, `*Pattern` rules | Replaced as a whole if set by the child |
+| `rules`, `rules.pullRequest`, `rules.requiredStatusChecks`, `rules.copilotReview`, `rules.workflows` | Merged field by field |
+| `bypassActors` | Union; same `actorType` + slug/id → child entry wins |
+| `requiredStatusChecks.checks` | Union; same `context` + `appSlug`/`integrationId` → applied once (the same check from different apps is kept separately) |
+| `pullRequest.requiredReviewers` | Union; same reviewer type + slug/id → child entry wins |
+| `workflows.workflows` | Union; same repository + path → child entry wins |
+
+- Chains may be up to **5** levels deep. `target` defaults to `branch` after resolution; `enforcement` and
+  `rules` are only required on rulesets without `extends`.
+- Resolution happens in memory from the operator cache and is fast. Changing a preset reconciles all
+  Repositories/Organizations using it directly, via an inline `extends`, or via any preset extending it.
+- **Fail closed**: if a chain cannot be resolved (missing parent, cycle, too deep, no enforcement), only that
+  ruleset is skipped. The existing GitHub ruleset is neither updated nor deleted, all other rulesets are still
+  synced, and `RulesetsSynced` becomes `False` with the reason in its message. The resource is not retried with
+  backoff; it is reconciled again as soon as a preset in the chain is created or changed (or the resource itself
+  changes). Transient read errors are retried as usual. A directly referenced preset that does not exist still
+  fails the whole ruleset sync, as before.
+- A preset extending itself is rejected at admission. A missing parent is deliberately **not** rejected, because
+  GitOps tools may apply a child before its parent; the ruleset is skipped until the parent exists.
+
 > **Note**: The `requiredReviewers` field in pull-request rules uses a GitHub API feature that is
 > currently in **beta**. Reconciliation of this field is disabled by default and must be explicitly
 > opted in by setting the environment variable `ENABLE_REQUIRED_REVIEWERS_RULES=true` on the

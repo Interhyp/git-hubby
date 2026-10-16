@@ -26,6 +26,8 @@ type OrganizationCtl struct {
 	Scheme                 *runtime.Scheme
 	ReconcilerFactory      *reconcilerfactory.Factory
 	SuccessRequeueInterval time.Duration
+	// RulesetPresetIndex maps RulesetPreset changes to the affected resources; see SetupRulesetPresetIndex.
+	RulesetPresetIndex *RulesetPresetIndex
 	// LegacySecretName is the credential secret name used for Organizations that still
 	// reference the deprecated GitHubAppInstallationId field.
 	LegacySecretName string
@@ -56,6 +58,9 @@ func (r *OrganizationCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		if errors.Is(err, orgrec.OrganizationStillHasReposError()) || errors.Is(err, orgrec.OrganizationStillHasTeamsError()) {
 			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 		}
+		if result, ok := handleUnresolvedRulesets(ctx, err, r.SuccessRequeueInterval); ok {
+			return result, nil
+		}
 		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
 			log.Error(err, "Reconciliation failed")
 		}
@@ -80,16 +85,6 @@ func (r *OrganizationCtl) SetupWithManager(mgr ctrl.Manager) error {
 	}); err != nil {
 		return err
 	}
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &githubv1alpha1.Organization{}, "spec.rulesetPresets.name", func(rawObj client.Object) []string {
-		org := rawObj.(*githubv1alpha1.Organization)
-		rulesets := make([]string, 0, len(org.Spec.RulesetPresetList))
-		for _, ruleset := range org.Spec.RulesetPresetList {
-			rulesets = append(rulesets, ruleset.Name)
-		}
-		return rulesets
-	}); err != nil {
-		return err
-	}
 	return ctrl.NewControllerManagedBy(mgr).
 		// Apply the generation/annotation predicate only to the primary Organization resource,
 		// not to the secondary watches (CSC, RulesetPreset) so each can use its own filter.
@@ -102,7 +97,7 @@ func (r *OrganizationCtl) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Watches( // changes of ruleset presets should trigger reconciliation of orgs using it
 			&githubv1alpha1.RulesetPreset{},
-			handler.EnqueueRequestsFromMapFunc(r.findOrganizationsForRulesetPreset),
+			handler.EnqueueRequestsFromMapFunc(r.RulesetPresetIndex.OrganizationRequests),
 		).
 		// NOTE: credential secrets are fetched directly (non-cached) on each reconciliation;
 		// no Secret watch is registered so the credentials namespace does not need to be
@@ -125,28 +120,6 @@ func (r *OrganizationCtl) findOrganizationsForCodeSecurityConfiguration(ctx cont
 	var orgList githubv1alpha1.OrganizationList
 	if err := r.ReconcilerFactory.K8sClient.List(ctx, &orgList, client.MatchingFields{"spec.codeSecurityConfigurationAttachments.name": csc.Name}); err != nil {
 		logf.FromContext(ctx).Error(err, "failed to list organizations for code security configuration", "codeSecurityConfiguration", csc.Name)
-		return nil
-	}
-
-	requests := make([]reconcile.Request, 0, len(orgList.Items))
-	for _, org := range orgList.Items {
-		requests = append(requests, reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Name:      org.Name,
-				Namespace: org.Namespace,
-			},
-		})
-	}
-
-	return requests
-}
-
-func (r *OrganizationCtl) findOrganizationsForRulesetPreset(ctx context.Context, obj client.Object) []reconcile.Request {
-	rulesetPreset := obj.(*githubv1alpha1.RulesetPreset)
-
-	var orgList githubv1alpha1.OrganizationList
-	if err := r.ReconcilerFactory.K8sClient.List(ctx, &orgList, client.MatchingFields{"spec.rulesetPresets.name": rulesetPreset.Name}); err != nil {
-		logf.FromContext(ctx).Error(err, "failed to list organizations for ruleset preset", "rulesetPreset", rulesetPreset.Name)
 		return nil
 	}
 

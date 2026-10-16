@@ -1128,6 +1128,7 @@ RulesetSpec defines a ruleset. It is the spec of a RulesetPreset and the element
 in Organization.spec.rulesets and Repository.spec.rulesets.
 A ruleset preset defines reusable repository rules that can be applied to multiple repositories
 or organizations. Rulesets enforce policies like branch protection, required reviews, and more.
+A ruleset can extend a RulesetPreset via Extends; see docs/configuration/repository.md#extending-rulesets for the merge rules.
 See: https://docs.github.com/en/rest/repos/rules
 
 
@@ -1140,11 +1141,12 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `name` _string_ | Name is the display name of the ruleset shown in the GitHub UI. |  | MaxLength: 255 <br />MinLength: 1 <br />Pattern: `^[a-zA-Z0-9][a-zA-Z0-9\s\[\]*/'_.,~-]*[a-zA-Z0-9\[\]]$` <br />Required: \{\} <br /> |
-| `target` _string_ | Target defines which ref types this ruleset applies to.<br />The Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level<br />RulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied). | branch | Enum: [branch tag push repository] <br />Optional: \{\} <br /> |
+| `extends` _string_ | Extends names a RulesetPreset in the same namespace this ruleset inherits from. The effective ruleset is the<br />fully resolved parent with the fields of this ruleset merged on top: scalar and boolean fields override the<br />parent's value if set, rules are merged recursively, bypassActors, status checks, required reviewers and<br />workflows are merged by key (a child entry replaces the parent entry with the same key), while conditions,<br />allowedMergeMethods and pattern rules replace the parent's value completely. Name is never inherited, and<br />inherited entries cannot be removed. Chains may be at most 5 levels deep.<br />If the chain cannot be resolved (missing parent, cycle, too deep), this ruleset is neither created, updated<br />nor deleted on GitHub, and the RulesetsSynced condition is set to False. |  | MaxLength: 253 <br />MinLength: 1 <br />Pattern: `^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$` <br />Optional: \{\} <br /> |
+| `target` _string_ | Target defines which ref types this ruleset applies to. Defaults to 'branch' (after resolving Extends).<br />The Target 'repository' is only supported by Organization-level RulesetPresets. Repository-level<br />RulesetPresets with Target 'repository' are filtered out (i.e. are not checked nor applied). |  | Enum: [branch tag push repository] <br />Optional: \{\} <br /> |
 | `conditions` _[RulesetConditions](#rulesetconditions)_ | Conditions defines which refs are included or excluded in the list of targets for this Ruleset.<br />They also define which Repositories are targeted by Organization-level Rulesets. |  | AtMostOneOf: [repositoryName repositoryProperty] <br />Optional: \{\} <br /> |
-| `enforcement` _[RulesetEnforcement](#rulesetenforcement)_ | Enforcement determines whether the ruleset is enforced.<br />- "disabled": Ruleset is not enforced<br />- "active": Ruleset is actively enforced; violations block operations<br />- "evaluate": Ruleset is evaluated but violations only generate warnings |  | Enum: [disabled active evaluate] <br />Required: \{\} <br /> |
+| `enforcement` _[RulesetEnforcement](#rulesetenforcement)_ | Enforcement determines whether the ruleset is enforced.<br />- "disabled": Ruleset is not enforced<br />- "active": Ruleset is actively enforced; violations block operations<br />- "evaluate": Ruleset is evaluated but violations only generate warnings<br />Required unless Extends is set. |  | Enum: [disabled active evaluate] <br />Optional: \{\} <br /> |
 | `bypassActors` _[RulesetBypassActor](#rulesetbypassactor) array_ | BypassActors defines actors (users, teams, apps) who can bypass this ruleset.<br />Bypass actors can perform operations that would otherwise be blocked by the ruleset.<br />See: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-bypass-mode-for-rulesets |  | AtMostOneOf: [actorId actorSlug] <br />MaxItems: 100 <br />Optional: \{\} <br /> |
-| `rules` _[RulesetRules](#rulesetrules)_ | Rules defines the specific rules to enforce in this ruleset. |  | Required: \{\} <br /> |
+| `rules` _[RulesetRules](#rulesetrules)_ | Rules defines the specific rules to enforce in this ruleset. Required unless Extends is set. |  | Optional: \{\} <br /> |
 
 
 #### RunnerGroup

@@ -3,6 +3,7 @@ package rulesets
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
@@ -13,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
 var _ = Describe("Collect", func() {
@@ -26,6 +28,8 @@ var _ = Describe("Collect", func() {
 		inline     []v1alpha1.RulesetSpec
 		result     []Desired
 		err        error
+		// failGets lists, per preset name, which Get calls (1-based) fail with a transient error.
+		failGets map[string][]int
 	)
 
 	newSpec := func(name string, enforcement v1alpha1.RulesetEnforcement) v1alpha1.RulesetSpec {
@@ -68,10 +72,21 @@ var _ = Describe("Collect", func() {
 		presets = nil
 		presetRefs = nil
 		inline = nil
+		failGets = nil
 	})
 
 	JustBeforeEach(func() {
-		result, err = Collect(ctx, testutil.NewFakeClient(presets...), namespace, presetRefs, inline)
+		calls := map[string]int{}
+		c := interceptor.NewClient(testutil.NewFakeClient(presets...).(client.WithWatch), interceptor.Funcs{
+			Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+				calls[key.Name]++
+				if slices.Contains(failGets[key.Name], calls[key.Name]) {
+					return apierrors.NewServiceUnavailable("transient")
+				}
+				return c.Get(ctx, key, obj, opts...)
+			},
+		})
+		result, err = Collect(ctx, c, namespace, presetRefs, inline)
 	})
 
 	Context("with presets only", func() {
@@ -146,6 +161,40 @@ var _ = Describe("Collect", func() {
 
 		It("logs a warning", func() {
 			Expect(logContains("WARNING: duplicate ruleset definition with identical content")).To(BeTrue())
+		})
+	})
+
+	Context("with a name collision and identical content of which one cannot be resolved", func() {
+		BeforeEach(func() {
+			child := newSpec("shared", "")
+			child.Extends = "base"
+			presets = []client.Object{newPreset("base", newSpec("base", "active")), newPreset("child", child)}
+			presetRefs = []corev1.LocalObjectReference{{Name: "child"}}
+			inline = []v1alpha1.RulesetSpec{child}
+		})
+
+		expectUnresolvedOnce := func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+			Expect(result[0].Spec.Name).To(Equal("shared"))
+			Expect(result[0].Unresolved).To(HaveOccurred())
+			Expect(result[0].Unresolved.Reason).To(Equal(ReasonParentUnavailable))
+		}
+
+		Context("when the first definition cannot be resolved", func() {
+			BeforeEach(func() { failGets = map[string][]int{"base": {1}} })
+			It("returns the ruleset once as unresolved without a conflict", expectUnresolvedOnce)
+		})
+
+		It("marks a kept resolved ruleset as unresolved if an identical duplicate could not be resolved", func() {
+			unresolved := &UnresolvedError{Ruleset: "shared", Reason: ReasonParentUnavailable}
+			resolved := Desired{Source: "rulesetPreset/child", Spec: newSpec("shared", "active")}
+			dup := Desired{Source: "inline[0]", Spec: newSpec("shared", ""), Unresolved: unresolved}
+			result := []Desired{resolved}
+			markUnresolvedDuplicates([]Desired{resolved, dup}, result)
+			Expect(result[0].Source).To(Equal("rulesetPreset/child"))
+			Expect(result[0].Unresolved).To(BeIdenticalTo(unresolved))
+			Expect(result[0].Spec).To(Equal(dup.Spec))
 		})
 	})
 

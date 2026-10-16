@@ -28,6 +28,8 @@ type RepositoryCtl struct {
 	Scheme                 *runtime.Scheme
 	ReconcilerFactory      *reconcilerfactory.Factory
 	SuccessRequeueInterval time.Duration
+	// RulesetPresetIndex maps RulesetPreset changes to the affected resources; see SetupRulesetPresetIndex.
+	RulesetPresetIndex *RulesetPresetIndex
 }
 
 // +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=repositories,verbs=get;list;watch;create;update;patch;delete
@@ -65,6 +67,9 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		if isArchivedRepoError(err) {
 			log.Info("Repository is in read-only state, skipping reconciliation until next change")
 			return ctrl.Result{}, nil
+		}
+		if result, ok := handleUnresolvedRulesets(ctx, err, r.SuccessRequeueInterval); ok {
+			return result, nil
 		}
 		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
 			log.Error(err, "Reconciliation failed")
@@ -105,16 +110,6 @@ func (r *RepositoryCtl) SetupWithManager(mgr ctrl.Manager) error {
 			result = append(result, repo.Spec.AttachedCodeSecurityConfiguration.Name)
 		}
 		return result
-	}); err != nil {
-		return err
-	}
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &githubv1alpha1.Repository{}, "spec.rulesetPresets.name", func(rawObj client.Object) []string {
-		repo := rawObj.(*githubv1alpha1.Repository)
-		rulesets := make([]string, 0, len(repo.Spec.RulesetPresetList))
-		for _, ruleset := range repo.Spec.RulesetPresetList {
-			rulesets = append(rulesets, ruleset.Name)
-		}
-		return rulesets
 	}); err != nil {
 		return err
 	}
@@ -160,7 +155,7 @@ func (r *RepositoryCtl) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Watches( // changes of ruleset presets should trigger reconciliation of repos using it
 			&githubv1alpha1.RulesetPreset{},
-			handler.EnqueueRequestsFromMapFunc(r.findRepositoriesForRulesetPreset),
+			handler.EnqueueRequestsFromMapFunc(r.RulesetPresetIndex.RepositoryRequests),
 		).
 		Watches( // changes of autolinks presets should trigger reconciliation of repos using it
 			&githubv1alpha1.AutolinksPreset{},
@@ -223,27 +218,6 @@ func (r *RepositoryCtl) findRepositoriesForWebhookIgnorePreset(ctx context.Conte
 	return requests
 }
 
-func (r *RepositoryCtl) findRepositoriesForRulesetPreset(ctx context.Context, obj client.Object) []reconcile.Request {
-	rulesetPreset := obj.(*githubv1alpha1.RulesetPreset)
-
-	var repoList githubv1alpha1.RepositoryList
-	if err := r.ReconcilerFactory.K8sClient.List(ctx, &repoList, client.MatchingFields{"spec.rulesetPresets.name": rulesetPreset.Name}); err != nil {
-		logf.FromContext(ctx).Error(err, "failed to list repositories for ruleset preset", "rulesetPreset", rulesetPreset.Name)
-		return nil
-	}
-
-	requests := make([]reconcile.Request, 0, len(repoList.Items))
-	for _, repo := range repoList.Items {
-		requests = append(requests, reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Name:      repo.Name,
-				Namespace: repo.Namespace,
-			},
-		})
-	}
-
-	return requests
-}
 func (r *RepositoryCtl) findRepositoriesForAutolinksPreset(ctx context.Context, obj client.Object) []reconcile.Request {
 	autolinksPreset := obj.(*githubv1alpha1.AutolinksPreset)
 
