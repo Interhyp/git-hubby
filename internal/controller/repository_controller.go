@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
-	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
 	"github.com/google/go-github/v93/github"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -68,8 +67,10 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	if err = rec.Reconcile(ctx); err != nil {
 		if isArchivedRepoError(err) {
-			log.Info("Repository is in read-only state, skipping reconciliation until next change")
-			return ctrl.Result{}, nil
+			// Safety net for races: the repository was archived on GitHub while later reconciliation groups ran.
+			// The next run detects the archived repository and stops the reconciliation regularly.
+			log.Info("Repository was archived during reconciliation, requeuing")
+			return ctrl.Result{RequeueAfter: archivedRepoRequeueDelay}, nil
 		}
 		if result, ok := handleUserActionRequired(ctx, err, r.SuccessRequeueInterval, r.GitHubStateRequeueInterval); ok {
 			return result, nil
@@ -86,10 +87,12 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil
 }
 
+// archivedRepoRequeueDelay is the delay before a repository that was archived on GitHub during a reconciliation is
+// reconciled again.
+const archivedRepoRequeueDelay = 10 * time.Second
+
+// isArchivedRepoError reports whether GitHub rejected a request because the repository is archived (read-only).
 func isArchivedRepoError(err error) bool {
-	if _, ok := errors.AsType[*reporec.RepoArchivedError](err); ok {
-		return true
-	}
 	if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok {
 		return ghErr.Response != nil &&
 			ghErr.Response.StatusCode == 403 &&

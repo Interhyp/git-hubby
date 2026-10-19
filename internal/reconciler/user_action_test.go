@@ -144,4 +144,22 @@ var _ = Describe("conditionFromResult", func() {
 		Expect(condition.Message).NotTo(ContainSubstring("api.github.com"))
 	})
 
+	It("sets True with the stop message for stopped reconciliations", func() {
+		condition := conditionFromResult(reconciliationResult{
+			Condition: conditions.TypeBaseSettingsSynced, Stop: &StopReconciliation{Message: "archived"}, FinishedAt: finishedAt,
+		})
+		Expect(condition.Status).To(Equal(metav1.ConditionTrue))
+		Expect(condition.Reason).To(Equal(conditions.ReasonSyncCompleted))
+		Expect(condition.Message).To(ContainSubstring("archived"))
+	})
+
+	It("sets Unknown with the stop message for skipped reconciliations", func() {
+		condition := conditionFromResult(reconciliationResult{
+			Condition: conditions.TypeWebhooksSynced, SkippedBy: &StopReconciliation{Message: "archived"}, FinishedAt: finishedAt,
+		})
+		Expect(condition.Status).To(Equal(metav1.ConditionUnknown))
+		Expect(condition.Reason).To(Equal(conditions.ReasonSkipped))
+		Expect(condition.Message).To(ContainSubstring("Skipped"))
+		Expect(condition.Message).To(ContainSubstring("archived"))
+	})
 })

@@ -1,23 +1,11 @@
 package reporec
 
 import (
-	"errors"
 	"fmt"
 )
 
-type RepoArchivedError struct {
-	RepositoryName  string
-	RepositoryOwner string
-}
-
-func (e RepoArchivedError) Error() string {
-	return fmt.Sprintf("Repository %s/%s is archived and is therefore read-only. No further reconciliation possible.", e.RepositoryOwner, e.RepositoryName)
-}
-
-func (e RepoArchivedError) Is(err error) bool {
-	var repoArchivedError *RepoArchivedError
-	return errors.As(err, &repoArchivedError)
-}
+// ArchivedMessage is used for the conditions of archived repositories (see reconcileRepository).
+const ArchivedMessage = "repository is archived (read-only); settings are not reconciled until it is unarchived"
 
 // DefaultBranchNotFoundError is returned when spec.defaultBranch references a branch that does not exist in the
 // GitHub repository (e.g. right after creation, when auto_init only created the organization's default branch).

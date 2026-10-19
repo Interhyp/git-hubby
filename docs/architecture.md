@@ -51,6 +51,7 @@ Common patterns:
 
 - **Timeout Protection**: Each reconciliation task has a 5-minute timeout
 - **Error Handling**: All errors collected and reported; execution stops at first failed group
+- **Intended stop**: A task can return `reconciler.StopReconciliation{Message}` when the desired final state is reached and the remaining groups must not run (e.g. an archived, read-only repository). Its condition becomes `True`, the conditions of all later groups become `Unknown` (reason `Skipped`, message names the cause), and the run counts as successful (`Ready=True`, sub-resource generations updated, regular success requeue).
 
 ## Status Conditions
 
@@ -66,7 +67,7 @@ Each reconciliation task sets its own condition (e.g. `GitHubSynced`, `RulesetsS
 - errors implementing `UserActionRequired() bool` returning `true`: ruleset/webhook/autolink conflicts, unresolvable ruleset `extends` chains (except transient read errors of a parent preset), invalid webhook secret references, a missing default branch, and unresolvable team/org role/GitHub App/bypass actor references (`idresolver.UnresolvableReferenceError`)
 - GitHub `422 Unprocessable Entity` responses. Their condition (and log) message uses GitHub's response message and validation errors instead of the raw error, e.g. `Validation Failed: default_branch: Cannot update default branch for an empty repository`.
 
-`Ready` uses `UserActionRequired` if all failed tasks require user action, otherwise `ReconcileFailed`.
+`Ready` uses `UserActionRequired` if all failed tasks require user action, otherwise `ReconcileFailed`. Skipped tasks (see *Intended stop* above) use `Status=Unknown` with reason `Skipped`.
 
 Retry behaviour of `UserActionRequired` errors depends on where the user has to act:
 

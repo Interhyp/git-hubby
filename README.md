@@ -205,6 +205,7 @@ Each reconciliation task sets its own condition; `Ready` aggregates them. Failed
 
 - `SyncFailed`: transient failure (e.g. network, GitHub 5xx), retried with exponential backoff
 - `UserActionRequired`: the spec or the state on GitHub has to be changed (e.g. conflicting definitions, missing team or default branch, GitHub 422), not retried with backoff. Requeued after `GITHUB_STATE_REQUEUE_INTERVAL_MINUTES` (default: 15) if the fix happens on GitHub, otherwise on the next spec/preset change or after the spread interval
+- Archived repositories (`archived: true`) count as successfully reconciled; as they are read-only, their remaining conditions are `Unknown` with reason `Skipped`
 
 ### Rate Limit Handling
 

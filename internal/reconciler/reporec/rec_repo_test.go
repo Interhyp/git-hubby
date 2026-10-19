@@ -446,24 +446,21 @@ var _ = Describe("ReconcileRepository", func() {
 		})
 
 		It("should update the repository to archived", func() {
-			// After archiving, the reconciler should return a RepoArchivedError
+			// After archiving, the reconciler stops the reconciliation on purpose
 			Expect(err).To(HaveOccurred())
-			var archivedErr *RepoArchivedError
-			Expect(errors.As(err, &archivedErr)).To(BeTrue())
+			var stop *reconciler.StopReconciliation
+			Expect(errors.As(err, &stop)).To(BeTrue())
 			Expect(editRepoCalled).To(BeTrue())
 			Expect(editedRepo).NotTo(BeNil())
 			Expect(editedRepo.GetArchived()).To(BeTrue())
 		})
 
-		It("should include repository details in error", func() {
-			Expect(err).To(HaveOccurred())
-			var archivedErr *RepoArchivedError
-			Expect(errors.As(err, &archivedErr)).To(BeTrue())
-			Expect(archivedErr.RepositoryName).To(Equal("test-repo"))
-			Expect(archivedErr.RepositoryOwner).To(Equal("test-org"))
-			Expect(err.Error()).To(ContainSubstring("test-org/test-repo"))
-			Expect(err.Error()).To(ContainSubstring("archived"))
-			Expect(err.Error()).To(ContainSubstring("read-only"))
+		It("should explain the stop in the message", func() {
+			var stop *reconciler.StopReconciliation
+			Expect(errors.As(err, &stop)).To(BeTrue())
+			Expect(stop.Message).To(Equal(ArchivedMessage))
+			Expect(stop.Message).To(ContainSubstring("archived"))
+			Expect(stop.Message).To(ContainSubstring("read-only"))
 		})
 	})
 
@@ -493,10 +490,11 @@ var _ = Describe("ReconcileRepository", func() {
 			}
 		})
 
-		It("should return RepoArchivedError without attempting update", func() {
+		It("should stop the reconciliation without attempting update", func() {
 			Expect(err).To(HaveOccurred())
-			var archivedErr *RepoArchivedError
-			Expect(errors.As(err, &archivedErr)).To(BeTrue())
+			var stop *reconciler.StopReconciliation
+			Expect(errors.As(err, &stop)).To(BeTrue())
+			Expect(stop.Message).To(Equal(ArchivedMessage))
 			// Should not call EditRepository since repo is already up-to-date
 			Expect(editRepoCalled).To(BeFalse())
 		})
@@ -541,10 +539,10 @@ var _ = Describe("ReconcileRepository", func() {
 			}
 		})
 
-		It("should not return RepoArchivedError", func() {
+		It("should not stop the reconciliation", func() {
 			Expect(err).NotTo(HaveOccurred())
-			var archivedErr *RepoArchivedError
-			Expect(errors.As(err, &archivedErr)).To(BeFalse())
+			var stop *reconciler.StopReconciliation
+			Expect(errors.As(err, &stop)).To(BeFalse())
 		})
 	})
 

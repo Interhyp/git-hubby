@@ -301,4 +301,22 @@ var _ = Describe("Shared Controller Functions", func() {
 			}
 		})
 	})
+
+	Describe("isArchivedRepoError", func() {
+		It("detects GitHub's read-only response", func() {
+			err := fmt.Errorf("webhooks: %w", &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusForbidden},
+				Message:  "Repository was archived so is read-only.",
+			})
+			Expect(isArchivedRepoError(err)).To(BeTrue())
+		})
+
+		It("ignores other errors", func() {
+			Expect(isArchivedRepoError(errors.New("boom"))).To(BeFalse())
+			Expect(isArchivedRepoError(&github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusForbidden},
+				Message:  "Resource not accessible by integration",
+			})).To(BeFalse())
+		})
+	})
 })

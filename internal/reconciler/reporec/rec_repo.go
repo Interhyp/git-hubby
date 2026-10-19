@@ -29,11 +29,8 @@ func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 	log.V(1).Info("Existence of Repository confirmed on GitHub, checking for required updates")
 
 	if mapper.RepoStaysArchived(r.Kubernetes.Resource, *ghRepo) {
-		log.V(1).Info("Repository stays archived, preventing further reconciliations")
-		return &RepoArchivedError{
-			RepositoryName:  r.GitHub.Resource.Name,
-			RepositoryOwner: r.GitHub.Resource.Owner,
-		}
+		log.V(1).Info("Repository stays archived, skipping further reconciliations")
+		return &reconciler.StopReconciliation{Message: ArchivedMessage}
 	}
 	if !mapper.RepoDiffers(r.Kubernetes.Resource, *ghRepo) {
 		log.V(1).Info("Repository already matches desired state, skipping update")
@@ -49,11 +46,8 @@ func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 		return err
 	}
 	if ghRepo.GetArchived() {
-		log.V(1).Info("Repository was archived, preventing further reconciliations")
-		return &RepoArchivedError{
-			RepositoryName:  r.GitHub.Resource.Name,
-			RepositoryOwner: r.GitHub.Resource.Owner,
-		}
+		log.V(1).Info("Repository was archived, skipping further reconciliations")
+		return &reconciler.StopReconciliation{Message: ArchivedMessage}
 	}
 	log.V(1).Info("Repository settings reconciled successfully")
 	return nil
