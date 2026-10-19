@@ -41,6 +41,9 @@ func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 	}
 
 	log.V(1).Info("Repository differs from desired state, updating it")
+	if err = r.ensureDefaultBranchExists(ctx, ghRepo); err != nil {
+		return err
+	}
 	ghRepo, err = r.updateRepo(ctx)
 	if err != nil {
 		return err
@@ -118,6 +121,33 @@ func (r *GitHubRepoReconciler) triggerOrganizationReconciliation(ctx context.Con
 
 	log.V(1).Info("Triggering parent organization reconciliation", "organization", orgName)
 	return r.Kubernetes.Client.Apply(ctx, applyConfig, client.ForceOwnership, reconciler.FieldOwner)
+}
+
+// ensureDefaultBranchExists verifies that spec.defaultBranch exists in the GitHub repository before the repository is
+// updated, because GitHub rejects the whole update otherwise. This is only checked if the default branch has to be
+// changed, e.g. right after creation when auto_init only created the organization's default branch.
+// Returns a DefaultBranchNotFoundError if the branch does not exist, which prevents the update and retry loops.
+func (r *GitHubRepoReconciler) ensureDefaultBranchExists(ctx context.Context, ghRepo *github.Repository) error {
+	desired := r.Kubernetes.Resource.Spec.DefaultBranch
+	if desired == "" || ghRepo.GetDefaultBranch() == desired {
+		return nil
+	}
+	log := logPkg.FromContext(ctx).WithValues("defaultBranch", desired)
+	_, err := r.GitHub.Client.GetBranch(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, desired)
+	if err == nil {
+		return nil
+	}
+	if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok && ghErr.Response != nil &&
+		(ghErr.Response.StatusCode == http.StatusNotFound || ghErr.Response.StatusCode == http.StatusMovedPermanently) {
+		log.Info("Desired default branch does not exist, skipping repository update")
+		return &DefaultBranchNotFoundError{
+			RepositoryOwner: r.GitHub.Resource.Owner,
+			RepositoryName:  r.GitHub.Resource.Name,
+			Branch:          desired,
+		}
+	}
+	log.Error(err, "failed to check existence of default branch")
+	return err
 }
 
 func (r *GitHubRepoReconciler) updateRepo(ctx context.Context) (*github.Repository, error) {

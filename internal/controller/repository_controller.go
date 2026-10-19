@@ -71,6 +71,12 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		if result, ok := handleUnresolvedRulesets(ctx, err, r.SuccessRequeueInterval); ok {
 			return result, nil
 		}
+		if reporec.AwaitsDefaultBranch(err) {
+			// GitHubSynced has already been set to False by the executor; its message names the missing branch.
+			// Retrying with backoff is pointless; wait for a spec change or the regular drift detection interval.
+			log.Info("Default branch does not exist, waiting for a spec change or the next drift detection", "reason", err.Error())
+			return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil
+		}
 		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
 			log.Error(err, "Reconciliation failed")
 		}

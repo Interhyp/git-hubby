@@ -18,3 +18,41 @@ func (e RepoArchivedError) Is(err error) bool {
 	var repoArchivedError *RepoArchivedError
 	return errors.As(err, &repoArchivedError)
 }
+
+// DefaultBranchNotFoundError is returned when spec.defaultBranch references a branch that does not exist in the
+// GitHub repository (e.g. right after creation, when auto_init only created the organization's default branch).
+// GitHub would reject the repository update, so no update is sent at all. Retrying with backoff is pointless: the
+// error can only be fixed by pushing the branch or changing the spec. The controller therefore does not requeue
+// with backoff but waits for the next spec change or the regular success requeue interval.
+type DefaultBranchNotFoundError struct {
+	RepositoryOwner string
+	RepositoryName  string
+	Branch          string
+}
+
+func (e *DefaultBranchNotFoundError) Error() string {
+	return fmt.Sprintf("default branch %q does not exist in repository %s/%s; push the branch or change spec.defaultBranch",
+		e.Branch, e.RepositoryOwner, e.RepositoryName)
+}
+
+// AwaitsDefaultBranch reports whether err (including all wrapped and joined errors) consists only of
+// DefaultBranchNotFoundErrors.
+func AwaitsDefaultBranch(err error) bool {
+	if _, ok := err.(*DefaultBranchNotFoundError); ok { //nolint:errorlint // the error tree is walked explicitly
+		return true
+	}
+	switch e := err.(type) { //nolint:errorlint // the error tree is walked explicitly
+	case interface{ Unwrap() []error }:
+		errs := e.Unwrap()
+		for _, inner := range errs {
+			if !AwaitsDefaultBranch(inner) {
+				return false
+			}
+		}
+		return len(errs) > 0
+	case interface{ Unwrap() error }:
+		return AwaitsDefaultBranch(e.Unwrap())
+	default:
+		return false
+	}
+}

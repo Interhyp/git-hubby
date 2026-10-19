@@ -185,6 +185,7 @@ func (m *MockGitHubClientWrapper) Reset() {
 	m.CreateRepositoryFunc = nil
 	m.EditRepositoryFunc = nil
 	m.DeleteRepositoryFunc = nil
+	m.GetBranchFunc = nil
 	m.ListHooksFunc = nil
 	m.CreateHookFunc = nil
 	m.DeleteHookFunc = nil

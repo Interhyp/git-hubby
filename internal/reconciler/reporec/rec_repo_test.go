@@ -669,6 +669,83 @@ var _ = Describe("ReconcileRepository", func() {
 		})
 	})
 
+	Context("when the desired default branch does not exist", func() {
+		var getBranchCalled bool
+
+		BeforeEach(func() {
+			getBranchCalled = false
+			repo.Spec.DefaultBranch = "develop"
+			currentGHRepo.DefaultBranch = new("main")
+			mockClient.GetBranchFunc = func(ctx context.Context, owner, name, branch string) (*github.Branch, error) {
+				getBranchCalled = true
+				Expect(branch).To(Equal("develop"))
+				return nil, &github.ErrorResponse{
+					Message:  "Branch not found",
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+				}
+			}
+		})
+
+		It("should return a DefaultBranchNotFoundError without updating the repository", func() {
+			Expect(getBranchCalled).To(BeTrue())
+			Expect(editRepoCalled).To(BeFalse())
+			var dbErr *DefaultBranchNotFoundError
+			Expect(errors.As(err, &dbErr)).To(BeTrue())
+			Expect(dbErr.Branch).To(Equal("develop"))
+			Expect(AwaitsDefaultBranch(errors.Join(err))).To(BeTrue())
+		})
+	})
+
+	Context("when the desired default branch exists but is not yet the default", func() {
+		BeforeEach(func() {
+			repo.Spec.DefaultBranch = "develop"
+			currentGHRepo.DefaultBranch = new("main")
+		})
+
+		It("should update the repository", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(editRepoCalled).To(BeTrue())
+			Expect(editedRepo.GetDefaultBranch()).To(Equal("develop"))
+		})
+	})
+
+	Context("when checking the default branch fails with a non-404 error", func() {
+		BeforeEach(func() {
+			repo.Spec.DefaultBranch = "develop"
+			currentGHRepo.DefaultBranch = new("main")
+			mockClient.GetBranchFunc = func(ctx context.Context, owner, name, branch string) (*github.Branch, error) {
+				return nil, errors.New("API error")
+			}
+		})
+
+		It("should return the error as a regular (retryable) error", func() {
+			Expect(err).To(HaveOccurred())
+			Expect(editRepoCalled).To(BeFalse())
+			Expect(AwaitsDefaultBranch(err)).To(BeFalse())
+		})
+	})
+
+	Context("when the default branch already matches", func() {
+		var getBranchCalled bool
+
+		BeforeEach(func() {
+			getBranchCalled = false
+			repo.Spec.DefaultBranch = "main"
+			currentGHRepo.DefaultBranch = new("main")
+			currentGHRepo.HasWiki = new(true) // force an update
+			mockClient.GetBranchFunc = func(ctx context.Context, owner, name, branch string) (*github.Branch, error) {
+				getBranchCalled = true
+				return &github.Branch{Name: new(branch)}, nil
+			}
+		})
+
+		It("should not check the branch and update the repository", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(getBranchCalled).To(BeFalse())
+			Expect(editRepoCalled).To(BeTrue())
+		})
+	})
+
 	Context("when the repository was renamed via spec.name", func() {
 		// Simulates the factory setting rec.GitHub.Resource.Name from repo.Spec.Name (the new desired name),
 		// while the repository on GitHub still exists under its old name and Status.ID is already populated.

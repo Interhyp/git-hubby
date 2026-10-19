@@ -80,6 +80,17 @@ func RepositoryFromCreateRequest(org string, repo github.CreateRepositoryRequest
 	}
 }
 
+func (m *MockGitHubClientWrapper) GetBranch(ctx context.Context, owner, repo, branch string) (*github.Branch, error) {
+	m.recordRepoCall(RepoCall{Method: "GetBranch", Owner: owner, Repo: repo})
+
+	if m.GetBranchFunc != nil {
+		return m.GetBranchFunc(ctx, owner, repo, branch)
+	}
+
+	// Default implementation - branch exists
+	return &github.Branch{Name: new(branch)}, nil
+}
+
 func (m *MockGitHubClientWrapper) EditRepository(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error) {
 	m.recordRepoCall(RepoCall{Method: "EditRepository", Owner: owner, Repo: repo})
 
