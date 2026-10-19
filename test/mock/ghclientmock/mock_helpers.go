@@ -96,7 +96,7 @@ func (m *MockGitHubClientWrapper) SetError(err error) {
 	m.GetRepositoryFunc = func(ctx context.Context, owner, repo string) (*github.Repository, error) {
 		return nil, err
 	}
-	m.CreateRepositoryFunc = func(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error) {
+	m.CreateRepositoryFunc = func(ctx context.Context, org string, repo github.CreateRepositoryRequest) (*github.Repository, error) {
 		return nil, err
 	}
 	m.EditRepositoryFunc = func(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error) {

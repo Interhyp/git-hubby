@@ -47,7 +47,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 		accessLevelForExternalWorkflows = new("none")
 		orgActionsEnabled = new("all")
 		currentAccessLevel = &github.RepositoryActionsAccessLevel{
-			AccessLevel: new("none"),
+			AccessLevel: "none",
 		}
 
 		// Reset flags and errors
@@ -63,7 +63,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 		mockClient.SetAccessLevelForExternalWorkflowsForRepoFunc = func(ctx context.Context, owner string, repo string, accessLevel github.RepositoryActionsAccessLevel) error {
 			setAccessLevelCalled = true
-			setAccessLevelWithValue = accessLevel.AccessLevel
+			setAccessLevelWithValue = new(accessLevel.AccessLevel)
 			return setAccessLevelError
 		}
 	})
@@ -153,7 +153,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			accessLevelForExternalWorkflows = new("organization")
 			orgActionsEnabled = new("all")
 			currentAccessLevel = &github.RepositoryActionsAccessLevel{
-				AccessLevel: new("none"),
+				AccessLevel: "none",
 			}
 		})
 
@@ -169,7 +169,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			accessLevelForExternalWorkflows = new("user")
 			orgActionsEnabled = new("all")
 			currentAccessLevel = &github.RepositoryActionsAccessLevel{
-				AccessLevel: new("user"),
+				AccessLevel: "user",
 			}
 		})
 
@@ -184,7 +184,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			accessLevelForExternalWorkflows = nil
 			orgActionsEnabled = new("all")
 			currentAccessLevel = &github.RepositoryActionsAccessLevel{
-				AccessLevel: new("user"),
+				AccessLevel: "user",
 			}
 		})
 
@@ -199,7 +199,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 		BeforeEach(func() {
 			orgActionsEnabled = new("all")
 			currentAccessLevel = &github.RepositoryActionsAccessLevel{
-				AccessLevel: new("none"),
+				AccessLevel: "none",
 			}
 		})
 
@@ -207,7 +207,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			BeforeEach(func() {
 				accessLevelForExternalWorkflows = new("none")
 				currentAccessLevel = &github.RepositoryActionsAccessLevel{
-					AccessLevel: new("organization"),
+					AccessLevel: "organization",
 				}
 			})
 
@@ -275,7 +275,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			BeforeEach(func() {
 				accessLevelForExternalWorkflows = new("organization")
 				currentAccessLevel = &github.RepositoryActionsAccessLevel{
-					AccessLevel: new("none"),
+					AccessLevel: "none",
 				}
 				setAccessLevelError = errors.New("API error: failed to set access level")
 			})
@@ -344,11 +344,11 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			orgActionsEnabled = new("all")
 		})
 
-		Context("when current access level is nil", func() {
+		Context("when current access level is empty", func() {
 			BeforeEach(func() {
 				accessLevelForExternalWorkflows = new("organization")
 				currentAccessLevel = &github.RepositoryActionsAccessLevel{
-					AccessLevel: nil,
+					AccessLevel: "",
 				}
 			})
 
@@ -363,7 +363,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			BeforeEach(func() {
 				accessLevelForExternalWorkflows = nil
 				currentAccessLevel = &github.RepositoryActionsAccessLevel{
-					AccessLevel: nil,
+					AccessLevel: "",
 				}
 			})
 

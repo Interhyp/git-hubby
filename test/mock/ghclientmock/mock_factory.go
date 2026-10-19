@@ -48,7 +48,7 @@ type MockGitHubClientWrapper struct {
 	// Repository mocks
 	GetRepositoryFunc      func(ctx context.Context, owner, repo string) (*github.Repository, error)
 	GetRepositoryByIDFunc  func(ctx context.Context, id int64) (*github.Repository, error)
-	CreateRepositoryFunc   func(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error)
+	CreateRepositoryFunc   func(ctx context.Context, org string, repo github.CreateRepositoryRequest) (*github.Repository, error)
 	EditRepositoryFunc     func(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error)
 	DeleteRepositoryFunc   func(ctx context.Context, owner, repo string) error
 	GetOrgRepositoriesFunc func(ctx context.Context, org string) ([]*github.Repository, error)

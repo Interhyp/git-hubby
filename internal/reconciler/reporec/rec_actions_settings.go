@@ -42,12 +42,12 @@ func (r *GitHubRepoReconciler) reconcileActionsAccessLevelForExternalWorkflows(c
 	log := logPkg.FromContext(ctx)
 	log.V(1).Info("Reconciling repository GitHub actions access policies on GitHub")
 
-	expectedActionsAccessLevel := utils.WithDefaultAsPtr(r.Kubernetes.Resource.Spec.AccessLevelForExternalWorkflows, "none")
+	expectedActionsAccessLevel := utils.WithDefault(r.Kubernetes.Resource.Spec.AccessLevelForExternalWorkflows, "none")
 	currentAccessLevel, err := r.GitHub.Client.GetAccessLevelForExternalWorkflowsForRepo(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name)
 	if err != nil {
 		return err
 	}
-	if currentAccessLevel.GetAccessLevel() != *expectedActionsAccessLevel {
+	if currentAccessLevel.GetAccessLevel() != expectedActionsAccessLevel {
 		err = r.GitHub.Client.SetAccessLevelForExternalWorkflowsForRepo(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, github.RepositoryActionsAccessLevel{
 			AccessLevel: expectedActionsAccessLevel,
 		})

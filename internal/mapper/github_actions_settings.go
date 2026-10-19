@@ -62,7 +62,7 @@ func EqualRunnerGroup(k8sGroup v1alpha1.RunnerGroup, ghGroup *github.RunnerGroup
 func MapRunnerGroupToCreateRequest(group v1alpha1.RunnerGroup, repos []v1alpha1.Repository) github.CreateRunnerGroupRequest {
 	selectedRepositoryIDs := GetSelectedRepositoryIDsForRunnerGroup(group, repos)
 	return github.CreateRunnerGroupRequest{
-		Name:                  new(group.Name),
+		Name:                  group.Name,
 		Visibility:            group.Visibility,
 		SelectedRepositoryIDs: selectedRepositoryIDs,
 		RestrictedToWorkflows: group.RestrictedToWorkflows,
@@ -89,7 +89,7 @@ func GetSelectedRepositoryIDsForRunnerGroup(group v1alpha1.RunnerGroup, repos []
 func MapRunnerGroupToUpdateRequest(group v1alpha1.RunnerGroup) github.UpdateRunnerGroupRequest {
 
 	return github.UpdateRunnerGroupRequest{
-		Name:                  new(group.Name),
+		Name:                  group.Name,
 		Visibility:            group.Visibility,
 		RestrictedToWorkflows: group.RestrictedToWorkflows,
 		SelectedWorkflows:     group.SelectedWorkflows,

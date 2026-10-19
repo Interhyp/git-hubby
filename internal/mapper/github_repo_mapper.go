@@ -29,6 +29,26 @@ func RepoToGithubRepo(repo *v1alpha1.Repository) *github.Repository {
 	}
 }
 
+func RepoToGithubCreateRepositoryRequest(repo *v1alpha1.Repository) github.CreateRepositoryRequest {
+	return github.CreateRepositoryRequest{
+		Name: repo.Spec.Name,
+		// don't set "private: true" to avoid errors or mismatched configurations
+		Visibility:          &repo.Spec.Visibility,
+		HasIssues:           repo.Spec.HasIssues,
+		HasProjects:         repo.Spec.HasProjects,
+		HasWiki:             repo.Spec.HasWiki,
+		IsTemplate:          repo.Spec.IsTemplate,
+		AllowSquashMerge:    getMergeStrategy(repo, "squash"),
+		AllowRebaseMerge:    getMergeStrategy(repo, "rebase"),
+		AllowMergeCommit:    getMergeStrategy(repo, "merge"),
+		DeleteBranchOnMerge: repo.Spec.DeleteBranchOnMerge,
+		MergeCommitTitle:    &repo.Spec.MergeCommitTitle,
+		MergeCommitMessage:  &repo.Spec.MergeCommitMessage,
+		Homepage:            utils.WithDefaultAsPtr(new(repo.Spec.About.Website), ""),
+		Description:         utils.WithDefaultAsPtr(new(repo.Spec.About.Description), ""),
+	}
+}
+
 func RepoStaysArchived(repo *v1alpha1.Repository, githubRepo github.Repository) bool {
 	wantArchived := false
 	if repo.Spec.Archived != nil {
