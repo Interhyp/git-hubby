@@ -65,6 +65,7 @@ Each reconciliation task sets its own condition (e.g. `GitHubSynced`, `RulesetsS
 `UserActionRequired` is used if `reconciler.RequiresUserAction(err)` reports that the error (including all wrapped and joined errors) consists only of errors requiring user action:
 
 - errors implementing `UserActionRequired() bool` returning `true`: ruleset/webhook/autolink conflicts, unresolvable ruleset `extends` chains (except transient read errors of a parent preset), invalid webhook secret references, a missing default branch, and unresolvable team/org role/GitHub App/bypass actor references (`idresolver.UnresolvableReferenceError`)
+- Kubernetes `NotFound` errors: missing referenced resources (presets, code security configurations, secrets, ...). Classified at the error itself, so fetch sites need no special handling and new references are covered automatically.
 - GitHub `422 Unprocessable Entity` responses. Their condition (and log) message uses GitHub's response message and validation errors instead of the raw error, e.g. `Validation Failed: default_branch: Cannot update default branch for an empty repository`.
 
 `Ready` uses `UserActionRequired` if all failed tasks require user action, otherwise `ReconcileFailed`. Skipped tasks (see *Intended stop* above) use `Status=Unknown` with reason `Skipped`.
@@ -72,7 +73,10 @@ Each reconciliation task sets its own condition (e.g. `GitHubSynced`, `RulesetsS
 Retry behaviour of `UserActionRequired` errors depends on where the user has to act:
 
 - **Kubernetes resources only** (conflicts, unresolvable `extends` chains, invalid references in the spec): no requeue until a watch event (spec or preset change) or the success requeue interval (`SPREAD_INTERVAL_MINUTES`).
-- **GitHub** (`reconciler.AwaitsGitHubChange`: missing team, org role, GitHub App or default branch, GitHub `422` responses): no watch event signals such changes, so the resource is requeued after `GITHUB_STATE_REQUEUE_INTERVAL_MINUTES` (default `15`). Errors mark this by implementing `AwaitsGitHubChange() bool`. If a run fails with both kinds, the shorter interval is used.
+- **GitHub** (`reconciler.AwaitsGitHubChange`: missing team, org role, GitHub App or default branch, GitHub `422` responses): no watch event signals such changes, so the resource is requeued after `GITHUB_STATE_REQUEUE_INTERVAL_MINUTES` (default `15`). Errors mark this by implementing `AwaitsGitHubChange() bool`.
+- **Missing referenced Kubernetes resources** (`NotFound`): requeued after `GITHUB_STATE_REQUEUE_INTERVAL_MINUTES` as well. Watched kinds (presets, code security configurations) are reconciled immediately once created; the requeue covers unwatched kinds (e.g. secrets created in a later Argo CD sync wave) without tracking which kinds are watched.
+
+If a run fails with several kinds, the shorter interval is used.
 
 Errors raised before the reconciliation tasks run (rate limits, startup spreading) and blocked organization finalization do not set conditions.
 

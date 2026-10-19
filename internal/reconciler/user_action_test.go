@@ -11,7 +11,9 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func unprocessable(message string, details ...github.Error) *github.ErrorResponse {
@@ -53,8 +55,19 @@ var _ = Describe("RequiresUserAction", func() {
 		Entry("marked error joined with a GitHub 502", errors.Join(&rulesets.ConflictError{}, serverError), false),
 		Entry("empty join wrapper", fmt.Errorf("x: %w", errors.Join()), false),
 		Entry("readable error wrapper", withReadableMessage(unprocessable("Validation Failed")), true),
+		Entry("missing referenced Kubernetes resource (unmarked)",
+			fmt.Errorf("failed to get something x: %w", notFound("somethings", "x")), true),
+		Entry("missing referenced resource joined with a marked error",
+			errors.Join(notFound("rulesetpresets", "x"), &rulesets.ConflictError{}), true),
+		Entry("other Kubernetes API error", apierrors.NewInternalError(errors.New("etcd")), false),
+		Entry("missing referenced resource joined with another error",
+			errors.Join(notFound("secrets", "s"), errors.New("boom")), false),
 	)
 })
+
+func notFound(resource, name string) error {
+	return apierrors.NewNotFound(schema.GroupResource{Group: "github.interhyp.de", Resource: resource}, name)
+}
 
 var _ = Describe("AwaitsGitHubChange", func() {
 	DescribeTable("classifies errors",
@@ -71,6 +84,7 @@ var _ = Describe("AwaitsGitHubChange", func() {
 		Entry("any joined error awaiting a GitHub change",
 			fmt.Errorf("sync: %w", errors.Join(&rulesets.ConflictError{Name: "r"}, gitHubStateErr{awaits: true})), true),
 		Entry("readable error wrapper", withReadableMessage(unprocessable("Validation Failed")), true),
+		Entry("missing referenced Kubernetes resource (fixed in Kubernetes)", notFound("webhookpresets", "x"), false),
 	)
 })
 

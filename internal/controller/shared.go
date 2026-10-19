@@ -9,6 +9,7 @@ import (
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
@@ -58,12 +59,16 @@ func handleRequeueError(ctx context.Context, err error) (controllerruntime.Resul
 //     successRequeueInterval is used.
 //   - GitHub (see reconciler.AwaitsGitHubChange, e.g. a missing team or GitHub App): no watch event signals the
 //     change, so the shorter gitHubStateRequeueInterval is used (capped at successRequeueInterval; ignored if <= 0).
+//   - Missing referenced Kubernetes resources (NotFound): watched kinds (presets, code security configurations)
+//     reconcile the resource once they are created, but not all referenced kinds are watched (e.g. secrets).
+//     gitHubStateRequeueInterval is used as well, so that resources created later (e.g. in a later Argo CD sync
+//     wave) are picked up without tracking which kinds are watched.
 func handleUserActionRequired(ctx context.Context, err error, successRequeueInterval, gitHubStateRequeueInterval time.Duration) (controllerruntime.Result, bool) {
 	if !reconciler.RequiresUserAction(err) {
 		return controllerruntime.Result{}, false
 	}
 	requeueAfter := successRequeueInterval
-	if reconciler.AwaitsGitHubChange(err) && gitHubStateRequeueInterval > 0 {
+	if (reconciler.AwaitsGitHubChange(err) || apierrors.IsNotFound(err)) && gitHubStateRequeueInterval > 0 {
 		requeueAfter = min(requeueAfter, gitHubStateRequeueInterval)
 	}
 	logPkg.FromContext(ctx).Info("Reconciliation requires user action, waiting for a change", "reason", err.Error(), "requeueAfter", requeueAfter)

@@ -16,6 +16,8 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 )
 
@@ -277,6 +279,8 @@ var _ = Describe("Shared Controller Functions", func() {
 			Entry("missing default branch", &reporec.DefaultBranchNotFoundError{Branch: "develop"}),
 			Entry("missing team", &idresolver.UnresolvableReferenceError{Message: "team not found", NotFound: true}),
 			Entry("GitHub 422", &github.ErrorResponse{Response: &http.Response{StatusCode: http.StatusUnprocessableEntity}, Message: "Validation Failed"}),
+			Entry("missing referenced Kubernetes resource (watched or not)",
+				fmt.Errorf("failed to get webhook preset x: %w", apierrors.NewNotFound(schema.GroupResource{Group: "github.interhyp.de", Resource: "webhookpresets"}, "x"))),
 		)
 
 		It("caps the GitHub state requeue interval at the success requeue interval and ignores unset values", func() {

@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v93/github"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // UserActionRequiredError marks errors that cannot be fixed by retrying: the spec or the state on GitHub has to be
@@ -23,8 +25,9 @@ type UserActionRequiredError interface {
 }
 
 // RequiresUserAction reports whether err (including all wrapped and joined errors) consists only of errors that
-// require user action. These are errors implementing UserActionRequiredError (returning true) and GitHub
-// "422 Unprocessable Entity" responses. nil and any other error return false.
+// require user action. These are errors implementing UserActionRequiredError (returning true), GitHub
+// "422 Unprocessable Entity" responses and Kubernetes "NotFound" errors (missing referenced resources).
+// nil and any other error return false.
 func RequiresUserAction(err error) bool {
 	if err == nil {
 		return false
@@ -34,6 +37,12 @@ func RequiresUserAction(err error) bool {
 	}
 	if ghErr, ok := err.(*github.ErrorResponse); ok { //nolint:errorlint // the error tree is walked explicitly
 		return isUnprocessableEntity(ghErr)
+	}
+	if status, ok := err.(apierrors.APIStatus); ok { //nolint:errorlint // the error tree is walked explicitly
+		// A referenced Kubernetes resource (preset, configuration, secret, ...) does not exist. Classifying this at
+		// the leaf covers every reference without marking each fetch site; new references are handled automatically.
+		// The controllers requeue these errors after the short GitHub state interval, see handleUserActionRequired.
+		return status.Status().Reason == metav1.StatusReasonNotFound
 	}
 	switch e := err.(type) { //nolint:errorlint // the error tree is walked explicitly
 	case interface{ Unwrap() []error }:
