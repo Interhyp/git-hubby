@@ -692,7 +692,7 @@ var _ = Describe("ReconcileRepository", func() {
 			var dbErr *DefaultBranchNotFoundError
 			Expect(errors.As(err, &dbErr)).To(BeTrue())
 			Expect(dbErr.Branch).To(Equal("develop"))
-			Expect(AwaitsDefaultBranch(errors.Join(err))).To(BeTrue())
+			Expect(reconciler.RequiresUserAction(errors.Join(err))).To(BeTrue())
 		})
 	})
 
@@ -721,7 +721,7 @@ var _ = Describe("ReconcileRepository", func() {
 		It("should return the error as a regular (retryable) error", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(editRepoCalled).To(BeFalse())
-			Expect(AwaitsDefaultBranch(err)).To(BeFalse())
+			Expect(reconciler.RequiresUserAction(err)).To(BeFalse())
 		})
 	})
 

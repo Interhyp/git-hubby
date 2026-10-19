@@ -63,7 +63,7 @@ func (x *ReconciliationExecutor[T]) Reconcile(ctx context.Context) error {
 	}
 
 	if err != nil {
-		return err
+		return withReadableMessage(err)
 	}
 
 	log.Info(fmt.Sprintf("Successfully reconciled %s", x.Reconciler.K8s().Resource.GetTypeRepresentation()))
@@ -185,26 +185,34 @@ func (x *ReconciliationExecutor[T]) runReconciliationGroup(ctx context.Context, 
 
 // conditionFromResult creates a new metav1.Condition with the provided values
 func conditionFromResult(result reconciliationResult) metav1.Condition {
+	finishedAt := result.FinishedAt.Format(time.RFC3339)
 	condition := metav1.Condition{
 		Type:               string(result.Condition),
 		Status:             metav1.ConditionTrue,
 		LastTransitionTime: metav1.NewTime(result.FinishedAt),
 		Reason:             conditions.ReasonSyncCompleted,
-		Message:            fmt.Sprintf("Sync completed successfully at %s", result.FinishedAt.Format(time.RFC3339)),
+		Message:            fmt.Sprintf("Sync completed successfully at %s", finishedAt),
 	}
 	if result.Error != nil {
-		condition.Message = fmt.Sprintf("Sync failed with %v at %s", result.Error, result.FinishedAt.Format(time.RFC3339))
+		condition.Message = fmt.Sprintf("Sync failed with %s at %s", ErrorMessage(result.Error), finishedAt)
 		condition.Status = metav1.ConditionFalse
 		condition.Reason = conditions.ReasonSyncFailed
+		if RequiresUserAction(result.Error) {
+			condition.Reason = conditions.ReasonUserActionRequired
+		}
 	}
 	return condition
 }
 
 func (x *ReconciliationExecutor[T]) updateConditionsFromResults(results []reconciliationResult) {
 	allReady := true
+	allFailuresRequireUserAction := true
 	for _, result := range results {
 		if result.Error != nil {
 			allReady = false
+			if !RequiresUserAction(result.Error) {
+				allFailuresRequireUserAction = false
+			}
 		}
 		meta.SetStatusCondition(x.Reconciler.K8s().Resource.GetConditions(), conditionFromResult(result))
 	}
@@ -212,14 +220,20 @@ func (x *ReconciliationExecutor[T]) updateConditionsFromResults(results []reconc
 		Type:               string(conditions.TypeReady),
 		ObservedGeneration: x.Reconciler.K8s().Resource.GetGeneration(),
 	}
-	if allReady {
+	now := time.Now().Format(time.RFC3339)
+	switch {
+	case allReady:
 		readyCondition.Status = metav1.ConditionTrue
 		readyCondition.Reason = conditions.ReasonReconcileCompleted
-		readyCondition.Message = fmt.Sprintf("All components synced successfully at %s", time.Now().Format(time.RFC3339))
-	} else {
+		readyCondition.Message = fmt.Sprintf("All components synced successfully at %s", now)
+	case allFailuresRequireUserAction:
+		readyCondition.Status = metav1.ConditionFalse
+		readyCondition.Reason = conditions.ReasonUserActionRequired
+		readyCondition.Message = fmt.Sprintf("Some components require user action to sync (see their conditions) at %s", now)
+	default:
 		readyCondition.Status = metav1.ConditionFalse
 		readyCondition.Reason = conditions.ReasonReconcileFailed
-		readyCondition.Message = fmt.Sprintf("Some components failed to sync during reconciliation at %s", time.Now().Format(time.RFC3339))
+		readyCondition.Message = fmt.Sprintf("Some components failed to sync during reconciliation at %s", now)
 	}
 	meta.SetStatusCondition(x.Reconciler.K8s().Resource.GetConditions(), readyCondition)
 }

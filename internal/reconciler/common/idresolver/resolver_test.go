@@ -303,6 +303,13 @@ var _ = Describe("Resolver", func() {
 				Expect(err.Error()).To(ContainSubstring("nonexistent-team"))
 				Expect(err.Error()).To(ContainSubstring("not found"))
 			})
+
+			It("returns an UnresolvableReferenceError awaiting a change on GitHub", func() {
+				refErr, ok := errors.AsType[*UnresolvableReferenceError](err)
+				Expect(ok).To(BeTrue())
+				Expect(refErr.UserActionRequired()).To(BeTrue())
+				Expect(refErr.AwaitsGitHubChange()).To(BeTrue())
+			})
 		})
 
 		Context("when Team bypass actor has both ActorID and ActorSlug nil", func() {
@@ -315,6 +322,13 @@ var _ = Describe("Resolver", func() {
 			It("returns a validation error", func() {
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("bypass actor with type Team requires either actor_id or actor_slug to be set"))
+			})
+
+			It("returns an UnresolvableReferenceError fixable in the spec only", func() {
+				refErr, ok := errors.AsType[*UnresolvableReferenceError](err)
+				Expect(ok).To(BeTrue())
+				Expect(refErr.UserActionRequired()).To(BeTrue())
+				Expect(refErr.AwaitsGitHubChange()).To(BeFalse())
 			})
 		})
 

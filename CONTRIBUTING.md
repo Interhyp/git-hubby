@@ -251,6 +251,7 @@ The operator reads configuration from environment variables, CLI flags, and `.en
 | `ENABLE_STARTUP_SPREADING` | Enable startup spreading to prevent API rate limit exhaustion | `true` |
 | `STARTUP_SPREAD_PERIOD_MINUTES` | Grace period after startup during which reconciliations may be delayed | `5` |
 | `SPREAD_INTERVAL_MINUTES` | Time window across which warm-start reconciliations are distributed | `180` |
+| `GITHUB_STATE_REQUEUE_INTERVAL_MINUTES` | Requeue interval for resources waiting for a user action on GitHub (e.g. missing team, GitHub App or default branch, GitHub 422); capped at `SPREAD_INTERVAL_MINUTES` | `15` |
 
 ### `.env` File
 

@@ -199,6 +199,13 @@ Common patterns:
 - **Timeout Protection**: Each reconciliation task has a 5-minute timeout
 - **Error Handling**: All errors collected and reported; execution stops at first failed group
 
+### Status Conditions
+
+Each reconciliation task sets its own condition; `Ready` aggregates them. Failed tasks use one of two reasons:
+
+- `SyncFailed`: transient failure (e.g. network, GitHub 5xx), retried with exponential backoff
+- `UserActionRequired`: the spec or the state on GitHub has to be changed (e.g. conflicting definitions, missing team or default branch, GitHub 422), not retried with backoff. Requeued after `GITHUB_STATE_REQUEUE_INTERVAL_MINUTES` (default: 15) if the fix happens on GitHub, otherwise on the next spec/preset change or after the spread interval
+
 ### Rate Limit Handling
 
 - **Per-org passive tracking**: A `rateLimitTrackerTransport` HTTP middleware reads `X-RateLimit-*` response headers from every API call and updates a per-org, per-category registry — no extra API calls required

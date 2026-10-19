@@ -50,6 +50,12 @@ type Config struct {
 	SpreadPeriodMinutes   int `env:"STARTUP_SPREAD_PERIOD_MINUTES" envDefault:"5"`
 	SpreadIntervalMinutes int `env:"SPREAD_INTERVAL_MINUTES"       envDefault:"180"`
 
+	// GitHubStateRequeueIntervalMinutes is the requeue interval for resources whose reconciliation requires user
+	// action on GitHub (e.g. a referenced team or GitHub App does not exist, a default branch is missing, GitHub
+	// rejected the request with 422). No watch event signals such changes, so they are retried more often than
+	// the regular success requeue interval. Capped at SPREAD_INTERVAL_MINUTES.
+	GitHubStateRequeueIntervalMinutes int `env:"GITHUB_STATE_REQUEUE_INTERVAL_MINUTES" envDefault:"15"`
+
 	// Logging — consumed early in main.go before the structured logger is fully initialised.
 	LogLevel  string `env:"LOG_LEVEL"`
 	LogFormat string `env:"LOG_FORMAT"`

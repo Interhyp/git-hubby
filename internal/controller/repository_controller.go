@@ -28,6 +28,9 @@ type RepositoryCtl struct {
 	Scheme                 *runtime.Scheme
 	ReconcilerFactory      *reconcilerfactory.Factory
 	SuccessRequeueInterval time.Duration
+	// GitHubStateRequeueInterval is used instead of SuccessRequeueInterval for errors requiring user action on
+	// GitHub (see handleUserActionRequired).
+	GitHubStateRequeueInterval time.Duration
 	// RulesetPresetIndex maps RulesetPreset changes to the affected resources; see SetupRulesetPresetIndex.
 	RulesetPresetIndex *RulesetPresetIndex
 }
@@ -68,14 +71,8 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			log.Info("Repository is in read-only state, skipping reconciliation until next change")
 			return ctrl.Result{}, nil
 		}
-		if result, ok := handleUnresolvedRulesets(ctx, err, r.SuccessRequeueInterval); ok {
+		if result, ok := handleUserActionRequired(ctx, err, r.SuccessRequeueInterval, r.GitHubStateRequeueInterval); ok {
 			return result, nil
-		}
-		if reporec.AwaitsDefaultBranch(err) {
-			// GitHubSynced has already been set to False by the executor; its message names the missing branch.
-			// Retrying with backoff is pointless; wait for a spec change or the regular drift detection interval.
-			log.Info("Default branch does not exist, waiting for a spec change or the next drift detection", "reason", err.Error())
-			return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil
 		}
 		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
 			log.Error(err, "Reconciliation failed")

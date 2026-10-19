@@ -41,6 +41,11 @@ func (e *ConflictError) Error() string {
 	return fmt.Sprintf("conflicting ruleset definitions for ruleset %q in sources [%s]", e.Name, strings.Join(e.Sources, ", "))
 }
 
+// UserActionRequired marks the conflict as not retryable (see reconciler.RequiresUserAction).
+func (e *ConflictError) UserActionRequired() bool {
+	return true
+}
+
 // PresetSource returns the source description of a ruleset defined by a RulesetPreset.
 func PresetSource(name string) string {
 	return "rulesetPreset/" + name

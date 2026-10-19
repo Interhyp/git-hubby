@@ -97,6 +97,7 @@ Controllers implement continuous drift detection:
 - **Configuration**: Passed from spreading manager via `spreadingManager.GetSpreadInterval()` in [cmd/main.go](cmd/main.go)
 - **Implementation**: `return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil` after successful reconciliation in each controller
 - **Benefit**: Detects manual GitHub changes and sub-resource updates without relying solely on K8s watch events
+- **User action required**: errors that cannot be fixed by retrying (`reconciler.RequiresUserAction`) set condition reason `UserActionRequired` and are requeued without backoff via `handleUserActionRequired()`: after `SuccessRequeueInterval`, or after `GitHubStateRequeueInterval` (`GITHUB_STATE_REQUEUE_INTERVAL_MINUTES`, default 15) if the fix happens on GitHub (`reconciler.AwaitsGitHubChange`, errors implementing `AwaitsGitHubChange() bool`, GitHub 422)
 
 ## Recent Architectural Changes (Current Branch)
 **Major refactoring**: This branch includes significant architectural improvements:

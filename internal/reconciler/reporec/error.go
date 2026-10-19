@@ -35,24 +35,12 @@ func (e *DefaultBranchNotFoundError) Error() string {
 		e.Branch, e.RepositoryOwner, e.RepositoryName)
 }
 
-// AwaitsDefaultBranch reports whether err (including all wrapped and joined errors) consists only of
-// DefaultBranchNotFoundErrors.
-func AwaitsDefaultBranch(err error) bool {
-	if _, ok := err.(*DefaultBranchNotFoundError); ok { //nolint:errorlint // the error tree is walked explicitly
-		return true
-	}
-	switch e := err.(type) { //nolint:errorlint // the error tree is walked explicitly
-	case interface{ Unwrap() []error }:
-		errs := e.Unwrap()
-		for _, inner := range errs {
-			if !AwaitsDefaultBranch(inner) {
-				return false
-			}
-		}
-		return len(errs) > 0
-	case interface{ Unwrap() error }:
-		return AwaitsDefaultBranch(e.Unwrap())
-	default:
-		return false
-	}
+// UserActionRequired marks the missing default branch as not retryable (see reconciler.RequiresUserAction).
+func (e *DefaultBranchNotFoundError) UserActionRequired() bool {
+	return true
+}
+
+// AwaitsGitHubChange marks the error as fixable on GitHub by pushing the branch (see reconciler.AwaitsGitHubChange).
+func (e *DefaultBranchNotFoundError) AwaitsGitHubChange() bool {
+	return true
 }

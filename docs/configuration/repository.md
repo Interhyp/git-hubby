@@ -182,7 +182,7 @@ Inline webhooks support exactly the same fields as a `WebhookPreset` spec. Their
 - The operator reconciles the **union** of inline `webhooks` and the referenced `webhookPresets`. At most **10** inline webhooks are allowed.
 - A webhook is identified by its (templated) payload URL, content type and events. If several definitions (inline or from presets) share this identity:
     - **identical definitions** are applied once and a warning is written to the operator log;
-    - **different definitions** (e.g. a different `active`, `sslVerify` or secret) are a conflict: no webhooks are changed on GitHub, the `WebhooksSynced` condition is set to `False` (reason `SyncFailed`) with the conflict in its message, and `Ready` becomes `False`.
+    - **different definitions** (e.g. a different `active`, `sslVerify` or secret) are a conflict: no webhooks are changed on GitHub, the `WebhooksSynced` condition is set to `False` (reason `UserActionRequired`) with the conflict in its message, and `Ready` becomes `False`.
 - **Secrets of inline webhooks must live in the Repository's namespace.** `secret.namespace` may only be omitted or set to the Repository's namespace; other values are rejected by the validation webhook and by the reconciler. Prefer `secret` over the plaintext `secretValue`.
 - A rotated secret is picked up on the next reconciliation (at the latest with the periodic success requeue); referenced Secrets are not watched.
 
@@ -213,7 +213,7 @@ autolinks:
 - The operator reconciles the **union** of inline `autolinks` and the autolinks of the referenced `autolinksPresets`. At most **25** inline autolinks are allowed, and their `keyPrefix`es must be unique.
 - An autolink is identified by its `keyPrefix` (GitHub requires unique key prefixes per repository). If several definitions share a `keyPrefix`:
     - **identical definitions** are applied once and a warning is written to the operator log;
-    - **different definitions** are a conflict: no autolinks are changed on GitHub and the `AutolinksSynced` condition is set to `False` (reason `SyncFailed`). This also applies to conflicts between two `AutolinksPreset`s.
+    - **different definitions** are a conflict: no autolinks are changed on GitHub and the `AutolinksSynced` condition is set to `False` (reason `UserActionRequired`). This also applies to conflicts between two `AutolinksPreset`s.
 
 ### Rulesets
 
@@ -260,7 +260,7 @@ Inline rulesets support exactly the same fields as a `RulesetPreset` spec. Their
 - At most **10** inline rulesets are allowed, and their names must be unique. Larger or shared sets of rules belong in `RulesetPreset`s.
 - If an inline ruleset and a referenced preset (or two referenced presets) have the same name:
     - **identical definitions** are applied once and a warning is written to the operator log;
-    - **different definitions** are a conflict: no rulesets are changed on GitHub, the `RulesetsSynced` condition is set to `False` (reason `SyncFailed`) with the conflict in its message, and `Ready` becomes `False`.
+    - **different definitions** are a conflict: no rulesets are changed on GitHub, the `RulesetsSynced` condition is set to `False` (reason `UserActionRequired`) with the conflict in its message, and `Ready` becomes `False`.
 - Rulesets with `target: repository` (inline or from presets) are only supported at organization level. At repository level they are filtered out, i.e. neither checked nor applied.
 
 #### Extending rulesets

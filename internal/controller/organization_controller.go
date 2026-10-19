@@ -26,6 +26,9 @@ type OrganizationCtl struct {
 	Scheme                 *runtime.Scheme
 	ReconcilerFactory      *reconcilerfactory.Factory
 	SuccessRequeueInterval time.Duration
+	// GitHubStateRequeueInterval is used instead of SuccessRequeueInterval for errors requiring user action on
+	// GitHub (see handleUserActionRequired).
+	GitHubStateRequeueInterval time.Duration
 	// RulesetPresetIndex maps RulesetPreset changes to the affected resources; see SetupRulesetPresetIndex.
 	RulesetPresetIndex *RulesetPresetIndex
 	// LegacySecretName is the credential secret name used for Organizations that still
@@ -58,7 +61,7 @@ func (r *OrganizationCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		if errors.Is(err, orgrec.OrganizationStillHasReposError()) || errors.Is(err, orgrec.OrganizationStillHasTeamsError()) {
 			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 		}
-		if result, ok := handleUnresolvedRulesets(ctx, err, r.SuccessRequeueInterval); ok {
+		if result, ok := handleUserActionRequired(ctx, err, r.SuccessRequeueInterval, r.GitHubStateRequeueInterval); ok {
 			return result, nil
 		}
 		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation

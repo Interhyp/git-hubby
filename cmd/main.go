@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Interhyp/git-hubby/internal/logging"
 	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
@@ -381,28 +382,32 @@ func main() {
 		setupLog.Error(err, "Failed to set up RulesetPreset index")
 		os.Exit(1)
 	}
+	gitHubStateRequeueInterval := time.Duration(cfg.GitHubStateRequeueIntervalMinutes) * time.Minute
 	if err := (&controller.OrganizationCtl{
-		Scheme:                 mgr.GetScheme(),
-		ReconcilerFactory:      reconcilerFactory,
-		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
-		RulesetPresetIndex:     rulesetPresetIndex,
+		Scheme:                     mgr.GetScheme(),
+		ReconcilerFactory:          reconcilerFactory,
+		SuccessRequeueInterval:     spreadingManager.GetSpreadInterval(),
+		GitHubStateRequeueInterval: gitHubStateRequeueInterval,
+		RulesetPresetIndex:         rulesetPresetIndex,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
 		os.Exit(1)
 	}
 	if err := (&controller.RepositoryCtl{
-		Scheme:                 mgr.GetScheme(),
-		ReconcilerFactory:      reconcilerFactory,
-		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
-		RulesetPresetIndex:     rulesetPresetIndex,
+		Scheme:                     mgr.GetScheme(),
+		ReconcilerFactory:          reconcilerFactory,
+		SuccessRequeueInterval:     spreadingManager.GetSpreadInterval(),
+		GitHubStateRequeueInterval: gitHubStateRequeueInterval,
+		RulesetPresetIndex:         rulesetPresetIndex,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Repository")
 		os.Exit(1)
 	}
 	if err := (&controller.TeamCtl{
-		Scheme:                 mgr.GetScheme(),
-		ReconcilerFactory:      reconcilerFactory,
-		SuccessRequeueInterval: spreadingManager.GetSpreadInterval(),
+		Scheme:                     mgr.GetScheme(),
+		ReconcilerFactory:          reconcilerFactory,
+		SuccessRequeueInterval:     spreadingManager.GetSpreadInterval(),
+		GitHubStateRequeueInterval: gitHubStateRequeueInterval,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Team")
 		os.Exit(1)

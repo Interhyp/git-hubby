@@ -7,7 +7,6 @@ import (
 
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
-	"github.com/Interhyp/git-hubby/internal/reconciler/common/rulesets"
 	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -49,16 +48,26 @@ func handleRequeueError(ctx context.Context, err error) (controllerruntime.Resul
 	return controllerruntime.Result{}, err // normal error requeue with exponential backoff
 }
 
-// handleUnresolvedRulesets returns the regular success result if err only consists of rulesets whose extends chain
-// cannot be resolved until a RulesetPreset changes (see rulesets.AwaitsPresetChange). The RulesetsSynced condition
-// has already been set to False by the executor; the RulesetPreset watch reconciles the resource once the chain is
-// fixed, so the error is not retried with backoff.
-func handleUnresolvedRulesets(ctx context.Context, err error, successRequeueInterval time.Duration) (controllerruntime.Result, bool) {
-	if !rulesets.AwaitsPresetChange(err) {
+// handleUserActionRequired returns a requeue result without error (no exponential backoff) if err only consists of
+// errors that require user action (see reconciler.RequiresUserAction), e.g. conflicting definitions, unresolvable
+// ruleset chains, missing references or a missing default branch. The affected conditions have already been set to
+// False with reason UserActionRequired by the executor.
+//
+// The requeue interval depends on where the user has to act:
+//   - Kubernetes resources only (spec, presets): watches reconcile the resource once they change, so the regular
+//     successRequeueInterval is used.
+//   - GitHub (see reconciler.AwaitsGitHubChange, e.g. a missing team or GitHub App): no watch event signals the
+//     change, so the shorter gitHubStateRequeueInterval is used (capped at successRequeueInterval; ignored if <= 0).
+func handleUserActionRequired(ctx context.Context, err error, successRequeueInterval, gitHubStateRequeueInterval time.Duration) (controllerruntime.Result, bool) {
+	if !reconciler.RequiresUserAction(err) {
 		return controllerruntime.Result{}, false
 	}
-	logPkg.FromContext(ctx).Info("Rulesets could not be resolved, waiting for a RulesetPreset change", "reason", err.Error())
-	return controllerruntime.Result{RequeueAfter: successRequeueInterval}, true
+	requeueAfter := successRequeueInterval
+	if reconciler.AwaitsGitHubChange(err) && gitHubStateRequeueInterval > 0 {
+		requeueAfter = min(requeueAfter, gitHubStateRequeueInterval)
+	}
+	logPkg.FromContext(ctx).Info("Reconciliation requires user action, waiting for a change", "reason", err.Error(), "requeueAfter", requeueAfter)
+	return controllerruntime.Result{RequeueAfter: requeueAfter}, true
 }
 
 func resourceWasDeleted[T reconciler.ReconcilableResource](r reconciler.Reconciler[T]) bool {

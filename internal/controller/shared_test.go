@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/Interhyp/git-hubby/internal/ghclient"
+	"github.com/Interhyp/git-hubby/internal/reconciler/common/idresolver"
 	"github.com/Interhyp/git-hubby/internal/reconciler/common/rulesets"
+	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/spreading"
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
+	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -251,15 +255,36 @@ var _ = Describe("Shared Controller Functions", func() {
 		})
 	})
 
-	Describe("handleUnresolvedRulesets", func() {
-		It("returns the success requeue interval for rulesets waiting for a RulesetPreset change", func() {
+	Describe("handleUserActionRequired", func() {
+		It("returns the success requeue interval for errors fixable in Kubernetes resources only", func() {
 			err := fmt.Errorf("rulesets: %w", errors.Join(
 				&rulesets.UnresolvedError{Ruleset: "a", Reason: rulesets.ReasonParentNotFound},
-				&rulesets.UnresolvedError{Ruleset: "b", Reason: rulesets.ReasonExtendsCycle},
+				&rulesets.ConflictError{Name: "b"},
+				&idresolver.UnresolvableReferenceError{Message: "invalid bypass actor"},
 			))
-			result, ok := handleUnresolvedRulesets(ctx, err, 3*time.Hour)
+			result, ok := handleUserActionRequired(ctx, err, 3*time.Hour, 15*time.Minute)
 			Expect(ok).To(BeTrue())
 			Expect(result).To(Equal(controllerruntime.Result{RequeueAfter: 3 * time.Hour}))
+		})
+
+		DescribeTable("returns the GitHub state requeue interval if any error awaits a change on GitHub",
+			func(gitHubErr error) {
+				err := fmt.Errorf("sync: %w", errors.Join(&rulesets.ConflictError{Name: "b"}, gitHubErr))
+				result, ok := handleUserActionRequired(ctx, err, 3*time.Hour, 15*time.Minute)
+				Expect(ok).To(BeTrue())
+				Expect(result).To(Equal(controllerruntime.Result{RequeueAfter: 15 * time.Minute}))
+			},
+			Entry("missing default branch", &reporec.DefaultBranchNotFoundError{Branch: "develop"}),
+			Entry("missing team", &idresolver.UnresolvableReferenceError{Message: "team not found", NotFound: true}),
+			Entry("GitHub 422", &github.ErrorResponse{Response: &http.Response{StatusCode: http.StatusUnprocessableEntity}, Message: "Validation Failed"}),
+		)
+
+		It("caps the GitHub state requeue interval at the success requeue interval and ignores unset values", func() {
+			err := &reporec.DefaultBranchNotFoundError{Branch: "develop"}
+			result, _ := handleUserActionRequired(ctx, err, 10*time.Minute, 15*time.Minute)
+			Expect(result.RequeueAfter).To(Equal(10 * time.Minute))
+			result, _ = handleUserActionRequired(ctx, err, 3*time.Hour, 0)
+			Expect(result.RequeueAfter).To(Equal(3 * time.Hour))
 		})
 
 		It("does not handle other errors", func() {
@@ -268,8 +293,10 @@ var _ = Describe("Shared Controller Functions", func() {
 				errors.New("boom"),
 				&rulesets.UnresolvedError{Ruleset: "a", Reason: rulesets.ReasonParentUnavailable},
 				errors.Join(&rulesets.UnresolvedError{Ruleset: "a", Reason: rulesets.ReasonParentNotFound}, errors.New("boom")),
+				errors.Join(&reporec.DefaultBranchNotFoundError{Branch: "develop"}, errors.New("boom")),
+				&github.ErrorResponse{Response: &http.Response{StatusCode: http.StatusBadGateway}},
 			} {
-				_, ok := handleUnresolvedRulesets(ctx, err, time.Hour)
+				_, ok := handleUserActionRequired(ctx, err, time.Hour, 15*time.Minute)
 				Expect(ok).To(BeFalse(), "error: %v", err)
 			}
 		})

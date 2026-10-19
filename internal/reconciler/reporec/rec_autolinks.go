@@ -34,6 +34,11 @@ func (e *AutolinkConflictError) Error() string {
 	return fmt.Sprintf("conflicting autolink definitions for keyPrefix %q in sources [%s]", e.KeyPrefix, strings.Join(e.Sources, ", "))
 }
 
+// UserActionRequired marks the conflict as not retryable (see reconciler.RequiresUserAction).
+func (e *AutolinkConflictError) UserActionRequired() bool {
+	return true
+}
+
 // AutolinksPresetSource returns the source description of an autolink defined by an AutolinksPreset.
 func AutolinksPresetSource(name string, idx int) string {
 	return fmt.Sprintf("autolinksPreset/%s[%d]", name, idx)

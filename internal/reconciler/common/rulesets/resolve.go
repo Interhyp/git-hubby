@@ -51,29 +51,12 @@ func (e *UnresolvedError) Unwrap() error {
 	return e.Err
 }
 
-// AwaitsPresetChange reports whether err (including all wrapped and joined errors) consists only of
-// UnresolvedErrors that can only be fixed by changing a RulesetPreset or the resource itself (missing parent, cycle,
-// too deep, missing enforcement). Retrying such errors with backoff is pointless: the RulesetPreset watches reconcile
-// all affected resources once a preset in the chain is created or changed. Transient read errors
-// (ReasonParentUnavailable) and any other error return false.
-func AwaitsPresetChange(err error) bool {
-	if unresolved, ok := err.(*UnresolvedError); ok { //nolint:errorlint // the error tree is walked explicitly
-		return unresolved.Reason != ReasonParentUnavailable
-	}
-	switch e := err.(type) { //nolint:errorlint // the error tree is walked explicitly
-	case interface{ Unwrap() []error }:
-		errs := e.Unwrap()
-		for _, inner := range errs {
-			if !AwaitsPresetChange(inner) {
-				return false
-			}
-		}
-		return len(errs) > 0
-	case interface{ Unwrap() error }:
-		return AwaitsPresetChange(e.Unwrap())
-	default:
-		return false
-	}
+// UserActionRequired reports whether the extends chain can only be fixed by changing a RulesetPreset or the resource
+// itself (missing parent, cycle, too deep, missing enforcement). Retrying such errors with backoff is pointless: the
+// RulesetPreset watches reconcile all affected resources once a preset in the chain is created or changed.
+// Transient read errors (ReasonParentUnavailable) return false. See reconciler.RequiresUserAction.
+func (e *UnresolvedError) UserActionRequired() bool {
+	return e.Reason != ReasonParentUnavailable
 }
 
 // ChainResolver resolves the extends chains of rulesets. Fetched RulesetPresets are memoized, so a ChainResolver

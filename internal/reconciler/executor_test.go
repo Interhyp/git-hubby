@@ -1017,7 +1017,7 @@ var _ = Describe("rulesets.ConflictError in status conditions", func() {
 		})
 		Expect(condition.Type).To(Equal(string(conditions.TypeRulesetsSynced)))
 		Expect(condition.Status).To(Equal(metav1.ConditionFalse))
-		Expect(condition.Reason).To(Equal(conditions.ReasonSyncFailed))
+		Expect(condition.Reason).To(Equal(conditions.ReasonUserActionRequired))
 		Expect(condition.Message).To(ContainSubstring(`conflicting ruleset definitions for ruleset "shared"`))
 		Expect(condition.Message).To(ContainSubstring("rulesetPreset/preset-a"))
 		Expect(condition.Message).To(ContainSubstring("inline[0]"))

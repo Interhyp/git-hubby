@@ -22,6 +22,9 @@ type TeamCtl struct {
 	Scheme                 *runtime.Scheme
 	ReconcilerFactory      *reconcilerfactory.Factory
 	SuccessRequeueInterval time.Duration
+	// GitHubStateRequeueInterval is used instead of SuccessRequeueInterval for errors requiring user action on
+	// GitHub (see handleUserActionRequired).
+	GitHubStateRequeueInterval time.Duration
 }
 
 // +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=teams,verbs=get;list;watch;create;update;patch;delete
@@ -51,6 +54,9 @@ func (r *TeamCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result,
 	}
 
 	if err = rec.Reconcile(ctx); err != nil {
+		if result, ok := handleUserActionRequired(ctx, err, r.SuccessRequeueInterval, r.GitHubStateRequeueInterval); ok {
+			return result, nil
+		}
 		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
 			log.Error(err, "Reconciliation failed")
 		}
