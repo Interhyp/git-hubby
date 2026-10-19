@@ -9,7 +9,7 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/Interhyp/git-hubby/internal/utils"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -54,7 +54,7 @@ func (o *GitHubOrgReconciler) disableActionsForGHOrg(ctx context.Context) error 
 		return err
 	}
 	if current.GetEnabledRepositories() != enabledReposNone {
-		_, err = o.GitHub.Client.SetActionsPermissionsForOrg(ctx, o.GitHub.Resource, github.ActionsPermissions{EnabledRepositories: new(enabledReposNone)})
+		_, err = o.GitHub.Client.SetActionsPermissionsForOrg(ctx, o.GitHub.Resource, github.ActionsPermissions{EnabledRepositories: enabledReposNone})
 		return err
 	}
 	return nil
@@ -151,7 +151,7 @@ func (o *GitHubOrgReconciler) reconcilePermissions(ctx context.Context) error {
 	}
 
 	expected := github.ActionsPermissions{
-		EnabledRepositories: o.Kubernetes.Resource.Spec.ActionsSettings.EnabledRepositories, // is not nil because we would have returned earlier as part of disabled check
+		EnabledRepositories: utils.WithDefault(o.Kubernetes.Resource.Spec.ActionsSettings.EnabledRepositories, enabledReposNone), // is not nil because we would have returned earlier as part of disabled check
 		AllowedActions:      utils.WithDefaultAsPtr(o.Kubernetes.Resource.Spec.ActionsSettings.AllowedActions, "selected"),
 		SHAPinningRequired:  utils.WithDefaultAsPtr(o.Kubernetes.Resource.Spec.ActionsSettings.ShaPinningRequired, false),
 	}
@@ -270,7 +270,7 @@ func (o *GitHubOrgReconciler) reconcileSelfHostedRunnerSettings(ctx context.Cont
 
 	if current.GetEnabledRepositories() != enabledReposNone {
 		err = o.GitHub.Client.SetSelfHostedRunnersSettingsForOrg(ctx, o.GitHub.Resource, github.SelfHostedRunnersSettingsOrganizationOpt{
-			EnabledRepositories: new(enabledReposNone),
+			EnabledRepositories: enabledReposNone,
 		})
 		if err != nil {
 			return err

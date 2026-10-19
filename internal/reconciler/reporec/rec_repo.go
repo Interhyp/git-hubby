@@ -9,7 +9,7 @@ import (
 	orgac "github.com/Interhyp/git-hubby/api/v1alpha1/applyconfiguration/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/mapper"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -73,7 +73,7 @@ func (r *GitHubRepoReconciler) getRepo(ctx context.Context) (*github.Repository,
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
 			log.V(1).Info("Repository does not exist, creating it")
-			newRepo := mapper.RepoToGithubRepo(r.Kubernetes.Resource)
+			newRepo := mapper.RepoToGithubCreateRepositoryRequest(r.Kubernetes.Resource)
 			newRepo.AutoInit = new(true)
 			ghRepo, err = r.GitHub.Client.CreateRepository(ctx, r.GitHub.Resource.Owner, newRepo)
 			if err != nil {

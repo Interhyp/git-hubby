@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 )
 
 // Repository operations
@@ -39,23 +39,45 @@ func (m *MockGitHubClientWrapper) GetRepositoryByID(ctx context.Context, id int6
 	return nil, nil
 }
 
-func (m *MockGitHubClientWrapper) CreateRepository(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error) {
-	m.recordRepoCall(RepoCall{Method: "CreateRepository", Owner: org, Repo: repo.GetName()})
+func (m *MockGitHubClientWrapper) CreateRepository(ctx context.Context, org string, repo github.CreateRepositoryRequest) (*github.Repository, error) {
+	m.recordRepoCall(RepoCall{Method: "CreateRepository", Owner: org, Repo: repo.Name})
 
 	if m.CreateRepositoryFunc != nil {
 		return m.CreateRepositoryFunc(ctx, org, repo)
 	}
 
 	// Default implementation - return the created repository
-	createdRepo := *repo
-	createdRepo.ID = new(int64(12345))
-	createdRepo.FullName = new(fmt.Sprintf("%s/%s", org, repo.GetName()))
-	createdRepo.Owner = &github.User{Login: new(org)}
-	if createdRepo.Archived == nil {
-		createdRepo.Archived = new(false)
-	}
+	return RepositoryFromCreateRequest(org, repo), nil
+}
 
-	return &createdRepo, nil
+// RepositoryFromCreateRequest simulates the repository GitHub returns for a CreateRepositoryRequest.
+// Fields not part of the request (e.g. HasDownloads, DefaultBranch) are left nil, Archived is false.
+func RepositoryFromCreateRequest(org string, repo github.CreateRepositoryRequest) *github.Repository {
+	return &github.Repository{
+		ID:                  new(int64(12345)),
+		Name:                new(repo.Name),
+		FullName:            new(fmt.Sprintf("%s/%s", org, repo.Name)),
+		Owner:               &github.User{Login: new(org)},
+		Description:         repo.Description,
+		Homepage:            repo.Homepage,
+		Private:             repo.Private,
+		Visibility:          repo.Visibility,
+		HasIssues:           repo.HasIssues,
+		HasProjects:         repo.HasProjects,
+		HasWiki:             repo.HasWiki,
+		HasDiscussions:      repo.HasDiscussions,
+		IsTemplate:          repo.IsTemplate,
+		AllowSquashMerge:    repo.AllowSquashMerge,
+		AllowMergeCommit:    repo.AllowMergeCommit,
+		AllowRebaseMerge:    repo.AllowRebaseMerge,
+		AllowUpdateBranch:   repo.AllowUpdateBranch,
+		AllowAutoMerge:      repo.AllowAutoMerge,
+		AllowForking:        repo.AllowForking,
+		DeleteBranchOnMerge: repo.DeleteBranchOnMerge,
+		MergeCommitTitle:    repo.MergeCommitTitle,
+		MergeCommitMessage:  repo.MergeCommitMessage,
+		Archived:            new(false),
+	}
 }
 
 func (m *MockGitHubClientWrapper) EditRepository(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error) {

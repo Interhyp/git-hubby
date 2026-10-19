@@ -9,7 +9,7 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +29,7 @@ var _ = Describe("ReconcileRepository", func() {
 		err              error
 		currentGHRepo    *github.Repository
 		editedRepo       *github.Repository
-		createdRepo      *github.Repository
+		createdRepo      *github.CreateRepositoryRequest
 		editRepoCalled   bool
 		createRepoCalled bool
 	)
@@ -110,13 +110,15 @@ var _ = Describe("ReconcileRepository", func() {
 			return &result, nil
 		}
 
-		mockClient.CreateRepositoryFunc = func(ctx context.Context, org string, repository *github.Repository) (*github.Repository, error) {
+		mockClient.CreateRepositoryFunc = func(ctx context.Context, org string, request github.CreateRepositoryRequest) (*github.Repository, error) {
 			createRepoCalled = true
-			createdRepo = repository
-			// Return the created repo with an ID
-			result := *repository
-			result.ID = new(int64(12345))
-			return &result, nil
+			createdRepo = &request
+			// Return the created repo with an ID; fields that are not part of the create request
+			// are simulated to already match the spec
+			result := ghclientmock.RepositoryFromCreateRequest(org, request)
+			result.HasDownloads = repo.Spec.HasDownloads
+			result.DefaultBranch = new(repo.Spec.DefaultBranch)
+			return result, nil
 		}
 	})
 
@@ -250,9 +252,8 @@ var _ = Describe("ReconcileRepository", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(createRepoCalled).To(BeTrue())
 			Expect(createdRepo).NotTo(BeNil())
-			Expect(createdRepo.GetName()).To(Equal("test-repo"))
+			Expect(createdRepo.Name).To(Equal("test-repo"))
 			Expect(createdRepo.GetVisibility()).To(Equal("internal"))
-			Expect(createdRepo.GetArchived()).To(BeFalse())
 		})
 
 		It("should not call edit repository", func() {
@@ -374,7 +375,7 @@ var _ = Describe("ReconcileRepository", func() {
 					},
 				}
 			}
-			mockClient.CreateRepositoryFunc = func(ctx context.Context, org string, repository *github.Repository) (*github.Repository, error) {
+			mockClient.CreateRepositoryFunc = func(ctx context.Context, org string, repository github.CreateRepositoryRequest) (*github.Repository, error) {
 				return nil, errors.New("failed to create repository")
 			}
 		})
@@ -663,10 +664,8 @@ var _ = Describe("ReconcileRepository", func() {
 			Expect(createdRepo.HasIssues).To(BeNil())
 			Expect(createdRepo.HasProjects).To(BeNil())
 			Expect(createdRepo.HasWiki).To(BeNil())
-			Expect(createdRepo.HasDownloads).To(BeNil())
 			Expect(createdRepo.IsTemplate).To(BeNil())
 			Expect(createdRepo.DeleteBranchOnMerge).To(BeNil())
-			Expect(createdRepo.Archived).To(BeNil())
 		})
 	})
 
@@ -841,11 +840,11 @@ var _ = Describe("getRepo", func() {
 					},
 				}
 			}
-			mockClient.CreateRepositoryFunc = func(ctx context.Context, org string, repository *github.Repository) (*github.Repository, error) {
+			mockClient.CreateRepositoryFunc = func(ctx context.Context, org string, repository github.CreateRepositoryRequest) (*github.Repository, error) {
 				return &github.Repository{
-					Name:       repository.Name,
+					Name:       new(repository.Name),
 					Visibility: repository.Visibility,
-					Archived:   repository.Archived,
+					Archived:   new(false),
 					ID:         new(int64(67890)),
 				}, nil
 			}
@@ -895,7 +894,7 @@ var _ = Describe("getRepo", func() {
 					},
 				}
 			}
-			mockClient.CreateRepositoryFunc = func(ctx context.Context, org string, repository *github.Repository) (*github.Repository, error) {
+			mockClient.CreateRepositoryFunc = func(ctx context.Context, org string, repository github.CreateRepositoryRequest) (*github.Repository, error) {
 				return nil, errors.New("creation failed")
 			}
 

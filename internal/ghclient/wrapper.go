@@ -8,7 +8,7 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/gofri/go-github-pagination/githubpagination"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 )
 
 // GitHubClientWrapper is the production implementation of GitHubClient using the real GitHub API.
@@ -69,7 +69,7 @@ func (g *GitHubClientWrapper) GetRepositoryByID(ctx context.Context, id int64) (
 	return result, _handleErrorResponse(response, err)
 }
 
-func (g *GitHubClientWrapper) CreateRepository(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error) {
+func (g *GitHubClientWrapper) CreateRepository(ctx context.Context, org string, repo github.CreateRepositoryRequest) (*github.Repository, error) {
 	result, response, err := g.client.Repositories.Create(ctx, org, repo)
 	defer _closeBody(response)
 	return result, _handleErrorResponse(response, err)
@@ -396,7 +396,7 @@ func (g *GitHubClientWrapper) GetAllTeamMembers(ctx context.Context, org string,
 }
 
 func (g *GitHubClientWrapper) AddTeamMember(ctx context.Context, org string, slug string, username string) error {
-	_, response, err := g.client.Teams.AddTeamMembershipBySlug(ctx, org, slug, username, nil)
+	_, response, err := g.client.Teams.AddTeamMembershipBySlug(ctx, org, slug, username, github.AddTeamMembershipRequest{})
 	defer _closeBody(response)
 	return _handleErrorResponse(response, err)
 }
@@ -501,7 +501,7 @@ func (g *GitHubClientWrapper) GetActionsRetentionForOrg(ctx context.Context, org
 	return result, _handleErrorResponse(response, err)
 }
 func (g *GitHubClientWrapper) SetActionsRetentionForOrg(ctx context.Context, org string, retentionInDays int) error {
-	response, err := g.client.Actions.UpdateArtifactAndLogRetentionPeriodInOrganization(ctx, org, github.ArtifactPeriodOpt{Days: new(retentionInDays)})
+	response, err := g.client.Actions.UpdateArtifactAndLogRetentionPeriodInOrganization(ctx, org, github.ArtifactPeriodOpt{Days: retentionInDays})
 	defer _closeBody(response)
 	return _handleErrorResponse(response, err)
 }

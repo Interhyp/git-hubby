@@ -3,7 +3,7 @@ package mapper
 import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/utils"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 )
 
 func RepoToGithubRepo(repo *v1alpha1.Repository) *github.Repository {
@@ -26,6 +26,26 @@ func RepoToGithubRepo(repo *v1alpha1.Repository) *github.Repository {
 		Homepage:            utils.WithDefaultAsPtr(new(repo.Spec.About.Website), ""),
 		Description:         utils.WithDefaultAsPtr(new(repo.Spec.About.Description), ""),
 		DefaultBranch:       new(repo.Spec.DefaultBranch),
+	}
+}
+
+func RepoToGithubCreateRepositoryRequest(repo *v1alpha1.Repository) github.CreateRepositoryRequest {
+	return github.CreateRepositoryRequest{
+		Name: repo.Spec.Name,
+		// don't set "private: true" to avoid errors or mismatched configurations
+		Visibility:          &repo.Spec.Visibility,
+		HasIssues:           repo.Spec.HasIssues,
+		HasProjects:         repo.Spec.HasProjects,
+		HasWiki:             repo.Spec.HasWiki,
+		IsTemplate:          repo.Spec.IsTemplate,
+		AllowSquashMerge:    getMergeStrategy(repo, "squash"),
+		AllowRebaseMerge:    getMergeStrategy(repo, "rebase"),
+		AllowMergeCommit:    getMergeStrategy(repo, "merge"),
+		DeleteBranchOnMerge: repo.Spec.DeleteBranchOnMerge,
+		MergeCommitTitle:    &repo.Spec.MergeCommitTitle,
+		MergeCommitMessage:  &repo.Spec.MergeCommitMessage,
+		Homepage:            utils.WithDefaultAsPtr(new(repo.Spec.About.Website), ""),
+		Description:         utils.WithDefaultAsPtr(new(repo.Spec.About.Description), ""),
 	}
 }
 

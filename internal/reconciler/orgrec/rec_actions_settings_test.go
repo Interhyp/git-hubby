@@ -7,7 +7,7 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -123,7 +123,7 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: new("none"),
+					EnabledRepositories: "none",
 					AllowedActions:      new("selected"),
 					SHAPinningRequired:  new(false),
 				}, nil
@@ -221,7 +221,7 @@ var _ = Describe("ReconcilePermissions", func() {
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 					AllowedActions:      new("all"),
 					SHAPinningRequired:  new(true),
 				}, nil
@@ -251,7 +251,7 @@ var _ = Describe("ReconcilePermissions", func() {
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 					AllowedActions:      new("all"),
 					SHAPinningRequired:  new(false),
 				}, nil
@@ -266,7 +266,7 @@ var _ = Describe("ReconcilePermissions", func() {
 		It("should update permissions", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(setPermissionsCalled).To(BeTrue())
-			Expect(capturedPermissions.EnabledRepositories).To(Equal(new("selected")))
+			Expect(capturedPermissions.EnabledRepositories).To(Equal("selected"))
 			Expect(capturedPermissions.AllowedActions).To(Equal(new("local_only")))
 			Expect(capturedPermissions.SHAPinningRequired).To(Equal(new(true)))
 		})
@@ -283,7 +283,7 @@ var _ = Describe("ReconcilePermissions", func() {
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 					AllowedActions:      new("all"),
 					SHAPinningRequired:  new(true),
 				}, nil
@@ -296,7 +296,7 @@ var _ = Describe("ReconcilePermissions", func() {
 
 		It("should use default values (<what was input>, selected, false)", func() {
 			Expect(err).NotTo(HaveOccurred())
-			Expect(capturedPermissions.EnabledRepositories).To(Equal(new("selected")))
+			Expect(capturedPermissions.EnabledRepositories).To(Equal("selected"))
 			Expect(capturedPermissions.AllowedActions).To(Equal(new("selected")))
 			Expect(capturedPermissions.SHAPinningRequired).To(Equal(new(false)))
 		})
@@ -321,7 +321,7 @@ var _ = Describe("ReconcilePermissions", func() {
 
 			mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 				return &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 				}, nil
 			}
 			mockClient.SetActionsPermissionsForOrgFunc = func(ctx context.Context, org string, permissions github.ActionsPermissions) (*github.ActionsPermissions, error) {
@@ -1042,7 +1042,7 @@ var _ = Describe("ReconcileSelfHostedRunnerSettings", func() {
 		It("should update settings to none", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(setSettingsCalled).To(BeTrue())
-			Expect(capturedSettings.EnabledRepositories).To(Equal(new("none")))
+			Expect(capturedSettings.EnabledRepositories).To(Equal("none"))
 		})
 	})
 
@@ -1724,7 +1724,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			}
 			return &github.RunnerGroup{
 				ID:                    new(int64(999)),
-				Name:                  createRequest.Name,
+				Name:                  new(createRequest.Name),
 				Visibility:            createRequest.Visibility,
 				RestrictedToWorkflows: createRequest.RestrictedToWorkflows,
 				SelectedWorkflows:     createRequest.SelectedWorkflows,
@@ -1741,7 +1741,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			}
 			return &github.RunnerGroup{
 				ID:                    new(groupID),
-				Name:                  updateRequest.Name,
+				Name:                  new(updateRequest.Name),
 				Visibility:            updateRequest.Visibility,
 				RestrictedToWorkflows: updateRequest.RestrictedToWorkflows,
 				SelectedWorkflows:     updateRequest.SelectedWorkflows,
@@ -1835,7 +1835,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should create the runner group", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("test-group")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal("test-group"))
 			Expect(createRunnerGroupCalls[0].Visibility).To(Equal(new("all")))
 			Expect(deleteRunnerGroupCalls).To(BeEmpty())
 		})
@@ -1914,7 +1914,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			Expect(createRunnerGroupCalls).To(BeEmpty())
 			Expect(updateRunnerGroupCalls).To(HaveLen(1))
 			Expect(updateRunnerGroupCalls[0].GroupID).To(Equal(int64(111)))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.Name).To(Equal(new("test-group")))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.Name).To(Equal("test-group"))
 			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(new("selected")))
 			Expect(updateRunnerGroupCalls[0].UpdateRequest.RestrictedToWorkflows).To(Equal(new(true)))
 			// Repository IDs are equal (both empty: current via mock default, desired has no repos), so no SetSelectedRepositories call
@@ -1964,7 +1964,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			Expect(deleteRunnerGroupCalls[0]).To(Equal(int64(222)))
 			Expect(createRunnerGroupCalls).To(HaveLen(2))
 
-			names := []string{*createRunnerGroupCalls[0].Name, *createRunnerGroupCalls[1].Name}
+			names := []string{createRunnerGroupCalls[0].Name, createRunnerGroupCalls[1].Name}
 			Expect(names).To(ConsistOf("group1", "group2"))
 		})
 	})
@@ -2042,7 +2042,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			Expect(deleteRunnerGroupCalls).To(HaveLen(1))
 			Expect(deleteRunnerGroupCalls[0]).To(Equal(int64(111)))
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("new-name")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal("new-name"))
 		})
 	})
 
@@ -2065,7 +2065,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should create runner group with workflow restrictions", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("restricted-group")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal("restricted-group"))
 			Expect(createRunnerGroupCalls[0].RestrictedToWorkflows).To(Equal(new(true)))
 			Expect(createRunnerGroupCalls[0].SelectedWorkflows).To(ConsistOf(
 				"org/repo/.github/workflows/deploy.yaml@refs/heads/main",
@@ -2118,7 +2118,7 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		It("should create runner group with selected repositories", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("selected-group")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal("selected-group"))
 			Expect(createRunnerGroupCalls[0].Visibility).To(Equal(new("selected")))
 			Expect(createRunnerGroupCalls[0].SelectedRepositoryIDs).To(ConsistOf(int64(100), int64(200)))
 		})
@@ -2214,11 +2214,11 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 			// Should update: group-update
 			Expect(updateRunnerGroupCalls).To(HaveLen(1))
 			Expect(updateRunnerGroupCalls[0].GroupID).To(Equal(int64(222)))
-			Expect(updateRunnerGroupCalls[0].UpdateRequest.Name).To(Equal(new("group-update")))
+			Expect(updateRunnerGroupCalls[0].UpdateRequest.Name).To(Equal("group-update"))
 			Expect(updateRunnerGroupCalls[0].UpdateRequest.Visibility).To(Equal(new("selected")))
 			// Should create: group-new
 			Expect(createRunnerGroupCalls).To(HaveLen(1))
-			Expect(createRunnerGroupCalls[0].Name).To(Equal(new("group-new")))
+			Expect(createRunnerGroupCalls[0].Name).To(Equal("group-new"))
 			// Repository IDs are equal (both empty) for group-update, so no SetSelectedRepositories call
 			// group-keep has visibility='all' so it also skips repository operations
 			Expect(setSelectedRepositoriesCalls).To(BeEmpty())
@@ -2764,7 +2764,7 @@ var _ = Describe("ReconcilePermissions with selected repositories", func() {
 
 		mockClient.GetActionsPermissionsForOrgFunc = func(ctx context.Context, org string) (*github.ActionsPermissions, error) {
 			return &github.ActionsPermissions{
-				EnabledRepositories: new("selected"),
+				EnabledRepositories: "selected",
 				AllowedActions:      new("selected"),
 				SHAPinningRequired:  new(false),
 			}, nil

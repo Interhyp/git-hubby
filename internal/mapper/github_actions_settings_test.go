@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +21,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when only configuration is nil", func() {
 			It("should return false", func() {
 				current := &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 				}
 				result := EqualActionsPermissions(nil, current)
 				Expect(result).To(BeFalse())
@@ -31,7 +31,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when only current is nil", func() {
 			It("should return false", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 				}
 				result := EqualActionsPermissions(configuration, nil)
 				Expect(result).To(BeFalse())
@@ -41,12 +41,12 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when both are equal", func() {
 			It("should return true for identical permissions", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 					AllowedActions:      new("all"),
 					SHAPinningRequired:  new(true),
 				}
 				current := &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 					AllowedActions:      new("all"),
 					SHAPinningRequired:  new(true),
 				}
@@ -113,10 +113,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when EnabledRepositories differs", func() {
 			It("should return false", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 				}
 				current := &github.ActionsPermissions{
-					EnabledRepositories: new("selected"),
+					EnabledRepositories: "selected",
 				}
 				result := EqualActionsPermissions(configuration, current)
 				Expect(result).To(BeFalse())
@@ -124,10 +124,10 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 			It("should return false when one is nil", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 				}
 				current := &github.ActionsPermissions{
-					EnabledRepositories: nil,
+					EnabledRepositories: "",
 				}
 				result := EqualActionsPermissions(configuration, current)
 				Expect(result).To(BeFalse())
@@ -137,12 +137,12 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 		Context("when multiple fields differ", func() {
 			It("should return false", func() {
 				configuration := &github.ActionsPermissions{
-					EnabledRepositories: new("all"),
+					EnabledRepositories: "all",
 					AllowedActions:      new("all"),
 					SHAPinningRequired:  new(true),
 				}
 				current := &github.ActionsPermissions{
-					EnabledRepositories: new("selected"),
+					EnabledRepositories: "selected",
 					AllowedActions:      new("selected"),
 					SHAPinningRequired:  new(false),
 				}
@@ -728,7 +728,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.Visibility).To(Equal(new("all")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(BeNil())
@@ -770,7 +770,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.Visibility).To(Equal(new("private")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(BeNil())
@@ -808,7 +808,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.Visibility).To(Equal(new("selected")))
 				Expect(result.SelectedRepositoryIDs).To(HaveLen(2))
 				Expect(result.SelectedRepositoryIDs).To(ContainElements(int64(123), int64(456)))
@@ -936,7 +936,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@refs/heads/main"}))
 			})
@@ -1049,7 +1049,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(new("production-runners")))
+				Expect(result.Name).To(Equal("production-runners"))
 				Expect(result.Visibility).To(Equal(new("selected")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{
@@ -1067,7 +1067,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToCreateRequest(group, repos)
 
-				Expect(result.Name).To(Equal(new("minimal-group")))
+				Expect(result.Name).To(Equal("minimal-group"))
 				Expect(result.Visibility).To(BeNil())
 				Expect(result.RestrictedToWorkflows).To(BeNil())
 				Expect(result.SelectedWorkflows).To(BeNil())
@@ -1313,7 +1313,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.Visibility).To(Equal(new("selected")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(HaveLen(2))
@@ -1333,7 +1333,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("all-runners")))
+				Expect(result.Name).To(Equal("all-runners"))
 				Expect(result.Visibility).To(Equal(new("all")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(BeNil())
@@ -1349,7 +1349,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("private-runners")))
+				Expect(result.Name).To(Equal("private-runners"))
 				Expect(result.Visibility).To(Equal(new("private")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@main"}))
@@ -1367,7 +1367,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.Visibility).To(BeNil())
 				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@main"}))
@@ -1383,7 +1383,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.Visibility).To(Equal(new("all")))
 				Expect(result.RestrictedToWorkflows).To(BeNil())
 				Expect(result.SelectedWorkflows).To(Equal([]string{"org/repo/.github/workflows/ci.yaml@main"}))
@@ -1399,7 +1399,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.Visibility).To(Equal(new("selected")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(false)))
 				Expect(result.SelectedWorkflows).To(BeNil())
@@ -1415,7 +1415,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("test-group")))
+				Expect(result.Name).To(Equal("test-group"))
 				Expect(result.Visibility).To(Equal(new("selected")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(BeEmpty())
@@ -1433,7 +1433,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("minimal-group")))
+				Expect(result.Name).To(Equal("minimal-group"))
 				Expect(result.Visibility).To(BeNil())
 				Expect(result.RestrictedToWorkflows).To(BeNil())
 				Expect(result.SelectedWorkflows).To(BeNil())
@@ -1455,7 +1455,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 
 				result := MapRunnerGroupToUpdateRequest(group)
 
-				Expect(result.Name).To(Equal(new("restricted-group")))
+				Expect(result.Name).To(Equal("restricted-group"))
 				Expect(result.Visibility).To(Equal(new("all")))
 				Expect(result.RestrictedToWorkflows).To(Equal(new(true)))
 				Expect(result.SelectedWorkflows).To(HaveLen(3))

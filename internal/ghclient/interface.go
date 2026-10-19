@@ -3,7 +3,7 @@ package ghclient
 import (
 	"context"
 
-	"github.com/google/go-github/v92/github"
+	"github.com/google/go-github/v93/github"
 )
 
 // GitHubClient defines the interface for GitHub operations used by reconcilers.
@@ -34,7 +34,7 @@ type GitHubClient interface {
 	GetOrgRepositories(ctx context.Context, org string) ([]*github.Repository, error)
 	GetRepository(ctx context.Context, owner, repo string) (*github.Repository, error)
 	GetRepositoryByID(ctx context.Context, id int64) (*github.Repository, error)
-	CreateRepository(ctx context.Context, org string, repo *github.Repository) (*github.Repository, error)
+	CreateRepository(ctx context.Context, org string, repo github.CreateRepositoryRequest) (*github.Repository, error)
 	EditRepository(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error)
 	DeleteRepository(ctx context.Context, owner, repo string) error
 	GetAllCustomPropertyValues(ctx context.Context, org string, repo string) ([]*github.CustomPropertyValue, error)
