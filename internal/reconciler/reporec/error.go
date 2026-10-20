@@ -32,3 +32,24 @@ func (e *DefaultBranchNotFoundError) UserActionRequired() bool {
 func (e *DefaultBranchNotFoundError) AwaitsGitHubChange() bool {
 	return true
 }
+
+// NewRepositoryUpdateError wraps an error of a repository update shortly after the repository was created. GitHub
+// initializes new repositories asynchronously (e.g. the default branch created by auto_init), and updates sent before
+// the initialization completed are rejected (422 Validation Failed). Such errors are expected: they are logged as info
+// and the repository controller requeues the resource shortly instead of waiting for user action.
+type NewRepositoryUpdateError struct {
+	Err error
+}
+
+func (e *NewRepositoryUpdateError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *NewRepositoryUpdateError) Unwrap() error {
+	return e.Err
+}
+
+// UserActionRequired marks the error as retryable (see reconciler.RequiresUserAction).
+func (e *NewRepositoryUpdateError) UserActionRequired() bool {
+	return false
+}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
+	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
 	"github.com/google/go-github/v93/github"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -72,6 +73,12 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			log.Info("Repository was archived during reconciliation, requeuing")
 			return ctrl.Result{RequeueAfter: archivedRepoRequeueDelay}, nil
 		}
+		if _, ok := errors.AsType[*reporec.NewRepositoryUpdateError](err); ok {
+			// Expected right after creation while GitHub initializes the repository (already logged by the
+			// reconciler). Requeue without returning the error to avoid error logs of controller-runtime.
+			log.Info("New repository is not ready yet, requeuing", "requeueAfter", newRepoRequeueDelay)
+			return ctrl.Result{RequeueAfter: newRepoRequeueDelay}, nil
+		}
 		if result, ok := handleUserActionRequired(ctx, err, r.SuccessRequeueInterval, r.GitHubStateRequeueInterval); ok {
 			return result, nil
 		}
@@ -90,6 +97,10 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 // archivedRepoRequeueDelay is the delay before a repository that was archived on GitHub during a reconciliation is
 // reconciled again.
 const archivedRepoRequeueDelay = 10 * time.Second
+
+// newRepoRequeueDelay is the delay before a repository is reconciled again after its update failed shortly after its
+// creation (see reporec.NewRepositoryUpdateError).
+const newRepoRequeueDelay = 10 * time.Second
 
 // isArchivedRepoError reports whether GitHub rejected a request because the repository is archived (read-only).
 func isArchivedRepoError(err error) bool {

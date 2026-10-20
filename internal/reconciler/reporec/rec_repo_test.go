@@ -405,6 +405,43 @@ var _ = Describe("ReconcileRepository", func() {
 		})
 	})
 
+	Context("when EditRepository fails with 422", func() {
+		BeforeEach(func() {
+			repo.Spec.Archived = new(true)
+			mockClient.EditRepositoryFunc = func(ctx context.Context, owner, name string, repository *github.Repository) (*github.Repository, error) {
+				return nil, &github.ErrorResponse{
+					Message:  "Validation Failed",
+					Response: &http.Response{StatusCode: http.StatusUnprocessableEntity},
+				}
+			}
+		})
+
+		Context("and the repository was created recently", func() {
+			BeforeEach(func() {
+				currentGHRepo.CreatedAt = &github.Timestamp{Time: time.Now().Add(-10 * time.Second)}
+			})
+
+			It("should return a retryable error", func() {
+				var newRepoErr *NewRepositoryUpdateError
+				Expect(errors.As(err, &newRepoErr)).To(BeTrue())
+				Expect(err.Error()).To(ContainSubstring("Validation Failed"))
+				Expect(reconciler.RequiresUserAction(err)).To(BeFalse())
+			})
+		})
+
+		Context("and the repository is older than the grace period", func() {
+			BeforeEach(func() {
+				currentGHRepo.CreatedAt = &github.Timestamp{Time: time.Now().Add(-newRepositoryGracePeriod - time.Minute)}
+			})
+
+			It("should require user action", func() {
+				var newRepoErr *NewRepositoryUpdateError
+				Expect(errors.As(err, &newRepoErr)).To(BeFalse())
+				Expect(reconciler.RequiresUserAction(err)).To(BeTrue())
+			})
+		})
+	})
+
 	Context("when GitHub returns repository with nil ID", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{

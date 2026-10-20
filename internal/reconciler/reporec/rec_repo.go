@@ -14,6 +14,10 @@ import (
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+// newRepositoryGracePeriod is the time after the creation of a repository during which failed updates are retried
+// shortly, see NewRepositoryUpdateError.
+const newRepositoryGracePeriod = time.Minute
+
 // applyRepository creates or applies a repository on GitHub.
 func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
@@ -41,8 +45,15 @@ func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 	if err = r.ensureDefaultBranchExists(ctx, ghRepo); err != nil {
 		return err
 	}
+	createdAt := ghRepo.GetCreatedAt().Time
 	ghRepo, err = r.updateRepo(ctx)
 	if err != nil {
+		if !createdAt.IsZero() && time.Since(createdAt) < newRepositoryGracePeriod {
+			// GitHub may still be initializing the repository: expected, retry instead of waiting for user action
+			log.Info("Failed to update new repository on GitHub, it may still be initializing; retrying", "reason", err.Error())
+			return &NewRepositoryUpdateError{Err: err}
+		}
+		log.Error(err, "failed to update repository on GitHub")
 		return err
 	}
 	if ghRepo.GetArchived() {
@@ -148,8 +159,7 @@ func (r *GitHubRepoReconciler) updateRepo(ctx context.Context) (*github.Reposito
 	log := logPkg.FromContext(ctx)
 	ghRepo, err := r.GitHub.Client.EditRepository(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, mapper.RepoToGithubRepo(r.Kubernetes.Resource))
 	if err != nil {
-		log.Error(err, "failed to update repository on GitHub")
-		return ghRepo, err
+		return ghRepo, err // logged by the caller
 	}
 	err = r.updateRecFieldsFromGitHub(ctx, ghRepo)
 	if err != nil {

@@ -66,7 +66,7 @@ Each reconciliation task sets its own condition (e.g. `GitHubSynced`, `RulesetsS
 
 - errors implementing `UserActionRequired() bool` returning `true`: ruleset/webhook/autolink conflicts, unresolvable ruleset `extends` chains (except transient read errors of a parent preset), invalid webhook secret references, a missing default branch, and unresolvable team/org role/GitHub App/bypass actor references (`idresolver.UnresolvableReferenceError`)
 - Kubernetes `NotFound` errors: missing referenced resources (presets, code security configurations, secrets, ...). Classified at the error itself, so fetch sites need no special handling and new references are covered automatically.
-- GitHub `422 Unprocessable Entity` responses. Their condition (and log) message uses GitHub's response message and validation errors instead of the raw error, e.g. `Validation Failed: default_branch: Cannot update default branch for an empty repository`.
+- GitHub `422 Unprocessable Entity` responses. Their condition (and log) message uses GitHub's response message and validation errors instead of the raw error, e.g. `Validation Failed: default_branch: Cannot update default branch for an empty repository`. Exception: failed repository updates within 1 minute after the repository was created are expected and requeued after 10 seconds with info logs only (`reporec.NewRepositoryUpdateError`), because GitHub initializes new repositories (e.g. the default branch of `auto_init`) asynchronously.
 
 `Ready` uses `UserActionRequired` if all failed tasks require user action, otherwise `ReconcileFailed`. Skipped tasks (see *Intended stop* above) use `Status=Unknown` with reason `Skipped`.
 
