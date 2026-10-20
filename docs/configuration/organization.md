@@ -207,7 +207,7 @@ rulesets:
 - At most **10** inline rulesets are allowed, and their names must be unique. Larger or shared sets of rules belong in `RulesetPreset`s.
 - If an inline ruleset and a referenced preset (or two referenced presets) have the same name:
     - **identical definitions** are applied once and a warning is written to the operator log;
-    - **different definitions** are a conflict: no rulesets are changed on GitHub, the `RulesetsSynced` condition is set to `False` (reason `SyncFailed`) with the conflict in its message, and `Ready` becomes `False`.
+    - **different definitions** are a conflict: no rulesets are changed on GitHub, the `RulesetsSynced` condition is set to `False` (reason `UserActionRequired`) with the conflict in its message, and `Ready` becomes `False`.
 - `target: repository` is supported for organization-level rulesets.
 - Like presets, inline rulesets require the `team` or `enterprise` plan.
 - Presets and inline rulesets can build on another `RulesetPreset` via `extends` and only state their differences, see [Extending rulesets](repository.md#extending-rulesets).

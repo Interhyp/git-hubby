@@ -3,7 +3,6 @@ package rulesets
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler/common/merge"
@@ -308,28 +307,20 @@ var _ = Describe("Extends resolution", func() {
 	})
 })
 
-var _ = Describe("AwaitsPresetChange", func() {
-	unresolved := func(reason UnresolvedReason) error {
-		return &UnresolvedError{Ruleset: "r", Reason: reason}
-	}
-
-	DescribeTable("classifies errors",
-		func(err error, expected bool) {
-			Expect(AwaitsPresetChange(err)).To(Equal(expected))
+var _ = Describe("UnresolvedError.UserActionRequired", func() {
+	DescribeTable("classifies reasons",
+		func(reason UnresolvedReason, expected bool) {
+			err := &UnresolvedError{Ruleset: "r", Reason: reason}
+			Expect(err.UserActionRequired()).To(Equal(expected))
 		},
-		Entry("nil", nil, false),
-		Entry("generic error", errors.New("boom"), false),
-		Entry("missing parent", unresolved(ReasonParentNotFound), true),
-		Entry("cycle", unresolved(ReasonExtendsCycle), true),
-		Entry("too deep", unresolved(ReasonExtendsTooDeep), true),
-		Entry("missing enforcement", unresolved(ReasonNoEnforcement), true),
-		Entry("transient read error", unresolved(ReasonParentUnavailable), false),
-		Entry("wrapped and joined unresolved errors",
-			fmt.Errorf("sync: %w", errors.Join(unresolved(ReasonParentNotFound), errors.Join(unresolved(ReasonExtendsCycle)))), true),
-		Entry("unresolved joined with a transient read error",
-			errors.Join(unresolved(ReasonParentNotFound), unresolved(ReasonParentUnavailable)), false),
-		Entry("unresolved joined with another error",
-			errors.Join(unresolved(ReasonParentNotFound), errors.New("webhook failed")), false),
-		Entry("empty join wrapper", fmt.Errorf("x: %w", errors.Join()), false),
+		Entry("missing parent", ReasonParentNotFound, true),
+		Entry("cycle", ReasonExtendsCycle, true),
+		Entry("too deep", ReasonExtendsTooDeep, true),
+		Entry("missing enforcement", ReasonNoEnforcement, true),
+		Entry("transient read error", ReasonParentUnavailable, false),
 	)
+
+	It("marks conflicts as requiring user action", func() {
+		Expect((&ConflictError{Name: "r"}).UserActionRequired()).To(BeTrue())
+	})
 })

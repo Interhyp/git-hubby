@@ -14,6 +14,10 @@ import (
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+// newRepositoryGracePeriod is the time after the creation of a repository during which failed updates are retried
+// shortly, see NewRepositoryUpdateError.
+const newRepositoryGracePeriod = time.Minute
+
 // applyRepository creates or applies a repository on GitHub.
 func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
@@ -29,11 +33,8 @@ func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 	log.V(1).Info("Existence of Repository confirmed on GitHub, checking for required updates")
 
 	if mapper.RepoStaysArchived(r.Kubernetes.Resource, *ghRepo) {
-		log.V(1).Info("Repository stays archived, preventing further reconciliations")
-		return &RepoArchivedError{
-			RepositoryName:  r.GitHub.Resource.Name,
-			RepositoryOwner: r.GitHub.Resource.Owner,
-		}
+		log.V(1).Info("Repository stays archived, skipping further reconciliations")
+		return &reconciler.StopReconciliation{Message: ArchivedMessage}
 	}
 	if !mapper.RepoDiffers(r.Kubernetes.Resource, *ghRepo) {
 		log.V(1).Info("Repository already matches desired state, skipping update")
@@ -41,16 +42,23 @@ func (r *GitHubRepoReconciler) reconcileRepository(ctx context.Context) error {
 	}
 
 	log.V(1).Info("Repository differs from desired state, updating it")
+	if err = r.ensureDefaultBranchExists(ctx, ghRepo); err != nil {
+		return err
+	}
+	createdAt := ghRepo.GetCreatedAt().Time
 	ghRepo, err = r.updateRepo(ctx)
 	if err != nil {
+		if !createdAt.IsZero() && time.Since(createdAt) < newRepositoryGracePeriod {
+			// GitHub may still be initializing the repository: expected, retry instead of waiting for user action
+			log.Info("Failed to update new repository on GitHub, it may still be initializing; retrying", "reason", err.Error())
+			return &NewRepositoryUpdateError{Err: err}
+		}
+		log.Error(err, "failed to update repository on GitHub")
 		return err
 	}
 	if ghRepo.GetArchived() {
-		log.V(1).Info("Repository was archived, preventing further reconciliations")
-		return &RepoArchivedError{
-			RepositoryName:  r.GitHub.Resource.Name,
-			RepositoryOwner: r.GitHub.Resource.Owner,
-		}
+		log.V(1).Info("Repository was archived, skipping further reconciliations")
+		return &reconciler.StopReconciliation{Message: ArchivedMessage}
 	}
 	log.V(1).Info("Repository settings reconciled successfully")
 	return nil
@@ -120,12 +128,38 @@ func (r *GitHubRepoReconciler) triggerOrganizationReconciliation(ctx context.Con
 	return r.Kubernetes.Client.Apply(ctx, applyConfig, client.ForceOwnership, reconciler.FieldOwner)
 }
 
+// ensureDefaultBranchExists verifies that spec.defaultBranch exists in the GitHub repository before the repository is
+// updated, because GitHub rejects the whole update otherwise. This is only checked if the default branch has to be
+// changed, e.g. right after creation when auto_init only created the organization's default branch.
+// Returns a DefaultBranchNotFoundError if the branch does not exist, which prevents the update and retry loops.
+func (r *GitHubRepoReconciler) ensureDefaultBranchExists(ctx context.Context, ghRepo *github.Repository) error {
+	desired := r.Kubernetes.Resource.Spec.DefaultBranch
+	if desired == "" || ghRepo.GetDefaultBranch() == desired {
+		return nil
+	}
+	log := logPkg.FromContext(ctx).WithValues("defaultBranch", desired)
+	_, err := r.GitHub.Client.GetBranch(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, desired)
+	if err == nil {
+		return nil
+	}
+	if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok && ghErr.Response != nil &&
+		(ghErr.Response.StatusCode == http.StatusNotFound || ghErr.Response.StatusCode == http.StatusMovedPermanently) {
+		log.Info("Desired default branch does not exist, skipping repository update")
+		return &DefaultBranchNotFoundError{
+			RepositoryOwner: r.GitHub.Resource.Owner,
+			RepositoryName:  r.GitHub.Resource.Name,
+			Branch:          desired,
+		}
+	}
+	log.Error(err, "failed to check existence of default branch")
+	return err
+}
+
 func (r *GitHubRepoReconciler) updateRepo(ctx context.Context) (*github.Repository, error) {
 	log := logPkg.FromContext(ctx)
 	ghRepo, err := r.GitHub.Client.EditRepository(ctx, r.GitHub.Resource.Owner, r.GitHub.Resource.Name, mapper.RepoToGithubRepo(r.Kubernetes.Resource))
 	if err != nil {
-		log.Error(err, "failed to update repository on GitHub")
-		return ghRepo, err
+		return ghRepo, err // logged by the caller
 	}
 	err = r.updateRecFieldsFromGitHub(ctx, ghRepo)
 	if err != nil {

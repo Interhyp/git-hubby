@@ -66,4 +66,12 @@ const (
 	ReasonSyncCompleted  = "SyncCompleted"
 	ReasonSyncFailed     = "SyncFailed"
 	ReasonSyncInProgress = "SyncInProgress"
+
+	// ReasonUserActionRequired is set instead of ReasonSyncFailed (and ReasonReconcileFailed for Ready) if the
+	// failure cannot be fixed by retrying, e.g. invalid or conflicting configuration, missing references or GitHub
+	// validation errors. A user has to change the spec or the state on GitHub.
+	ReasonUserActionRequired = "UserActionRequired"
+	// ReasonSkipped is set on conditions whose reconciliation was skipped because an earlier reconciliation
+	// stopped the run on purpose (e.g. the repository is archived).
+	ReasonSkipped = "Skipped"
 )

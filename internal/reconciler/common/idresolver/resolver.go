@@ -10,6 +10,40 @@ import (
 	"github.com/google/go-github/v93/github"
 )
 
+// UnresolvableReferenceError is returned when a slug/name reference cannot be resolved because the referenced team,
+// org role or GitHub App does not exist in (or is not installed on) the organization, or the reference itself is
+// incomplete. It can only be fixed by a user (create the team, install the app, change the spec).
+type UnresolvableReferenceError struct {
+	Message string
+	// NotFound is true if the referenced team, org role or GitHub App does not exist on GitHub (fixable on GitHub),
+	// false if the reference itself is invalid (fixable in the spec only).
+	NotFound bool
+}
+
+func (e *UnresolvableReferenceError) Error() string {
+	return e.Message
+}
+
+// UserActionRequired marks the reference as not retryable (see reconciler.RequiresUserAction).
+func (e *UnresolvableReferenceError) UserActionRequired() bool {
+	return true
+}
+
+// AwaitsGitHubChange reports whether the reference can be fixed on GitHub (see reconciler.AwaitsGitHubChange).
+func (e *UnresolvableReferenceError) AwaitsGitHubChange() bool {
+	return e.NotFound
+}
+
+// notFound returns an UnresolvableReferenceError for a reference to a non-existing GitHub resource.
+func notFound(format string, args ...any) error {
+	return &UnresolvableReferenceError{Message: fmt.Sprintf(format, args...), NotFound: true}
+}
+
+// unresolvable returns an UnresolvableReferenceError for an invalid reference.
+func unresolvable(format string, args ...any) error {
+	return &UnresolvableReferenceError{Message: fmt.Sprintf(format, args...)}
+}
+
 // Resolver resolves GitHub slug/name references to numeric IDs during reconciliation.
 //
 // Use New to create a production instance: it pre-loads all GitHub App
@@ -190,7 +224,7 @@ func (r *Resolver) doResolveCscBypassReviewers(csc *v1alpha1.CodeSecurityConfigu
 func (r *Resolver) ResolveTeamSlug(slug string) (int64, error) {
 	id, ok := r.teamsBySlug[slug]
 	if !ok {
-		return 0, fmt.Errorf("team with slug %q not found in org %s", slug, r.orgName)
+		return 0, notFound("team with slug %q not found in org %s", slug, r.orgName)
 	}
 	return id, nil
 }
@@ -199,7 +233,7 @@ func (r *Resolver) ResolveTeamSlug(slug string) (int64, error) {
 func (r *Resolver) ResolveRoleName(name string) (int64, error) {
 	id, ok := r.rolesByName[name]
 	if !ok {
-		return 0, fmt.Errorf("org role with name %q not found in org %s", name, r.orgName)
+		return 0, notFound("org role with name %q not found in org %s", name, r.orgName)
 	}
 	return id, nil
 }
@@ -209,7 +243,7 @@ func (r *Resolver) ResolveRoleName(name string) (int64, error) {
 func (r *Resolver) resolveAppSlug(slug string) (*int64, error) {
 	id, ok := r.appsBySlug[slug]
 	if !ok {
-		return nil, fmt.Errorf("no GitHub App with slug %s installed on org %s", slug, r.orgName)
+		return nil, notFound("no GitHub App with slug %s installed on org %s", slug, r.orgName)
 	}
 	return id, nil
 }
@@ -297,7 +331,7 @@ func (r *Resolver) resolveRequiredReviewerSlugs(rs v1alpha1.RulesetSpec) (v1alph
 				}
 				reviewer.Reviewer.ID = &id
 			default:
-				return rs, fmt.Errorf("unsupported required reviewer type %q for slug resolution", reviewer.Reviewer.Type)
+				return rs, unresolvable("unsupported required reviewer type %q for slug resolution", reviewer.Reviewer.Type)
 			}
 		}
 		updated[i] = reviewer
@@ -315,7 +349,7 @@ func resolveBypassActorWith(actor *v1alpha1.RulesetBypassActor, resolver func(sl
 		return actor, nil
 	}
 	if actor.ActorSlug == nil {
-		return nil, fmt.Errorf("bypass actor with type %s requires either actor_id or actor_slug to be set", actor.ActorType)
+		return nil, unresolvable("bypass actor with type %s requires either actor_id or actor_slug to be set", actor.ActorType)
 	}
 	id, err := resolver(*actor.ActorSlug)
 	if err != nil {

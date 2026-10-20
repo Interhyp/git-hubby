@@ -113,8 +113,8 @@ func NewOrgRateLimitRegistryFromConfig(cfg config.Config) *OrgRateLimitRegistry 
 
 	registryConfig := OrgRegistryConfig{
 		CategoryThresholds: thresholds,
-		ResetGracePeriod:   time.Duration(cfg.RateLimitConfig.ResetGracePeriod) * time.Second,
-		StalenessThreshold: time.Duration(cfg.RateLimitConfig.StalenessThresholdMinutes) * time.Minute,
+		ResetGracePeriod:   cfg.RateLimitConfig.ResetGracePeriod(),
+		StalenessThreshold: cfg.RateLimitConfig.StalenessThreshold(),
 	}
 	return NewOrgRateLimitRegistry(registryConfig)
 }

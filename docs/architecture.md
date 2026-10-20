@@ -51,6 +51,34 @@ Common patterns:
 
 - **Timeout Protection**: Each reconciliation task has a 5-minute timeout
 - **Error Handling**: All errors collected and reported; execution stops at first failed group
+- **Intended stop**: A task can return `reconciler.StopReconciliation{Message}` when the desired final state is reached and the remaining groups must not run (e.g. an archived, read-only repository). Its condition becomes `True`, the conditions of all later groups become `Unknown` (reason `Skipped`, message names the cause), and the run counts as successful (`Ready=True`, sub-resource generations updated, regular success requeue).
+
+## Status Conditions
+
+Each reconciliation task sets its own condition (e.g. `GitHubSynced`, `RulesetsSynced`, `WebhooksSynced`); `Ready` aggregates them. A failed task sets `Status=False` with one of two reasons; the message always carries the concrete cause:
+
+| Reason | Meaning | Retry behaviour |
+|--------|---------|-----------------|
+| `SyncFailed` | Transient or unknown failure (network, GitHub 5xx, timeouts) | Exponential backoff |
+| `UserActionRequired` | The spec or the state on GitHub has to be changed by a user | No backoff; see below |
+
+`UserActionRequired` is used if `reconciler.RequiresUserAction(err)` reports that the error (including all wrapped and joined errors) consists only of errors requiring user action:
+
+- errors implementing `UserActionRequired() bool` returning `true`: ruleset/webhook/autolink conflicts, unresolvable ruleset `extends` chains (except transient read errors of a parent preset), invalid webhook secret references, a missing default branch, and unresolvable team/org role/GitHub App/bypass actor references (`idresolver.UnresolvableReferenceError`)
+- Kubernetes `NotFound` errors: missing referenced resources (presets, code security configurations, secrets, ...). Classified at the error itself, so fetch sites need no special handling and new references are covered automatically.
+- GitHub `422 Unprocessable Entity` responses. Their condition (and log) message uses GitHub's response message and validation errors instead of the raw error, e.g. `Validation Failed: default_branch: Cannot update default branch for an empty repository`. Exception: failed repository updates within 1 minute after the repository was created are expected and requeued after 10 seconds with info logs only (`reporec.NewRepositoryUpdateError`), because GitHub initializes new repositories (e.g. the default branch of `auto_init`) asynchronously.
+
+`Ready` uses `UserActionRequired` if all failed tasks require user action, otherwise `ReconcileFailed`. Skipped tasks (see *Intended stop* above) use `Status=Unknown` with reason `Skipped`.
+
+Retry behaviour of `UserActionRequired` errors depends on where the user has to act:
+
+- **Kubernetes resources only** (conflicts, unresolvable `extends` chains, invalid references in the spec): no requeue until a watch event (spec or preset change) or the success requeue interval (`SPREAD_INTERVAL_MINUTES`).
+- **GitHub** (`reconciler.AwaitsGitHubChange`: missing team, org role, GitHub App or default branch, GitHub `422` responses): no watch event signals such changes, so the resource is requeued after `GITHUB_STATE_REQUEUE_INTERVAL_MINUTES` (default `15`). Errors mark this by implementing `AwaitsGitHubChange() bool`.
+- **Missing referenced Kubernetes resources** (`NotFound`): requeued after `GITHUB_STATE_REQUEUE_INTERVAL_MINUTES` as well. Watched kinds (presets, code security configurations) are reconciled immediately once created; the requeue covers unwatched kinds (e.g. secrets created in a later Argo CD sync wave) without tracking which kinds are watched.
+
+If a run fails with several kinds, the shorter interval is used.
+
+Errors raised before the reconciliation tasks run (rate limits, startup spreading) and blocked organization finalization do not set conditions.
 
 ## Rate Limit Handling
 
@@ -101,13 +129,13 @@ ctx = ghclient.WithCache(ctx)  // enables caching for this call
 
 Without `WithCache`, all calls pass through to the GitHub API directly. This allows callers that need fresh data (e.g. team membership reconciliation) to bypass the cache while callers that tolerate slight staleness (e.g. slug-to-ID resolution) share cached results across concurrent reconciliations of the same org.
 
-The cache TTL defaults to 5 minutes and can be adjusted via `ClientConfig.ResponseCacheTTL`. Callers can force a cache invalidation via `ghclient.InvalidateCache(client)`, which is done automatically by `GitHubIDResolver` when a slug lookup fails (to handle newly created resources not yet in the cached list).
+The cache TTL defaults to 5 minutes and can be adjusted via `ClientConfig.ResponseCacheTTL`. Callers can force a cache invalidation via `ghclient.InvalidateCache(client)`, which is done automatically by the ID resolver (`idresolver.Resolver`) when a slug lookup fails (to handle newly created resources not yet in the cached list).
 
-### ID Resolution (`GitHubIDResolver`)
+### ID Resolution (`idresolver.Resolver`)
 
 Ruleset bypass actors, required-status-check apps, required-reviewer teams, and code security configuration bypass reviewers all reference GitHub resources by slug or name, which must be resolved to numeric IDs before the GitHub API will accept them.
 
-`GitHubIDResolver` handles this efficiently:
+`idresolver.Resolver` ([internal/reconciler/common/idresolver](../internal/reconciler/common/idresolver)) handles this efficiently:
 
 1. At construction time it makes exactly **three bulk API calls** — `GetAllTeamsForOrg`, `GetGitHubAppsInstallations`, `GetAllOrgRoles` — using the cached context so concurrent reconciliations share results.
 2. All subsequent `ResolveTeamSlug`, `ResolveRoleName`, and app-slug lookups are **in-memory map reads** with no further API calls.

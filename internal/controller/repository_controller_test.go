@@ -2,6 +2,9 @@ package controller
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/http"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
@@ -211,5 +214,23 @@ var _ = Describe("Repository Controller - Integration Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(*updatedRepo.Status.ID).To(Equal(int64(99999)))
 		})
+	})
+})
+
+var _ = Describe("isArchivedRepoError", func() {
+	It("detects GitHub's read-only response", func() {
+		err := fmt.Errorf("webhooks: %w", &github.ErrorResponse{
+			Response: &http.Response{StatusCode: http.StatusForbidden},
+			Message:  "Repository was archived so is read-only.",
+		})
+		Expect(isArchivedRepoError(err)).To(BeTrue())
+	})
+
+	It("ignores other errors", func() {
+		Expect(isArchivedRepoError(errors.New("boom"))).To(BeFalse())
+		Expect(isArchivedRepoError(&github.ErrorResponse{
+			Response: &http.Response{StatusCode: http.StatusForbidden},
+			Message:  "Resource not accessible by integration",
+		})).To(BeFalse())
 	})
 })

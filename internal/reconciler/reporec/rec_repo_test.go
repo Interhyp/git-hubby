@@ -405,6 +405,43 @@ var _ = Describe("ReconcileRepository", func() {
 		})
 	})
 
+	Context("when EditRepository fails with 422", func() {
+		BeforeEach(func() {
+			repo.Spec.Archived = new(true)
+			mockClient.EditRepositoryFunc = func(ctx context.Context, owner, name string, repository *github.Repository) (*github.Repository, error) {
+				return nil, &github.ErrorResponse{
+					Message:  "Validation Failed",
+					Response: &http.Response{StatusCode: http.StatusUnprocessableEntity},
+				}
+			}
+		})
+
+		Context("and the repository was created recently", func() {
+			BeforeEach(func() {
+				currentGHRepo.CreatedAt = &github.Timestamp{Time: time.Now().Add(-10 * time.Second)}
+			})
+
+			It("should return a retryable error", func() {
+				var newRepoErr *NewRepositoryUpdateError
+				Expect(errors.As(err, &newRepoErr)).To(BeTrue())
+				Expect(err.Error()).To(ContainSubstring("Validation Failed"))
+				Expect(reconciler.RequiresUserAction(err)).To(BeFalse())
+			})
+		})
+
+		Context("and the repository is older than the grace period", func() {
+			BeforeEach(func() {
+				currentGHRepo.CreatedAt = &github.Timestamp{Time: time.Now().Add(-newRepositoryGracePeriod - time.Minute)}
+			})
+
+			It("should require user action", func() {
+				var newRepoErr *NewRepositoryUpdateError
+				Expect(errors.As(err, &newRepoErr)).To(BeFalse())
+				Expect(reconciler.RequiresUserAction(err)).To(BeTrue())
+			})
+		})
+	})
+
 	Context("when GitHub returns repository with nil ID", func() {
 		BeforeEach(func() {
 			currentGHRepo = &github.Repository{
@@ -446,24 +483,21 @@ var _ = Describe("ReconcileRepository", func() {
 		})
 
 		It("should update the repository to archived", func() {
-			// After archiving, the reconciler should return a RepoArchivedError
+			// After archiving, the reconciler stops the reconciliation on purpose
 			Expect(err).To(HaveOccurred())
-			var archivedErr *RepoArchivedError
-			Expect(errors.As(err, &archivedErr)).To(BeTrue())
+			var stop *reconciler.StopReconciliation
+			Expect(errors.As(err, &stop)).To(BeTrue())
 			Expect(editRepoCalled).To(BeTrue())
 			Expect(editedRepo).NotTo(BeNil())
 			Expect(editedRepo.GetArchived()).To(BeTrue())
 		})
 
-		It("should include repository details in error", func() {
-			Expect(err).To(HaveOccurred())
-			var archivedErr *RepoArchivedError
-			Expect(errors.As(err, &archivedErr)).To(BeTrue())
-			Expect(archivedErr.RepositoryName).To(Equal("test-repo"))
-			Expect(archivedErr.RepositoryOwner).To(Equal("test-org"))
-			Expect(err.Error()).To(ContainSubstring("test-org/test-repo"))
-			Expect(err.Error()).To(ContainSubstring("archived"))
-			Expect(err.Error()).To(ContainSubstring("read-only"))
+		It("should explain the stop in the message", func() {
+			var stop *reconciler.StopReconciliation
+			Expect(errors.As(err, &stop)).To(BeTrue())
+			Expect(stop.Message).To(Equal(ArchivedMessage))
+			Expect(stop.Message).To(ContainSubstring("archived"))
+			Expect(stop.Message).To(ContainSubstring("read-only"))
 		})
 	})
 
@@ -493,10 +527,11 @@ var _ = Describe("ReconcileRepository", func() {
 			}
 		})
 
-		It("should return RepoArchivedError without attempting update", func() {
+		It("should stop the reconciliation without attempting update", func() {
 			Expect(err).To(HaveOccurred())
-			var archivedErr *RepoArchivedError
-			Expect(errors.As(err, &archivedErr)).To(BeTrue())
+			var stop *reconciler.StopReconciliation
+			Expect(errors.As(err, &stop)).To(BeTrue())
+			Expect(stop.Message).To(Equal(ArchivedMessage))
 			// Should not call EditRepository since repo is already up-to-date
 			Expect(editRepoCalled).To(BeFalse())
 		})
@@ -541,10 +576,10 @@ var _ = Describe("ReconcileRepository", func() {
 			}
 		})
 
-		It("should not return RepoArchivedError", func() {
+		It("should not stop the reconciliation", func() {
 			Expect(err).NotTo(HaveOccurred())
-			var archivedErr *RepoArchivedError
-			Expect(errors.As(err, &archivedErr)).To(BeFalse())
+			var stop *reconciler.StopReconciliation
+			Expect(errors.As(err, &stop)).To(BeFalse())
 		})
 	})
 
@@ -666,6 +701,83 @@ var _ = Describe("ReconcileRepository", func() {
 			Expect(createdRepo.HasWiki).To(BeNil())
 			Expect(createdRepo.IsTemplate).To(BeNil())
 			Expect(createdRepo.DeleteBranchOnMerge).To(BeNil())
+		})
+	})
+
+	Context("when the desired default branch does not exist", func() {
+		var getBranchCalled bool
+
+		BeforeEach(func() {
+			getBranchCalled = false
+			repo.Spec.DefaultBranch = "develop"
+			currentGHRepo.DefaultBranch = new("main")
+			mockClient.GetBranchFunc = func(ctx context.Context, owner, name, branch string) (*github.Branch, error) {
+				getBranchCalled = true
+				Expect(branch).To(Equal("develop"))
+				return nil, &github.ErrorResponse{
+					Message:  "Branch not found",
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+				}
+			}
+		})
+
+		It("should return a DefaultBranchNotFoundError without updating the repository", func() {
+			Expect(getBranchCalled).To(BeTrue())
+			Expect(editRepoCalled).To(BeFalse())
+			var dbErr *DefaultBranchNotFoundError
+			Expect(errors.As(err, &dbErr)).To(BeTrue())
+			Expect(dbErr.Branch).To(Equal("develop"))
+			Expect(reconciler.RequiresUserAction(errors.Join(err))).To(BeTrue())
+		})
+	})
+
+	Context("when the desired default branch exists but is not yet the default", func() {
+		BeforeEach(func() {
+			repo.Spec.DefaultBranch = "develop"
+			currentGHRepo.DefaultBranch = new("main")
+		})
+
+		It("should update the repository", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(editRepoCalled).To(BeTrue())
+			Expect(editedRepo.GetDefaultBranch()).To(Equal("develop"))
+		})
+	})
+
+	Context("when checking the default branch fails with a non-404 error", func() {
+		BeforeEach(func() {
+			repo.Spec.DefaultBranch = "develop"
+			currentGHRepo.DefaultBranch = new("main")
+			mockClient.GetBranchFunc = func(ctx context.Context, owner, name, branch string) (*github.Branch, error) {
+				return nil, errors.New("API error")
+			}
+		})
+
+		It("should return the error as a regular (retryable) error", func() {
+			Expect(err).To(HaveOccurred())
+			Expect(editRepoCalled).To(BeFalse())
+			Expect(reconciler.RequiresUserAction(err)).To(BeFalse())
+		})
+	})
+
+	Context("when the default branch already matches", func() {
+		var getBranchCalled bool
+
+		BeforeEach(func() {
+			getBranchCalled = false
+			repo.Spec.DefaultBranch = "main"
+			currentGHRepo.DefaultBranch = new("main")
+			currentGHRepo.HasWiki = new(true) // force an update
+			mockClient.GetBranchFunc = func(ctx context.Context, owner, name, branch string) (*github.Branch, error) {
+				getBranchCalled = true
+				return &github.Branch{Name: new(branch)}, nil
+			}
+		})
+
+		It("should not check the branch and update the repository", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(getBranchCalled).To(BeFalse())
+			Expect(editRepoCalled).To(BeTrue())
 		})
 	})
 

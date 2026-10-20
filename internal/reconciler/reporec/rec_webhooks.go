@@ -44,6 +44,26 @@ func (e *WebhookConflictError) Error() string {
 	return fmt.Sprintf("conflicting webhook definitions for payload URL %q in sources [%s]", e.URL, strings.Join(e.Sources, ", "))
 }
 
+// UserActionRequired marks the conflict as not retryable (see reconciler.RequiresUserAction).
+func (e *WebhookConflictError) UserActionRequired() bool {
+	return true
+}
+
+// InvalidWebhookSecretRefError is returned when the secret reference of a webhook is invalid, i.e. it does not define
+// name and key, or an inline webhook references a secret outside the namespace of the Repository.
+type InvalidWebhookSecretRefError struct {
+	Message string
+}
+
+func (e *InvalidWebhookSecretRefError) Error() string {
+	return e.Message
+}
+
+// UserActionRequired marks the invalid reference as not retryable (see reconciler.RequiresUserAction).
+func (e *InvalidWebhookSecretRefError) UserActionRequired() bool {
+	return true
+}
+
 // WebhookPresetSource returns the source description of a webhook defined by a WebhookPreset.
 func WebhookPresetSource(name string) string {
 	return "webhookPreset/" + name
@@ -359,7 +379,9 @@ func (r *GitHubRepoReconciler) loadWebhookSecret(ctx context.Context, desired *D
 		return nil
 	}
 	if secretRef.Name == nil || secretRef.Key == nil {
-		return fmt.Errorf("webhook secret reference of %s must define name and key", desired.Source)
+		return &InvalidWebhookSecretRefError{
+			Message: fmt.Sprintf("webhook secret reference of %s must define name and key", desired.Source),
+		}
 	}
 	repoNamespace := r.Kubernetes.Resource.Namespace
 	namespace := repoNamespace
@@ -367,8 +389,10 @@ func (r *GitHubRepoReconciler) loadWebhookSecret(ctx context.Context, desired *D
 		namespace = *secretRef.Namespace
 	}
 	if desired.Inline && namespace != repoNamespace {
-		err := fmt.Errorf("inline webhook %s references secret %s/%s outside of the repository namespace %s",
-			desired.Source, namespace, *secretRef.Name, repoNamespace)
+		err := &InvalidWebhookSecretRefError{
+			Message: fmt.Sprintf("inline webhook %s references secret %s/%s outside of the repository namespace %s",
+				desired.Source, namespace, *secretRef.Name, repoNamespace),
+		}
 		log.Error(err, "rejecting cross-namespace secret reference of inline webhook")
 		return err
 	}

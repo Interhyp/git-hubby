@@ -23,9 +23,10 @@ import (
 
 // OrganizationCtl reconciles a Organization object
 type OrganizationCtl struct {
-	Scheme                 *runtime.Scheme
-	ReconcilerFactory      *reconcilerfactory.Factory
-	SuccessRequeueInterval time.Duration
+	Scheme            *runtime.Scheme
+	ReconcilerFactory *reconcilerfactory.Factory
+	// Requeue decides when resources are reconciled again.
+	Requeue *RequeuePolicy
 	// RulesetPresetIndex maps RulesetPreset changes to the affected resources; see SetupRulesetPresetIndex.
 	RulesetPresetIndex *RulesetPresetIndex
 	// LegacySecretName is the credential secret name used for Organizations that still
@@ -42,13 +43,12 @@ type OrganizationCtl struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *OrganizationCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := logf.FromContext(ctx)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	rec, err := r.ReconcilerFactory.CreateForOrg(ctx, req.NamespacedName)
 	if err != nil {
-		return handleRequeueError(ctx, err)
+		return r.Requeue.OnFactoryError(ctx, err)
 	}
 	if rec == nil {
 		return ctrl.Result{}, nil // no requeue, k8s resource not found
@@ -58,19 +58,13 @@ func (r *OrganizationCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		if errors.Is(err, orgrec.OrganizationStillHasReposError()) || errors.Is(err, orgrec.OrganizationStillHasTeamsError()) {
 			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 		}
-		if result, ok := handleUnresolvedRulesets(ctx, err, r.SuccessRequeueInterval); ok {
-			return result, nil
-		}
-		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
-			log.Error(err, "Reconciliation failed")
-		}
-		return handleRequeueError(ctx, err)
+		return r.Requeue.OnReconcileError(ctx, err)
 	}
 	if resourceWasDeleted(rec.Reconciler) {
 		return ctrl.Result{}, nil
 	}
 
-	return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil
+	return r.Requeue.OnSuccess(), nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

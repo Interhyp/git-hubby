@@ -81,6 +81,14 @@ func (g *GitHubClientWrapper) EditRepository(ctx context.Context, owner, repo st
 	return result, _handleErrorResponse(response, err)
 }
 
+// GetBranch returns the given branch of a repository. Renamed branches are not followed (maxRedirects = 0),
+// so a 404/301 error is returned for branches that do not exist under the requested name.
+func (g *GitHubClientWrapper) GetBranch(ctx context.Context, owner, repo, branch string) (*github.Branch, error) {
+	result, response, err := g.client.Repositories.GetBranch(ctx, owner, repo, branch, 0)
+	defer _closeBody(response)
+	return result, _handleErrorResponse(response, err)
+}
+
 func (g *GitHubClientWrapper) DeleteRepository(ctx context.Context, owner, repo string) error {
 	response, err := g.client.Repositories.Delete(ctx, owner, repo)
 	defer _closeBody(response)

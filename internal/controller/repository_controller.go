@@ -25,9 +25,10 @@ import (
 
 // RepositoryCtl reconciles a Repository object
 type RepositoryCtl struct {
-	Scheme                 *runtime.Scheme
-	ReconcilerFactory      *reconcilerfactory.Factory
-	SuccessRequeueInterval time.Duration
+	Scheme            *runtime.Scheme
+	ReconcilerFactory *reconcilerfactory.Factory
+	// Requeue decides when resources are reconciled again.
+	Requeue *RequeuePolicy
 	// RulesetPresetIndex maps RulesetPreset changes to the affected resources; see SetupRulesetPresetIndex.
 	RulesetPresetIndex *RulesetPresetIndex
 }
@@ -57,7 +58,7 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	rec, err := r.ReconcilerFactory.CreateForRepo(ctx, req.NamespacedName)
 	if err != nil {
-		return handleRequeueError(ctx, err)
+		return r.Requeue.OnFactoryError(ctx, err)
 	}
 	if rec == nil {
 		return ctrl.Result{}, nil // no requeue, k8s resource not found
@@ -65,28 +66,36 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	if err = rec.Reconcile(ctx); err != nil {
 		if isArchivedRepoError(err) {
-			log.Info("Repository is in read-only state, skipping reconciliation until next change")
-			return ctrl.Result{}, nil
+			// Safety net for races: the repository was archived on GitHub while later reconciliation groups ran.
+			// The next run detects the archived repository and stops the reconciliation regularly.
+			log.Info("Repository was archived during reconciliation, requeuing")
+			return ctrl.Result{RequeueAfter: archivedRepoRequeueDelay}, nil
 		}
-		if result, ok := handleUnresolvedRulesets(ctx, err, r.SuccessRequeueInterval); ok {
-			return result, nil
+		if _, ok := errors.AsType[*reporec.NewRepositoryUpdateError](err); ok {
+			// Expected right after creation while GitHub initializes the repository (already logged by the
+			// reconciler). Requeue without returning the error to avoid error logs of controller-runtime.
+			log.Info("New repository is not ready yet, requeuing", "requeueAfter", newRepoRequeueDelay)
+			return ctrl.Result{RequeueAfter: newRepoRequeueDelay}, nil
 		}
-		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
-			log.Error(err, "Reconciliation failed")
-		}
-		return handleRequeueError(ctx, err)
+		return r.Requeue.OnReconcileError(ctx, err)
 	}
 	if resourceWasDeleted(rec.Reconciler) {
 		return ctrl.Result{}, nil
 	}
 
-	return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil
+	return r.Requeue.OnSuccess(), nil
 }
 
+// archivedRepoRequeueDelay is the delay before a repository that was archived on GitHub during a reconciliation is
+// reconciled again.
+const archivedRepoRequeueDelay = 10 * time.Second
+
+// newRepoRequeueDelay is the delay before a repository is reconciled again after its update failed shortly after its
+// creation (see reporec.NewRepositoryUpdateError).
+const newRepoRequeueDelay = 10 * time.Second
+
+// isArchivedRepoError reports whether GitHub rejected a request because the repository is archived (read-only).
 func isArchivedRepoError(err error) bool {
-	if _, ok := errors.AsType[*reporec.RepoArchivedError](err); ok {
-		return true
-	}
 	if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok {
 		return ghErr.Response != nil &&
 			ghErr.Response.StatusCode == 403 &&

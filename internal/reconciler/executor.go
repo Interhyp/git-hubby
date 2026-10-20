@@ -29,6 +29,10 @@ type reconciliationResult struct {
 	Condition  conditions.ConditionType
 	Error      error
 	FinishedAt time.Time
+	// Stop is set if the reconciliation stopped the run on purpose (Error is nil in this case).
+	Stop *StopReconciliation
+	// SkippedBy is set if the reconciliation was not executed because an earlier reconciliation stopped the run.
+	SkippedBy *StopReconciliation
 }
 
 // Reconcile performs the reconciliation process for the resource of type T
@@ -63,7 +67,7 @@ func (x *ReconciliationExecutor[T]) Reconcile(ctx context.Context) error {
 	}
 
 	if err != nil {
-		return err
+		return withReadableMessage(err)
 	}
 
 	log.Info(fmt.Sprintf("Successfully reconciled %s", x.Reconciler.K8s().Resource.GetTypeRepresentation()))
@@ -126,26 +130,43 @@ func (x *ReconciliationExecutor[T]) applyMetadata(ctx context.Context, includeFi
 }
 
 // runReconciliations executes all reconciliation groups sequentially, running reconciliations within each group in parallel
-// All errors are collected and returned at the end to avoid inconsistent states
+// All errors are collected and returned at the end to avoid inconsistent states.
+// If a reconciliation returns a StopReconciliation, the remaining groups are skipped without failing the run.
 func (x *ReconciliationExecutor[T]) runReconciliations(ctx context.Context) ([]reconciliationResult, error) {
 	log := logPkg.FromContext(ctx)
 	var results []reconciliationResult
 	var allErrors []error
 
-	for groupIdx, group := range x.Reconciler.RequiredReconciliations() {
+	groups := x.Reconciler.RequiredReconciliations()
+	for groupIdx, group := range groups {
 		log.V(1).Info(fmt.Sprintf("Executing reconciliation group %d with %d reconciliations", groupIdx, len(group)))
 
 		groupResults := x.runReconciliationGroup(ctx, group)
-		results = append(results, groupResults...)
 
-		// Process groupResults: collect errors
-		for _, result := range groupResults {
-			if result.Error != nil {
-				allErrors = append(allErrors, result.Error)
+		// Process groupResults: separate intended stops from errors
+		var stop *StopReconciliation
+		for i := range groupResults {
+			if s, ok := asStopReconciliation(groupResults[i].Error); ok {
+				groupResults[i].Error = nil
+				groupResults[i].Stop = s
+				if stop == nil {
+					stop = s
+				}
+				continue
+			}
+			if groupResults[i].Error != nil {
+				allErrors = append(allErrors, groupResults[i].Error)
 			}
 		}
+		results = append(results, groupResults...)
+
 		if len(allErrors) > 0 {
 			break // Stop processing further groups on first group with error
+		}
+		if stop != nil {
+			log.Info("Reconciliation stopped, skipping remaining reconciliations", "reason", stop.Message)
+			results = append(results, skippedResults(groups[groupIdx+1:], stop)...)
+			break
 		}
 	}
 
@@ -183,28 +204,63 @@ func (x *ReconciliationExecutor[T]) runReconciliationGroup(ctx context.Context, 
 	return results
 }
 
+// skippedResults returns results for all reconciliations of groups which are skipped because of stop.
+func skippedResults(groups []ParallelReconciliationGroup, stop *StopReconciliation) []reconciliationResult {
+	var results []reconciliationResult
+	now := time.Now()
+	for _, group := range groups {
+		for _, rec := range group {
+			results = append(results, reconciliationResult{
+				Condition:  rec.Condition,
+				FinishedAt: now,
+				SkippedBy:  stop,
+			})
+		}
+	}
+	return results
+}
+
 // conditionFromResult creates a new metav1.Condition with the provided values
 func conditionFromResult(result reconciliationResult) metav1.Condition {
+	finishedAt := result.FinishedAt.Format(time.RFC3339)
 	condition := metav1.Condition{
 		Type:               string(result.Condition),
 		Status:             metav1.ConditionTrue,
 		LastTransitionTime: metav1.NewTime(result.FinishedAt),
 		Reason:             conditions.ReasonSyncCompleted,
-		Message:            fmt.Sprintf("Sync completed successfully at %s", result.FinishedAt.Format(time.RFC3339)),
+		Message:            fmt.Sprintf("Sync completed successfully at %s", finishedAt),
 	}
-	if result.Error != nil {
-		condition.Message = fmt.Sprintf("Sync failed with %v at %s", result.Error, result.FinishedAt.Format(time.RFC3339))
+	switch {
+	case result.Error != nil:
+		condition.Message = fmt.Sprintf("Sync failed with %s at %s", ErrorMessage(result.Error), finishedAt)
 		condition.Status = metav1.ConditionFalse
 		condition.Reason = conditions.ReasonSyncFailed
+		if RequiresUserAction(result.Error) {
+			condition.Reason = conditions.ReasonUserActionRequired
+		}
+	case result.Stop != nil:
+		condition.Message = fmt.Sprintf("Sync completed at %s: %s", finishedAt, result.Stop.Message)
+	case result.SkippedBy != nil:
+		condition.Status = metav1.ConditionUnknown
+		condition.Reason = conditions.ReasonSkipped
+		condition.Message = fmt.Sprintf("Skipped at %s: %s", finishedAt, result.SkippedBy.Message)
 	}
 	return condition
 }
 
 func (x *ReconciliationExecutor[T]) updateConditionsFromResults(results []reconciliationResult) {
 	allReady := true
+	allFailuresRequireUserAction := true
+	var stop *StopReconciliation
 	for _, result := range results {
 		if result.Error != nil {
 			allReady = false
+			if !RequiresUserAction(result.Error) {
+				allFailuresRequireUserAction = false
+			}
+		}
+		if result.Stop != nil && stop == nil {
+			stop = result.Stop
 		}
 		meta.SetStatusCondition(x.Reconciler.K8s().Resource.GetConditions(), conditionFromResult(result))
 	}
@@ -212,14 +268,24 @@ func (x *ReconciliationExecutor[T]) updateConditionsFromResults(results []reconc
 		Type:               string(conditions.TypeReady),
 		ObservedGeneration: x.Reconciler.K8s().Resource.GetGeneration(),
 	}
-	if allReady {
+	now := time.Now().Format(time.RFC3339)
+	switch {
+	case allReady && stop != nil:
 		readyCondition.Status = metav1.ConditionTrue
 		readyCondition.Reason = conditions.ReasonReconcileCompleted
-		readyCondition.Message = fmt.Sprintf("All components synced successfully at %s", time.Now().Format(time.RFC3339))
-	} else {
+		readyCondition.Message = fmt.Sprintf("Reconciliation completed at %s, remaining components skipped: %s", now, stop.Message)
+	case allReady:
+		readyCondition.Status = metav1.ConditionTrue
+		readyCondition.Reason = conditions.ReasonReconcileCompleted
+		readyCondition.Message = fmt.Sprintf("All components synced successfully at %s", now)
+	case allFailuresRequireUserAction:
+		readyCondition.Status = metav1.ConditionFalse
+		readyCondition.Reason = conditions.ReasonUserActionRequired
+		readyCondition.Message = fmt.Sprintf("Some components require user action to sync (see their conditions) at %s", now)
+	default:
 		readyCondition.Status = metav1.ConditionFalse
 		readyCondition.Reason = conditions.ReasonReconcileFailed
-		readyCondition.Message = fmt.Sprintf("Some components failed to sync during reconciliation at %s", time.Now().Format(time.RFC3339))
+		readyCondition.Message = fmt.Sprintf("Some components failed to sync during reconciliation at %s", now)
 	}
 	meta.SetStatusCondition(x.Reconciler.K8s().Resource.GetConditions(), readyCondition)
 }

@@ -16,17 +16,6 @@ These instructions help AI agents work productively in this **Kubebuilder v4**-b
   - [internal/reconciler/orgrec](internal/reconciler/orgrec) for organizations - manages org settings, custom properties, rulesets, code security configurations, and actions settings
   - [internal/reconciler/reporec](internal/reconciler/reporec) for repositories - manages repo settings, webhooks, and rulesets
   - [internal/reconciler/teamrec](internal/reconciler/teamrec) for teams - manages team creation, membership, and multi-organization support
-- **Code organization in `internal/reconciler`** (see "Code Organization" in [docs/architecture.md](docs/architecture.md)):
-  - Root package (`executor.go`, `types.go`): reconciliation framework only (`ReconciliationExecutor`, `Reconciler`, `Reconciliation`, `GitHub[T]`, `Kubernetes[T]`).
-  - `common/` is a folder (never a package itself) for packages shared by **two or more** resource reconcilers:
-    - [internal/reconciler/common/merge](internal/reconciler/common/merge): union of presets + inline definitions (`merge.Dedupe`, `merge.Conflict`, `merge.InlineSource`).
-    - [internal/reconciler/common/rulesets](internal/reconciler/common/rulesets): ruleset reconciliation for orgs and repos (`rulesets.Collect`, `rulesets.Sync`, `rulesets.Target`, `rulesets.SyncOptions`, `rulesets.ConflictError`).
-    - [internal/reconciler/common/idresolver](internal/reconciler/common/idresolver): GitHub slug/name → ID resolution (`idresolver.New`, `idresolver.Resolver`).
-  - Code used by a single resource reconciler stays in that reconciler's package (e.g. autolinks/webhooks in `reporec`).
-  - Packages in `common/` must not import `orgrec`, `reporec`, `teamrec` or `reconcilerfactory`; they receive behaviour via interfaces/callbacks.
-  - Non-reconciler-specific helpers belong to the owning package: condition helpers in `internal/conditions` (e.g. `conditions.ToApplyConfigs`), CRD spec predicates as methods in `api/v1alpha1/*_methods.go` (e.g. `(*Organization).IsActionsDisabled()`).
-  - Do not introduce catch-all files/packages such as `shared.go`, `utils.go` or `common.go`.
-  - Test helpers shared across packages live in [test/testutil](test/testutil) (`testutil.CapturingContext()`, `testutil.NewFakeClient()`).
 - GitHub integration via a cached client factory that supports **multiple GitHub Apps** — each organization can reference its own credentials secret via `spec.githubAppConfig`; see [internal/ghclient/factory.go](internal/ghclient/factory.go), [internal/ghclient/wrapper.go](internal/ghclient/wrapper.go), [internal/ghclient/interface.go](internal/ghclient/interface.go).
   - `CachingGitHubClientFactory` caches credentials per secret name and clients per organization (`cacheKey`); rate-limit state is shared per GitHub App ID.
   - `SecretProviderFunc` now takes a `secretName string` parameter so any secret in the credentials namespace can be fetched on demand.
@@ -54,10 +43,10 @@ The operator implements a sophisticated startup spreading system ([internal/reco
   - Deletions
   - Sub-resource changes
 - **Implementation**: 
-  - `SpreadingManager` created in [cmd/main.go](cmd/main.go) via `spreading.NewDefaultManager()`
+  - `SpreadingManager` created in [cmd/main.go](cmd/main.go) via `spreading.NewManager(cfg)` from the operator config
   - Factory methods (`CreateForOrg()`, `CreateForRepo()`, `CreateForTeam()`) call `SpreadingManager.Spread()` before creating reconciler
   - Returns `RequiresSpreadError` with calculated delay if spreading is needed
-  - Controllers handle this error via `handleRequeueError()` in [internal/controller/shared.go](internal/controller/shared.go)
+  - Controllers handle this error via `RequeuePolicy.OnFactoryError()` in [internal/controller/requeue_policy.go](internal/controller/requeue_policy.go)
   - Delay calculated randomly within spread interval to distribute load evenly
 - **Configuration**: Enable/disable via `ENABLE_STARTUP_SPREADING` (default: `true`)
 
@@ -94,8 +83,8 @@ Controllers implement continuous drift detection:
 
 - **Requeue on Success**: After successful reconciliation, controllers requeue resource after `SuccessRequeueInterval`
 - **Default Value**: Set to spreading interval (typically 180 minutes) to ensure resources are checked regularly
-- **Configuration**: Passed from spreading manager via `spreadingManager.GetSpreadInterval()` in [cmd/main.go](cmd/main.go)
-- **Implementation**: `return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil` after successful reconciliation in each controller
+- **Configuration**: `config.Config.SuccessRequeueInterval()` (equals the spread interval) and `config.Config.GitHubStateRequeueInterval()` (errors awaiting a change on GitHub), see [internal/config/config.go](internal/config/config.go). Controllers do not read them directly: all requeue decisions are made by the shared `RequeuePolicy` ([internal/controller/requeue_policy.go](internal/controller/requeue_policy.go)), created once in [cmd/main.go](cmd/main.go) via `controller.NewRequeuePolicy(cfg)` and passed to each controller as `Requeue`.
+- **Implementation**: `return r.Requeue.OnSuccess(), nil` after successful reconciliation in each controller
 - **Benefit**: Detects manual GitHub changes and sub-resource updates without relying solely on K8s watch events
 
 ## Recent Architectural Changes (Current Branch)
@@ -116,7 +105,7 @@ Controllers implement continuous drift detection:
 10. **Startup spreading system**: New [internal/reconciler/spreading](internal/reconciler/spreading) package implements intelligent reconciliation distribution during pod startup to prevent API rate limit exhaustion; see `spreading.go`, controlled via environment variables.
 11. **Parallel reconciliation execution**: Reconciler executor ([internal/reconciler/executor.go](internal/reconciler/executor.go)) now runs reconciliation groups sequentially with concurrent execution of tasks within each group; each task has a 5-minute timeout.
 12. **Sub-resource generation tracking**: Added `ObservedSubResourceGenerations` field to Organization, Repository, and Team status; tracks generation of referenced sub-resources (e.g., RulesetPresets, WebhookPresets) to detect changes and prevent unnecessary spreading.
-13. **Success requeue interval**: Controllers now requeue successful reconciliations after a configurable interval (defaults to spread interval, typically 180 minutes) for continuous drift detection; see `SuccessRequeueInterval` in controllers.
+13. **Success requeue interval**: Controllers now requeue successful reconciliations after a configurable interval (defaults to spread interval, typically 180 minutes) for continuous drift detection; see `config.Config.SuccessRequeueInterval()`.
 14. **Resource health tracking**: Added `IsHealthy()`, `GetObservedGeneration()`, and `GetObservedSubResourceGenerations()` methods to all CRD types in `*_methods.go` files; implements `SpreadableResource` interface for spreading logic.
 
 ## Critical Workflows
@@ -200,7 +189,7 @@ Controllers implement continuous drift detection:
     5. The CI test `ConfiguredThresholds coverage` validates that every `MonitoredCategory` is wired; a runtime warning also fires if traffic is observed for an uncovered category
 - Startup spreading integration: factory methods evaluate spreading before creating reconcilers; return `RequiresSpreadError` to delay warm-start reconciliations; see [internal/reconciler/spreading](internal/reconciler/spreading) and factory implementation.
 - Parallel reconciliation: reconcilers define sequential groups of parallel tasks via `RequiredReconciliations()`; executor runs groups sequentially with concurrent execution within groups; see [internal/reconciler/executor.go](internal/reconciler/executor.go).
-- Success requeue: after successful reconciliation, controllers requeue after `SuccessRequeueInterval` (defaults to spread interval, ~180 min) for continuous drift detection.
+- Success requeue: after successful reconciliation, controllers requeue after `config.Config.SuccessRequeueInterval()` (defaults to spread interval, ~180 min) for continuous drift detection.
 - Deletion semantics:
   - Organizations: only deleted when no `Repository` references remain; enforced via finalizer; see organization reconciler in [internal/reconciler/orgrec](internal/reconciler/orgrec).
   - Repositories: deletion archives the repo instead of hard delete; see repository reconciler in [internal/reconciler/reporec](internal/reconciler/reporec).
@@ -208,15 +197,14 @@ Controllers implement continuous drift detection:
 - Repository indexing: field index on `spec.organizationRef.name` for efficient listing; see [internal/controller/repository_controller.go](internal/controller/repository_controller.go).
 - Team multi-organization support: Teams can belong to multiple organizations simultaneously via `spec.organizationRefs`; the reconciler tracks `status.previousOrganizationRefs` to detect removed organizations and clean up teams accordingly; see [internal/reconciler/teamrec/reconciler.go](internal/reconciler/teamrec/reconciler.go).
 - Preset application:
-  - Rulesets: desired vs current reconciliation for orgs and repos; orphaned rulesets are deleted; shared logic in [internal/reconciler/common/rulesets](internal/reconciler/common/rulesets), wired via `rulesets.Target`/`rulesets.SyncOptions` in `orgrec/rec_rulesets.go` and `reporec/rec_rulesets.go`.
-    - The desired set is the **union** of referenced `RulesetPreset`s (`spec.rulesetPresets`) and **inline rulesets** (`spec.rulesets`, type `[]RulesetSpec`, max. 10, unique names via CEL), collected by `rulesets.Collect()`. All specs are deep-copied before mutation.
-    - Same-name collisions: identical definitions are applied once (warning in the log); differing definitions return a `rulesets.ConflictError`, no GitHub ruleset calls are made, and `RulesetsSynced` becomes `False`.
-    - The mapper (`mapper.RulesetSpecToGithubRuleset()`, `mapper.RulesetsDiffer()`) and `idresolver.Resolver.ResolveRuleset()` operate on `RulesetSpec`, not on `RulesetPreset`.
-    - **Inheritance** (`spec.extends`, see [docs/configuration/repository.md](docs/configuration/repository.md#extending-rulesets)): presets and inline rulesets can extend a `RulesetPreset`; `rulesets.ChainResolver` resolves chains (max. `MaxExtendsDepth`) from the cache using the per-field `rulesets.MergeRules` table (a reflection test enforces that every `RulesetSpec` field has a rule — add one when adding fields). Unresolvable chains yield `Desired.Unresolved`; `Sync` then neither creates, updates nor deletes that ruleset (fail closed) and returns an `UnresolvedError`. Controllers map preset changes to descendants via the `spec.extends` index; the factory includes ancestor generations in sub-resource generations.
-    - Repository-level rulesets with `target: repository` (inline or preset) are filtered out (`SyncOptions.Skip`); organization rulesets get a default `~ALL` repository name condition (`SyncOptions.Adjust`).
-  - Webhooks: desired set is the **union** of `WebhookPresetList` and **inline webhooks** (`spec.webhooks`, type `[]WebhookSpec`, max. 10), collected in `collectDesiredWebhooks()` in [internal/reconciler/reporec/rec_webhooks.go](internal/reconciler/reporec/rec_webhooks.go): specs are deep-copied, payload URLs templated, de-duplicated via `dedupeDesiredWebhooks()` (identity = hash of URL/content-type/events; differing definitions → `WebhookConflictError`, no GitHub calls), then secrets loaded. Inline webhook secrets must live in the Repository's namespace (enforced by webhook and reconciler). Secret hash tracked in status; see [internal/mapper/github_hook_mapper.go](internal/mapper/github_hook_mapper.go) (`WebhookSpecToGithubHook()`), [api/v1alpha1/webhookpreset_methods.go](api/v1alpha1/webhookpreset_methods.go).
-  - Webhook ignores: union of `WebhookIgnorePresetsList` and inline `spec.webhookIgnores` (max. 10), compiled by `collectWebhookIgnoreRegexes()` in `reporec`; matching existing hooks are never deleted.
-  - Autolinks: union of `AutolinksPresetList` and inline `spec.autolinks` (max. 25, unique `keyPrefix` via CEL), collected by `collectDesiredAutolinks()` in `reporec`; identity is `keyPrefix`, differing definitions → `AutolinkConflictError`, no GitHub calls. The generic de-duplication lives in [internal/reconciler/common/merge](internal/reconciler/common/merge).
+  - Rulesets: desired vs current reconciliation for orgs and repos; orphaned rulesets are deleted; see organization and repository reconcilers.
+    - The desired set is the **union** of referenced `RulesetPreset`s (`spec.rulesetPresets`) and **inline rulesets** (`spec.rulesets`, type `[]RulesetSpec`, max. 10, unique names via CEL), collected by `reconciler.CollectDesiredRulesets()` in [internal/reconciler/inline_presets.go](internal/reconciler/inline_presets.go). All specs are deep-copied before mutation.
+    - Same-name collisions: identical definitions are applied once (warning in the log); differing definitions return a `RulesetConflictError`, no GitHub ruleset calls are made, and `RulesetsSynced` becomes `False`.
+    - The mapper (`mapper.RulesetSpecToGithubRuleset()`, `mapper.RulesetsDiffer()`) and `GitHubIDResolver.ResolveRuleset()` operate on `RulesetSpec`, not on `RulesetPreset`.
+    - Repository-level rulesets with `target: repository` (inline or preset) are filtered out.
+  - Webhooks: desired set is the **union** of `WebhookPresetList` and **inline webhooks** (`spec.webhooks`, type `[]WebhookSpec`, max. 10), collected in `collectDesiredWebhooks()` in [internal/reconciler/reporec/rec_webhooks.go](internal/reconciler/reporec/rec_webhooks.go): specs are deep-copied, payload URLs templated, de-duplicated via `reconciler.DedupeDesiredWebhooks()` (identity = hash of URL/content-type/events; differing definitions → `WebhookConflictError`, no GitHub calls), then secrets loaded. Inline webhook secrets must live in the Repository's namespace (enforced by webhook and reconciler). Secret hash tracked in status; see [internal/mapper/github_hook_mapper.go](internal/mapper/github_hook_mapper.go) (`WebhookSpecToGithubHook()`), [api/v1alpha1/webhookpreset_methods.go](api/v1alpha1/webhookpreset_methods.go).
+  - Webhook ignores: union of `WebhookIgnorePresetsList` and inline `spec.webhookIgnores` (max. 10), compiled by `reconciler.CollectWebhookIgnoreRegexes()`; matching existing hooks are never deleted.
+  - Autolinks: union of `AutolinksPresetList` and inline `spec.autolinks` (max. 25, unique `keyPrefix` via CEL), collected by `reconciler.CollectDesiredAutolinks()`; identity is `keyPrefix`, differing definitions → `AutolinkConflictError`, no GitHub calls. Shared helpers live in [internal/reconciler/inline_presets.go](internal/reconciler/inline_presets.go).
 - Code Security Configurations: Organizations reference `CodeSecurityConfiguration` CRDs via `spec.codeSecurityConfigurations`; the organization reconciler creates/updates/deletes these configurations in GitHub and manages attachment scopes (all, public, private_or_internal, selected); see [internal/reconciler/orgrec/rec_code_security_configurations.go](internal/reconciler/orgrec/rec_code_security_configurations.go) and [internal/mapper/github_code_security_configuration_mapper.go](internal/mapper/github_code_security_configuration_mapper.go).
 - Custom Properties: Repositories support custom properties via `spec.customProperties`; the reconciler resolves property definitions from the organization and applies values; see [internal/reconciler/reporec/rec_custom_properties.go](internal/reconciler/reporec/rec_custom_properties.go).
 - Mapping rules: GitHub shapes are produced by `mapper/*` with opinionated defaults, e.g., repository `Visibility` forced to `internal`; see [internal/mapper/github_repo_mapper.go](internal/mapper/github_repo_mapper.go), [internal/mapper/github_org_mapper.go](internal/mapper/github_org_mapper.go), and [internal/mapper/github_team_mapper.go](internal/mapper/github_team_mapper.go).
@@ -227,9 +215,9 @@ Controllers implement continuous drift detection:
 - Controller skeletons should:
   - Use `predicate.GenerationChangedPredicate` and `AnnotationChangedPredicate`.
   - Enable `UsePriorityQueue` and compose `workqueue` limiter with global GitHub limiter; see controllers.
-  - Set `SuccessRequeueInterval` from spreading manager to enable continuous drift detection.
+  - Delegate requeue decisions to the shared `RequeuePolicy` (`r.Requeue.OnSuccess()`, `.OnFactoryError()`, `.OnReconcileError()`) instead of adding interval fields; resource-specific special cases (e.g. archived repositories) are handled in the controller before `OnReconcileError()`.
   - Delegate business logic to reconcilers created by factory functions: `CreateForOrg()`, `CreateForRepo()`, `CreateForTeam()` from [internal/reconciler/reconcilerfactory/factory.go](internal/reconciler/reconcilerfactory/factory.go).
-  - Handle `RequiresSpreadError` via `handleRequeueError()` in [internal/controller/shared.go](internal/controller/shared.go).
+  - Handle factory errors (rate limits, `RequiresSpreadError`) via `r.Requeue.OnFactoryError()` in [internal/controller/requeue_policy.go](internal/controller/requeue_policy.go).
 - Reconciler structure pattern:
   - Each reconciler is in a dedicated package with a `reconciler.go` file containing the main `Reconcile()` method.
   - Reconciliation logic is split into separate files by concern (e.g., `rec_org.go`, `rec_rulesets.go`, `rec_webhooks.go`, `rec_code_security_configurations.go`, `rec_team.go`, `rec_members.go`, `rec_custom_properties.go`).

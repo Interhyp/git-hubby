@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
@@ -12,16 +11,16 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // TeamCtl reconciles a Repository object
 type TeamCtl struct {
-	Scheme                 *runtime.Scheme
-	ReconcilerFactory      *reconcilerfactory.Factory
-	SuccessRequeueInterval time.Duration
+	Scheme            *runtime.Scheme
+	ReconcilerFactory *reconcilerfactory.Factory
+	// Requeue decides when resources are reconciled again.
+	Requeue *RequeuePolicy
 }
 
 // +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=teams,verbs=get;list;watch;create;update;patch;delete
@@ -38,29 +37,25 @@ type TeamCtl struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.25.0/pkg/reconcile
 func (r *TeamCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := logf.FromContext(ctx)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	rec, err := r.ReconcilerFactory.CreateForTeam(ctx, req.NamespacedName)
 	if err != nil {
-		return handleRequeueError(ctx, err)
+		return r.Requeue.OnFactoryError(ctx, err)
 	}
 	if rec == nil {
 		return ctrl.Result{}, nil // no requeue, k8s resource not found
 	}
 
 	if err = rec.Reconcile(ctx); err != nil {
-		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
-			log.Error(err, "Reconciliation failed")
-		}
-		return handleRequeueError(ctx, err)
+		return r.Requeue.OnReconcileError(ctx, err)
 	}
 	if resourceWasDeleted(rec.Reconciler) {
 		return ctrl.Result{}, nil
 	}
 
-	return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil
+	return r.Requeue.OnSuccess(), nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

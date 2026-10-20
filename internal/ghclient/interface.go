@@ -37,6 +37,7 @@ type GitHubClient interface {
 	CreateRepository(ctx context.Context, org string, repo github.CreateRepositoryRequest) (*github.Repository, error)
 	EditRepository(ctx context.Context, owner, repo string, repository *github.Repository) (*github.Repository, error)
 	DeleteRepository(ctx context.Context, owner, repo string) error
+	GetBranch(ctx context.Context, owner, repo, branch string) (*github.Branch, error)
 	GetAllCustomPropertyValues(ctx context.Context, org string, repo string) ([]*github.CustomPropertyValue, error)
 	CreateOrUpdateRepositoryCustomProperties(ctx context.Context, owner string, name string, values []*github.CustomPropertyValue) error
 
