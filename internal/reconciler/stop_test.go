@@ -31,8 +31,8 @@ var _ = Describe("Executor condition handling", func() {
 		scheme := runtime.NewScheme()
 		Expect(githubv1alpha1.AddToScheme(scheme)).To(Succeed())
 		org := &githubv1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-org", Namespace: "default"},
-			Spec:       githubv1alpha1.OrganizationSpec{Name: "test-org", GitHubAppInstallationId: new(int64(12345))},
+			Name: "test-org", Namespace: "default",
+			Spec: githubv1alpha1.OrganizationSpec{Name: "test-org", GitHubAppInstallationId: new(int64(12345))},
 		}
 		k8sClient := fake.NewClientBuilder().
 			WithScheme(scheme).

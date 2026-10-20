@@ -14,7 +14,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -88,15 +87,15 @@ var _ = Describe("ReconcileRulesets", func() {
 		idResolver = &mockIdResolver{}
 		features = config.Features{}
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-org", Namespace: "default"},
+			Name: "test-org", Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
 			},
 		}
 		preset = &v1alpha1.RulesetPreset{
-			ObjectMeta: metav1.ObjectMeta{Name: "preset-1", Namespace: "default"},
-			Spec:       rulesetSpec("preset-ruleset"),
+			Name: "preset-1", Namespace: "default",
+			Spec: rulesetSpec("preset-ruleset"),
 		}
 		existingRulesets = nil
 		getAllCalled = false

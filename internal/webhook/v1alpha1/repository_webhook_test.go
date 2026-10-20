@@ -8,7 +8,6 @@ import (
 	gogithub "github.com/google/go-github/v93/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -84,10 +83,8 @@ var _ = Describe("Repository Webhook", func() {
 
 		// Set up test organization
 		testOrg = &githubv1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: githubv1alpha1.OrganizationSpec{
 				Name: "test-org",
 				GitHubAppConfig: &githubv1alpha1.GitHubAppConfig{
@@ -105,10 +102,8 @@ var _ = Describe("Repository Webhook", func() {
 
 		// Set up test repository
 		obj = &githubv1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: githubv1alpha1.RepositorySpec{
 				Name: "test-repo",
 				OrganizationRef: githubv1alpha1.OrganizationRef{
@@ -119,10 +114,8 @@ var _ = Describe("Repository Webhook", func() {
 		}
 
 		oldObj = &githubv1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: githubv1alpha1.RepositorySpec{
 				Name: "test-repo",
 				OrganizationRef: githubv1alpha1.OrganizationRef{

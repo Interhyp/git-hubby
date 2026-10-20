@@ -9,7 +9,6 @@ import (
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -64,10 +63,8 @@ var _ = Describe("ReconcileTopics", func() {
 
 	JustBeforeEach(func() {
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name: "test-repo",
 				About: v1alpha1.About{

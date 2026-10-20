@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -54,10 +53,8 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 	JustBeforeEach(func() {
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
@@ -182,10 +179,8 @@ var _ = Describe("ReconcilePermissions", func() {
 
 	JustBeforeEach(func() {
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
@@ -361,10 +356,8 @@ var _ = Describe("ReconcileRetention", func() {
 
 	JustBeforeEach(func() {
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
@@ -527,10 +520,8 @@ var _ = Describe("ReconcileAllowedActions", func() {
 
 	JustBeforeEach(func() {
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
@@ -798,10 +789,8 @@ var _ = Describe("ReconcileDefaultWorkflowPermissions", func() {
 
 	JustBeforeEach(func() {
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
@@ -969,10 +958,8 @@ var _ = Describe("ReconcileSelfHostedRunnerSettings", func() {
 
 	JustBeforeEach(func() {
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
@@ -1149,10 +1136,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 	JustBeforeEach(func() {
 		// Create organization CR
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
@@ -1224,10 +1209,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1238,10 +1221,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo2",
-						Namespace: "default",
-					},
+					Name:      "repo2",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo2",
 						ActionsEnabled:  new(true),
@@ -1266,10 +1247,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(false),
@@ -1296,10 +1275,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1310,10 +1287,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo2",
-						Namespace: "default",
-					},
+					Name:      "repo2",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo2",
 						ActionsEnabled:  new(false),
@@ -1324,10 +1299,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo3",
-						Namespace: "default",
-					},
+					Name:      "repo3",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo3",
 						ActionsEnabled:  new(true),
@@ -1352,10 +1325,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1381,10 +1352,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1408,10 +1377,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1450,10 +1417,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1479,10 +1444,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1493,10 +1456,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo2",
-						Namespace: "default",
-					},
+					Name:      "repo2",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo2",
 						ActionsEnabled:  new(true),
@@ -1521,10 +1482,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1551,10 +1510,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  new(true),
@@ -1583,10 +1540,8 @@ var _ = Describe("ReconcileActionsEnabled", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:            "repo1",
 						ActionsEnabled:  nil, // should default to true
@@ -1765,10 +1720,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 	JustBeforeEach(func() {
 		// Create organization CR
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),
@@ -1926,10 +1879,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2078,10 +2029,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2092,10 +2041,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo2",
-						Namespace: "default",
-					},
+					Name:      "repo2",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo2",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2128,10 +2075,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2142,10 +2087,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo2",
-						Namespace: "default",
-					},
+					Name:      "repo2",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo2",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "other-org"},
@@ -2229,10 +2172,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2243,10 +2184,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo2",
-						Namespace: "default",
-					},
+					Name:      "repo2",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo2",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2312,10 +2251,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2417,10 +2354,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2485,10 +2420,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2532,10 +2465,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2546,10 +2477,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo2",
-						Namespace: "default",
-					},
+					Name:      "repo2",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo2",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2595,10 +2524,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2662,10 +2589,8 @@ var _ = Describe("ReconcileRunnerGroups", func() {
 		BeforeEach(func() {
 			repos = []*v1alpha1.Repository{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo1",
-						Namespace: "default",
-					},
+					Name:      "repo1",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                         "repo1",
 						OrganizationRef:              v1alpha1.OrganizationRef{Name: "test-org"},
@@ -2777,10 +2702,8 @@ var _ = Describe("ReconcilePermissions with selected repositories", func() {
 
 	JustBeforeEach(func() {
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: new(int64(12345)),

@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -44,10 +43,8 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 	Context("when no organizations have been removed", func() {
 		JustBeforeEach(func() {
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name: "test-team",
 					OrganizationRefs: []v1alpha1.OrganizationRef{
@@ -123,10 +120,8 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 	Context("when one organization has been removed", func() {
 		JustBeforeEach(func() {
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name: "test-team",
 					OrganizationRefs: []v1alpha1.OrganizationRef{
@@ -203,10 +198,8 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 	Context("when multiple organizations have been removed", func() {
 		JustBeforeEach(func() {
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name: "test-team",
 					OrganizationRefs: []v1alpha1.OrganizationRef{
@@ -289,10 +282,8 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 	Context("when team deletion fails", func() {
 		JustBeforeEach(func() {
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name: "test-team",
 					OrganizationRefs: []v1alpha1.OrganizationRef{
@@ -363,10 +354,8 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 	Context("when team deletion returns 404 (already deleted)", func() {
 		JustBeforeEach(func() {
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name: "test-team",
 					OrganizationRefs: []v1alpha1.OrganizationRef{
@@ -437,10 +426,8 @@ var _ = Describe("ReconcileRemovedOrgRefs", func() {
 	Context("when previousOrganizationRefs is empty (first reconciliation)", func() {
 		JustBeforeEach(func() {
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name: "test-team",
 					OrganizationRefs: []v1alpha1.OrganizationRef{

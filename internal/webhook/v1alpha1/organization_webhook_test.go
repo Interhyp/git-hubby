@@ -7,7 +7,6 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -28,10 +27,8 @@ var _ = Describe("Organization Webhook", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		obj = &githubv1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: githubv1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: &installationID,
@@ -39,10 +36,8 @@ var _ = Describe("Organization Webhook", func() {
 			},
 		}
 		oldObj = &githubv1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: githubv1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				GitHubAppInstallationId: &installationID,

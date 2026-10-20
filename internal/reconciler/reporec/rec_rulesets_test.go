@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -99,7 +98,7 @@ var _ = Describe("ReconcileRuleSets", func() {
 		features = config.Features{}
 		orgPlan = v1alpha1.PlanEnterprise
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+			Name: "test-repo", Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name:            "test-repo",
 				Archived:        new(false),
@@ -107,8 +106,8 @@ var _ = Describe("ReconcileRuleSets", func() {
 			},
 		}
 		preset = &v1alpha1.RulesetPreset{
-			ObjectMeta: metav1.ObjectMeta{Name: "preset-1", Namespace: "default"},
-			Spec:       rulesetSpec("preset-ruleset"),
+			Name: "preset-1", Namespace: "default",
+			Spec: rulesetSpec("preset-ruleset"),
 		}
 		existingRulesets = nil
 		getAllCalled = false
@@ -124,8 +123,8 @@ var _ = Describe("ReconcileRuleSets", func() {
 
 	JustBeforeEach(func() {
 		org := &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-org", Namespace: "default"},
-			Spec:       v1alpha1.OrganizationSpec{Plan: orgPlan},
+			Name: "test-org", Namespace: "default",
+			Spec: v1alpha1.OrganizationSpec{Plan: orgPlan},
 		}
 		scheme := runtime.NewScheme()
 		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())

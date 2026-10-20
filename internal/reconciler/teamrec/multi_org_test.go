@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -45,10 +44,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when adding a new organization to an existing team", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "test-team",
 						Description: "Test team description",
@@ -159,10 +156,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when adding multiple new organizations at once", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "test-team",
 						Description: "Test team description",
@@ -280,10 +275,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when adding organization and team creation fails", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -378,10 +371,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when removing one organization from a multi-org team", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -467,10 +458,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when removing all organizations except one", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -562,10 +551,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when deletion fails in one of the removed organizations", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -647,10 +634,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when first reconciliation with no previous refs", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -717,10 +702,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when previousOrganizationRefs matches current refs", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -798,10 +781,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when organization order changes but content is same", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -884,10 +865,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when team creation succeeds in first org but fails in second", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -992,10 +971,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when team update succeeds in first org but fails in second", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "test-team",
 						Description: "New description",
@@ -1118,10 +1095,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when deletion succeeds in first removed org but fails in second", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -1218,10 +1193,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when mix of add, keep, and remove operations with partial failure", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -1344,10 +1317,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when deleting team from all organizations successfully", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -1435,10 +1406,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when deletion fails in second organization", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -1531,10 +1500,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when team is already deleted from one organization", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},
@@ -1619,10 +1586,8 @@ var _ = Describe("Multi-Organization Team Scenarios", func() {
 		Context("when GetTeamBySlug fails during deletion", func() {
 			BeforeEach(func() {
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: "default",
-					},
+					Name:      "test-team",
+					Namespace: "default",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "test-team",
 						Members: []string{"user1"},

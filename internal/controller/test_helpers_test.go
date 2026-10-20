@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/managedfields"
 	"k8s.io/client-go/kubernetes/scheme"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -83,18 +82,14 @@ func CreateMockGitHubRepository() *ghclientmock.MockGitHubClientWrapper {
 func (te *TestEnvironment) SetupTeamTest(_ *testing.T, namespace, teamName string, teamSlug *string, organizationRefs []githubv1alpha1.OrganizationRef) *githubv1alpha1.Team {
 	// Create namespace first
 	ns := &corev1.Namespace{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name: namespace,
-		},
+		Name: namespace,
 	}
 	_ = te.Client.Create(te.Context, ns) // Ignore error if namespace already exists
 
 	// Create the Team
 	team := &githubv1alpha1.Team{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name:      teamName,
-			Namespace: namespace,
-		},
+		Name:      teamName,
+		Namespace: namespace,
 		Spec: githubv1alpha1.TeamSpec{
 			Name:             teamName,
 			OrganizationRefs: organizationRefs,
@@ -112,18 +107,14 @@ func (te *TestEnvironment) SetupTeamTest(_ *testing.T, namespace, teamName strin
 func (te *TestEnvironment) SetupTeamWithMembersTest(_ *testing.T, namespace, teamName, orgName string) *githubv1alpha1.Team {
 	// Create namespace first
 	ns := &corev1.Namespace{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name: namespace,
-		},
+		Name: namespace,
 	}
 	_ = te.Client.Create(te.Context, ns) // Ignore error if namespace already exists
 
 	// Create the Team
 	team := &githubv1alpha1.Team{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name:      teamName,
-			Namespace: namespace,
-		},
+		Name:      teamName,
+		Namespace: namespace,
 		Spec: githubv1alpha1.TeamSpec{
 			Name: teamName,
 			OrganizationRefs: []githubv1alpha1.OrganizationRef{
@@ -144,18 +135,14 @@ func (te *TestEnvironment) SetupTeamWithMembersTest(_ *testing.T, namespace, tea
 func (te *TestEnvironment) SetupOrganizationTest(_ *testing.T, namespace, orgName string) *githubv1alpha1.Organization {
 	// Create namespace first
 	ns := &corev1.Namespace{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name: namespace,
-		},
+		Name: namespace,
 	}
 	_ = te.Client.Create(te.Context, ns) // Ignore error if namespace already exists
 
 	// Create the Organization
 	org := &githubv1alpha1.Organization{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name:      orgName,
-			Namespace: namespace,
-		},
+		Name:      orgName,
+		Namespace: namespace,
 		Spec: githubv1alpha1.OrganizationSpec{
 			Name:        orgName,
 			Description: "Test organization for unit tests",
@@ -174,18 +161,14 @@ func (te *TestEnvironment) SetupOrganizationTest(_ *testing.T, namespace, orgNam
 func (te *TestEnvironment) SetupRepositoryTest(_ *testing.T, namespace, repoName, orgName string) *githubv1alpha1.Repository {
 	// Create namespace first
 	ns := &corev1.Namespace{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name: namespace,
-		},
+		Name: namespace,
 	}
 	_ = te.Client.Create(te.Context, ns) // Ignore error if namespace already exists
 
 	// Create the repository
 	repo := &githubv1alpha1.Repository{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name:      repoName,
-			Namespace: namespace,
-		},
+		Name:      repoName,
+		Namespace: namespace,
 		Spec: githubv1alpha1.RepositorySpec{
 			Name: repoName,
 			OrganizationRef: githubv1alpha1.OrganizationRef{
@@ -218,9 +201,7 @@ func (te *TestEnvironment) SetupRepositoryTest(_ *testing.T, namespace, repoName
 // CreateTestNamespace creates a namespace for testing
 func (te *TestEnvironment) CreateTestNamespace(namespaceName string) {
 	namespace := &corev1.Namespace{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name: namespaceName,
-		},
+		Name: namespaceName,
 	}
 
 	_ = te.Client.Create(te.Context, namespace) // Ignore error if namespace already exists
@@ -236,10 +217,8 @@ func (te *TestEnvironment) CleanupTestResources(resources ...client.Object) {
 // CreateSecret creates a test GitHub App credentials secret
 func (te *TestEnvironment) CreateSecret(namespace, secretName string) {
 	secret := &corev1.Secret{
-		ObjectMeta: ctrl.ObjectMeta{
-			Name:      secretName,
-			Namespace: namespace,
-		},
+		Name:      secretName,
+		Namespace: namespace,
 		Data: map[string][]byte{
 			"app-id":              []byte("12345"),
 			"app-installation-id": []byte("67890"),

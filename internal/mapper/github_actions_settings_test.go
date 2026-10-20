@@ -5,7 +5,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("GitHub Actions Configuration Mapper", func() {
@@ -742,7 +741,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
@@ -787,7 +786,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
@@ -796,7 +795,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo2"},
+						Name: "repo2",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
@@ -821,7 +820,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
@@ -830,7 +829,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo2-no-id"},
+						Name: "repo2-no-id",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
@@ -853,7 +852,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"test-group"},
 						},
@@ -862,7 +861,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo2"},
+						Name: "repo2",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"other-group"},
 						},
@@ -871,7 +870,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo3"},
+						Name: "repo3",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: nil,
 						},
@@ -894,7 +893,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"other-group"},
 						},
@@ -1010,7 +1009,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"production-runners"},
 						},
@@ -1019,7 +1018,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo2"},
+						Name: "repo2",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"production-runners", "staging-runners"},
 						},
@@ -1028,7 +1027,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo3-no-id"},
+						Name: "repo3-no-id",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"production-runners"},
 						},
@@ -1037,7 +1036,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo4"},
+						Name: "repo4",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"staging-runners"},
 						},
@@ -1085,7 +1084,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"all-runners"},
 						},
@@ -1107,7 +1106,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"private-runners"},
 						},
@@ -1129,7 +1128,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"no-visibility"},
 						},
@@ -1153,7 +1152,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"other-runners"},
 						},
@@ -1175,7 +1174,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
@@ -1184,7 +1183,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo2"},
+						Name: "repo2",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
@@ -1207,7 +1206,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
@@ -1216,7 +1215,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo2-no-id"},
+						Name: "repo2-no-id",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
@@ -1225,7 +1224,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo3"},
+						Name: "repo3",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"selected-runners"},
 						},
@@ -1249,7 +1248,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 				}
 				repos := []v1alpha1.Repository{
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo1"},
+						Name: "repo1",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"production-runners", "staging-runners"},
 						},
@@ -1258,7 +1257,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo2"},
+						Name: "repo2",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"staging-runners"},
 						},
@@ -1267,7 +1266,7 @@ var _ = Describe("GitHub Actions Configuration Mapper", func() {
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{Name: "repo3"},
+						Name: "repo3",
 						Spec: v1alpha1.RepositorySpec{
 							AvailableActionsRunnerGroups: []string{"production-runners"},
 						},

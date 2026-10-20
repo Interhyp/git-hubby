@@ -11,7 +11,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -40,12 +39,12 @@ var _ = Describe("ReconcileAutolinks with inline autolinks", func() {
 		ctx = context.Background()
 		mockClient = ghclientmock.NewMockGitHubClientWrapper()
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
-			Spec:       v1alpha1.RepositorySpec{Name: "test-repo"},
+			Name: "test-repo", Namespace: "default",
+			Spec: v1alpha1.RepositorySpec{Name: "test-repo"},
 		}
 		preset = &v1alpha1.AutolinksPreset{
-			ObjectMeta: metav1.ObjectMeta{Name: "preset-1", Namespace: "default"},
-			Spec:       v1alpha1.AutolinksPresetSpec{AutolinkList: []v1alpha1.Autolink{autolink("JIRA-", "https://jira/<num>")}},
+			Name: "preset-1", Namespace: "default",
+			Spec: v1alpha1.AutolinksPresetSpec{AutolinkList: []v1alpha1.Autolink{autolink("JIRA-", "https://jira/<num>")}},
 		}
 		listCalled = false
 		currentAutolinks = nil

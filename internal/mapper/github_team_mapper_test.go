@@ -5,7 +5,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("GitHub Team Mapper", func() {
@@ -14,9 +13,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when converting a team with manual members", func() {
 			It("should successfully convert to GitHub create team request", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "my-team",
 						Description: "This is a test team",
@@ -39,9 +36,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 			It("should use the team description", func() {
 				idpGroup := "engineers"
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "idp-team",
 						Description: "IDP synchronized team",
@@ -59,9 +54,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when converting a team without description", func() {
 			It("should use empty description", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "my-team",
 						Members: []string{"user1"},
@@ -78,9 +71,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when converting a team with empty description", func() {
 			It("should use empty description", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "my-team",
 						Description: "",
@@ -98,9 +89,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when converting teams for different organizations", func() {
 			It("should use the same description for both organizations", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "my-team",
 						Description: "Shared team description",
@@ -119,9 +108,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when custom privacy is specified", func() {
 			It("should use the specified privacy", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "my-team",
 						Privacy: "secret",
@@ -138,9 +125,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when custom permission is specified", func() {
 			It("should use the specified permission", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:       "my-team",
 						Permission: "push",
@@ -157,9 +142,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when custom notification setting is specified", func() {
 			It("should use the specified notification setting", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:                "my-team",
 						NotificationSetting: "notifications_enabled",
@@ -176,9 +159,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when all team settings are customized", func() {
 			It("should use all specified values", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:                "my-team",
 						Description:         "Custom team",
@@ -204,9 +185,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when converting a team with manual members", func() {
 			It("should successfully convert to GitHub update team request", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "my-team",
 						Description: "This is a test team",
@@ -229,9 +208,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 			It("should use the team description", func() {
 				idpGroup := "engineers"
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "idp-team",
 						Description: "IDP synchronized team",
@@ -249,9 +226,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when converting a team without description", func() {
 			It("should use empty description", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "my-team",
 						Members: []string{"user1"},
@@ -268,9 +243,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when converting a team with empty description", func() {
 			It("should use empty description", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "my-team",
 						Description: "",
@@ -288,9 +261,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when converting teams for different organizations", func() {
 			It("should use the same description for both organizations", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:        "my-team",
 						Description: "Shared team description",
@@ -309,9 +280,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when custom privacy is specified", func() {
 			It("should use the specified privacy", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:    "my-team",
 						Privacy: "secret",
@@ -328,9 +297,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when custom permission is specified", func() {
 			It("should use the specified permission", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:       "my-team",
 						Permission: "push",
@@ -347,9 +314,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when custom notification setting is specified", func() {
 			It("should use the specified notification setting", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:                "my-team",
 						NotificationSetting: "notifications_enabled",
@@ -366,9 +331,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 		Context("when all team settings are customized", func() {
 			It("should use all specified values", func() {
 				team := &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-team",
-					},
+					Name: "test-team",
 					Spec: v1alpha1.TeamSpec{
 						Name:                "my-team",
 						Description:         "Custom team",
@@ -395,9 +358,7 @@ var _ = Describe("GitHub Team Mapper", func() {
 
 		BeforeEach(func() {
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-team",
-				},
+				Name: "test-team",
 				Spec: v1alpha1.TeamSpec{
 					Name:        "my-team",
 					Description: "Test team description",

@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -38,10 +37,8 @@ var _ = Describe("ReconcileTeamRoleAssignments", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		team = &v1alpha1.Team{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-team",
-				Namespace: "default",
-			},
+			Name:      "test-team",
+			Namespace: "default",
 			Spec: v1alpha1.TeamSpec{
 				Name:    "test-team",
 				Members: []string{"user1", "user2"},

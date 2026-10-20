@@ -91,10 +91,8 @@ var _ = Describe("Spreading", func() {
 				}}
 
 				resource = &mockResource{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-resource",
-						Namespace: "test-namespace",
-					},
+					Name:               "test-resource",
+					Namespace:          "test-namespace",
 					generation:         1,
 					observedGeneration: 1,
 					healthy:            true,

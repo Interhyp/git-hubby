@@ -9,7 +9,6 @@ import (
 	"github.com/Interhyp/git-hubby/internal/reconciler/orgrec"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -120,10 +119,8 @@ func (r *OrganizationCtl) findOrganizationsForCodeSecurityConfiguration(ctx cont
 	requests := make([]reconcile.Request, 0, len(orgList.Items))
 	for _, org := range orgList.Items {
 		requests = append(requests, reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Name:      org.Name,
-				Namespace: org.Namespace,
-			},
+			Name:      org.Name,
+			Namespace: org.Namespace,
 		})
 	}
 

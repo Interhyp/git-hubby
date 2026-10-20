@@ -6,7 +6,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 )
@@ -35,7 +34,7 @@ var _ = Describe("Inline rulesets CRD validation", func() {
 
 	newOrg := func(name string, rulesets []githubv1alpha1.RulesetSpec) *githubv1alpha1.Organization {
 		return &githubv1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+			Name: name, Namespace: namespace,
 			Spec: githubv1alpha1.OrganizationSpec{
 				Name:                       name,
 				Description:                "test",
@@ -48,7 +47,7 @@ var _ = Describe("Inline rulesets CRD validation", func() {
 
 	newRepo := func(name string, rulesets []githubv1alpha1.RulesetSpec) *githubv1alpha1.Repository {
 		return &githubv1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+			Name: name, Namespace: namespace,
 			Spec: githubv1alpha1.RepositorySpec{
 				Name:            name,
 				OrganizationRef: githubv1alpha1.OrganizationRef{Name: "some-org"},
@@ -101,7 +100,7 @@ var _ = Describe("Inline rulesets CRD validation", func() {
 
 	Context("RulesetPreset extends", func() {
 		newPreset := func(name string, spec githubv1alpha1.RulesetSpec) *githubv1alpha1.RulesetPreset {
-			return &githubv1alpha1.RulesetPreset{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}, Spec: spec}
+			return &githubv1alpha1.RulesetPreset{Name: name, Namespace: namespace, Spec: spec}
 		}
 
 		It("accepts a preset that only sets extends and name", func() {

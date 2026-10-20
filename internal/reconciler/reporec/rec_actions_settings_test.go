@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -71,10 +70,8 @@ var _ = Describe("ReconcileActionsSettings", func() {
 	JustBeforeEach(func() {
 		// Create organization CR
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name: "test-org",
 				ActionsSettings: v1alpha1.ActionsSettings{
@@ -85,10 +82,8 @@ var _ = Describe("ReconcileActionsSettings", func() {
 
 		// Create repository CR
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name:                            "test-repo",
 				Archived:                        new(false),
@@ -293,10 +288,8 @@ var _ = Describe("ReconcileActionsSettings", func() {
 			It("should return the error", func() {
 				// Create repository CR without organization
 				repoWithoutOrg := &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "default",
-					},
+					Name:      "test-repo",
+					Namespace: "default",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                            "test-repo",
 						Archived:                        new(false),
