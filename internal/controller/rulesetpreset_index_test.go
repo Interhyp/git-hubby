@@ -6,8 +6,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -27,8 +25,8 @@ var _ = Describe("RulesetPreset watch mapping", func() {
 
 	preset := func(name, extends string) *githubv1alpha1.RulesetPreset {
 		return &githubv1alpha1.RulesetPreset{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			Spec:       githubv1alpha1.RulesetSpec{Name: name, Extends: extends},
+			Name: name, Namespace: namespace,
+			Spec: githubv1alpha1.RulesetSpec{Name: name, Extends: extends},
 		}
 	}
 	refs := func(names ...string) []corev1.LocalObjectReference {
@@ -40,12 +38,12 @@ var _ = Describe("RulesetPreset watch mapping", func() {
 	}
 	repo := func(name string, presets []corev1.LocalObjectReference, inline ...githubv1alpha1.RulesetSpec) *githubv1alpha1.Repository {
 		return &githubv1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			Spec:       githubv1alpha1.RepositorySpec{RulesetPresetList: presets, Rulesets: inline},
+			Name: name, Namespace: namespace,
+			Spec: githubv1alpha1.RepositorySpec{RulesetPresetList: presets, Rulesets: inline},
 		}
 	}
 	request := func(name string) reconcile.Request {
-		return reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: namespace}}
+		return reconcile.Request{Name: name, Namespace: namespace}
 	}
 
 	BeforeEach(func() {
@@ -59,8 +57,8 @@ var _ = Describe("RulesetPreset watch mapping", func() {
 			preset("cycle-a", "cycle-b"),
 			preset("cycle-b", "cycle-a"),
 			&githubv1alpha1.RulesetPreset{
-				ObjectMeta: metav1.ObjectMeta{Name: "middle-other-ns", Namespace: "other"},
-				Spec:       githubv1alpha1.RulesetSpec{Name: "x", Extends: "base"},
+				Name: "middle-other-ns", Namespace: "other",
+				Spec: githubv1alpha1.RulesetSpec{Name: "x", Extends: "base"},
 			},
 		}
 	})
@@ -107,8 +105,8 @@ var _ = Describe("RulesetPreset watch mapping", func() {
 				repo("inline-extends-middle", nil, githubv1alpha1.RulesetSpec{Name: "i", Extends: "middle"}),
 				repo("uses-unrelated", refs("unrelated")),
 				&githubv1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{Name: "org", Namespace: namespace},
-					Spec:       githubv1alpha1.OrganizationSpec{RulesetPresetList: refs("leaf-b")},
+					Name: "org", Namespace: namespace,
+					Spec: githubv1alpha1.OrganizationSpec{RulesetPresetList: refs("leaf-b")},
 				},
 			)
 		})

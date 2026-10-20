@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -72,10 +71,8 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testOrg,
-				Namespace: defaultNamespace,
-			},
+			Name:      testOrg,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    testOrg,
 				GitHubAppInstallationId: new(int64(12345)),
@@ -83,10 +80,8 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 		}
 
 		csc = &v1alpha1.CodeSecurityConfiguration{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testCsc,
-				Namespace: defaultNamespace,
-			},
+			Name:      testCsc,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.CodeSecurityConfigurationSpec{
 				Name:        testCsc,
 				Description: "Test code security configuration",
@@ -94,10 +89,8 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 		}
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testRepo,
-				Namespace: defaultNamespace,
-			},
+			Name:      testRepo,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.RepositorySpec{
 				Name: testRepo,
 				OrganizationRef: v1alpha1.OrganizationRef{
@@ -566,10 +559,8 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 
 		BeforeEach(func() {
 			csc2 = &v1alpha1.CodeSecurityConfiguration{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-csc-2",
-					Namespace: defaultNamespace,
-				},
+				Name:      "test-csc-2",
+				Namespace: defaultNamespace,
 				Spec: v1alpha1.CodeSecurityConfigurationSpec{
 					Name:        "test-csc-2",
 					Description: "Second test code security configuration",
@@ -699,10 +690,8 @@ var _ = Describe("UnsetObsoleteDefaults", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testOrg,
-				Namespace: defaultNamespace,
-			},
+			Name:      testOrg,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    testOrg,
 				GitHubAppInstallationId: new(int64(12345)),
@@ -710,10 +699,8 @@ var _ = Describe("UnsetObsoleteDefaults", func() {
 		}
 
 		csc = &v1alpha1.CodeSecurityConfiguration{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testCsc,
-				Namespace: defaultNamespace,
-			},
+			Name:      testCsc,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.CodeSecurityConfigurationSpec{
 				Name:        testCsc,
 				Description: "Test code security configuration",
@@ -844,10 +831,8 @@ var _ = Describe("ResolveBypassReviewerNames", func() {
 	BeforeEach(func() {
 		resolver = &mockIdResolver{}
 		csc = &v1alpha1.CodeSecurityConfiguration{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testCsc,
-				Namespace: defaultNamespace,
-			},
+			Name:      testCsc,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.CodeSecurityConfigurationSpec{
 				Name:        testCsc,
 				Description: "Test code security configuration",
@@ -958,10 +943,8 @@ var _ = Describe("AttachToRepos", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testOrg,
-				Namespace: defaultNamespace,
-			},
+			Name:      testOrg,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    testOrg,
 				GitHubAppInstallationId: new(int64(12345)),
@@ -969,10 +952,8 @@ var _ = Describe("AttachToRepos", func() {
 		}
 
 		csc = &v1alpha1.CodeSecurityConfiguration{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testCsc,
-				Namespace: defaultNamespace,
-			},
+			Name:      testCsc,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.CodeSecurityConfigurationSpec{
 				Name:        testCsc,
 				Description: "Test code security configuration",
@@ -980,10 +961,8 @@ var _ = Describe("AttachToRepos", func() {
 		}
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testRepo,
-				Namespace: defaultNamespace,
-			},
+			Name:      testRepo,
+			Namespace: defaultNamespace,
 			Spec: v1alpha1.RepositorySpec{
 				Name: testRepo,
 				OrganizationRef: v1alpha1.OrganizationRef{
@@ -1324,10 +1303,8 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 				Build()
 			rec.Kubernetes.Client = k8sClient
 			rec.Kubernetes.Resource = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      testOrg,
-					Namespace: defaultNamespace,
-				},
+				Name:      testOrg,
+				Namespace: defaultNamespace,
 			}
 
 			result, err := rec.getDesiredAttachmentsForScope(ctx, "selected", testCsc)
@@ -1390,7 +1367,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 			Kubernetes: reconciler.Kubernetes[*v1alpha1.Organization]{
 				Client: k8sClient,
 				Resource: &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{Name: testOrg, Namespace: defaultNamespace},
+					Name: testOrg, Namespace: defaultNamespace,
 				},
 			},
 		}
@@ -1505,7 +1482,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 	Context("when scope is 'selected'", func() {
 		It("should pass specific repo IDs to attach API", func() {
 			repo := &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: testRepo, Namespace: defaultNamespace},
+				Name: testRepo, Namespace: defaultNamespace,
 				Spec: v1alpha1.RepositorySpec{
 					Name: testRepo,
 					AttachedCodeSecurityConfiguration: &v1alpha1.CodeSecurityConfigurationRef{

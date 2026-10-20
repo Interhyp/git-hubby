@@ -6,7 +6,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
 )
@@ -18,7 +17,7 @@ var _ = Describe("Inline autolinks, webhooks and webhook ignores CRD validation"
 
 	newRepo := func(name string, mutate func(*githubv1alpha1.RepositorySpec)) *githubv1alpha1.Repository {
 		repo := &githubv1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+			Name: name, Namespace: namespace,
 			Spec: githubv1alpha1.RepositorySpec{
 				Name:            name,
 				OrganizationRef: githubv1alpha1.OrganizationRef{Name: "some-org"},

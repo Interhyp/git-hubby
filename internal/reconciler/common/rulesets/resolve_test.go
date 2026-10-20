@@ -12,7 +12,6 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -42,7 +41,7 @@ var _ = Describe("Extends resolution", func() {
 	)
 
 	preset := func(name string, spec v1alpha1.RulesetSpec) *v1alpha1.RulesetPreset {
-		return &v1alpha1.RulesetPreset{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}, Spec: spec}
+		return &v1alpha1.RulesetPreset{Name: name, Namespace: namespace, Spec: spec}
 	}
 
 	base := v1alpha1.RulesetSpec{

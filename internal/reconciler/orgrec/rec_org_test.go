@@ -12,7 +12,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -41,10 +40,8 @@ var _ = Describe("ReconcileOrganization", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				Description:             "Test Organization",

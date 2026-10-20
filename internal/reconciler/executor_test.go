@@ -96,10 +96,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 	Context("When adding labels to organization", func() {
 		It("Should add default labels to organization with no labels", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -139,12 +137,10 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should preserve existing labels and add missing defaults", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-					Labels: map[string]string{
-						"existing-label": "existing-value",
-					},
+				Name:      "test-org",
+				Namespace: "default",
+				Labels: map[string]string{
+					"existing-label": "existing-value",
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
@@ -186,12 +182,10 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should override existing enforced label values", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-					Labels: map[string]string{
-						"app.kubernetes.io/managed-by": "custom-value",
-					},
+				Name:      "test-org",
+				Namespace: "default",
+				Labels: map[string]string{
+					"app.kubernetes.io/managed-by": "custom-value",
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
@@ -228,10 +222,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should set organization label to the spec name", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "my-github-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -267,12 +259,10 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should override already set organization label", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-					Labels: map[string]string{
-						"test-key": "original-org",
-					},
+				Name:      "test-org",
+				Namespace: "default",
+				Labels: map[string]string{
+					"test-key": "original-org",
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "new-org",
@@ -309,14 +299,12 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should preserve all existing labels", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-					Labels: map[string]string{
-						"label1": "value1",
-						"label2": "value2",
-						"label3": "value3",
-					},
+				Name:      "test-org",
+				Namespace: "default",
+				Labels: map[string]string{
+					"label1": "value1",
+					"label2": "value2",
+					"label3": "value3",
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
@@ -358,10 +346,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should handle organization name with special characters", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-org-with-dashes",
-					Namespace: "default",
-				},
+				Name:      "my-org-with-dashes",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "my-org-with-dashes",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -397,10 +383,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should apply labels idempotently", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -450,12 +434,10 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should handle labels with multiple enforced labels", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-					Labels: map[string]string{
-						"custom-key": "custom-value",
-					},
+				Name:      "test-org",
+				Namespace: "default",
+				Labels: map[string]string{
+					"custom-key": "custom-value",
 				},
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
@@ -497,10 +479,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 	Context("Parallel Reconciliation Execution", func() {
 		It("Should execute reconciliations in a single group concurrently", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -570,10 +550,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should execute multiple groups sequentially", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -651,10 +629,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should collect errors from all reconciliations without failing fast", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -725,10 +701,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should stop after group has at least on error", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -785,10 +759,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should handle empty reconciliation groups", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -826,10 +798,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should execute groups in order even with different completion times", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -896,10 +866,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 	Context("When final status apply fails", func() {
 		It("Should return the status apply error even when reconciliations succeed", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),
@@ -947,10 +915,8 @@ var _ = Describe("OrganizationReconciler Labels", func() {
 
 		It("Should still update in-memory conditions even when status apply fails", func() {
 			org := &githubv1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-org",
-					Namespace: "default",
-				},
+				Name:      "test-org",
+				Namespace: "default",
 				Spec: githubv1alpha1.OrganizationSpec{
 					Name:                    "test-org",
 					GitHubAppInstallationId: new(int64(12345)),

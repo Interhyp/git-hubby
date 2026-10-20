@@ -4,7 +4,6 @@ import (
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("GitHub Hook Mapper", func() {
@@ -14,9 +13,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 		Context("when converting a webhook preset with all fields set", func() {
 			It("should successfully convert to GitHub hook", func() {
 				preset := v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-webhook",
-					},
+					Name: "test-webhook",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: contentTypeApplicationJSON,
@@ -44,9 +41,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 		Context("when converting a webhook preset with SSL verification disabled", func() {
 			It("should set InsecureSSL to 0", func() {
 				preset := v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "insecure-webhook",
-					},
+					Name: "insecure-webhook",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						SSLVerify:  new(false),
@@ -64,9 +59,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 		Context("when converting a webhook preset without content type", func() {
 			It("should use default content type", func() {
 				preset := v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "default-content-type",
-					},
+					Name: "default-content-type",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(true),
@@ -83,9 +76,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 		Context("when converting a webhook preset with custom content type", func() {
 			It("should use the custom content type", func() {
 				preset := v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "custom-content-type",
-					},
+					Name: "custom-content-type",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: "application/x-www-form-urlencoded",
@@ -103,9 +94,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 		Context("when converting a webhook preset without events", func() {
 			It("should default to push event", func() {
 				preset := v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "default-events",
-					},
+					Name: "default-events",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(true),
@@ -122,9 +111,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 		Context("when converting an inactive webhook preset", func() {
 			It("should set Active to false", func() {
 				preset := v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "inactive-webhook",
-					},
+					Name: "inactive-webhook",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(false),
@@ -141,9 +128,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 		Context("when converting a webhook preset with multiple events", func() {
 			It("should include all events", func() {
 				preset := v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "multi-event-webhook",
-					},
+					Name: "multi-event-webhook",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(true),
@@ -161,9 +146,7 @@ var _ = Describe("GitHub Hook Mapper", func() {
 		Context("when converting a webhook preset with empty secret", func() {
 			It("should set empty secret", func() {
 				preset := v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "no-secret",
-					},
+					Name: "no-secret",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Active:     new(true),

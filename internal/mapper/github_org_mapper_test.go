@@ -5,7 +5,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("GitHub Org Mapper", func() {
@@ -14,9 +13,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization with only name field (legacy mode)", func() {
 			It("should use name as both login and display name", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name:        "my-org",
 						Description: "This is a test organization",
@@ -34,9 +31,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization with both login and name", func() {
 			It("should use name as display name", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Login:       "my-org-login",
 						Name:        "My Organization Display Name",
@@ -55,9 +50,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization with only login field", func() {
 			It("should use login as display name", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Login:       "my-org-login",
 						Description: "Test description",
@@ -75,9 +68,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization with empty description", func() {
 			It("should set empty description", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name:        "my-org",
 						Description: "",
@@ -95,9 +86,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization with Location set", func() {
 			It("should set Location in GitHub organization", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name:        "my-org",
 						Location:    "Munich, Germany",
@@ -115,9 +104,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization with Website set", func() {
 			It("should set Blog in GitHub organization", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name:        "my-org",
 						Website:     "https://example.com",
@@ -135,9 +122,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization with all fields set", func() {
 			It("should set all fields correctly", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Login:       "my-org-login",
 						Name:        "My Org Display Name",
@@ -160,9 +145,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization with empty optional fields", func() {
 			It("should not set Location and Blog when empty", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name:        "my-org",
 						Location:    "",
@@ -183,9 +166,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when converting an organization without MemberPrivileges", func() {
 			It("should not set any member privilege fields on the GitHub organization", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name:        "my-org",
 						Description: "Test description",
@@ -211,9 +192,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 
 			BeforeEach(func() {
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-org",
-					},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name:        "my-org",
 						Description: "Test description",
@@ -319,7 +298,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when MemberPrivileges is set with only some fields populated", func() {
 			It("should only set populated fields on the GitHub organization, leaving the rest nil", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name: "my-org",
 						MemberPrivileges: &v1alpha1.OrganizationMemberPrivileges{
@@ -344,7 +323,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 		Context("when organization plan gates MembersCanCreateInternalRepositories", func() {
 			It("should map MembersCanCreateInternalRepositories when Plan is empty (defaults to enterprise)", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name: "my-org",
 						MemberPrivileges: &v1alpha1.OrganizationMemberPrivileges{
@@ -360,7 +339,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 
 			It("should map MembersCanCreateInternalRepositories when Plan is enterprise", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name: "my-org",
 						Plan: v1alpha1.PlanEnterprise,
@@ -377,7 +356,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 
 			It("should map MembersCanCreateInternalRepositories when Plan is team", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name: "my-org",
 						Plan: v1alpha1.PlanTeam,
@@ -394,7 +373,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 
 			It("should NOT map MembersCanCreateInternalRepositories when Plan is free", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name: "my-org",
 						Plan: v1alpha1.PlanFree,
@@ -411,7 +390,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 
 			It("should still map other MemberPrivileges fields when Plan is free", func() {
 				org := &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-org"},
+					Name: "test-org",
 					Spec: v1alpha1.OrganizationSpec{
 						Name: "my-org",
 						Plan: v1alpha1.PlanFree,
@@ -435,9 +414,7 @@ var _ = Describe("GitHub Org Mapper", func() {
 
 		BeforeEach(func() {
 			org = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-org",
-				},
+				Name: "test-org",
 				Spec: v1alpha1.OrganizationSpec{
 					Name:        "my-org",
 					Description: "Test organization",

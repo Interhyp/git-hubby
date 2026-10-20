@@ -8,7 +8,6 @@ import (
 	"github.com/Interhyp/git-hubby/internal/reconciler/reconcilerfactory"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
 	"github.com/google/go-github/v93/github"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -195,10 +194,8 @@ func (r *RepositoryCtl) findRepositoriesForWebhookPreset(ctx context.Context, ob
 	requests := make([]reconcile.Request, 0, len(repoList.Items))
 	for _, repo := range repoList.Items {
 		requests = append(requests, reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Name:      repo.Name,
-				Namespace: repo.Namespace,
-			},
+			Name:      repo.Name,
+			Namespace: repo.Namespace,
 		})
 	}
 
@@ -217,10 +214,8 @@ func (r *RepositoryCtl) findRepositoriesForWebhookIgnorePreset(ctx context.Conte
 	requests := make([]reconcile.Request, 0, len(repoList.Items))
 	for _, repo := range repoList.Items {
 		requests = append(requests, reconcile.Request{
-			NamespacedName: client.ObjectKey{
-				Name:      repo.Name,
-				Namespace: repo.Namespace,
-			},
+			Name:      repo.Name,
+			Namespace: repo.Namespace,
 		})
 	}
 
@@ -239,10 +234,8 @@ func (r *RepositoryCtl) findRepositoriesForAutolinksPreset(ctx context.Context, 
 	requests := make([]reconcile.Request, 0, len(repoList.Items))
 	for _, repo := range repoList.Items {
 		requests = append(requests, reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Name:      repo.Name,
-				Namespace: repo.Namespace,
-			},
+			Name:      repo.Name,
+			Namespace: repo.Namespace,
 		})
 	}
 

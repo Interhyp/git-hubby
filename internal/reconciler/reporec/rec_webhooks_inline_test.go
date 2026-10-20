@@ -12,7 +12,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -49,8 +48,8 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 	}
 	secret := func(namespace, name, key, value string) *corev1.Secret {
 		return &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			Data:       map[string][]byte{key: []byte(value)},
+			Name: name, Namespace: namespace,
+			Data: map[string][]byte{key: []byte(value)},
 		}
 	}
 
@@ -58,14 +57,14 @@ var _ = Describe("ReconcileWebhooks with inline webhooks", func() {
 		ctx = context.Background()
 		mockClient = ghclientmock.NewMockGitHubClientWrapper()
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
-			Spec:       v1alpha1.RepositorySpec{Name: "test-repo"},
-			Status:     v1alpha1.RepositoryStatus{Webhooks: map[string]v1alpha1.WebhookStatus{}},
+			Name: "test-repo", Namespace: "default",
+			Spec:   v1alpha1.RepositorySpec{Name: "test-repo"},
+			Status: v1alpha1.RepositoryStatus{Webhooks: map[string]v1alpha1.WebhookStatus{}},
 		}
 		objects = []client.Object{
 			&v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{Name: "preset-1", Namespace: "default"},
-				Spec:       inlineWebhook("https://preset.example.com/hook"),
+				Name: "preset-1", Namespace: "default",
+				Spec: inlineWebhook("https://preset.example.com/hook"),
 			},
 		}
 		listCalled = false

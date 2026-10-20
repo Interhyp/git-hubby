@@ -6,7 +6,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("GitHub Repo Mapper", func() {
@@ -15,9 +14,7 @@ var _ = Describe("GitHub Repo Mapper", func() {
 		Context("when converting a repository with all fields set", func() {
 			It("should successfully convert to GitHub repository", func() {
 				repo := &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 					Spec: v1alpha1.RepositorySpec{
 						Name:               "my-repo",
 						Archived:           new(false),
@@ -44,9 +41,7 @@ var _ = Describe("GitHub Repo Mapper", func() {
 		Context("when converting an archived repository", func() {
 			It("should set Archived to true", func() {
 				repo := &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "archived-repo",
-					},
+					Name: "archived-repo",
 					Spec: v1alpha1.RepositorySpec{
 						Name:     "archived-repo",
 						Archived: new(true),
@@ -63,9 +58,7 @@ var _ = Describe("GitHub Repo Mapper", func() {
 		Context("when converting a repository", func() {
 			It("should always set visibility to internal", func() {
 				repo := &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 					Spec: v1alpha1.RepositorySpec{
 						Name:               "my-repo",
 						Archived:           new(false),
@@ -90,9 +83,7 @@ var _ = Describe("GitHub Repo Mapper", func() {
 		Context("when converting a repository with special characters in name", func() {
 			It("should preserve the name", func() {
 				repo := &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 					Spec: v1alpha1.RepositorySpec{
 						Name:     "my-special-repo_123",
 						Archived: new(false),
@@ -112,9 +103,7 @@ var _ = Describe("GitHub Repo Mapper", func() {
 
 		BeforeEach(func() {
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
+				Name: "test-repo",
 				Spec: v1alpha1.RepositorySpec{
 					Name:                "my-repo",
 					Archived:            new(false),
@@ -518,9 +507,7 @@ var _ = Describe("GitHub Repo Mapper", func() {
 		Context("when repository has nil bool fields", func() {
 			It("should pass nil values through to GitHub repo (no defaults applied in mapper)", func() {
 				repo := &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 					Spec: v1alpha1.RepositorySpec{
 						Name:                "my-repo",
 						Visibility:          "internal",

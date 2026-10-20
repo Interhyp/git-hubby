@@ -12,7 +12,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -43,11 +42,9 @@ var _ = Describe("ReconcileRepository", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "test-repo",
-				Namespace:   "default",
-				Annotations: map[string]string{},
-			},
+			Name:        "test-repo",
+			Namespace:   "default",
+			Annotations: map[string]string{},
 			Spec: v1alpha1.RepositorySpec{
 				Name:                "test-repo",
 				Archived:            new(false),
@@ -272,11 +269,9 @@ var _ = Describe("ReconcileRepository", func() {
 
 			BeforeEach(func() {
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        "test-org",
-						Namespace:   "default",
-						Annotations: map[string]string{},
-					},
+					Name:        "test-org",
+					Namespace:   "default",
+					Annotations: map[string]string{},
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    "test-org",
 						GitHubAppInstallationId: new(int64(123)),
@@ -871,10 +866,8 @@ var _ = Describe("getRepo", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name:     "test-repo",
 				Archived: new(false),
@@ -1146,10 +1139,8 @@ var _ = Describe("updateRepo", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name:     "test-repo",
 				Archived: new(false),
@@ -1238,10 +1229,8 @@ var _ = Describe("updateRecFieldsFromGitHub", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name:     "test-repo",
 				Archived: new(false),

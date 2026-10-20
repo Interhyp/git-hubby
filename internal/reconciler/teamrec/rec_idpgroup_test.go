@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -39,10 +38,8 @@ var _ = Describe("ReconcileIDPGroup", func() {
 
 		idpGroup := "test-idp-group"
 		team = &v1alpha1.Team{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-team",
-				Namespace: "default",
-			},
+			Name:      "test-team",
+			Namespace: "default",
 			Spec: v1alpha1.TeamSpec{
 				Name:        "test-team",
 				Description: "IDP Team",
@@ -55,20 +52,16 @@ var _ = Describe("ReconcileIDPGroup", func() {
 
 		// Create Organization objects that the IDP group reconciliation will fetch
 		org1 := &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "org1",
-				Namespace: "default",
-			},
+			Name:      "org1",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Plan: v1alpha1.PlanEnterprise,
 			},
 		}
 
 		org2 := &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "org2",
-				Namespace: "default",
-			},
+			Name:      "org2",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Plan: v1alpha1.PlanEnterprise,
 			},

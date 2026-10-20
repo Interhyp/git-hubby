@@ -18,7 +18,6 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -106,10 +105,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		}
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name:                     "test-repo",
 				Archived:                 new(false),
@@ -177,10 +174,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -197,10 +192,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret123",
-						Namespace: "default",
-					},
+					Name:      "secret123",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("secret123"),
 					},
@@ -229,10 +222,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook1",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -246,10 +237,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slack-webhook",
-						Namespace: "default",
-					},
+					Name:      "slack-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://slack.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -266,19 +255,15 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret1",
-						Namespace: "default",
-					},
+					Name:      "secret1",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("secret1"),
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret2",
-						Namespace: "default",
-					},
+					Name:      "secret2",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("secret2"),
 					},
@@ -303,10 +288,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 		BeforeEach(func() {
 			preset = &v1alpha1.WebhookPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ci-webhook",
-					Namespace: "default",
-				},
+				Name:      "ci-webhook",
+				Namespace: "default",
 				Spec: v1alpha1.WebhookSpec{
 					PayloadURL: "https://example.com/webhook",
 					Secret: &v1alpha1.WebhookSecretSpec{
@@ -323,10 +306,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret123",
-						Namespace: "default",
-					},
+					Name:      "secret123",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("secret123"),
 					},
@@ -374,10 +355,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -394,10 +373,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			hash := mapper.HashWebhookConfig("https://example.com/webhook", "application/json", []string{"push", "pull_request"})
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name:     "test-repo",
 					Archived: new(false),
@@ -416,10 +393,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "newsecret456",
-						Namespace: "default",
-					},
+					Name:      "newsecret456",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("newsecret456"),
 					},
@@ -517,10 +492,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -537,10 +510,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret123",
-						Namespace: "default",
-					},
+					Name:      "secret123",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("secret123"),
 					},
@@ -660,10 +631,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -680,10 +649,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret123",
-						Namespace: "default",
-					},
+					Name:      "secret123",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("secret123"),
 					},
@@ -718,10 +685,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -738,10 +703,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret123",
-						Namespace: "default",
-					},
+					Name:      "secret123",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("secret123"),
 					},
@@ -776,10 +739,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL:  "https://example.com/webhook",
 						ContentType: "application/json",
@@ -804,10 +765,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook1",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -824,10 +783,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret2",
-						Namespace: "default",
-					},
+					Name:      "secret2",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"newkey456": []byte("secret2"),
 					},
@@ -847,10 +804,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ci-webhook",
-						Namespace: "default",
-					},
+					Name:      "ci-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook1",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -867,10 +822,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret1",
-						Namespace: "default",
-					},
+					Name:      "secret1",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"wrong-key": []byte("secret1"),
 					},
@@ -901,10 +854,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookIgnorePresets = []*v1alpha1.WebhookIgnorePreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "foo-bar-ignore",
-						Namespace: "default",
-					},
+					Name:      "foo-bar-ignore",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookIgnoreSpec{
 						IgnoreURLRegex: new("https:\\/\\/foo\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
@@ -950,19 +901,15 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookIgnorePresets = []*v1alpha1.WebhookIgnorePreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "foo-bar-ignore",
-						Namespace: "default",
-					},
+					Name:      "foo-bar-ignore",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookIgnoreSpec{
 						IgnoreURLRegex: new("https:\\/\\/foo\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "bar-bar-ignore",
-						Namespace: "default",
-					},
+					Name:      "bar-bar-ignore",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookIgnoreSpec{
 						IgnoreURLRegex: new("https:\\/\\/bar\\.bar\\.random\\.info\\/webhook\\/.*"),
 					},
@@ -992,10 +939,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookIgnorePresets = []*v1alpha1.WebhookIgnorePreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "foo-bar-ignore",
-						Namespace: "default",
-					},
+					Name:      "foo-bar-ignore",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookIgnoreSpec{
 						IgnoreURLRegex: new("("),
 					},
@@ -1014,10 +959,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "templated-webhook",
-						Namespace: "default",
-					},
+					Name:      "templated-webhook",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/hooks/{{.SSHURL}}",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1034,10 +977,8 @@ var _ = Describe("ReconcileWebhooks", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-secret",
-						Namespace: "default",
-					},
+					Name:      "webhook-secret",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"token": []byte("my-secret-token"),
 					},
@@ -1142,10 +1083,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 		}
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name:              "test-repo",
 				WebhookPresetList: webhookPresetRefs,
@@ -1191,10 +1130,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-json",
-						Namespace: "default",
-					},
+					Name:      "webhook-json",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1208,10 +1145,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-form",
-						Namespace: "default",
-					},
+					Name:      "webhook-form",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1228,10 +1163,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret1",
-						Namespace: "default",
-					},
+					Name:      "secret1",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"key1": []byte("secret123"),
 					},
@@ -1275,10 +1208,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-push",
-						Namespace: "default",
-					},
+					Name:      "webhook-push",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1292,10 +1223,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 					},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-pr",
-						Namespace: "default",
-					},
+					Name:      "webhook-pr",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1312,10 +1241,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret1",
-						Namespace: "default",
-					},
+					Name:      "secret1",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"key1": []byte("secret123"),
 					},
@@ -1351,10 +1278,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-1",
-						Namespace: "default",
-					},
+					Name:      "webhook-1",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1371,10 +1296,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret1",
-						Namespace: "default",
-					},
+					Name:      "secret1",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"key1": []byte("secret123"),
 					},
@@ -1452,10 +1375,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-templated",
-						Namespace: "default",
-					},
+					Name:      "webhook-templated",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/hooks/{{.SSHURL}}",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1472,10 +1393,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret1",
-						Namespace: "default",
-					},
+					Name:      "secret1",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"key1": []byte("secret123"),
 					},
@@ -1566,10 +1485,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 		BeforeEach(func() {
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-1",
-						Namespace: "default",
-					},
+					Name:      "webhook-1",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1586,10 +1503,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret1",
-						Namespace: "default",
-					},
+					Name:      "secret1",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"key1": []byte("new-secret-value"),
 					},
@@ -1650,10 +1565,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 			// Only keep the push webhook, remove the pull_request webhook
 			webhookPresets = []*v1alpha1.WebhookPreset{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "webhook-push",
-						Namespace: "default",
-					},
+					Name:      "webhook-push",
+					Namespace: "default",
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/webhook",
 						Secret: &v1alpha1.WebhookSecretSpec{
@@ -1670,10 +1583,8 @@ var _ = Describe("ReconcileWebhooks - Hash-based collision handling", func() {
 
 			webhookSecrets = []*corev1.Secret{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "secret1",
-						Namespace: "default",
-					},
+					Name:      "secret1",
+					Namespace: "default",
 					Data: map[string][]byte{
 						"key1": []byte("secret123"),
 					},
@@ -1776,10 +1687,8 @@ var _ = Describe("cleanupUnusedWebhooks", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name: "test-repo",
 				OrganizationRef: v1alpha1.OrganizationRef{
@@ -1929,10 +1838,8 @@ var _ = Describe("createMissingWebhooks", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name: "test-repo",
 				OrganizationRef: v1alpha1.OrganizationRef{
@@ -2108,10 +2015,8 @@ var _ = Describe("updateWebhooksStatus", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name: "test-repo",
 				OrganizationRef: v1alpha1.OrganizationRef{
@@ -2283,10 +2188,8 @@ var _ = Describe("templatePayloadURL", func() {
 		mockClient = ghclientmock.NewMockGitHubClientWrapper()
 
 		preset = &v1alpha1.WebhookPreset{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-webhook",
-				Namespace: "default",
-			},
+			Name:      "test-webhook",
+			Namespace: "default",
 			Spec: v1alpha1.WebhookSpec{
 				PayloadURL:  "https://example.com/webhook",
 				ContentType: "application/json",
@@ -2573,8 +2476,8 @@ var _ = Describe("collectWebhookIgnoreRegexes", func() {
 
 	newPreset := func(name string, regex *string) *v1alpha1.WebhookIgnorePreset {
 		return &v1alpha1.WebhookIgnorePreset{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			Spec:       v1alpha1.WebhookIgnoreSpec{IgnoreURLRegex: regex},
+			Name: name, Namespace: namespace,
+			Spec: v1alpha1.WebhookIgnoreSpec{IgnoreURLRegex: regex},
 		}
 	}
 

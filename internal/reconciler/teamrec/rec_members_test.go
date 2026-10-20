@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -40,10 +39,8 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		team = &v1alpha1.Team{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-team",
-				Namespace: "default",
-			},
+			Name:      "test-team",
+			Namespace: "default",
 			Spec: v1alpha1.TeamSpec{
 				Name:    "test-team",
 				Members: []string{"user1", "user2"},
@@ -56,10 +53,8 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		// org1 uses legacy mode (no Login): GetLogin() returns Spec.Name == "org1",
 		// which matches githubOrg.Resource set by the factory.
 		org1 = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "org1",
-				Namespace: "default",
-			},
+			Name:      "org1",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name: "org1",
 			},
@@ -567,10 +562,8 @@ var _ = Describe("ReconcileTeamMembers", func() {
 		BeforeEach(func() {
 			// Rebuild k8sClient with org1 having a MemberSuffix configured
 			orgWithSuffix := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "org1",
-					Namespace: "default",
-				},
+				Name:      "org1",
+				Namespace: "default",
 				Spec: v1alpha1.OrganizationSpec{
 					Name:         "org1",
 					MemberSuffix: "@example.com",
@@ -633,10 +626,8 @@ var _ = Describe("ReconcileTeamMembers", func() {
 
 			// org1 has a different suffix; env var should win
 			orgWithSuffix := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "org1",
-					Namespace: "default",
-				},
+				Name:      "org1",
+				Namespace: "default",
 				Spec: v1alpha1.OrganizationSpec{
 					Name:         "org1",
 					MemberSuffix: "@example.com",
@@ -706,12 +697,12 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			}
 
 			orgWithSuffix1 := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{Name: "org1", Namespace: "default"},
-				Spec:       v1alpha1.OrganizationSpec{Name: "org1", MemberSuffix: "_suffix1"},
+				Name: "org1", Namespace: "default",
+				Spec: v1alpha1.OrganizationSpec{Name: "org1", MemberSuffix: "_suffix1"},
 			}
 			orgWithSuffix2 := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{Name: "org2", Namespace: "default"},
-				Spec:       v1alpha1.OrganizationSpec{Name: "org2", MemberSuffix: "_suffix2"},
+				Name: "org2", Namespace: "default",
+				Spec: v1alpha1.OrganizationSpec{Name: "org2", MemberSuffix: "_suffix2"},
 			}
 			k8sClient = fake.NewClientBuilder().
 				WithScheme(scheme).
@@ -788,10 +779,8 @@ var _ = Describe("ReconcileTeamMembers", func() {
 			}
 
 			org2 := &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "org2",
-					Namespace: "default",
-				},
+				Name:      "org2",
+				Namespace: "default",
 				Spec: v1alpha1.OrganizationSpec{
 					Name: "org2",
 				},

@@ -14,7 +14,6 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -80,20 +79,16 @@ var _ = Describe("ReconcileAutolinks", func() {
 
 	JustBeforeEach(func() {
 		preset = &v1alpha1.AutolinksPreset{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-autolinks-preset",
-				Namespace: "default",
-			},
+			Name:      "test-autolinks-preset",
+			Namespace: "default",
 			Spec: v1alpha1.AutolinksPresetSpec{
 				AutolinkList: autolinks,
 			},
 		}
 
 		repo = &v1alpha1.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: v1alpha1.RepositorySpec{
 				Name: "test-repo",
 				AutolinksPresetList: []v1.LocalObjectReference{
@@ -417,10 +412,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when merging two presets with non-overlapping autolinks", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-jira",
-					Namespace: "default",
-				},
+				Name:      "preset-jira",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -438,10 +431,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-github",
-					Namespace: "default",
-				},
+				Name:      "preset-github",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -459,10 +450,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -513,10 +502,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when merging two presets with duplicate autolinks", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-base",
-					Namespace: "default",
-				},
+				Name:      "preset-base",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -534,10 +521,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-duplicate",
-					Namespace: "default",
-				},
+				Name:      "preset-duplicate",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -555,10 +540,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -609,10 +592,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when merging three presets with partial overlaps", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-jira",
-					Namespace: "default",
-				},
+				Name:      "preset-jira",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -630,10 +611,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-github",
-					Namespace: "default",
-				},
+				Name:      "preset-github",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -651,10 +630,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset3 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-custom",
-					Namespace: "default",
-				},
+				Name:      "preset-custom",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -672,10 +649,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -727,10 +702,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when merging presets and some autolinks already exist in GitHub", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-jira",
-					Namespace: "default",
-				},
+				Name:      "preset-jira",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -748,10 +721,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-github",
-					Namespace: "default",
-				},
+				Name:      "preset-github",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -785,10 +756,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -839,10 +808,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when merging presets with GitHub having extra autolinks not in presets", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-jira",
-					Namespace: "default",
-				},
+				Name:      "preset-jira",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -855,10 +822,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-github",
-					Namespace: "default",
-				},
+				Name:      "preset-github",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -899,10 +864,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -947,10 +910,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when merging presets with full reconciliation (add, remove, keep)", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-jira",
-					Namespace: "default",
-				},
+				Name:      "preset-jira",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -968,10 +929,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-github",
-					Namespace: "default",
-				},
+				Name:      "preset-github",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -1005,10 +964,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -1063,10 +1020,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when a preset is missing in the cluster", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-jira",
-					Namespace: "default",
-				},
+				Name:      "preset-jira",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -1080,10 +1035,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 
 			// preset-missing does not exist in the cluster
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -1125,10 +1078,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when merging presets with different IsAlphanumeric values for same keyPrefix", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-alpha",
-					Namespace: "default",
-				},
+				Name:      "preset-alpha",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -1141,10 +1092,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-nonalpha",
-					Namespace: "default",
-				},
+				Name:      "preset-nonalpha",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -1157,10 +1106,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -1207,20 +1154,16 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when merging empty presets", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-empty1",
-					Namespace: "default",
-				},
+				Name:      "preset-empty1",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{},
 				},
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-empty2",
-					Namespace: "default",
-				},
+				Name:      "preset-empty2",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{},
 				},
@@ -1236,10 +1179,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -1284,10 +1225,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 	Context("when preset order matters for deduplication", func() {
 		BeforeEach(func() {
 			preset1 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-first",
-					Namespace: "default",
-				},
+				Name:      "preset-first",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -1300,10 +1239,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			preset2 = &v1alpha1.AutolinksPreset{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preset-second",
-					Namespace: "default",
-				},
+				Name:      "preset-second",
+				Namespace: "default",
 				Spec: v1alpha1.AutolinksPresetSpec{
 					AutolinkList: []v1alpha1.Autolink{
 						{
@@ -1316,10 +1253,8 @@ var _ = Describe("ReconcileAutolinks with Multiple Presets", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					AutolinksPresetList: []v1.LocalObjectReference{
@@ -1382,8 +1317,8 @@ var _ = Describe("collectDesiredAutolinks", func() {
 	}
 	newPreset := func(name string, autolinks ...v1alpha1.Autolink) *v1alpha1.AutolinksPreset {
 		return &v1alpha1.AutolinksPreset{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			Spec:       v1alpha1.AutolinksPresetSpec{AutolinkList: autolinks},
+			Name: name, Namespace: namespace,
+			Spec: v1alpha1.AutolinksPresetSpec{AutolinkList: autolinks},
 		}
 	}
 

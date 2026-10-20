@@ -17,7 +17,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -93,10 +92,8 @@ var _ = Describe("Factory", func() {
 			}
 
 			org = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      defaultOrgName,
-					Namespace: defaultNS,
-				},
+				Name:      defaultOrgName,
+				Namespace: defaultNS,
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    defaultOrgName,
 					Description:             "Test Organization",
@@ -232,10 +229,8 @@ var _ = Describe("Factory", func() {
 			}
 
 			org = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      defaultOrgName,
-					Namespace: defaultNS,
-				},
+				Name:      defaultOrgName,
+				Namespace: defaultNS,
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    defaultOrgName,
 					Description:             "Test Organization",
@@ -244,10 +239,8 @@ var _ = Describe("Factory", func() {
 			}
 
 			repo = &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: defaultNS,
-				},
+				Name:      "test-repo",
+				Namespace: defaultNS,
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					OrganizationRef: v1alpha1.OrganizationRef{
@@ -421,10 +414,8 @@ var _ = Describe("Factory", func() {
 			}
 
 			org1 = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "org1",
-					Namespace: defaultNS,
-				},
+				Name:      "org1",
+				Namespace: defaultNS,
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    "org1",
 					Description:             "Test Organization 1",
@@ -433,10 +424,8 @@ var _ = Describe("Factory", func() {
 			}
 
 			org2 = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "org2",
-					Namespace: defaultNS,
-				},
+				Name:      "org2",
+				Namespace: defaultNS,
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    "org2",
 					Description:             "Test Organization 2",
@@ -445,10 +434,8 @@ var _ = Describe("Factory", func() {
 			}
 
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: defaultNS,
-				},
+				Name:      "test-team",
+				Namespace: defaultNS,
 				Spec: v1alpha1.TeamSpec{
 					Name:        "test-team",
 					Description: "Test Team",
@@ -703,10 +690,8 @@ var _ = Describe("Factory", func() {
 			namespace = defaultNS
 
 			org = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      orgRef,
-					Namespace: namespace,
-				},
+				Name:      orgRef,
+				Namespace: namespace,
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    orgRef,
 					Description:             "Test Organization",
@@ -766,10 +751,8 @@ var _ = Describe("Factory", func() {
 
 		BeforeEach(func() {
 			org1 = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "org1",
-					Namespace: defaultNS,
-				},
+				Name:      "org1",
+				Namespace: defaultNS,
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    "org1",
 					GitHubAppInstallationId: new(int64(11111)),
@@ -777,10 +760,8 @@ var _ = Describe("Factory", func() {
 			}
 
 			org2 = &v1alpha1.Organization{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "org2",
-					Namespace: defaultNS,
-				},
+				Name:      "org2",
+				Namespace: defaultNS,
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                    "org2",
 					GitHubAppInstallationId: new(int64(22222)),
@@ -788,10 +769,8 @@ var _ = Describe("Factory", func() {
 			}
 
 			team = &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: defaultNS,
-				},
+				Name:      "test-team",
+				Namespace: defaultNS,
 				Spec: v1alpha1.TeamSpec{
 					Name: "test-team",
 					OrganizationRefs: []v1alpha1.OrganizationRef{
@@ -920,10 +899,8 @@ var _ = Describe("Factory", func() {
 				}
 
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      defaultOrgName,
-						Namespace: defaultNS,
-					},
+					Name:      defaultOrgName,
+					Namespace: defaultNS,
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
 						GitHubAppInstallationId: &defaultAppID,
@@ -976,10 +953,8 @@ var _ = Describe("Factory", func() {
 				}
 
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      defaultOrgName,
-						Namespace: defaultNS,
-					},
+					Name:      defaultOrgName,
+					Namespace: defaultNS,
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
 						GitHubAppInstallationId: &defaultAppID,
@@ -988,10 +963,8 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
 
 				repo = &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: defaultNS,
-					},
+					Name:      "test-repo",
+					Namespace: defaultNS,
 					Spec: v1alpha1.RepositorySpec{
 						Name: "test-repo",
 						OrganizationRef: v1alpha1.OrganizationRef{
@@ -1046,10 +1019,8 @@ var _ = Describe("Factory", func() {
 				}
 
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      defaultOrgName,
-						Namespace: defaultNS,
-					},
+					Name:      defaultOrgName,
+					Namespace: defaultNS,
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
 						GitHubAppInstallationId: &defaultAppID,
@@ -1058,10 +1029,8 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
 
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-team",
-						Namespace: defaultNS,
-					},
+					Name:      "test-team",
+					Namespace: defaultNS,
 					Spec: v1alpha1.TeamSpec{
 						Name: "test-team",
 						OrganizationRefs: []v1alpha1.OrganizationRef{
@@ -1110,10 +1079,8 @@ var _ = Describe("Factory", func() {
 
 			BeforeEach(func() {
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      defaultOrgName,
-						Namespace: defaultNS,
-					},
+					Name:      defaultOrgName,
+					Namespace: defaultNS,
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
 						GitHubAppInstallationId: &defaultAppID,
@@ -1134,11 +1101,9 @@ var _ = Describe("Factory", func() {
 
 				BeforeEach(func() {
 					rulesetPreset = &v1alpha1.RulesetPreset{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-ruleset",
-							Namespace:  defaultNS,
-							Generation: 5,
-						},
+						Name:       "test-ruleset",
+						Namespace:  defaultNS,
+						Generation: 5,
 						Spec: v1alpha1.RulesetSpec{
 							Name: "test-ruleset",
 						},
@@ -1172,8 +1137,8 @@ var _ = Describe("Factory", func() {
 						{"dangling", "missing", 7},
 					} {
 						Expect(k8sClient.Create(ctx, &v1alpha1.RulesetPreset{
-							ObjectMeta: metav1.ObjectMeta{Name: p.name, Namespace: defaultNS, Generation: p.generation},
-							Spec:       v1alpha1.RulesetSpec{Name: p.name, Extends: p.extends},
+							Name: p.name, Namespace: defaultNS, Generation: p.generation,
+							Spec: v1alpha1.RulesetSpec{Name: p.name, Extends: p.extends},
 						})).To(Succeed())
 					}
 					org.Spec.RulesetPresetList = []v1.LocalObjectReference{{Name: "child"}, {Name: "dangling"}}
@@ -1198,11 +1163,9 @@ var _ = Describe("Factory", func() {
 
 				BeforeEach(func() {
 					csc = &v1alpha1.CodeSecurityConfiguration{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-csc",
-							Namespace:  defaultNS,
-							Generation: 3,
-						},
+						Name:       "test-csc",
+						Namespace:  defaultNS,
+						Generation: 3,
 						Spec: v1alpha1.CodeSecurityConfigurationSpec{
 							Name:        "test-csc",
 							Description: "Test CSC",
@@ -1234,11 +1197,9 @@ var _ = Describe("Factory", func() {
 
 				BeforeEach(func() {
 					rulesetPreset1 = &v1alpha1.RulesetPreset{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "ruleset-1",
-							Namespace:  defaultNS,
-							Generation: 1,
-						},
+						Name:       "ruleset-1",
+						Namespace:  defaultNS,
+						Generation: 1,
 						Spec: v1alpha1.RulesetSpec{
 							Name: "ruleset-1",
 						},
@@ -1246,11 +1207,9 @@ var _ = Describe("Factory", func() {
 					Expect(k8sClient.Create(ctx, rulesetPreset1)).To(Succeed())
 
 					rulesetPreset2 = &v1alpha1.RulesetPreset{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "ruleset-2",
-							Namespace:  defaultNS,
-							Generation: 1,
-						},
+						Name:       "ruleset-2",
+						Namespace:  defaultNS,
+						Generation: 1,
 						Spec: v1alpha1.RulesetSpec{
 							Name: "ruleset-2",
 						},
@@ -1258,11 +1217,9 @@ var _ = Describe("Factory", func() {
 					Expect(k8sClient.Create(ctx, rulesetPreset2)).To(Succeed())
 
 					csc1 = &v1alpha1.CodeSecurityConfiguration{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "csc-1",
-							Namespace:  defaultNS,
-							Generation: 1,
-						},
+						Name:       "csc-1",
+						Namespace:  defaultNS,
+						Generation: 1,
 						Spec: v1alpha1.CodeSecurityConfigurationSpec{
 							Name:        "csc-1",
 							Description: "CSC 1",
@@ -1271,11 +1228,9 @@ var _ = Describe("Factory", func() {
 					Expect(k8sClient.Create(ctx, csc1)).To(Succeed())
 
 					csc2 = &v1alpha1.CodeSecurityConfiguration{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "csc-2",
-							Namespace:  defaultNS,
-							Generation: 1,
-						},
+						Name:       "csc-2",
+						Namespace:  defaultNS,
+						Generation: 1,
 						Spec: v1alpha1.CodeSecurityConfigurationSpec{
 							Name:        "csc-2",
 							Description: "CSC 2",
@@ -1322,8 +1277,8 @@ var _ = Describe("Factory", func() {
 			Context("when one of several ruleset presets does not exist", func() {
 				BeforeEach(func() {
 					Expect(k8sClient.Create(ctx, &v1alpha1.RulesetPreset{
-						ObjectMeta: metav1.ObjectMeta{Name: "existing", Namespace: defaultNS, Generation: 2},
-						Spec:       v1alpha1.RulesetSpec{Name: "existing"},
+						Name: "existing", Namespace: defaultNS, Generation: 2,
+						Spec: v1alpha1.RulesetSpec{Name: "existing"},
 					})).To(Succeed())
 					org.Spec.RulesetPresetList = []v1.LocalObjectReference{
 						{Name: "non-existent"},
@@ -1359,10 +1314,8 @@ var _ = Describe("Factory", func() {
 
 			BeforeEach(func() {
 				repo = &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: defaultNS,
-					},
+					Name:      "test-repo",
+					Namespace: defaultNS,
 					Spec: v1alpha1.RepositorySpec{
 						Name: "test-repo",
 						OrganizationRef: v1alpha1.OrganizationRef{
@@ -1385,11 +1338,9 @@ var _ = Describe("Factory", func() {
 
 				BeforeEach(func() {
 					rulesetPreset = &v1alpha1.RulesetPreset{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "repo-ruleset",
-							Namespace:  defaultNS,
-							Generation: 8,
-						},
+						Name:       "repo-ruleset",
+						Namespace:  defaultNS,
+						Generation: 8,
 						Spec: v1alpha1.RulesetSpec{
 							Name: "repo-ruleset",
 						},
@@ -1415,11 +1366,9 @@ var _ = Describe("Factory", func() {
 
 				BeforeEach(func() {
 					webhookPreset = &v1alpha1.WebhookPreset{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-webhook",
-							Namespace:  defaultNS,
-							Generation: 6,
-						},
+						Name:       "test-webhook",
+						Namespace:  defaultNS,
+						Generation: 6,
 						Spec: v1alpha1.WebhookSpec{
 							PayloadURL: "https://example.com/webhook",
 						},
@@ -1445,11 +1394,9 @@ var _ = Describe("Factory", func() {
 
 				BeforeEach(func() {
 					csc = &v1alpha1.CodeSecurityConfiguration{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "repo-csc",
-							Namespace:  defaultNS,
-							Generation: 9,
-						},
+						Name:       "repo-csc",
+						Namespace:  defaultNS,
+						Generation: 9,
 						Spec: v1alpha1.CodeSecurityConfigurationSpec{
 							Name:        "repo-csc",
 							Description: "Repo CSC",
@@ -1481,11 +1428,9 @@ var _ = Describe("Factory", func() {
 
 				BeforeEach(func() {
 					rulesetPreset = &v1alpha1.RulesetPreset{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "repo-ruleset",
-							Namespace:  defaultNS,
-							Generation: 11,
-						},
+						Name:       "repo-ruleset",
+						Namespace:  defaultNS,
+						Generation: 11,
 						Spec: v1alpha1.RulesetSpec{
 							Name: "repo-ruleset",
 						},
@@ -1493,11 +1438,9 @@ var _ = Describe("Factory", func() {
 					Expect(k8sClient.Create(ctx, rulesetPreset)).To(Succeed())
 
 					webhookPreset1 = &v1alpha1.WebhookPreset{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "webhook-1",
-							Namespace:  defaultNS,
-							Generation: 13,
-						},
+						Name:       "webhook-1",
+						Namespace:  defaultNS,
+						Generation: 13,
 						Spec: v1alpha1.WebhookSpec{
 							PayloadURL: "https://example.com/webhook1",
 						},
@@ -1505,11 +1448,9 @@ var _ = Describe("Factory", func() {
 					Expect(k8sClient.Create(ctx, webhookPreset1)).To(Succeed())
 
 					webhookPreset2 = &v1alpha1.WebhookPreset{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "webhook-2",
-							Namespace:  defaultNS,
-							Generation: 14,
-						},
+						Name:       "webhook-2",
+						Namespace:  defaultNS,
+						Generation: 14,
 						Spec: v1alpha1.WebhookSpec{
 							PayloadURL: "https://example.com/webhook2",
 						},
@@ -1517,11 +1458,9 @@ var _ = Describe("Factory", func() {
 					Expect(k8sClient.Create(ctx, webhookPreset2)).To(Succeed())
 
 					csc = &v1alpha1.CodeSecurityConfiguration{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "repo-csc",
-							Namespace:  defaultNS,
-							Generation: 12,
-						},
+						Name:       "repo-csc",
+						Namespace:  defaultNS,
+						Generation: 12,
 						Spec: v1alpha1.CodeSecurityConfigurationSpec{
 							Name:        "repo-csc",
 							Description: "Repo CSC",
@@ -1624,11 +1563,9 @@ var _ = Describe("Factory", func() {
 				}
 
 				rulesetPreset = &v1alpha1.RulesetPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "integration-ruleset",
-						Namespace:  defaultNS,
-						Generation: 15,
-					},
+					Name:       "integration-ruleset",
+					Namespace:  defaultNS,
+					Generation: 15,
 					Spec: v1alpha1.RulesetSpec{
 						Name: "integration-ruleset",
 					},
@@ -1636,11 +1573,9 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, rulesetPreset)).To(Succeed())
 
 				csc = &v1alpha1.CodeSecurityConfiguration{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "integration-csc",
-						Namespace:  defaultNS,
-						Generation: 16,
-					},
+					Name:       "integration-csc",
+					Namespace:  defaultNS,
+					Generation: 16,
 					Spec: v1alpha1.CodeSecurityConfigurationSpec{
 						Name:        "integration-csc",
 						Description: "Integration CSC",
@@ -1649,10 +1584,8 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, csc)).To(Succeed())
 
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      defaultOrgName,
-						Namespace: defaultNS,
-					},
+					Name:      defaultOrgName,
+					Namespace: defaultNS,
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
 						GitHubAppInstallationId: &defaultAppID,
@@ -1711,11 +1644,9 @@ var _ = Describe("Factory", func() {
 				}
 
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       defaultOrgName,
-						Namespace:  defaultNS,
-						Generation: 1,
-					},
+					Name:       defaultOrgName,
+					Namespace:  defaultNS,
+					Generation: 1,
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
 						GitHubAppInstallationId: &defaultAppID,
@@ -1724,11 +1655,9 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
 
 				rulesetPreset = &v1alpha1.RulesetPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "integration-repo-ruleset",
-						Namespace:  defaultNS,
-						Generation: 1,
-					},
+					Name:       "integration-repo-ruleset",
+					Namespace:  defaultNS,
+					Generation: 1,
 					Spec: v1alpha1.RulesetSpec{
 						Name: "integration-repo-ruleset",
 					},
@@ -1736,11 +1665,9 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, rulesetPreset)).To(Succeed())
 
 				webhookPreset = &v1alpha1.WebhookPreset{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "integration-webhook",
-						Namespace:  defaultNS,
-						Generation: 1,
-					},
+					Name:       "integration-webhook",
+					Namespace:  defaultNS,
+					Generation: 1,
 					Spec: v1alpha1.WebhookSpec{
 						PayloadURL: "https://example.com/integration",
 					},
@@ -1748,11 +1675,9 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, webhookPreset)).To(Succeed())
 
 				csc = &v1alpha1.CodeSecurityConfiguration{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "integration-repo-csc",
-						Namespace:  defaultNS,
-						Generation: 1,
-					},
+					Name:       "integration-repo-csc",
+					Namespace:  defaultNS,
+					Generation: 1,
 					Spec: v1alpha1.CodeSecurityConfigurationSpec{
 						Name:        "integration-repo-csc",
 						Description: "Integration Repo CSC",
@@ -1761,11 +1686,9 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, csc)).To(Succeed())
 
 				repo = &v1alpha1.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:       "integration-repo",
-						Namespace:  defaultNS,
-						Generation: 1,
-					},
+					Name:       "integration-repo",
+					Namespace:  defaultNS,
+					Generation: 1,
 					Spec: v1alpha1.RepositorySpec{
 						Name: "integration-repo",
 						OrganizationRef: v1alpha1.OrganizationRef{
@@ -1828,10 +1751,8 @@ var _ = Describe("Factory", func() {
 				}
 
 				org = &v1alpha1.Organization{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      defaultOrgName,
-						Namespace: defaultNS,
-					},
+					Name:      defaultOrgName,
+					Namespace: defaultNS,
 					Spec: v1alpha1.OrganizationSpec{
 						Name:                    defaultOrgName,
 						GitHubAppInstallationId: &defaultAppID,
@@ -1840,10 +1761,8 @@ var _ = Describe("Factory", func() {
 				Expect(k8sClient.Create(ctx, org)).To(Succeed())
 
 				team = &v1alpha1.Team{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "integration-team",
-						Namespace: defaultNS,
-					},
+					Name:      "integration-team",
+					Namespace: defaultNS,
 					Spec: v1alpha1.TeamSpec{
 						Name: "integration-team",
 						OrganizationRefs: []v1alpha1.OrganizationRef{

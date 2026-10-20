@@ -12,7 +12,6 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
@@ -53,8 +52,8 @@ var _ = Describe("Collect", func() {
 
 	newPreset := func(objName string, spec v1alpha1.RulesetSpec) *v1alpha1.RulesetPreset {
 		return &v1alpha1.RulesetPreset{
-			ObjectMeta: metav1.ObjectMeta{Name: objName, Namespace: namespace},
-			Spec:       spec,
+			Name: objName, Namespace: namespace,
+			Spec: spec,
 		}
 	}
 

@@ -8,7 +8,6 @@ import (
 	"github.com/Interhyp/git-hubby/test/mock/ghclientmock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -34,10 +33,8 @@ var _ = Describe("ReconcileDeletion", func() {
 		Expect(schemeErr).NotTo(HaveOccurred())
 
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				Description:             "Test Organization",
@@ -90,10 +87,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has repositories", func() {
 		BeforeEach(func() {
 			repo := &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					OrganizationRef: v1alpha1.OrganizationRef{
@@ -131,10 +126,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has multiple repositories", func() {
 		BeforeEach(func() {
 			repo1 := &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo-1",
-					Namespace: "default",
-				},
+				Name:      "test-repo-1",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo-1",
 					OrganizationRef: v1alpha1.OrganizationRef{
@@ -144,10 +137,8 @@ var _ = Describe("ReconcileDeletion", func() {
 			}
 
 			repo2 := &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo-2",
-					Namespace: "default",
-				},
+				Name:      "test-repo-2",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo-2",
 					OrganizationRef: v1alpha1.OrganizationRef{
@@ -185,10 +176,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has teams", func() {
 		BeforeEach(func() {
 			team := &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name:    "test-team",
 					Members: []string{"user1", "user2"},
@@ -227,10 +216,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has multiple teams", func() {
 		BeforeEach(func() {
 			team1 := &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team-1",
-					Namespace: "default",
-				},
+				Name:      "test-team-1",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name:    "test-team-1",
 					Members: []string{"user1"},
@@ -241,10 +228,8 @@ var _ = Describe("ReconcileDeletion", func() {
 			}
 
 			team2 := &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team-2",
-					Namespace: "default",
-				},
+				Name:      "test-team-2",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name:    "test-team-2",
 					Members: []string{"user2"},
@@ -283,10 +268,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has both repositories and teams", func() {
 		BeforeEach(func() {
 			repo := &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					OrganizationRef: v1alpha1.OrganizationRef{
@@ -296,10 +279,8 @@ var _ = Describe("ReconcileDeletion", func() {
 			}
 
 			team := &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name:    "test-team",
 					Members: []string{"user1"},
@@ -339,10 +320,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has repositories in a different namespace", func() {
 		BeforeEach(func() {
 			repoInDifferentNamespace := &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "other-namespace",
-				},
+				Name:      "test-repo",
+				Namespace: "other-namespace",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					OrganizationRef: v1alpha1.OrganizationRef{
@@ -378,10 +357,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has teams in a different namespace", func() {
 		BeforeEach(func() {
 			teamInDifferentNamespace := &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "other-namespace",
-				},
+				Name:      "test-team",
+				Namespace: "other-namespace",
 				Spec: v1alpha1.TeamSpec{
 					Name:    "test-team",
 					Members: []string{"user1"},
@@ -418,10 +395,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has repositories referencing a different organization", func() {
 		BeforeEach(func() {
 			repoForDifferentOrg := &v1alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: v1alpha1.RepositorySpec{
 					Name: "test-repo",
 					OrganizationRef: v1alpha1.OrganizationRef{
@@ -457,10 +432,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has teams referencing multiple organizations (including this one)", func() {
 		BeforeEach(func() {
 			teamInMultipleOrgs := &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name:    "test-team",
 					Members: []string{"user1"},
@@ -500,10 +473,8 @@ var _ = Describe("ReconcileDeletion", func() {
 	Context("when organization has teams referencing only other organizations", func() {
 		BeforeEach(func() {
 			teamInOtherOrgs := &v1alpha1.Team{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-team",
-					Namespace: "default",
-				},
+				Name:      "test-team",
+				Namespace: "default",
 				Spec: v1alpha1.TeamSpec{
 					Name:    "test-team",
 					Members: []string{"user1"},
@@ -547,10 +518,8 @@ var _ = Describe("RequiredReconciliations", func() {
 
 	BeforeEach(func() {
 		org = &v1alpha1.Organization{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-org",
-				Namespace: "default",
-			},
+			Name:      "test-org",
+			Namespace: "default",
 			Spec: v1alpha1.OrganizationSpec{
 				Name:                    "test-org",
 				Description:             "Test Organization",
