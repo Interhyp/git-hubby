@@ -35,6 +35,20 @@
       "semanticCommitType": "chore"
     },
     {
+      "description": "Update the go directive in go.mod (Renovate leaves it alone by default unless out of range)",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["golang"],
+      "matchDatasources": ["golang-version"],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Bundle all Go toolchain bumps (go.mod, mise.toml, Dockerfile base image) into a single PR",
+      "matchManagers": ["gomod", "mise", "dockerfile"],
+      "matchPackageNames": ["go", "golang"],
+      "groupName": "go",
+      "semanticCommitType": "build"
+    },
+    {
       "matchManagers": ["custom.regex"],
       "matchPackageNames": ["github.com/golangci/golangci-lint/v2"],
       "groupName": "golangci-lint",
