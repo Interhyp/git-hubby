@@ -1,6 +1,6 @@
 module github.com/Interhyp/git-hubby
 
-go 1.26.3
+go 1.27.3
 
 require (
 	github.com/PuerkitoBio/rehttp v1.4.0
