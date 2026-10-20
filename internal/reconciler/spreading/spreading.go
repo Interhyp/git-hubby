@@ -9,15 +9,8 @@ import (
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-)
 
-const (
-	// DefaultSpreadPeriodMinutes is the default spread-period window in minutes.
-	// Matches the envDefault in internal/config.Config.SpreadPeriodMinutes.
-	DefaultSpreadPeriodMinutes = 5
-	// DefaultSpreadIntervalMinutes is the default spread-interval window in minutes.
-	// Matches the envDefault in internal/config.Config.SpreadIntervalMinutes.
-	DefaultSpreadIntervalMinutes = 180
+	"github.com/Interhyp/git-hubby/internal/config"
 )
 
 // SpreadableResource defines the interface for resources that support startup spreading
@@ -52,55 +45,18 @@ type Manager struct {
 	Config Config
 }
 
-// Option is a functional option for configuring a spreading Manager.
-type Option func(*Config)
-
-// WithEnabled overrides the Enabled field of the default manager config.
-// Pass spreading.WithEnabled(features.EnableStartupSpreading) from cmd/main.go.
-func WithEnabled(enabled bool) Option {
-	return func(c *Config) {
-		c.Enabled = enabled
-	}
-}
-
-// NewManager creates a new spreading manager
-func NewManager(config Config) *Manager {
+// NewManager creates a spreading manager from the operator configuration. The start time is the time of creation and
+// the seed is random, so that resources are spread differently on each pod restart.
+func NewManager(cfg config.Config) *Manager {
 	return &Manager{
-		Config: config,
+		Config: Config{
+			StartTime:      time.Now(),
+			SpreadSeed:     uuid.New().String(),
+			SpreadPeriod:   cfg.SpreadPeriod(),
+			SpreadInterval: cfg.SpreadInterval(),
+			Enabled:        cfg.Features.EnableStartupSpreading,
+		},
 	}
-}
-
-// WithSpreadPeriod overrides the SpreadPeriod field of the default manager config.
-// Pass spreading.WithSpreadPeriod(cfg.SpreadPeriodMinutes) from cmd/main.go.
-func WithSpreadPeriod(minutes int) Option {
-	return func(c *Config) {
-		c.SpreadPeriod = time.Duration(minutes) * time.Minute
-	}
-}
-
-// WithSpreadInterval overrides the SpreadInterval field of the default manager config.
-// Pass spreading.WithSpreadInterval(cfg.SpreadIntervalMinutes) from cmd/main.go.
-func WithSpreadInterval(minutes int) Option {
-	return func(c *Config) {
-		c.SpreadInterval = time.Duration(minutes) * time.Minute
-	}
-}
-
-// NewDefaultManager creates a manager with default configuration from environment variables.
-// The Enabled flag and numeric tuning values are not read from env here; pass the relevant
-// With* opts from cmd/main.go so that configuration ownership stays in internal/config.
-func NewDefaultManager(opts ...Option) *Manager {
-	config := Config{
-		SpreadSeed:     uuid.New().String(),
-		StartTime:      time.Now(),
-		Enabled:        true,
-		SpreadPeriod:   DefaultSpreadPeriodMinutes * time.Minute,
-		SpreadInterval: DefaultSpreadIntervalMinutes * time.Minute,
-	}
-	for _, opt := range opts {
-		opt(&config)
-	}
-	return &Manager{Config: config}
 }
 
 // Spread returns a RequiresSpreadError if a reconciliation should be delayed for spreading
@@ -174,10 +130,6 @@ func subResourcesChanged(generations map[string]int64, generations2 map[string]i
 		}
 	}
 	return false
-}
-
-func (m *Manager) GetSpreadInterval() time.Duration {
-	return m.Config.SpreadInterval
 }
 
 // calculateSpreadDelay calculates how long to delay a reconciliation for spreading

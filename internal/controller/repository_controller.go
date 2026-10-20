@@ -25,12 +25,10 @@ import (
 
 // RepositoryCtl reconciles a Repository object
 type RepositoryCtl struct {
-	Scheme                 *runtime.Scheme
-	ReconcilerFactory      *reconcilerfactory.Factory
-	SuccessRequeueInterval time.Duration
-	// GitHubStateRequeueInterval is used instead of SuccessRequeueInterval for errors requiring user action on
-	// GitHub (see handleUserActionRequired).
-	GitHubStateRequeueInterval time.Duration
+	Scheme            *runtime.Scheme
+	ReconcilerFactory *reconcilerfactory.Factory
+	// Requeue decides when resources are reconciled again.
+	Requeue *RequeuePolicy
 	// RulesetPresetIndex maps RulesetPreset changes to the affected resources; see SetupRulesetPresetIndex.
 	RulesetPresetIndex *RulesetPresetIndex
 }
@@ -60,7 +58,7 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	rec, err := r.ReconcilerFactory.CreateForRepo(ctx, req.NamespacedName)
 	if err != nil {
-		return handleRequeueError(ctx, err)
+		return r.Requeue.OnFactoryError(ctx, err)
 	}
 	if rec == nil {
 		return ctrl.Result{}, nil // no requeue, k8s resource not found
@@ -79,19 +77,13 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			log.Info("New repository is not ready yet, requeuing", "requeueAfter", newRepoRequeueDelay)
 			return ctrl.Result{RequeueAfter: newRepoRequeueDelay}, nil
 		}
-		if result, ok := handleUserActionRequired(ctx, err, r.SuccessRequeueInterval, r.GitHubStateRequeueInterval); ok {
-			return result, nil
-		}
-		if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
-			log.Error(err, "Reconciliation failed")
-		}
-		return handleRequeueError(ctx, err)
+		return r.Requeue.OnReconcileError(ctx, err)
 	}
 	if resourceWasDeleted(rec.Reconciler) {
 		return ctrl.Result{}, nil
 	}
 
-	return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil
+	return r.Requeue.OnSuccess(), nil
 }
 
 // archivedRepoRequeueDelay is the delay before a repository that was archived on GitHub during a reconciliation is

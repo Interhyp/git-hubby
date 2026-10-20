@@ -41,7 +41,7 @@ func RequiresUserAction(err error) bool {
 	if status, ok := err.(apierrors.APIStatus); ok { //nolint:errorlint // the error tree is walked explicitly
 		// A referenced Kubernetes resource (preset, configuration, secret, ...) does not exist. Classifying this at
 		// the leaf covers every reference without marking each fetch site; new references are handled automatically.
-		// The controllers requeue these errors after the short GitHub state interval, see handleUserActionRequired.
+		// The controllers requeue these errors after the short GitHub state interval, see controller.RequeuePolicy.OnReconcileError.
 		return status.Status().Reason == metav1.StatusReasonNotFound
 	}
 	switch e := err.(type) { //nolint:errorlint // the error tree is walked explicitly

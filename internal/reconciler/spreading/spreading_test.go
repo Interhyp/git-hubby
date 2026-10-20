@@ -7,6 +7,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/Interhyp/git-hubby/internal/config"
 )
 
 // mockResource implements SpreadableResource for testing
@@ -45,48 +47,31 @@ var _ = Describe("Spreading", func() {
 
 	Describe("Manager", func() {
 		Describe("NewManager", func() {
-			It("should create a manager with given config", func() {
-				config := Config{
-					StartTime:      time.Now(),
-					SpreadSeed:     "test-seed",
-					SpreadPeriod:   5 * time.Minute,
-					SpreadInterval: 180 * time.Minute,
-					Enabled:        true,
-				}
-
-				manager := NewManager(config)
-
-				Expect(manager).NotTo(BeNil())
-				Expect(manager.Config).To(Equal(config))
-			})
-		})
-
-		Describe("NewDefaultManager", func() {
-			It("should create a manager with default configuration", func() {
-				manager := NewDefaultManager()
+			It("should create a manager from the operator config", func() {
+				before := time.Now()
+				manager := NewManager(config.Config{
+					SpreadPeriodMinutes:   10,
+					SpreadIntervalMinutes: 120,
+					Features:              config.Features{EnableStartupSpreading: true},
+				})
 
 				Expect(manager).NotTo(BeNil())
 				Expect(manager.Config.Enabled).To(BeTrue())
-				Expect(manager.Config.SpreadPeriod).To(Equal(5 * time.Minute))
-				Expect(manager.Config.SpreadInterval).To(Equal(180 * time.Minute))
+				Expect(manager.Config.SpreadPeriod).To(Equal(10 * time.Minute))
+				Expect(manager.Config.SpreadInterval).To(Equal(120 * time.Minute))
 				Expect(manager.Config.SpreadSeed).NotTo(BeEmpty())
-				Expect(manager.Config.StartTime).NotTo(BeZero())
+				Expect(manager.Config.StartTime).To(BeTemporally(">=", before))
 			})
 
-			It("should disable spreading when WithEnabled(false) is passed", func() {
-				manager := NewDefaultManager(WithEnabled(false))
+			It("should disable spreading if disabled in the config", func() {
+				manager := NewManager(config.Config{Features: config.Features{EnableStartupSpreading: false}})
 
 				Expect(manager.Config.Enabled).To(BeFalse())
 			})
 
-			It("should set SpreadPeriod when WithSpreadPeriod is passed", func() {
-				manager := NewDefaultManager(WithSpreadPeriod(10))
-				Expect(manager.Config.SpreadPeriod).To(Equal(10 * time.Minute))
-			})
-
-			It("should set SpreadInterval when WithSpreadInterval is passed", func() {
-				manager := NewDefaultManager(WithSpreadInterval(120))
-				Expect(manager.Config.SpreadInterval).To(Equal(120 * time.Minute))
+			It("should use a different seed for each manager", func() {
+				Expect(NewManager(config.Config{}).Config.SpreadSeed).
+					NotTo(Equal(NewManager(config.Config{}).Config.SpreadSeed))
 			})
 		})
 
@@ -97,13 +82,13 @@ var _ = Describe("Spreading", func() {
 			)
 
 			BeforeEach(func() {
-				manager = NewManager(Config{
+				manager = &Manager{Config: Config{
 					StartTime:      time.Now(),
 					SpreadSeed:     "test-seed",
 					SpreadPeriod:   5 * time.Minute,
 					SpreadInterval: 180 * time.Minute,
 					Enabled:        true,
-				})
+				}}
 
 				resource = &mockResource{
 					ObjectMeta: metav1.ObjectMeta{
@@ -321,13 +306,13 @@ var _ = Describe("Spreading", func() {
 			)
 
 			BeforeEach(func() {
-				manager = NewManager(Config{
+				manager = &Manager{Config: Config{
 					StartTime:      time.Now(),
 					SpreadSeed:     "test-seed",
 					SpreadPeriod:   5 * time.Minute,
 					SpreadInterval: 180 * time.Minute,
 					Enabled:        true,
-				})
+				}}
 			})
 
 			It("should return delays within the valid bounds", func() {
@@ -576,35 +561,6 @@ var _ = Describe("Spreading", func() {
 				hash2 := hashString("test-string-2")
 
 				Expect(hash1).NotTo(Equal(hash2))
-			})
-		})
-
-		Describe("WithEnabled option", func() {
-			It("should enable the manager when passed true", func() {
-				m := NewDefaultManager(WithEnabled(true))
-				Expect(m.Config.Enabled).To(BeTrue())
-			})
-
-			It("should disable the manager when passed false", func() {
-				m := NewDefaultManager(WithEnabled(false))
-				Expect(m.Config.Enabled).To(BeFalse())
-			})
-
-			It("default manager is enabled when no option is passed", func() {
-				m := NewDefaultManager()
-				Expect(m.Config.Enabled).To(BeTrue())
-			})
-		})
-
-		Describe("WithSpreadPeriod and WithSpreadInterval defaults", func() {
-			It("default manager uses DefaultSpreadPeriodMinutes", func() {
-				m := NewDefaultManager()
-				Expect(m.Config.SpreadPeriod).To(Equal(DefaultSpreadPeriodMinutes * time.Minute))
-			})
-
-			It("default manager uses DefaultSpreadIntervalMinutes", func() {
-				m := NewDefaultManager()
-				Expect(m.Config.SpreadInterval).To(Equal(DefaultSpreadIntervalMinutes * time.Minute))
 			})
 		})
 	})

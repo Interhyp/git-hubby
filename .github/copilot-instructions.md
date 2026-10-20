@@ -43,10 +43,10 @@ The operator implements a sophisticated startup spreading system ([internal/reco
   - Deletions
   - Sub-resource changes
 - **Implementation**: 
-  - `SpreadingManager` created in [cmd/main.go](cmd/main.go) via `spreading.NewDefaultManager()`
+  - `SpreadingManager` created in [cmd/main.go](cmd/main.go) via `spreading.NewManager(cfg)` from the operator config
   - Factory methods (`CreateForOrg()`, `CreateForRepo()`, `CreateForTeam()`) call `SpreadingManager.Spread()` before creating reconciler
   - Returns `RequiresSpreadError` with calculated delay if spreading is needed
-  - Controllers handle this error via `handleRequeueError()` in [internal/controller/shared.go](internal/controller/shared.go)
+  - Controllers handle this error via `RequeuePolicy.OnFactoryError()` in [internal/controller/requeue_policy.go](internal/controller/requeue_policy.go)
   - Delay calculated randomly within spread interval to distribute load evenly
 - **Configuration**: Enable/disable via `ENABLE_STARTUP_SPREADING` (default: `true`)
 
@@ -83,8 +83,8 @@ Controllers implement continuous drift detection:
 
 - **Requeue on Success**: After successful reconciliation, controllers requeue resource after `SuccessRequeueInterval`
 - **Default Value**: Set to spreading interval (typically 180 minutes) to ensure resources are checked regularly
-- **Configuration**: Passed from spreading manager via `spreadingManager.GetSpreadInterval()` in [cmd/main.go](cmd/main.go)
-- **Implementation**: `return ctrl.Result{RequeueAfter: r.SuccessRequeueInterval}, nil` after successful reconciliation in each controller
+- **Configuration**: `config.Config.SuccessRequeueInterval()` (equals the spread interval) and `config.Config.GitHubStateRequeueInterval()` (errors awaiting a change on GitHub), see [internal/config/config.go](internal/config/config.go). Controllers do not read them directly: all requeue decisions are made by the shared `RequeuePolicy` ([internal/controller/requeue_policy.go](internal/controller/requeue_policy.go)), created once in [cmd/main.go](cmd/main.go) via `controller.NewRequeuePolicy(cfg)` and passed to each controller as `Requeue`.
+- **Implementation**: `return r.Requeue.OnSuccess(), nil` after successful reconciliation in each controller
 - **Benefit**: Detects manual GitHub changes and sub-resource updates without relying solely on K8s watch events
 
 ## Recent Architectural Changes (Current Branch)
@@ -105,7 +105,7 @@ Controllers implement continuous drift detection:
 10. **Startup spreading system**: New [internal/reconciler/spreading](internal/reconciler/spreading) package implements intelligent reconciliation distribution during pod startup to prevent API rate limit exhaustion; see `spreading.go`, controlled via environment variables.
 11. **Parallel reconciliation execution**: Reconciler executor ([internal/reconciler/executor.go](internal/reconciler/executor.go)) now runs reconciliation groups sequentially with concurrent execution of tasks within each group; each task has a 5-minute timeout.
 12. **Sub-resource generation tracking**: Added `ObservedSubResourceGenerations` field to Organization, Repository, and Team status; tracks generation of referenced sub-resources (e.g., RulesetPresets, WebhookPresets) to detect changes and prevent unnecessary spreading.
-13. **Success requeue interval**: Controllers now requeue successful reconciliations after a configurable interval (defaults to spread interval, typically 180 minutes) for continuous drift detection; see `SuccessRequeueInterval` in controllers.
+13. **Success requeue interval**: Controllers now requeue successful reconciliations after a configurable interval (defaults to spread interval, typically 180 minutes) for continuous drift detection; see `config.Config.SuccessRequeueInterval()`.
 14. **Resource health tracking**: Added `IsHealthy()`, `GetObservedGeneration()`, and `GetObservedSubResourceGenerations()` methods to all CRD types in `*_methods.go` files; implements `SpreadableResource` interface for spreading logic.
 
 ## Critical Workflows
@@ -189,7 +189,7 @@ Controllers implement continuous drift detection:
     5. The CI test `ConfiguredThresholds coverage` validates that every `MonitoredCategory` is wired; a runtime warning also fires if traffic is observed for an uncovered category
 - Startup spreading integration: factory methods evaluate spreading before creating reconcilers; return `RequiresSpreadError` to delay warm-start reconciliations; see [internal/reconciler/spreading](internal/reconciler/spreading) and factory implementation.
 - Parallel reconciliation: reconcilers define sequential groups of parallel tasks via `RequiredReconciliations()`; executor runs groups sequentially with concurrent execution within groups; see [internal/reconciler/executor.go](internal/reconciler/executor.go).
-- Success requeue: after successful reconciliation, controllers requeue after `SuccessRequeueInterval` (defaults to spread interval, ~180 min) for continuous drift detection.
+- Success requeue: after successful reconciliation, controllers requeue after `config.Config.SuccessRequeueInterval()` (defaults to spread interval, ~180 min) for continuous drift detection.
 - Deletion semantics:
   - Organizations: only deleted when no `Repository` references remain; enforced via finalizer; see organization reconciler in [internal/reconciler/orgrec](internal/reconciler/orgrec).
   - Repositories: deletion archives the repo instead of hard delete; see repository reconciler in [internal/reconciler/reporec](internal/reconciler/reporec).
@@ -215,9 +215,9 @@ Controllers implement continuous drift detection:
 - Controller skeletons should:
   - Use `predicate.GenerationChangedPredicate` and `AnnotationChangedPredicate`.
   - Enable `UsePriorityQueue` and compose `workqueue` limiter with global GitHub limiter; see controllers.
-  - Set `SuccessRequeueInterval` from spreading manager to enable continuous drift detection.
+  - Delegate requeue decisions to the shared `RequeuePolicy` (`r.Requeue.OnSuccess()`, `.OnFactoryError()`, `.OnReconcileError()`) instead of adding interval fields; resource-specific special cases (e.g. archived repositories) are handled in the controller before `OnReconcileError()`.
   - Delegate business logic to reconcilers created by factory functions: `CreateForOrg()`, `CreateForRepo()`, `CreateForTeam()` from [internal/reconciler/reconcilerfactory/factory.go](internal/reconciler/reconcilerfactory/factory.go).
-  - Handle `RequiresSpreadError` via `handleRequeueError()` in [internal/controller/shared.go](internal/controller/shared.go).
+  - Handle factory errors (rate limits, `RequiresSpreadError`) via `r.Requeue.OnFactoryError()` in [internal/controller/requeue_policy.go](internal/controller/requeue_policy.go).
 - Reconciler structure pattern:
   - Each reconciler is in a dedicated package with a `reconciler.go` file containing the main `Reconcile()` method.
   - Reconciliation logic is split into separate files by concern (e.g., `rec_org.go`, `rec_rulesets.go`, `rec_webhooks.go`, `rec_code_security_configurations.go`, `rec_team.go`, `rec_members.go`, `rec_custom_properties.go`).
