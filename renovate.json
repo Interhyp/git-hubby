@@ -22,7 +22,7 @@
     {
       "matchManagers": [
         "github-actions",
-        "node",
+        "nodenv",
         "npm",
         "mise"
       ],
