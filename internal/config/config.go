@@ -20,6 +20,11 @@ type Features struct {
 	// EnableStartupSpreading enables the startup spreading mechanism that
 	// distributes warm-start reconciliations over time to avoid API rate-limit exhaustion.
 	EnableStartupSpreading bool `env:"ENABLE_STARTUP_SPREADING" envDefault:"true"`
+
+	// EnableResilientGitHubAuth caches the GitHub App installation token, retries transient
+	// transport errors (e.g. HTTP/2 PROTOCOL_ERROR) and discards the cached token on a 401.
+	// Disabled by default: every request then fetches its own installation token.
+	EnableResilientGitHubAuth bool `env:"ENABLE_RESILIENT_GITHUB_AUTH" envDefault:"false"`
 }
 
 // RateLimitConfig holds configuration for the per-org rate limit registry.

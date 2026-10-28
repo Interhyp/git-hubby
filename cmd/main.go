@@ -347,8 +347,11 @@ func main() {
 	setupLog.Info("Per-org rate limit tracking initialized",
 		"coreThreshold", cfg.RateLimitConfig.StallThresholdCore,
 	)
+	clientConfig := ghclient.DefaultClientConfig()
+	clientConfig.ResilientAuth = cfg.Features.EnableResilientGitHubAuth
+	setupLog.Info("GitHub client configured", "resilientAuth", clientConfig.ResilientAuth)
 	clientManager, err := ghclient.NewGitHubCachingClientFactory(
-		ghclient.DefaultClientConfig(),
+		clientConfig,
 		fetchSecret,
 		appCredentialsSecretName,
 		orgRegistry,
