@@ -43,6 +43,10 @@ type ClientConfig struct {
 	// are cached in the CachingClient wrapper. Caching is opt-in per call via WithCache(ctx).
 	// Zero disables the caching wrapper entirely.
 	ResponseCacheTTL time.Duration
+	// ResilientAuth enables the resilient GitHub App authentication: the installation token
+	// is cached, transient transport errors are retried and a 401 discards the cached token.
+	// Disabled by default, in which case every request fetches its own installation token.
+	ResilientAuth bool
 }
 
 // AppConfig identifies a GitHub App installation for client creation and caching.
@@ -311,7 +315,7 @@ func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, cre
 	}
 
 	// Authentication
-	rt = AuthorizeGitHubAccess(rt, creds.AppID, appInstallationID, creds.PrivateKey)
+	rt = AuthorizeGitHubAccess(rt, creds.AppID, appInstallationID, creds.PrivateKey, AuthOptions{Resilient: m.config.ResilientAuth})
 
 	// Per-org rate limit header tracking (inserted above auth so it sees authenticated responses)
 	if m.orgRegistry != nil {

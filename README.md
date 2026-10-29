@@ -237,6 +237,7 @@ Boolean environment variables that enable or disable operator functionality, loa
 |----------|---------|-------------|
 | `ENABLE_STARTUP_SPREADING` | `true` | Enable startup spreading to prevent API rate-limit exhaustion after pod restarts |
 | `ENABLE_WEBHOOKS` | `true` | Enable the admission webhook server. Set `false` for local development without cert-manager |
+| `ENABLE_RESILIENT_GITHUB_AUTH` | `false` | Cache the GitHub App installation token, retry transient transport errors (e.g. HTTP/2 `PROTOCOL_ERROR`) and discard the cached token on a `401`. When off, every request fetches its own installation token |
 | `ENABLE_REQUIRED_REVIEWERS_RULES` | `false` | Enable `requiredReviewers` in pull-request ruleset rules (GitHub API feature is in **beta**) |
 
 See [Architecture → Feature Flags](https://interhyp.github.io/git-hubby/architecture/#feature-flags) for details.
