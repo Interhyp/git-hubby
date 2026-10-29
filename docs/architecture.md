@@ -24,7 +24,7 @@ The operator uses a factory-based reconciliation pattern:
 
 To prevent API rate limit exhaustion during pod restarts (e.g., rolling deployments), the operator implements a startup spreading mechanism:
 
-- **Spread Period** (default 5 minutes): Window after startup during which reconciliations may be delayed
+- **Spread Period** (default 5 minutes): Window after startup during which reconciliations may be delayed. With leader election, the window starts when the pod becomes leader (not at process start), so a standby pod taking over later spreads as well
 - **Spread Interval** (default 180 minutes): Time window across which reconciliations are distributed
 - **Smart Detection**: Only spreads warm-start reconciliations (healthy resources with unchanged specs)
 - **Immediate Processing**: Changed resources, unhealthy resources, and deletions bypass spreading
