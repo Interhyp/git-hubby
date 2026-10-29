@@ -4,6 +4,7 @@ import (
 	"context"
 	"hash/fnv"
 	"math/rand/v2"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,7 +25,8 @@ type SpreadableResource interface {
 
 // Config holds the configuration for startup spreading
 type Config struct {
-	// StartTime is when this pod started
+	// StartTime is the start of the spreading window. It is initialized when the manager is created and reset when
+	// the pod becomes leader (see Manager.Start), because the controllers only start reconciling then.
 	StartTime time.Time
 	// SpreadSeed is a random seed used for hashing resources to spread them differently on each pod restart
 	SpreadSeed string
@@ -40,9 +42,13 @@ type Config struct {
 	Enabled bool
 }
 
-// Manager handles startup spreading decisions
+// Manager handles startup spreading decisions. It is a manager.Runnable that needs leader election: when the pod
+// becomes leader, the spreading window starts anew (see Start).
 type Manager struct {
 	Config Config
+
+	// mu guards Config.StartTime, which is reset on leader election while reconciliations read it.
+	mu sync.RWMutex
 }
 
 // NewManager creates a spreading manager from the operator configuration. The start time is the time of creation and
@@ -59,6 +65,44 @@ func NewManager(cfg config.Config) *Manager {
 	}
 }
 
+// Start implements manager.Runnable. Because it needs leader election (see NeedLeaderElection), it is called when
+// this pod becomes leader, i.e. right before the controllers start to reconcile all resources. The spreading window
+// is restarted at that point: a standby pod that becomes leader long after its process start (e.g. after the leader
+// was evicted) would otherwise already be outside of the spread period and reconcile all resources at once.
+//
+// Start blocks until the context is canceled, as required for runnables.
+func (m *Manager) Start(ctx context.Context) error {
+	if m != nil {
+		m.ResetStartTime(ctx)
+	}
+	<-ctx.Done()
+	return nil
+}
+
+// NeedLeaderElection implements manager.LeaderElectionRunnable.
+func (m *Manager) NeedLeaderElection() bool {
+	return true
+}
+
+// ResetStartTime restarts the spreading window now.
+func (m *Manager) ResetStartTime(ctx context.Context) {
+	now := time.Now()
+	m.mu.Lock()
+	m.Config.StartTime = now
+	m.mu.Unlock()
+	logf.FromContext(ctx).Info("Startup spreading window started",
+		"startTime", now,
+		"spreadPeriod", m.Config.SpreadPeriod,
+		"spreadInterval", m.Config.SpreadInterval,
+		"enabled", m.Config.Enabled)
+}
+
+func (m *Manager) startTime() time.Time {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Config.StartTime
+}
+
 // Spread returns a RequiresSpreadError if a reconciliation should be delayed for spreading
 func (m *Manager) Spread(ctx context.Context, resource SpreadableResource, currentSubResourceGenerations map[string]int64) error {
 	log := logf.FromContext(ctx)
@@ -68,7 +112,7 @@ func (m *Manager) Spread(ctx context.Context, resource SpreadableResource, curre
 	}
 
 	// We're outside the spreading window - reconcile immediately
-	if time.Since(m.Config.StartTime) > m.Config.SpreadPeriod {
+	if time.Since(m.startTime()) > m.Config.SpreadPeriod {
 		log.V(1).Info("Outside grace period, not spreading")
 		return nil
 	}
@@ -141,7 +185,7 @@ func (m *Manager) calculateSpreadDelay() time.Duration {
 		return 0
 	}
 	offset := time.Duration(rand.IntN(intervalLength)) * time.Minute
-	spreadIntervalStart := m.Config.StartTime.Add(m.Config.SpreadPeriod)
+	spreadIntervalStart := m.startTime().Add(m.Config.SpreadPeriod)
 	targetTime := spreadIntervalStart.Add(offset)
 	// Calculate delay from now until target time
 	delay := time.Until(targetTime)

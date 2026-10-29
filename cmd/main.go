@@ -367,6 +367,12 @@ func main() {
 		"spreadInterval", spreadingManager.Config.SpreadInterval,
 		"startTime", spreadingManager.Config.StartTime,
 		"enabled", spreadingManager.Config.Enabled)
+	// The spreading window starts when this pod becomes leader (not at process start), see spreading.Manager.Start.
+	// Added before the controllers, so that the window is open before they reconcile their first resource.
+	if err := mgr.Add(spreadingManager); err != nil {
+		setupLog.Error(err, "unable to add startup spreading manager")
+		os.Exit(1)
+	}
 
 	reconcilerFactory := &reconcilerfactory.Factory{
 		ClientManager:    clientManager,

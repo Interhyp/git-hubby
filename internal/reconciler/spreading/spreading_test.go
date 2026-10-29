@@ -2,6 +2,7 @@ package spreading
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -72,6 +73,35 @@ var _ = Describe("Spreading", func() {
 			It("should use a different seed for each manager", func() {
 				Expect(NewManager(config.Config{}).Config.SpreadSeed).
 					NotTo(Equal(NewManager(config.Config{}).Config.SpreadSeed))
+			})
+		})
+
+		Describe("leader election", func() {
+			It("should need leader election", func() {
+				Expect(NewManager(config.Config{}).NeedLeaderElection()).To(BeTrue())
+			})
+
+			It("should restart the spreading window when started as leader", func() {
+				manager := NewManager(config.Config{
+					SpreadPeriodMinutes:   5,
+					SpreadIntervalMinutes: 180,
+					Features:              config.Features{EnableStartupSpreading: true},
+				})
+				// the pod was a standby for hours before becoming leader
+				manager.Config.StartTime = time.Now().Add(-3 * time.Hour)
+				resource := &mockResource{generation: 1, observedGeneration: 1, healthy: true}
+				Expect(manager.Spread(ctx, resource, nil)).To(Succeed(), "outside of the window before becoming leader")
+
+				startCtx, cancel := context.WithCancel(ctx)
+				done := make(chan error)
+				go func() { done <- manager.Start(startCtx) }()
+				Eventually(func() time.Time { return manager.startTime() }).Should(BeTemporally("~", time.Now(), time.Minute))
+
+				var spreadErr *RequiresSpreadError
+				Expect(errors.As(manager.Spread(ctx, resource, nil), &spreadErr)).To(BeTrue())
+
+				cancel()
+				Eventually(done).Should(Receive(BeNil()))
 			})
 		})
 
