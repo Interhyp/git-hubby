@@ -35,16 +35,43 @@ var _ = Describe("RequeuePolicy", func() {
 
 	Describe("NewRequeuePolicy", func() {
 		It("takes the intervals from the config", func() {
-			p := NewRequeuePolicy(config.Config{SpreadIntervalMinutes: 180, GitHubStateRequeueIntervalMinutes: 15})
+			p := NewRequeuePolicy(config.Config{SpreadIntervalMinutes: 180, GitHubStateRequeueIntervalMinutes: 15, SuccessRequeueJitterPercent: 10})
 
 			Expect(p.successInterval).To(Equal(180 * time.Minute))
 			Expect(p.gitHubStateInterval).To(Equal(15 * time.Minute))
+			Expect(p.successJitter).To(Equal(18 * time.Minute))
+		})
+
+		It("clamps the jitter percentage to [0, 100]", func() {
+			Expect(NewRequeuePolicy(config.Config{SpreadIntervalMinutes: 180, SuccessRequeueJitterPercent: -5}).successJitter).To(BeZero())
+			Expect(NewRequeuePolicy(config.Config{SpreadIntervalMinutes: 180, SuccessRequeueJitterPercent: 250}).successJitter).To(Equal(180 * time.Minute))
 		})
 	})
 
 	Describe("OnSuccess", func() {
-		It("requeues after the success interval", func() {
+		It("requeues after the success interval without jitter", func() {
 			Expect(policy.OnSuccess()).To(Equal(ctrl.Result{RequeueAfter: 3 * time.Hour}))
+		})
+
+		It("adds the random offset to the success interval", func() {
+			policy.successJitter = 18 * time.Minute
+			policy.randN = func(n time.Duration) time.Duration {
+				Expect(n).To(Equal(18 * time.Minute))
+				return 7 * time.Minute
+			}
+			Expect(policy.OnSuccess()).To(Equal(ctrl.Result{RequeueAfter: 3*time.Hour + 7*time.Minute}))
+		})
+
+		It("only adds positive offsets below the jitter and varies them", func() {
+			policy.successJitter = 18 * time.Minute
+			seen := map[time.Duration]struct{}{}
+			for range 200 {
+				after := policy.OnSuccess().RequeueAfter
+				Expect(after).To(BeNumerically(">=", 3*time.Hour))
+				Expect(after).To(BeNumerically("<", 3*time.Hour+18*time.Minute))
+				seen[after] = struct{}{}
+			}
+			Expect(len(seen)).To(BeNumerically(">", 1))
 		})
 	})
 

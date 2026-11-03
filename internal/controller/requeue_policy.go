@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"math/rand/v2"
 	"time"
 
 	"github.com/Interhyp/git-hubby/internal/config"
@@ -28,6 +29,12 @@ type RequeuePolicy struct {
 	// gitHubStateInterval is used for errors that are fixed by a change on GitHub or by creating a referenced
 	// Kubernetes resource. Capped at successInterval; ignored if <= 0.
 	gitHubStateInterval time.Duration
+	// successJitter is the maximum random offset added to successInterval. The offset is positive only, so that
+	// successInterval stays a lower bound (required by startup spreading, see spreading.Config.SpreadInterval).
+	// Without it, resources reconciled at the same time are requeued together forever.
+	successJitter time.Duration
+	// randN returns a random duration in [0, n); replaceable in tests. Defaults to rand.N.
+	randN func(n time.Duration) time.Duration
 }
 
 // NewRequeuePolicy creates the requeue policy from the operator configuration.
@@ -35,13 +42,25 @@ func NewRequeuePolicy(cfg config.Config) *RequeuePolicy {
 	return &RequeuePolicy{
 		successInterval:     cfg.SuccessRequeueInterval(),
 		gitHubStateInterval: cfg.GitHubStateRequeueInterval(),
+		successJitter:       cfg.SuccessRequeueJitter(),
 	}
 }
 
 // OnSuccess returns the result after a successful reconciliation: the resource is reconciled again after the success
-// interval to detect drift on GitHub.
+// interval plus a random offset in [0, successJitter) to detect drift on GitHub. The offset keeps resources that were
+// reconciled at the same time from being requeued together on every cycle.
 func (p *RequeuePolicy) OnSuccess() ctrl.Result {
-	return ctrl.Result{RequeueAfter: p.successInterval}
+	return ctrl.Result{RequeueAfter: p.successInterval + p.randomJitter()}
+}
+
+func (p *RequeuePolicy) randomJitter() time.Duration {
+	if p.successJitter <= 0 {
+		return 0
+	}
+	if p.randN != nil {
+		return p.randN(p.successJitter)
+	}
+	return rand.N(p.successJitter)
 }
 
 // OnFactoryError returns the result for errors that occur before the reconciliation, i.e. while the reconciler is

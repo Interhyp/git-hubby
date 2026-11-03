@@ -180,11 +180,13 @@ To prevent API rate limit exhaustion during pod restarts (e.g., rolling deployme
 - **Spread Period** (default 5 minutes): Window after startup during which reconciliations may be delayed
 - **Spread Interval** (default 180 minutes): Time window across which reconciliations are distributed
 - **Smart Detection**: Only spreads warm-start reconciliations (healthy resources with unchanged specs)
-- **Immediate Processing**: Changed resources, unhealthy resources, and deletions bypass spreading
+- **Immediate Processing**: Changed resources, unhealthy resources, deletions and resources with changed sub-resources (presets) bypass spreading; the reason is logged at info level
+- **Requeue Jitter**: Successful reconciliations are requeued after the spread interval plus a random offset of up to `SUCCESS_REQUEUE_JITTER_PERCENT` of it, so that resources reconciled together do not stay synchronized
 - **Configuration**: Control via environment variables:
   - `ENABLE_STARTUP_SPREADING` (default: true)
   - `STARTUP_SPREAD_PERIOD_MINUTES` (default: 5)
   - `SPREAD_INTERVAL_MINUTES` (default: 180)
+  - `SUCCESS_REQUEUE_JITTER_PERCENT` (default: 10)
 
 ### Parallel Reconciliation
 

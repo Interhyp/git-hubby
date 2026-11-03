@@ -116,27 +116,32 @@ func (m *Manager) Spread(ctx context.Context, resource SpreadableResource, curre
 		log.V(1).Info("Outside grace period, not spreading")
 		return nil
 	}
+	// Inside the spreading window, the reasons for not spreading are logged at info level: resources that are not
+	// spread are reconciled together right after the start and (with a fixed requeue interval) on every following
+	// cycle, so the reasons are needed to explain periodic reconciliation spikes. These logs are bounded by the
+	// window (once per resource and start).
+
 	// Spec has changed since last reconciliation
 	if resource.GetGeneration() != resource.GetObservedGeneration() {
-		log.V(1).Info("Resource generation changed, not spreading",
+		log.Info("Resource generation changed, not spreading", "reason", "GenerationChanged",
 			"generation", resource.GetGeneration(),
 			"observedGeneration", resource.GetObservedGeneration())
 		return nil
 	}
 	// Resource is unhealthy (degraded state)
 	if !resource.IsHealthy() {
-		log.V(1).Info("Resource is unhealthy, not spreading")
+		log.Info("Resource is unhealthy, not spreading", "reason", "Unhealthy")
 		return nil
 	}
 	// Resource is being deleted
 	if !resource.GetDeletionTimestamp().IsZero() {
-		log.V(1).Info("Resource is being deleted, not spreading")
+		log.Info("Resource is being deleted, not spreading", "reason", "Deleting")
 		return nil
 	}
 
 	// Subresources changed
 	if subResourcesChanged(currentSubResourceGenerations, resource.GetObservedSubResourceGenerations()) {
-		log.V(1).Info("Resources Subresource generations changed, not spreading",
+		log.Info("Resource sub-resource generations changed, not spreading", "reason", "SubResourcesChanged",
 			"currentSubResourceGenerations", currentSubResourceGenerations,
 			"observedSubResourceGenerations", resource.GetObservedSubResourceGenerations())
 		return nil
