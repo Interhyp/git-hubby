@@ -466,6 +466,10 @@ type OrganizationStatus struct {
 	// Keys are in the format "<kind>/<namespace/<name>".
 	// SubResources are kubernetes resources that are referenced by this Organization and are not managed
 	// by their own controllers like RuleSetPresets and CodeSecurityConfigurations
+	// The map is atomic, so that a status apply replaces it entirely: keys of sub-resources that are no longer
+	// referenced are removed instead of being kept by Server-Side Apply's per-key merge (stale keys made the
+	// resource skip startup spreading on every restart).
+	// +mapType=atomic
 	ObservedSubResourceGenerations map[string]int64 `json:"observedSubResourceGenerations,omitempty"`
 }
 

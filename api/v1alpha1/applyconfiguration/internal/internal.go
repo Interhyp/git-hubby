@@ -518,6 +518,7 @@ var schemaYAML = typed.YAMLObject(`types:
         map:
           elementType:
             scalar: numeric
+          elementRelationship: atomic
 - name: com.github.Interhyp.git-hubby.api.v1alpha1.PatternRule
   map:
     fields:
@@ -820,6 +821,7 @@ var schemaYAML = typed.YAMLObject(`types:
         map:
           elementType:
             scalar: numeric
+          elementRelationship: atomic
     - name: webhooks
       type:
         map:

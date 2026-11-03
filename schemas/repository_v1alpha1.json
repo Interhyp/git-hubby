@@ -1325,8 +1325,9 @@
             "format": "int64",
             "type": "integer"
           },
-          "description": "ObservedSubResourceGenerations is a map of sub-resource names to their observed generations.\nKeys are in the format \"<kind>/<namespace/<name>\".\nSubResources are kubernetes resources that are referenced by this Repository and are not managed\nby their own controllers like WebhookPresets, RuleSetPresets and the attached CodeSecurityConfiguration",
-          "type": "object"
+          "description": "ObservedSubResourceGenerations is a map of sub-resource names to their observed generations.\nKeys are in the format \"<kind>/<namespace/<name>\".\nSubResources are kubernetes resources that are referenced by this Repository and are not managed\nby their own controllers like WebhookPresets, RuleSetPresets and the attached CodeSecurityConfiguration\nThe map is atomic, so that a status apply replaces it entirely: keys of sub-resources that are no longer\nreferenced are removed instead of being kept by Server-Side Apply's per-key merge (stale keys made the\nresource skip startup spreading on every restart).",
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
         },
         "webhooks": {
           "additionalProperties": {

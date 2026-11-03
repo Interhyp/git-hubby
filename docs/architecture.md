@@ -27,7 +27,9 @@ To prevent API rate limit exhaustion during pod restarts (e.g., rolling deployme
 - **Spread Period** (default 5 minutes): Window after startup during which reconciliations may be delayed. With leader election, the window starts when the pod becomes leader (not at process start), so a standby pod taking over later spreads as well
 - **Spread Interval** (default 180 minutes): Time window across which reconciliations are distributed
 - **Smart Detection**: Only spreads warm-start reconciliations (healthy resources with unchanged specs)
-- **Immediate Processing**: Changed resources, unhealthy resources, and deletions bypass spreading
+- **Immediate Processing**: Changed resources, unhealthy resources, deletions and resources with changed sub-resources (presets, see `status.observedSubResourceGenerations`) bypass spreading. The reason is logged at info level (`reason`: `GenerationChanged`, `Unhealthy`, `Deleting`, `SubResourcesChanged`).
+- **Requeue Jitter**: After a successful reconciliation, resources are requeued after `SPREAD_INTERVAL_MINUTES` plus a random offset in `[0, SUCCESS_REQUEUE_JITTER_PERCENT %)` of it. The offset is positive only, so the interval stays a lower bound as required by spreading. Without it, resources that bypassed spreading at startup are reconciled together on every cycle (periodic spikes).
+- **Atomic Sub-Resource Generations**: `status.observedSubResourceGenerations` is an atomic map (`x-kubernetes-map-type: atomic`), so the status apply replaces it entirely and keys of no longer referenced sub-resources are removed, even if they were written by another field manager.
 
 ### Configuration
 
@@ -37,7 +39,8 @@ Control via environment variables:
 |----------|---------|-------------|
 | `ENABLE_STARTUP_SPREADING` | `true` | Enable/disable spreading |
 | `STARTUP_SPREAD_PERIOD_MINUTES` | `5` | Window after startup for spreading |
-| `SPREAD_INTERVAL_MINUTES` | `180` | Time window for distribution |
+| `SPREAD_INTERVAL_MINUTES` | `180` | Time window for distribution, also the success requeue interval |
+| `SUCCESS_REQUEUE_JITTER_PERCENT` | `10` | Maximum random offset added to the success requeue interval, in percent (0-100, 0 disables) |
 
 ## Parallel Reconciliation
 

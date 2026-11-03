@@ -68,6 +68,12 @@ type Config struct {
 	SpreadPeriodMinutes   int `env:"STARTUP_SPREAD_PERIOD_MINUTES" envDefault:"5"`
 	SpreadIntervalMinutes int `env:"SPREAD_INTERVAL_MINUTES"       envDefault:"180"`
 
+	// SuccessRequeueJitterPercent is the maximum random offset added to the success requeue interval, in percent of
+	// the interval (0-100, values outside are clamped). The offset is positive only, so the requeue interval stays
+	// at least SPREAD_INTERVAL_MINUTES. Without it, resources reconciled at the same time (e.g. those not spread at
+	// startup) are requeued together forever and cause periodic reconciliation spikes. 0 disables the offset.
+	SuccessRequeueJitterPercent int `env:"SUCCESS_REQUEUE_JITTER_PERCENT" envDefault:"10"`
+
 	// GitHubStateRequeueIntervalMinutes is the requeue interval for resources whose reconciliation requires user
 	// action on GitHub (e.g. a referenced team or GitHub App does not exist, a default branch is missing, GitHub
 	// rejected the request with 422). No watch event signals such changes, so they are retried more often than
@@ -98,6 +104,13 @@ func (c Config) SpreadInterval() time.Duration {
 // the spread interval, so that requeued resources are distributed like warm-start reconciliations.
 func (c Config) SuccessRequeueInterval() time.Duration {
 	return c.SpreadInterval()
+}
+
+// SuccessRequeueJitter returns the maximum random offset added to the success requeue interval, see
+// SuccessRequeueJitterPercent.
+func (c Config) SuccessRequeueJitter() time.Duration {
+	pct := min(max(c.SuccessRequeueJitterPercent, 0), 100)
+	return c.SuccessRequeueInterval() * time.Duration(pct) / 100
 }
 
 // GitHubStateRequeueInterval returns GitHubStateRequeueIntervalMinutes as a duration.
