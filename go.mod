@@ -20,7 +20,7 @@ require (
 	go.elastic.co/ecszap v1.0.3
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/exp v0.0.0-20261106112924-d498a4c2cc9a
+	golang.org/x/exp v0.0.0-20261106192419-47ce03d25ef0
 	golang.org/x/text v0.43.0
 	k8s.io/api v0.37.0
 	k8s.io/apimachinery v0.37.0
@@ -100,7 +100,7 @@ require (
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.52.0 // indirect
+	golang.org/x/tools v0.52.1-0.20261106145633-d407941a339a // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
