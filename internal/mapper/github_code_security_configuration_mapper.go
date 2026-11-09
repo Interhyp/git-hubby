@@ -111,8 +111,8 @@ func advancedSecurityComponents(advancedSecurity string) (codeSecurity, secretPr
 // advancedSecurityDiffers reports whether the desired Code Security and Secret Protection states differ from the
 // current ones. GitHub never returns the code_security and secret_protection fields; it reports both features
 // combined in advanced_security instead (enabled, code_security, secret_protection or disabled). not_set is reported
-// as disabled. The individual desired fields take precedence over the desired advanced_security value; features which
-// are set by neither are not managed and never differ.
+// as disabled. advanced_security must not be set together with the individual fields (rejected by GitHub and the CRD
+// validation); features which are set by neither are not managed and never differ.
 func advancedSecurityDiffers(desired, current *github.CodeSecurityConfiguration) bool {
 	currentCS, currentSP := advancedSecurityComponents(current.GetAdvancedSecurity())
 	var desiredCS, desiredSP *bool

@@ -644,7 +644,6 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		Entry("advanced security enabled", new("enabled"), nil, nil, "enabled", false),
 		Entry("advanced security enabled, differing", new("enabled"), nil, nil, "secret_protection", true),
 		Entry("deprecated advanced security value", new("code_security"), nil, nil, "code_security", false),
-		Entry("individual fields take precedence", new("enabled"), nil, new("disabled"), "code_security", false),
 		Entry("nothing managed", nil, nil, nil, "enabled", false),
 	)
 

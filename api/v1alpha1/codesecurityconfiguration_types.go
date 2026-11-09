@@ -14,6 +14,7 @@ import (
 // it is reconciled by the Organization controller.
 // Please note that activating features may cause additional costs as the code security features are billed additionally.
 // See: https://docs.github.com/en/rest/code-security/configurations
+// +kubebuilder:validation:XValidation:rule="!has(self.advancedSecurity) || (!has(self.codeSecurity) && !has(self.secretProtection))",message="advancedSecurity must not be set together with codeSecurity or secretProtection"
 type CodeSecurityConfigurationSpec struct {
 	// Name is the display name of the code security configuration.
 	Name string `json:"name"`
@@ -27,6 +28,7 @@ type CodeSecurityConfigurationSpec struct {
 	// - "secret_protection": Enable secret protection features only
 	// Warning: code_security and secret_protection are deprecated values for this field.
 	// Prefer the individual code_security and secret_protection fields to set the status of these features.
+	// Must not be set together with CodeSecurity or SecretProtection (rejected by GitHub).
 	// See: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security
 	// +kubebuilder:validation:Enum=enabled;disabled;code_security;secret_protection
 	AdvancedSecurity *string `json:"advancedSecurity,omitempty"`

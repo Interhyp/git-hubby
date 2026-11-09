@@ -40,6 +40,7 @@ type CodeSecurityConfigurationSpecApplyConfiguration struct {
 	// - "secret_protection": Enable secret protection features only
 	// Warning: code_security and secret_protection are deprecated values for this field.
 	// Prefer the individual code_security and secret_protection fields to set the status of these features.
+	// Must not be set together with CodeSecurity or SecretProtection (rejected by GitHub).
 	// See: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security
 	AdvancedSecurity *string `json:"advancedSecurity,omitempty"`
 	// DependencyGraph enables or disables the dependency graph.
