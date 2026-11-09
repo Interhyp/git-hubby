@@ -82,9 +82,54 @@ func toCodeScanningOptions(spec *v1alpha1.CodeScanningOptions) *github.CodeScann
 	}
 }
 
-// featureStateDisabled is assumed for feature states that GitHub omits in its response (e.g. secret_protection and
-// code_security are only returned by newer API versions).
+// featureStateDisabled is assumed for feature states that GitHub omits in its response.
 const featureStateDisabled = "disabled"
+
+const featureStateEnabled = "enabled"
+
+// advancedSecurity values returned by GitHub. The code_security and secret_protection values are deprecated for
+// requests, but GitHub still uses them in responses to report that only one of the features is enabled.
+const (
+	advancedSecurityCodeSecurity     = "code_security"
+	advancedSecuritySecretProtection = "secret_protection"
+)
+
+// advancedSecurityComponents splits an advanced_security value into the states of Code Security and Secret Protection.
+func advancedSecurityComponents(advancedSecurity string) (codeSecurity, secretProtection bool) {
+	switch advancedSecurity {
+	case featureStateEnabled:
+		return true, true
+	case advancedSecurityCodeSecurity:
+		return true, false
+	case advancedSecuritySecretProtection:
+		return false, true
+	default:
+		return false, false
+	}
+}
+
+// advancedSecurityDiffers reports whether the desired Code Security and Secret Protection states differ from the
+// current ones. GitHub never returns the code_security and secret_protection fields; it reports both features
+// combined in advanced_security instead (enabled, code_security, secret_protection or disabled). not_set is reported
+// as disabled. The individual desired fields take precedence over the desired advanced_security value; features which
+// are set by neither are not managed and never differ.
+func advancedSecurityDiffers(desired, current *github.CodeSecurityConfiguration) bool {
+	currentCS, currentSP := advancedSecurityComponents(current.GetAdvancedSecurity())
+	var desiredCS, desiredSP *bool
+	if desired.AdvancedSecurity != nil {
+		cs, sp := advancedSecurityComponents(*desired.AdvancedSecurity)
+		desiredCS, desiredSP = &cs, &sp
+	}
+	if desired.CodeSecurity != nil {
+		cs := *desired.CodeSecurity == featureStateEnabled
+		desiredCS = &cs
+	}
+	if desired.SecretProtection != nil {
+		sp := *desired.SecretProtection == featureStateEnabled
+		desiredSP = &sp
+	}
+	return (desiredCS != nil && *desiredCS != currentCS) || (desiredSP != nil && *desiredSP != currentSP)
+}
 
 // stateDiffers reports whether a desired feature state differs from the current one. Unset desired states are not
 // managed and never differ; states missing on GitHub are treated as disabled.
@@ -143,7 +188,7 @@ func CodeSecurityConfigurationsDiffer(desired, current *github.CodeSecurityConfi
 	}
 	return desired.Name != current.Name ||
 		desired.Description != current.Description ||
-		stateDiffers(desired.AdvancedSecurity, current.AdvancedSecurity) ||
+		advancedSecurityDiffers(desired, current) ||
 		stateDiffers(desired.DependencyGraph, current.DependencyGraph) ||
 		stateDiffers(desired.DependencyGraphAutosubmitAction, current.DependencyGraphAutosubmitAction) ||
 		dependencyGraphAutosubmitActionOptionsDiffer(desired.DependencyGraphAutosubmitActionOptions, current.DependencyGraphAutosubmitActionOptions) ||
@@ -153,14 +198,12 @@ func CodeSecurityConfigurationsDiffer(desired, current *github.CodeSecurityConfi
 		codeScanningDefaultSetupOptionsDiffer(desired.CodeScanningDefaultSetupOptions, current.CodeScanningDefaultSetupOptions) ||
 		stateDiffers(desired.CodeScanningDelegatedAlertDismissal, current.CodeScanningDelegatedAlertDismissal) ||
 		codeScanningOptionsDiffer(desired.CodeScanningOptions, current.CodeScanningOptions) ||
-		stateDiffers(desired.CodeSecurity, current.CodeSecurity) ||
 		stateDiffers(desired.SecretScanning, current.SecretScanning) ||
 		stateDiffers(desired.SecretScanningPushProtection, current.SecretScanningPushProtection) ||
 		stateDiffers(desired.SecretScanningValidityChecks, current.SecretScanningValidityChecks) ||
 		stateDiffers(desired.SecretScanningNonProviderPatterns, current.SecretScanningNonProviderPatterns) ||
 		stateDiffers(desired.SecretScanningGenericSecrets, current.SecretScanningGenericSecrets) ||
 		stateDiffers(desired.SecretScanningDelegatedAlertDismissal, current.SecretScanningDelegatedAlertDismissal) ||
-		stateDiffers(desired.SecretProtection, current.SecretProtection) ||
 		stateDiffers(desired.PrivateVulnerabilityReporting, current.PrivateVulnerabilityReporting) ||
 		stateDiffers(desired.Enforcement, current.Enforcement)
 }

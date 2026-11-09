@@ -576,6 +576,41 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 		})
 	})
 
+	// GitHub never returns code_security and secret_protection but reports both combined in advanced_security,
+	// see the API behaviour verified against GitHub (API version 2026-03-10).
+	DescribeTable("when comparing code security and secret protection with advanced security",
+		func(advancedSecurity, codeSecurity, secretProtection *string, currentAdvancedSecurity string, expected bool) {
+			desired := &github.CodeSecurityConfiguration{
+				Name:             "test-config",
+				AdvancedSecurity: advancedSecurity,
+				CodeSecurity:     codeSecurity,
+				SecretProtection: secretProtection,
+			}
+			current := &github.CodeSecurityConfiguration{
+				Name:             "test-config",
+				AdvancedSecurity: new(currentAdvancedSecurity),
+			}
+			Expect(CodeSecurityConfigurationsDiffer(desired, current)).To(Equal(expected))
+		},
+		Entry("both enabled", nil, new("enabled"), new("enabled"), "enabled", false),
+		Entry("only code security enabled", nil, new("enabled"), new("disabled"), "code_security", false),
+		Entry("only code security enabled, secret protection not set", nil, new("enabled"), new("not_set"), "code_security", false),
+		Entry("only secret protection enabled", nil, new("disabled"), new("enabled"), "secret_protection", false),
+		Entry("only secret protection enabled, code security not set", nil, new("not_set"), new("enabled"), "secret_protection", false),
+		Entry("both disabled", nil, new("disabled"), new("disabled"), "disabled", false),
+		Entry("both not set", nil, new("not_set"), new("not_set"), "disabled", false),
+		Entry("code security enabled on GitHub only", nil, new("disabled"), new("enabled"), "enabled", true),
+		Entry("secret protection disabled on GitHub", nil, new("enabled"), new("enabled"), "code_security", true),
+		Entry("only code security managed, matching", nil, new("enabled"), nil, "enabled", false),
+		Entry("only code security managed, differing", nil, new("disabled"), nil, "code_security", true),
+		Entry("only secret protection managed, matching", nil, nil, new("disabled"), "code_security", false),
+		Entry("advanced security enabled", new("enabled"), nil, nil, "enabled", false),
+		Entry("advanced security enabled, differing", new("enabled"), nil, nil, "secret_protection", true),
+		Entry("deprecated advanced security value", new("code_security"), nil, nil, "code_security", false),
+		Entry("individual fields take precedence", new("enabled"), nil, new("disabled"), "code_security", false),
+		Entry("nothing managed", nil, nil, nil, "enabled", false),
+	)
+
 	Context("when configurations are nil", func() {
 		It("should return false if both are nil", func() {
 			Expect(CodeSecurityConfigurationsDiffer(nil, nil)).To(BeFalse())
