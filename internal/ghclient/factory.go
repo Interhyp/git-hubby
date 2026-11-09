@@ -324,10 +324,7 @@ func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, cre
 
 	// retry
 	retryFn := rehttp.RetryAll(
-		rehttp.RetryAny(
-			rehttp.RetryStatusInterval(500, 600), // 5xx server errors
-			retryByContextCodes,                  // per-request retryable codes via context
-		),
+		rehttp.RetryStatusInterval(500, 600), // 5xx server errors
 		rehttp.RetryMaxRetries(5),
 	)
 	delayFn := rehttp.ExpJitterDelay(5*time.Second, 30*time.Second)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"github.com/Interhyp/git-hubby/internal/reconciler"
@@ -257,6 +259,7 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 		var updatedConfig *github.CodeSecurityConfiguration
 
 		BeforeEach(func() {
+			updatedConfig = nil
 			csc.Spec.Description = "Updated description"
 			org.Spec.CodeSecurityConfigurations = []v1alpha1.AttachableCodeSecurityConfigurationRef{
 				{Name: testCsc},
@@ -290,6 +293,41 @@ var _ = Describe("ReconcileCodeSecurityConfigurations", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(updatedConfig).NotTo(BeNil())
 			Expect(updatedConfig.Description).To(Equal("Updated description"))
+		})
+
+		Context("while an enablement is in progress", func() {
+			BeforeEach(func() {
+				mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
+					return []*github.RepositoryAttachment{
+						{Repository: &github.Repository{Name: new("repo1")}, Status: new("enforced")},
+						{Repository: &github.Repository{Name: new("repo2")}, Status: new("updating")},
+					}, nil
+				}
+			})
+
+			It("should not update the configuration and retry later", func() {
+				requeueAfter, ok := reconciler.RetryLater(err)
+				Expect(ok).To(BeTrue())
+				Expect(requeueAfter).To(Equal(enablementRetryDelay))
+				Expect(updatedConfig).To(BeNil())
+			})
+		})
+
+		Context("when GitHub rejects the update because of a running enablement", func() {
+			BeforeEach(func() {
+				mockClient.UpdateCodeSecurityConfigurationForOrgFunc = func(ctx context.Context, org string, configId int64, config github.CodeSecurityConfiguration) (*github.CodeSecurityConfiguration, error) {
+					return nil, &github.ErrorResponse{
+						Response: &http.Response{StatusCode: http.StatusConflict},
+						Message:  "Another enablement event is in progress.",
+					}
+				}
+			})
+
+			It("should retry later", func() {
+				requeueAfter, ok := reconciler.RetryLater(err)
+				Expect(ok).To(BeTrue())
+				Expect(requeueAfter).To(Equal(enablementRetryDelay))
+			})
 		})
 	})
 
@@ -1023,7 +1061,7 @@ var _ = Describe("AttachToRepos", func() {
 		})
 
 		It("should attach to all repos", func() {
-			err = rec.attachCSC(ctx, "all", "some-code-security-configuration", 999)
+			err = rec.attachCSC(ctx, "all", "some-code-security-configuration", 999, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(attachScope).To(Equal("all"))
 		})
@@ -1064,7 +1102,7 @@ var _ = Describe("AttachToRepos", func() {
 				Build()
 			rec.Kubernetes.Client = k8sClient
 
-			err = rec.attachCSC(ctx, scope, cscK8sName, 999)
+			err = rec.attachCSC(ctx, scope, cscK8sName, 999, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(attachedRepoIDs).To(ContainElement(int64(12345)))
 		})
@@ -1117,7 +1155,7 @@ var _ = Describe("AttachToRepos", func() {
 				Build()
 			rec.Kubernetes.Client = k8sClient
 
-			err = rec.attachCSC(ctx, scope, cscK8sName, 999)
+			err = rec.attachCSC(ctx, scope, cscK8sName, 999, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(attachedRepoIDs).To(ContainElement(int64(54321)))
 		})
@@ -1139,7 +1177,7 @@ var _ = Describe("AttachToRepos", func() {
 		})
 
 		It("should return error", func() {
-			err = rec.attachCSC(ctx, "all", "some-code-security-configuration-name", 999)
+			err = rec.attachCSC(ctx, "all", "some-code-security-configuration-name", 999, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("attachment error"))
 		})
@@ -1156,7 +1194,7 @@ var _ = Describe("AttachmentsDiffer", func() {
 				"repo1": 1,
 				"repo2": 2,
 			}
-			Expect(attachmentsDiffer(current, desired)).To(BeTrue())
+			Expect(attachmentsDiffer(current, desired, nil, true)).To(BeTrue())
 		})
 	})
 
@@ -1170,7 +1208,7 @@ var _ = Describe("AttachmentsDiffer", func() {
 				"repo1": 1,
 				"repo2": 2,
 			}
-			Expect(attachmentsDiffer(current, desired)).To(BeFalse())
+			Expect(attachmentsDiffer(current, desired, nil, true)).To(BeFalse())
 		})
 	})
 
@@ -1184,7 +1222,7 @@ var _ = Describe("AttachmentsDiffer", func() {
 				"repo2": 2,
 			}
 			// This has different count (1 vs 2) so returns true
-			Expect(attachmentsDiffer(current, desired)).To(BeTrue())
+			Expect(attachmentsDiffer(current, desired, nil, true)).To(BeTrue())
 		})
 	})
 
@@ -1194,7 +1232,7 @@ var _ = Describe("AttachmentsDiffer", func() {
 			desired := map[string]int64{
 				"repo1": 1,
 			}
-			Expect(attachmentsDiffer(current, desired)).To(BeTrue())
+			Expect(attachmentsDiffer(current, desired, nil, true)).To(BeTrue())
 		})
 	})
 
@@ -1208,8 +1246,135 @@ var _ = Describe("AttachmentsDiffer", func() {
 				"repo1": 1,
 				"repo2": 2,
 			}
-			Expect(attachmentsDiffer(current, desired)).To(BeFalse())
+			Expect(attachmentsDiffer(current, desired, nil, true)).To(BeFalse())
 		})
+	})
+
+	Context("when not comparing exactly", func() {
+		It("should ignore attached repositories which are not desired", func() {
+			current := []*github.RepositoryAttachment{
+				{Repository: &github.Repository{Name: new("repo1")}},
+				{Repository: &github.Repository{Name: new("transferred")}},
+			}
+			desired := map[string]int64{"repo1": 1}
+			Expect(attachmentsDiffer(current, desired, nil, false)).To(BeFalse())
+			Expect(attachmentsDiffer(current, desired, nil, true)).To(BeTrue())
+		})
+	})
+
+	Context("when a desired repository is attached by GitHub", func() {
+		It("should not consider it missing", func() {
+			current := []*github.RepositoryAttachment{
+				{Repository: &github.Repository{Name: new("repo1")}},
+			}
+			desired := map[string]int64{"repo1": 1, "new-repo": 2}
+			Expect(attachmentsDiffer(current, desired, map[string]bool{"new-repo": true}, false)).To(BeFalse())
+			Expect(attachmentsDiffer(current, desired, nil, false)).To(BeTrue())
+		})
+	})
+})
+
+var _ = Describe("IsAttachedByGitHub", func() {
+	var fixedNow time.Time
+
+	BeforeEach(func() {
+		fixedNow = time.Date(2026, 11, 9, 7, 0, 0, 0, time.UTC)
+		now = func() time.Time { return fixedNow }
+		DeferCleanup(func() { now = time.Now })
+	})
+
+	repoCreatedAgo := func(age time.Duration, visibility string) *github.Repository {
+		return &github.Repository{
+			Name:       new("repo"),
+			Visibility: new(visibility),
+			CreatedAt:  &github.Timestamp{Time: fixedNow.Add(-age)},
+		}
+	}
+
+	DescribeTable("should report whether GitHub attaches the default configuration",
+		func(age time.Duration, visibility string, defaultForNewRepos *string, expected bool) {
+			Expect(isAttachedByGitHub(repoCreatedAgo(age, visibility), defaultForNewRepos)).To(Equal(expected))
+		},
+		Entry("new repo, default for all", time.Minute, "private", new("all"), true),
+		Entry("old repo, default for all", time.Hour, "private", new("all"), false),
+		Entry("new repo, not default", time.Minute, "private", nil, false),
+		Entry("new public repo, default for public", time.Minute, "public", new("public"), true),
+		Entry("new private repo, default for public", time.Minute, "private", new("public"), false),
+		Entry("new internal repo, default for private and internal", time.Minute, "internal", new("private_and_internal"), true),
+		Entry("new public repo, default for private and internal", time.Minute, "public", new("private_and_internal"), false),
+	)
+
+	It("should return false if the creation time is unknown", func() {
+		Expect(isAttachedByGitHub(&github.Repository{Name: new("repo")}, new("all"))).To(BeFalse())
+	})
+})
+
+var _ = Describe("AttachCSC - repositories attached by GitHub", func() {
+	var (
+		ctx          context.Context
+		mockClient   *ghclientmock.MockGitHubClientWrapper
+		rec          *GitHubOrgReconciler
+		attachCalled bool
+		createdAt    time.Time
+	)
+
+	BeforeEach(func() {
+		ctx = context.Background()
+		mockClient = ghclientmock.NewMockGitHubClientWrapper()
+		rec = &GitHubOrgReconciler{
+			GitHub: reconciler.GitHub[string]{Client: mockClient, Resource: testOrg},
+		}
+		attachCalled = false
+		mockClient.GetRepositoriesAttachedToCodeSecurityConfigurationFunc = func(ctx context.Context, org string, cscID int64) ([]*github.RepositoryAttachment, error) {
+			return []*github.RepositoryAttachment{
+				{Repository: &github.Repository{Name: new("repo1"), ID: new(int64(1))}, Status: new("enforced")},
+			}, nil
+		}
+		mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
+			return []*github.Repository{
+				{ID: new(int64(1)), Name: new("repo1"), Visibility: new("private"), CreatedAt: &github.Timestamp{Time: time.Now().Add(-24 * time.Hour)}},
+				{ID: new(int64(2)), Name: new("new-repo"), Visibility: new("private"), CreatedAt: &github.Timestamp{Time: createdAt}},
+			}, nil
+		}
+		mockClient.AttachCodeSecurityConfigurationsFunc = func(ctx context.Context, org string, cscID int64, scope string, repoIDs []int64) error {
+			attachCalled = true
+			return nil
+		}
+	})
+
+	It("should not re-attach for a new repository if the configuration is the default for new repositories", func() {
+		createdAt = time.Now().Add(-time.Minute)
+		Expect(rec.attachCSC(ctx, "all", testCsc, 999, new("all"))).To(Succeed())
+		Expect(attachCalled).To(BeFalse())
+	})
+
+	It("should re-attach for a new repository if the configuration is not the default for new repositories", func() {
+		createdAt = time.Now().Add(-time.Minute)
+		Expect(rec.attachCSC(ctx, "all", testCsc, 999, nil)).To(Succeed())
+		Expect(attachCalled).To(BeTrue())
+	})
+
+	It("should re-attach for an old repository which is not attached", func() {
+		createdAt = time.Now().Add(-time.Hour)
+		Expect(rec.attachCSC(ctx, "all", testCsc, 999, new("all"))).To(Succeed())
+		Expect(attachCalled).To(BeTrue())
+	})
+
+	It("should not re-attach if an attached repository was transferred to another organization", func() {
+		mockClient.GetOrgRepositoriesFunc = func(ctx context.Context, org string) ([]*github.Repository, error) {
+			return []*github.Repository{}, nil
+		}
+		Expect(rec.attachCSC(ctx, "all", testCsc, 999, new("all"))).To(Succeed())
+		Expect(attachCalled).To(BeFalse())
+	})
+
+	It("should retry later if GitHub rejects the attachment because of a running enablement", func() {
+		createdAt = time.Now().Add(-time.Hour)
+		mockClient.AttachCodeSecurityConfigurationsFunc = func(ctx context.Context, org string, cscID int64, scope string, repoIDs []int64) error {
+			return &github.ErrorResponse{Response: &http.Response{StatusCode: http.StatusConflict}}
+		}
+		_, ok := reconciler.RetryLater(rec.attachCSC(ctx, "all", testCsc, 999, new("all")))
+		Expect(ok).To(BeTrue())
 	})
 })
 
@@ -1241,7 +1406,7 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 				}, nil
 			}
 
-			result, err := rec.getDesiredAttachmentsForScope(ctx, "all", testCsc)
+			result, _, err := rec.getDesiredAttachmentsForScope(ctx, "all", testCsc, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(3))
 			Expect(result).To(HaveKeyWithValue("repo1", int64(1)))
@@ -1260,7 +1425,7 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 				}, nil
 			}
 
-			result, err := rec.getDesiredAttachmentsForScope(ctx, "public", testCsc)
+			result, _, err := rec.getDesiredAttachmentsForScope(ctx, "public", testCsc, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
 			Expect(result).To(HaveKeyWithValue("repo1", int64(1)))
@@ -1277,7 +1442,7 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 				}, nil
 			}
 
-			result, err := rec.getDesiredAttachmentsForScope(ctx, "private_or_internal", testCsc)
+			result, _, err := rec.getDesiredAttachmentsForScope(ctx, "private_or_internal", testCsc, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(2))
 			Expect(result).To(HaveKeyWithValue("repo2", int64(2)))
@@ -1307,7 +1472,7 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 				Namespace: defaultNamespace,
 			}
 
-			result, err := rec.getDesiredAttachmentsForScope(ctx, "selected", testCsc)
+			result, _, err := rec.getDesiredAttachmentsForScope(ctx, "selected", testCsc, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeEmpty())
 		})
@@ -1319,7 +1484,7 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 				return nil, errors.New("API error")
 			}
 
-			_, err := rec.getDesiredAttachmentsForScope(ctx, "all", testCsc)
+			_, _, err := rec.getDesiredAttachmentsForScope(ctx, "all", testCsc, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("API error"))
 		})
@@ -1335,7 +1500,7 @@ var _ = Describe("GetDesiredAttachmentsForScope", func() {
 				}, nil
 			}
 
-			result, err := rec.getDesiredAttachmentsForScope(ctx, "all", testCsc)
+			result, _, err := rec.getDesiredAttachmentsForScope(ctx, "all", testCsc, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
 			Expect(result).To(HaveKeyWithValue("repo1", int64(1)))
@@ -1383,7 +1548,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 				return nil
 			}
 
-			err := rec.attachCSC(ctx, "all_without_configurations", testCsc, 999)
+			err := rec.attachCSC(ctx, "all_without_configurations", testCsc, 999, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capturedScope).To(Equal("all_without_configurations"))
 			Expect(capturedRepoIds).To(BeNil())
@@ -1417,7 +1582,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 				return nil
 			}
 
-			err := rec.attachCSC(ctx, "all", testCsc, 999)
+			err := rec.attachCSC(ctx, "all", testCsc, 999, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(attachCalled).To(BeFalse())
 		})
@@ -1446,7 +1611,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 				return nil
 			}
 
-			err := rec.attachCSC(ctx, "all", testCsc, 999)
+			err := rec.attachCSC(ctx, "all", testCsc, 999, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capturedScope).To(Equal("all"))
 		})
@@ -1472,7 +1637,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 				return nil
 			}
 
-			err := rec.attachCSC(ctx, "public", testCsc, 999)
+			err := rec.attachCSC(ctx, "public", testCsc, 999, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capturedScope).To(Equal("public"))
 			Expect(capturedRepoIds).To(BeNil())
@@ -1517,7 +1682,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 				return nil
 			}
 
-			err := rec.attachCSC(ctx, "selected", testCsc, 999)
+			err := rec.attachCSC(ctx, "selected", testCsc, 999, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(capturedRepoIds).To(ContainElement(int64(12345)))
 		})
@@ -1529,7 +1694,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 				return nil, errors.New("GitHub API error")
 			}
 
-			err := rec.attachCSC(ctx, "all", testCsc, 999)
+			err := rec.attachCSC(ctx, "all", testCsc, 999, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("GitHub API error"))
 		})
@@ -1544,7 +1709,7 @@ var _ = Describe("AttachCSC - Comprehensive Scenarios", func() {
 				return nil, errors.New("failed to list repos")
 			}
 
-			err := rec.attachCSC(ctx, "all", testCsc, 999)
+			err := rec.attachCSC(ctx, "all", testCsc, 999, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("failed to list repos"))
 		})

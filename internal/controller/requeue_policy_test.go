@@ -9,6 +9,7 @@ import (
 
 	"github.com/Interhyp/git-hubby/internal/config"
 	"github.com/Interhyp/git-hubby/internal/ghclient"
+	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/Interhyp/git-hubby/internal/reconciler/common/idresolver"
 	"github.com/Interhyp/git-hubby/internal/reconciler/common/rulesets"
 	"github.com/Interhyp/git-hubby/internal/reconciler/reporec"
@@ -314,6 +315,27 @@ var _ = Describe("RequeuePolicy", func() {
 
 			result, _ = (&RequeuePolicy{successInterval: 3 * time.Hour}).OnReconcileError(ctx, err)
 			Expect(result.RequeueAfter).To(Equal(3 * time.Hour))
+		})
+
+		It("requeues after the delay of retry later errors without error", func() {
+			err := fmt.Errorf("csc: %w", errors.Join(
+				&reconciler.RetryLaterError{Reason: "enablement in progress", RequeueAfter: time.Minute},
+				&reconciler.RetryLaterError{Reason: "attachment in progress", RequeueAfter: 2 * time.Minute},
+			))
+
+			result, returnErr := policy.OnReconcileError(ctx, err)
+
+			Expect(returnErr).NotTo(HaveOccurred())
+			Expect(result).To(Equal(ctrl.Result{RequeueAfter: 2 * time.Minute}))
+		})
+
+		It("returns retry later errors joined with other errors for a requeue with exponential backoff", func() {
+			err := errors.Join(&reconciler.RetryLaterError{Reason: "enablement in progress", RequeueAfter: time.Minute}, errors.New("boom"))
+
+			result, returnErr := policy.OnReconcileError(ctx, err)
+
+			Expect(returnErr).To(MatchError(err))
+			Expect(result).To(Equal(ctrl.Result{}))
 		})
 
 		It("returns other errors for a requeue with exponential backoff", func() {
