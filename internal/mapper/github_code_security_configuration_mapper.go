@@ -166,12 +166,21 @@ func codeScanningDefaultSetupOptionsDiffer(desired, current *github.CodeScanning
 }
 
 // codeScanningOptionsDiffer reports whether the desired options differ from the current ones.
-// Unset desired options are not managed and never differ.
-func codeScanningOptionsDiffer(desired, current *github.CodeScanningOptions) bool {
-	if desired == nil {
+// Unset desired options are not managed and never differ. The options are a variant of code scanning default setup
+// ("Enabled with advanced setup allowed" in the GitHub UI) and are not returned by GitHub unless default setup is
+// enabled, so they are only compared if the effective default setup state is enabled.
+func codeScanningOptionsDiffer(desired, current *github.CodeSecurityConfiguration) bool {
+	if desired.CodeScanningOptions == nil {
 		return false
 	}
-	return desired.GetAllowAdvanced() != current.GetAllowAdvanced()
+	defaultSetup := current.GetCodeScanningDefaultSetup()
+	if desired.CodeScanningDefaultSetup != nil {
+		defaultSetup = *desired.CodeScanningDefaultSetup
+	}
+	if defaultSetup != featureStateEnabled {
+		return false
+	}
+	return desired.CodeScanningOptions.GetAllowAdvanced() != current.GetCodeScanningOptions().GetAllowAdvanced()
 }
 
 // CodeSecurityConfigurationsDiffer returns true if the desired configuration differs from the current one on GitHub.
@@ -197,7 +206,7 @@ func CodeSecurityConfigurationsDiffer(desired, current *github.CodeSecurityConfi
 		stateDiffers(desired.CodeScanningDefaultSetup, current.CodeScanningDefaultSetup) ||
 		codeScanningDefaultSetupOptionsDiffer(desired.CodeScanningDefaultSetupOptions, current.CodeScanningDefaultSetupOptions) ||
 		stateDiffers(desired.CodeScanningDelegatedAlertDismissal, current.CodeScanningDelegatedAlertDismissal) ||
-		codeScanningOptionsDiffer(desired.CodeScanningOptions, current.CodeScanningOptions) ||
+		codeScanningOptionsDiffer(desired, current) ||
 		stateDiffers(desired.SecretScanning, current.SecretScanning) ||
 		stateDiffers(desired.SecretScanningPushProtection, current.SecretScanningPushProtection) ||
 		stateDiffers(desired.SecretScanningValidityChecks, current.SecretScanningValidityChecks) ||

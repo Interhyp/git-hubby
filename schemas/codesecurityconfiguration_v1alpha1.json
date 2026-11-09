@@ -67,7 +67,7 @@
           "type": "string"
         },
         "codeScanningOptions": {
-          "description": "CodeScanningOptions configures advanced code scanning options.",
+          "description": "CodeScanningOptions configures advanced code scanning options.\nOnly applies if CodeScanningDefaultSetup is enabled (\"Enabled with advanced setup allowed\" in the GitHub UI).\nGitHub does not return these options otherwise, so they are only compared with GitHub if\nCodeScanningDefaultSetup is enabled.",
           "properties": {
             "allowAdvanced": {
               "description": "AllowAdvanced determines whether users can enable advanced code scanning features.\nWhen true, repository administrators can configure advanced code scanning settings beyond the default setup.",
@@ -78,7 +78,7 @@
           "additionalProperties": false
         },
         "codeSecurity": {
-          "description": "CodeSecurity is a meta-setting that enables multiple code security features.",
+          "description": "CodeSecurity is a meta-setting that enables multiple code security features.\nGitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub\n(enabled, code_security, secret_protection or disabled). not_set is treated as disabled.",
           "enum": [
             "enabled",
             "disabled",
@@ -168,7 +168,7 @@
           "type": "string"
         },
         "secretProtection": {
-          "description": "SecretProtection is a meta-setting that enables multiple secret protection features.",
+          "description": "SecretProtection is a meta-setting that enables multiple secret protection features.\nGitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub\n(enabled, code_security, secret_protection or disabled). not_set is treated as disabled.",
           "enum": [
             "enabled",
             "disabled",

@@ -73,9 +73,14 @@ type CodeSecurityConfigurationSpec struct {
 	// +kubebuilder:validation:Enum=enabled;disabled;not_set
 	CodeScanningDelegatedAlertDismissal *string `json:"codeScanningDelegatedAlertDismissal,omitempty"`
 	// CodeScanningOptions configures advanced code scanning options.
+	// Only applies if CodeScanningDefaultSetup is enabled ("Enabled with advanced setup allowed" in the GitHub UI).
+	// GitHub does not return these options otherwise, so they are only compared with GitHub if
+	// CodeScanningDefaultSetup is enabled.
 	CodeScanningOptions *CodeScanningOptions `json:"codeScanningOptions,omitempty"`
 
 	// CodeSecurity is a meta-setting that enables multiple code security features.
+	// GitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub
+	// (enabled, code_security, secret_protection or disabled). not_set is treated as disabled.
 	// +kubebuilder:validation:Enum=enabled;disabled;not_set
 	CodeSecurity *string `json:"codeSecurity,omitempty"`
 
@@ -114,6 +119,8 @@ type CodeSecurityConfigurationSpec struct {
 	SecretScanningDelegatedAlertDismissal *string `json:"secretScanningDelegatedAlertDismissal,omitempty"`
 
 	// SecretProtection is a meta-setting that enables multiple secret protection features.
+	// GitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub
+	// (enabled, code_security, secret_protection or disabled). not_set is treated as disabled.
 	// +kubebuilder:validation:Enum=enabled;disabled;not_set
 	SecretProtection *string `json:"secretProtection,omitempty"`
 

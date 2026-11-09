@@ -73,8 +73,13 @@ type CodeSecurityConfigurationSpecApplyConfiguration struct {
 	// When enabled, users with appropriate permissions can dismiss alerts that don't require action.
 	CodeScanningDelegatedAlertDismissal *string `json:"codeScanningDelegatedAlertDismissal,omitempty"`
 	// CodeScanningOptions configures advanced code scanning options.
+	// Only applies if CodeScanningDefaultSetup is enabled ("Enabled with advanced setup allowed" in the GitHub UI).
+	// GitHub does not return these options otherwise, so they are only compared with GitHub if
+	// CodeScanningDefaultSetup is enabled.
 	CodeScanningOptions *CodeScanningOptionsApplyConfiguration `json:"codeScanningOptions,omitempty"`
 	// CodeSecurity is a meta-setting that enables multiple code security features.
+	// GitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub
+	// (enabled, code_security, secret_protection or disabled). not_set is treated as disabled.
 	CodeSecurity *string `json:"codeSecurity,omitempty"`
 	// SecretScanning enables or disables secret scanning.
 	// Secret scanning detects secrets (like API keys and tokens) in your code.
@@ -99,6 +104,8 @@ type CodeSecurityConfigurationSpecApplyConfiguration struct {
 	// When enabled, users with appropriate permissions can dismiss false-positive alerts.
 	SecretScanningDelegatedAlertDismissal *string `json:"secretScanningDelegatedAlertDismissal,omitempty"`
 	// SecretProtection is a meta-setting that enables multiple secret protection features.
+	// GitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub
+	// (enabled, code_security, secret_protection or disabled). not_set is treated as disabled.
 	SecretProtection *string `json:"secretProtection,omitempty"`
 	// PrivateVulnerabilityReporting enables or disables private vulnerability reporting.
 	// When enabled, security researchers can privately report vulnerabilities.
