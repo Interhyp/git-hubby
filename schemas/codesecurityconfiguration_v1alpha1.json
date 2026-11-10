@@ -16,7 +16,7 @@
       "description": "spec defines the desired state of CodeSecurityConfiguration",
       "properties": {
         "advancedSecurity": {
-          "description": "AdvancedSecurity enables or disables GitHub Advanced Security features.\n- \"enabled\": Enable Advanced Security (required for code scanning, secret scanning, and dependency review)\n- \"disabled\": Disable Advanced Security\n- \"code_security\": Enable code security features only\n- \"secret_protection\": Enable secret protection features only\nWarning: code_security and secret_protection are deprecated values for this field.\nPrefer the individual code_security and secret_protection fields to set the status of these features.\nSee: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security",
+          "description": "AdvancedSecurity enables or disables GitHub Advanced Security features.\n- \"enabled\": Enable Advanced Security (required for code scanning, secret scanning, and dependency review)\n- \"disabled\": Disable Advanced Security\n- \"code_security\": Enable code security features only\n- \"secret_protection\": Enable secret protection features only\nWarning: code_security and secret_protection are deprecated values for this field.\nPrefer the individual code_security and secret_protection fields to set the status of these features.\nMust not be set together with CodeSecurity or SecretProtection (rejected by GitHub).\nSee: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security",
           "enum": [
             "enabled",
             "disabled",
@@ -67,7 +67,7 @@
           "type": "string"
         },
         "codeScanningOptions": {
-          "description": "CodeScanningOptions configures advanced code scanning options.",
+          "description": "CodeScanningOptions configures advanced code scanning options.\nOnly applies if CodeScanningDefaultSetup is enabled (\"Enabled with advanced setup allowed\" in the GitHub UI).\nGitHub does not return these options otherwise, so they are only compared with GitHub if\nCodeScanningDefaultSetup is enabled.",
           "properties": {
             "allowAdvanced": {
               "description": "AllowAdvanced determines whether users can enable advanced code scanning features.\nWhen true, repository administrators can configure advanced code scanning settings beyond the default setup.",
@@ -78,7 +78,7 @@
           "additionalProperties": false
         },
         "codeSecurity": {
-          "description": "CodeSecurity is a meta-setting that enables multiple code security features.",
+          "description": "CodeSecurity is a meta-setting that enables multiple code security features.\nGitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub\n(enabled, code_security, secret_protection or disabled). not_set is treated as disabled.",
           "enum": [
             "enabled",
             "disabled",
@@ -168,7 +168,7 @@
           "type": "string"
         },
         "secretProtection": {
-          "description": "SecretProtection is a meta-setting that enables multiple secret protection features.",
+          "description": "SecretProtection is a meta-setting that enables multiple secret protection features.\nGitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub\n(enabled, code_security, secret_protection or disabled). not_set is treated as disabled.",
           "enum": [
             "enabled",
             "disabled",
@@ -292,6 +292,12 @@
         "name"
       ],
       "type": "object",
+      "x-kubernetes-validations": [
+        {
+          "message": "advancedSecurity must not be set together with codeSecurity or secretProtection",
+          "rule": "!has(self.advancedSecurity) || (!has(self.codeSecurity) && !has(self.secretProtection))"
+        }
+      ],
       "additionalProperties": false
     },
     "status": {

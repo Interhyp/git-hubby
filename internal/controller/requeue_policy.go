@@ -112,9 +112,16 @@ func (p *RequeuePolicy) OnFactoryError(ctx context.Context, err error) (ctrl.Res
 //     GitHub state interval is used as well, so that resources created later (e.g. in a later Argo CD sync wave)
 //     are picked up without tracking which kinds are watched.
 //
+// Errors consisting only of reconciler.RetryLaterErrors (transient states on GitHub that resolve on their own) are
+// requeued after their delay without error.
+//
 // All other errors are logged and handled like errors of the factory, see OnFactoryError.
 func (p *RequeuePolicy) OnReconcileError(ctx context.Context, err error) (ctrl.Result, error) {
 	log := logPkg.FromContext(ctx)
+	if requeueAfter, ok := reconciler.RetryLater(err); ok {
+		log.Info("Reconciliation blocked by a transient state on GitHub, retrying later", "reason", err.Error(), "requeueAfter", requeueAfter)
+		return ctrl.Result{RequeueAfter: requeueAfter}, nil
+	}
 	if reconciler.RequiresUserAction(err) {
 		requeueAfter := p.userActionRequeueInterval(err)
 		log.Info("Reconciliation requires user action, waiting for a change", "reason", err.Error(), "requeueAfter", requeueAfter)

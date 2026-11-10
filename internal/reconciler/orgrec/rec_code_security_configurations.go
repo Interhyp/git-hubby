@@ -10,8 +10,8 @@ import (
 	"time"
 
 	githubv1alpha1 "github.com/Interhyp/git-hubby/api/v1alpha1"
-	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/mapper"
+	"github.com/Interhyp/git-hubby/internal/reconciler"
 	"github.com/google/go-github/v93/github"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logPkg "sigs.k8s.io/controller-runtime/pkg/log"
@@ -19,11 +19,31 @@ import (
 
 const targetTypeOrganization = "organization"
 
-func (o *GitHubOrgReconciler) reconcileCodeSecurityConfigurations(ctx context.Context) error {
-	// GitHub returns 409 on code-security configuration endpoints when an enablement
-	// event is in progress. This is transient and should be retried at the transport level.
-	ctx = ghclient.WithRetryableStatusCodes(ctx, http.StatusConflict)
+const (
+	// enablementRetryDelay is the delay before reconciling again while an enablement of a code security
+	// configuration is in progress on GitHub.
+	enablementRetryDelay = 1 * time.Minute
+	// newRepoAttachmentGracePeriod is the time after the creation of a repository in which GitHub is expected to
+	// attach the default code security configuration on its own.
+	newRepoAttachmentGracePeriod = 10 * time.Minute
+)
 
+// errAttachmentTimeout is returned if attaching a code security configuration did not finish in time.
+var errAttachmentTimeout = errors.New("timeout waiting for code security configuration attachment to complete")
+
+// now returns the current time; replaceable in tests.
+var now = time.Now
+
+// retryLaterForAttachment returns a reconciler.RetryLaterError for an attachment which is still in progress.
+func retryLaterForAttachment(err error) error {
+	return &reconciler.RetryLaterError{
+		Reason:       "code security configuration attachment is in progress",
+		RequeueAfter: enablementRetryDelay,
+		Err:          err,
+	}
+}
+
+func (o *GitHubOrgReconciler) reconcileCodeSecurityConfigurations(ctx context.Context) error {
 	log := logPkg.FromContext(ctx)
 	log.V(1).Info("Reconciling organization code security configurations on GitHub")
 
@@ -42,9 +62,10 @@ func (o *GitHubOrgReconciler) reconcileCodeSecurityConfigurations(ctx context.Co
 	}
 
 	type attachable struct {
-		k8sName  string
-		scope    *string
-		githubId int64
+		k8sName            string
+		scope              *string
+		githubId           int64
+		defaultForNewRepos *string
 	}
 	seen := make(map[string]attachable)
 	for _, csc := range o.Kubernetes.Resource.Spec.CodeSecurityConfigurations {
@@ -70,9 +91,10 @@ func (o *GitHubOrgReconciler) reconcileCodeSecurityConfigurations(ctx context.Co
 			}
 		}
 		seen[k8sName] = attachable{
-			k8sName:  k8sName,
-			scope:    csc.AttachmentScope,
-			githubId: currentCsc.GetID(),
+			k8sName:            k8sName,
+			scope:              csc.AttachmentScope,
+			githubId:           currentCsc.GetID(),
+			defaultForNewRepos: expectedCsc.Spec.DefaultForNewRepos,
 		}
 	}
 	for ghName, ghConf := range ghOrgConfsByName {
@@ -85,7 +107,7 @@ func (o *GitHubOrgReconciler) reconcileCodeSecurityConfigurations(ctx context.Co
 	for _, candidate := range seen {
 		if candidate.scope != nil {
 			// attaching must happen last as this is an async process that will block other operations on the csc
-			err = o.attachCSC(ctx, *candidate.scope, candidate.k8sName, candidate.githubId)
+			err = o.attachCSC(ctx, *candidate.scope, candidate.k8sName, candidate.githubId, candidate.defaultForNewRepos)
 			if err != nil {
 				return err
 			}
@@ -130,6 +152,9 @@ func (o *GitHubOrgReconciler) unsetObsoleteDefaults(ctx context.Context) error {
 		if _, isStillDefault := defaultK8sConfs[ghName]; !isStillDefault {
 			err = o.GitHub.Client.SetCodeSecurityConfigurationAsDefaultForOrg(ctx, o.GitHub.Resource, ghConf.Configuration.GetID(), "none")
 			if err != nil {
+				if retryErr := retryLaterIfEnablementInProgress(err); retryErr != nil {
+					return retryErr
+				}
 				return err
 			}
 		}
@@ -158,8 +183,15 @@ func (o *GitHubOrgReconciler) updateCsc(ctx context.Context, desired *githubv1al
 	desiredAsGH := mapper.ToGithubCodeSecurityConfiguration(desired)
 	cscID := current.GetID()
 	if mapper.CodeSecurityConfigurationsDiffer(&desiredAsGH, current) {
+		// Updating an attached configuration is rejected with 409 while an enablement is in progress
+		if err := o.checkNoEnablementInProgress(ctx, cscID); err != nil {
+			return nil, err
+		}
 		current, err := o.GitHub.Client.UpdateCodeSecurityConfigurationForOrg(ctx, o.GitHub.Resource, cscID, desiredAsGH)
 		if err != nil {
+			if retryErr := retryLaterIfEnablementInProgress(err); retryErr != nil {
+				return nil, retryErr
+			}
 			log.Error(err, "Failed to update code security configuration on GitHub")
 			return nil, err
 		}
@@ -167,6 +199,9 @@ func (o *GitHubOrgReconciler) updateCsc(ctx context.Context, desired *githubv1al
 		if desired.Spec.DefaultForNewRepos != nil {
 			err = o.GitHub.Client.SetCodeSecurityConfigurationAsDefaultForOrg(ctx, o.GitHub.Resource, cscID, *desired.Spec.DefaultForNewRepos)
 			if err != nil {
+				if retryErr := retryLaterIfEnablementInProgress(err); retryErr != nil {
+					return nil, retryErr
+				}
 				log.Error(err, "Failed to set code security configuration as default on GitHub")
 				return nil, err
 			}
@@ -175,6 +210,37 @@ func (o *GitHubOrgReconciler) updateCsc(ctx context.Context, desired *githubv1al
 
 	log.V(1).Info("Updated code security configurations on GitHub")
 	return current, nil
+}
+
+// checkNoEnablementInProgress returns a reconciler.RetryLaterError if any repository attached to the code security
+// configuration with the given cscGitHubID is still being attached or updated.
+func (o *GitHubOrgReconciler) checkNoEnablementInProgress(ctx context.Context, cscGitHubID int64) error {
+	attachments, err := o.GitHub.Client.GetRepositoriesAttachedToCodeSecurityConfiguration(ctx, o.GitHub.Resource, cscGitHubID)
+	if err != nil {
+		return err
+	}
+	for _, attachment := range attachments {
+		if status := attachment.GetStatus(); status == "attaching" || status == "updating" {
+			return &reconciler.RetryLaterError{
+				Reason:       "code security configuration enablement is in progress",
+				RequeueAfter: enablementRetryDelay,
+			}
+		}
+	}
+	return nil
+}
+
+// retryLaterIfEnablementInProgress returns a reconciler.RetryLaterError wrapping err if GitHub rejected the request
+// with 409 because an enablement of the code security configuration is in progress, nil otherwise.
+func retryLaterIfEnablementInProgress(err error) error {
+	if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok && ghErr.Response != nil && ghErr.Response.StatusCode == http.StatusConflict {
+		return &reconciler.RetryLaterError{
+			Reason:       "code security configuration enablement is in progress",
+			RequeueAfter: enablementRetryDelay,
+			Err:          err,
+		}
+	}
+	return nil
 }
 
 // attachCSC attaches the code security configuration with the given cscGitHubID to repositories according to the specified scope if the
@@ -186,22 +252,29 @@ func (o *GitHubOrgReconciler) updateCsc(ctx context.Context, desired *githubv1al
 // If the scope is "private_or_internal", it expects all private and internal repositories of the organization to be attached.
 // We only count repositories as attached if their attachment status is "attached", "removed_by_enterprise" or "enforced".
 // If any repository has a failed attachment status like "detached", "removed" or "failed", we consider the attachments as not matching the expectation and try to re-attach according to the scope.
-func (o *GitHubOrgReconciler) attachCSC(ctx context.Context, attachmentScope string, cscK8sName string, cscGitHubID int64) error {
+// For all scopes except "selected", repositories which GitHub attaches on its own are not considered missing (see
+// getDesiredAttachmentsForScope) and attached repositories which are no longer expected (e.g. transferred to another
+// organization) are ignored: re-attaching would start an enablement on all repositories without changing them.
+func (o *GitHubOrgReconciler) attachCSC(ctx context.Context, attachmentScope string, cscK8sName string, cscGitHubID int64, defaultForNewRepos *string) error {
 	log := logPkg.FromContext(ctx).WithValues("CodeSecurityConfiguration", cscK8sName)
 	if attachmentScope == "all_without_configurations" {
 		return o.attachToRepos(ctx, attachmentScope, cscGitHubID, nil)
 	}
 	currentAttachments, err := o.getAndWaitForFinishedAttachments(ctx, cscGitHubID, 5*time.Second, 1*time.Minute)
 	if err != nil {
+		if errors.Is(err, errAttachmentTimeout) {
+			return retryLaterForAttachment(err)
+		}
 		log.Error(err, fmt.Sprintf("Failed to get repositories attached to code security configuration %s", cscK8sName))
 		return err
 	}
-	desiredAttachments, err := o.getDesiredAttachmentsForScope(ctx, attachmentScope, cscK8sName)
+	desiredAttachments, attachedByGitHub, err := o.getDesiredAttachmentsForScope(ctx, attachmentScope, cscK8sName, defaultForNewRepos)
 	if err != nil {
 		log.Error(err, fmt.Sprintf("Failed to get repositories attached to code security configuration %s", cscK8sName))
 		return err
 	}
-	if attachmentsDiffer(currentAttachments, desiredAttachments) {
+	//nolint:goconst
+	if attachmentsDiffer(currentAttachments, desiredAttachments, attachedByGitHub, attachmentScope == "selected") {
 		var ids []int64
 		//nolint:goconst
 		if attachmentScope == "selected" {
@@ -217,18 +290,23 @@ func (o *GitHubOrgReconciler) attachCSC(ctx context.Context, attachmentScope str
 	return nil
 }
 
-func (o *GitHubOrgReconciler) getDesiredAttachmentsForScope(ctx context.Context, attachmentScope string, cscK8sName string) (map[string]int64, error) {
-	var desiredAttachments map[string]int64
+// getDesiredAttachmentsForScope returns the names and IDs of the repositories which are expected to be attached for
+// the given scope. For all scopes except "selected", it also returns the names of the repositories which GitHub
+// attaches on its own because they were created recently and the configuration is the default for new repositories
+// of their visibility (see isAttachedByGitHub). Missing attachments of these repositories are expected to show up shortly.
+func (o *GitHubOrgReconciler) getDesiredAttachmentsForScope(ctx context.Context, attachmentScope string, cscK8sName string, defaultForNewRepos *string) (map[string]int64, map[string]bool, error) {
 	switch attachmentScope {
 	//nolint:goconst
 	case "selected":
-		return o.getSelectedAttachedRepoNamesToIDs(ctx, cscK8sName)
+		desiredAttachments, err := o.getSelectedAttachedRepoNamesToIDs(ctx, cscK8sName)
+		return desiredAttachments, nil, err
 	default:
 		repos, err := o.GitHub.Client.GetOrgRepositories(ctx, o.GitHub.Resource)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		desiredAttachments = make(map[string]int64)
+		desiredAttachments := make(map[string]int64)
+		attachedByGitHub := make(map[string]bool)
 		for _, repo := range repos {
 			if repo.ID == nil || repo.Name == nil {
 				continue
@@ -248,11 +326,31 @@ func (o *GitHubOrgReconciler) getDesiredAttachmentsForScope(ctx context.Context,
 			}
 			if doInclude {
 				desiredAttachments[*repo.Name] = *repo.ID
+				if isAttachedByGitHub(repo, defaultForNewRepos) {
+					attachedByGitHub[*repo.Name] = true
+				}
 			}
 		}
-
+		return desiredAttachments, attachedByGitHub, nil
 	}
-	return desiredAttachments, nil
+}
+
+// isAttachedByGitHub reports whether GitHub attaches the configuration to repo on its own, i.e. the repository was
+// created within newRepoAttachmentGracePeriod and the configuration is the default for new repositories of its visibility.
+func isAttachedByGitHub(repo *github.Repository, defaultForNewRepos *string) bool {
+	if defaultForNewRepos == nil || repo.CreatedAt == nil || now().Sub(repo.GetCreatedAt().Time) > newRepoAttachmentGracePeriod {
+		return false
+	}
+	switch *defaultForNewRepos {
+	case "all":
+		return true
+	case githubv1alpha1.VisibilityPublic:
+		return repo.GetVisibility() == githubv1alpha1.VisibilityPublic
+	case "private_and_internal":
+		return repo.GetVisibility() == githubv1alpha1.VisibilityPrivate || repo.GetVisibility() == githubv1alpha1.VisibilityInternal
+	default:
+		return false
+	}
 }
 
 func (o *GitHubOrgReconciler) getAndWaitForFinishedAttachments(ctx context.Context, cscGitHubID int64, queryInterval, timeoutAfter time.Duration) ([]*github.RepositoryAttachment, error) {
@@ -273,7 +371,7 @@ func (o *GitHubOrgReconciler) getAndWaitForFinishedAttachments(ctx context.Conte
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-timeout:
-			return nil, fmt.Errorf("timeout waiting for code security configuration attachment to complete")
+			return nil, errAttachmentTimeout
 		case <-ticker.C:
 			attachments, err = o.getAttachmentsIfAllAttached(ctx, cscGitHubID, &GetAttachmentsOpts{returnErrorOnFailedStatus: true})
 			if err != nil {
@@ -333,10 +431,16 @@ func (o *GitHubOrgReconciler) attachToRepos(ctx context.Context, attachmentScope
 			// Attachment was accepted and is processing asynchronously - wait for it to finish
 			log.V(1).Info("Attachment accepted, waiting for completion", "scope", attachmentScope)
 			if _, waitErr := o.getAndWaitForFinishedAttachments(ctx, cscGitHubID, 5*time.Second, 2*time.Minute); waitErr != nil {
+				if errors.Is(waitErr, errAttachmentTimeout) {
+					return retryLaterForAttachment(waitErr)
+				}
 				log.Error(waitErr, "Attaching code security configuration did not finish in time", "scope", attachmentScope)
 				return waitErr
 			}
 			return nil
+		}
+		if retryErr := retryLaterIfEnablementInProgress(err); retryErr != nil {
+			return retryErr
 		}
 		log.Error(err, "Failed to attach code security configuration to repositories", "scope", attachmentScope)
 		return err
@@ -377,15 +481,20 @@ func (o *GitHubOrgReconciler) getSelectedAttachedRepoNamesToIDs(ctx context.Cont
 	return desiredAttachments, nil
 }
 
-func attachmentsDiffer(currentAttachments []*github.RepositoryAttachment, desiredAttachments map[string]int64) bool {
-	if len(currentAttachments) != len(desiredAttachments) {
-		return true
-	}
+// attachmentsDiffer reports whether the attached repositories differ from the desired ones. Desired repositories
+// contained in attachedByGitHub are not considered missing. If exact is false, attached repositories which are not
+// desired are ignored.
+func attachmentsDiffer(currentAttachments []*github.RepositoryAttachment, desiredAttachments map[string]int64, attachedByGitHub map[string]bool, exact bool) bool {
+	attached := make(map[string]bool, len(currentAttachments))
 	for _, current := range currentAttachments {
-		// same size, so equality is ensured if one collection is wholely contained in the other
-		_, found := desiredAttachments[current.GetRepository().GetName()]
-		if !found {
-			// one not found = not fully contained -> different
+		name := current.GetRepository().GetName()
+		attached[name] = true
+		if _, found := desiredAttachments[name]; !found && exact {
+			return true
+		}
+	}
+	for name := range desiredAttachments {
+		if !attached[name] && !attachedByGitHub[name] {
 			return true
 		}
 	}
@@ -405,6 +514,9 @@ func (o *GitHubOrgReconciler) createCsc(ctx context.Context, conf *githubv1alpha
 	if conf.Spec.DefaultForNewRepos != nil {
 		err = o.GitHub.Client.SetCodeSecurityConfigurationAsDefaultForOrg(ctx, o.GitHub.Resource, result.GetID(), *conf.Spec.DefaultForNewRepos)
 		if err != nil {
+			if retryErr := retryLaterIfEnablementInProgress(err); retryErr != nil {
+				return nil, retryErr
+			}
 			log.Error(err, "Failed to set code security configuration as default on GitHub")
 			return nil, err
 		}
@@ -418,6 +530,9 @@ func (o *GitHubOrgReconciler) deleteCsc(ctx context.Context, conf github.CodeSec
 	log.V(1).Info("Deleting code security configurations on GitHub")
 
 	if err := o.GitHub.Client.DeleteCodeSecurityConfigurationForOrg(ctx, o.GitHub.Resource, conf.GetID()); err != nil {
+		if retryErr := retryLaterIfEnablementInProgress(err); retryErr != nil {
+			return retryErr
+		}
 		log.Error(err, "Failed to delete code security configuration on GitHub")
 		return err
 	}

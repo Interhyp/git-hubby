@@ -49,6 +49,7 @@ spec:
                   - "secret_protection": Enable secret protection features only
                   Warning: code_security and secret_protection are deprecated values for this field.
                   Prefer the individual code_security and secret_protection fields to set the status of these features.
+                  Must not be set together with CodeSecurity or SecretProtection (rejected by GitHub).
                   See: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security
                 enum:
                 - enabled
@@ -99,8 +100,11 @@ spec:
                 - not_set
                 type: string
               codeScanningOptions:
-                description: CodeScanningOptions configures advanced code scanning
-                  options.
+                description: |-
+                  CodeScanningOptions configures advanced code scanning options.
+                  Only applies if CodeScanningDefaultSetup is enabled ("Enabled with advanced setup allowed" in the GitHub UI).
+                  GitHub does not return these options otherwise, so they are only compared with GitHub if
+                  CodeScanningDefaultSetup is enabled.
                 properties:
                   allowAdvanced:
                     description: |-
@@ -109,8 +113,10 @@ spec:
                     type: boolean
                 type: object
               codeSecurity:
-                description: CodeSecurity is a meta-setting that enables multiple
-                  code security features.
+                description: |-
+                  CodeSecurity is a meta-setting that enables multiple code security features.
+                  GitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub
+                  (enabled, code_security, secret_protection or disabled). not_set is treated as disabled.
                 enum:
                 - enabled
                 - disabled
@@ -207,8 +213,10 @@ spec:
                 - not_set
                 type: string
               secretProtection:
-                description: SecretProtection is a meta-setting that enables multiple
-                  secret protection features.
+                description: |-
+                  SecretProtection is a meta-setting that enables multiple secret protection features.
+                  GitHub does not return this field; it is compared with the combined AdvancedSecurity value returned by GitHub
+                  (enabled, code_security, secret_protection or disabled). not_set is treated as disabled.
                 enum:
                 - enabled
                 - disabled
@@ -332,6 +340,10 @@ spec:
             - description
             - name
             type: object
+            x-kubernetes-validations:
+            - message: advancedSecurity must not be set together with codeSecurity
+                or secretProtection
+              rule: '!has(self.advancedSecurity) || (!has(self.codeSecurity) && !has(self.secretProtection))'
           status:
             description: status defines the observed state of CodeSecurityConfiguration
             properties:

@@ -253,13 +253,15 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 
 		It("should return true for different code scanning options", func() {
 			first := &github.CodeSecurityConfiguration{
-				Name: "test-config",
+				Name:                     "test-config",
+				CodeScanningDefaultSetup: new("enabled"),
 				CodeScanningOptions: &github.CodeScanningOptions{
 					AllowAdvanced: new(true),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
-				Name: "test-config",
+				Name:                     "test-config",
+				CodeScanningDefaultSetup: new("enabled"),
 				CodeScanningOptions: &github.CodeScanningOptions{
 					AllowAdvanced: new(false),
 				},
@@ -271,18 +273,52 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 
 		It("should return true when one has code scanning options and other is nil", func() {
 			first := &github.CodeSecurityConfiguration{
-				Name: "test-config",
+				Name:                     "test-config",
+				CodeScanningDefaultSetup: new("enabled"),
 				CodeScanningOptions: &github.CodeScanningOptions{
 					AllowAdvanced: new(true),
 				},
 			}
 			second := &github.CodeSecurityConfiguration{
-				Name: "test-config",
+				Name:                     "test-config",
+				CodeScanningDefaultSetup: new("enabled"),
 			}
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
 			Expect(result).To(BeTrue())
 		})
+
+		It("should compare code scanning options if default setup is only enabled on GitHub", func() {
+			first := &github.CodeSecurityConfiguration{
+				Name:                "test-config",
+				CodeScanningOptions: &github.CodeScanningOptions{AllowAdvanced: new(true)},
+			}
+			second := &github.CodeSecurityConfiguration{
+				Name:                     "test-config",
+				CodeScanningDefaultSetup: new("enabled"),
+			}
+
+			Expect(CodeSecurityConfigurationsDiffer(first, second)).To(BeTrue())
+		})
+
+		DescribeTable("should ignore code scanning options if default setup is not enabled",
+			func(desiredDefaultSetup *string, currentDefaultSetup string) {
+				first := &github.CodeSecurityConfiguration{
+					Name:                     "test-config",
+					CodeScanningDefaultSetup: desiredDefaultSetup,
+					CodeScanningOptions:      &github.CodeScanningOptions{AllowAdvanced: new(true)},
+				}
+				second := &github.CodeSecurityConfiguration{
+					Name:                     "test-config",
+					CodeScanningDefaultSetup: new(currentDefaultSetup),
+				}
+
+				Expect(CodeSecurityConfigurationsDiffer(first, second)).To(BeFalse())
+			},
+			Entry("disabled", new("disabled"), "disabled"),
+			Entry("not set", new("not_set"), "not_set"),
+			Entry("unmanaged and disabled on GitHub", nil, "disabled"),
+		)
 
 		It("should return true for different code security", func() {
 			first := &github.CodeSecurityConfiguration{
@@ -506,6 +542,119 @@ var _ = Describe("CodeSecurityConfigurationsDiffer", func() {
 
 			result := CodeSecurityConfigurationsDiffer(first, second)
 			Expect(result).To(BeTrue())
+		})
+	})
+
+	Context("when fields are not set in the desired configuration", func() {
+		// Response of GitHub for an existing configuration: all features are returned, secret_protection is omitted.
+		current := func() *github.CodeSecurityConfiguration {
+			return &github.CodeSecurityConfiguration{
+				Name:                            "disabled-config",
+				Description:                     "Disables secret scanning",
+				AdvancedSecurity:                new("disabled"),
+				DependencyGraph:                 new("enabled"),
+				DependencyGraphAutosubmitAction: new("disabled"),
+				DependencyGraphAutosubmitActionOptions: &github.DependencyGraphAutosubmitActionOptions{
+					LabeledRunners: new(false),
+				},
+				DependabotAlerts:                      new("enabled"),
+				DependabotSecurityUpdates:             new("disabled"),
+				CodeScanningDefaultSetup:              new("disabled"),
+				CodeScanningDefaultSetupOptions:       &github.CodeScanningDefaultSetupOptions{RunnerType: "not_set"},
+				CodeScanningDelegatedAlertDismissal:   new("disabled"),
+				SecretScanning:                        new("disabled"),
+				SecretScanningPushProtection:          new("disabled"),
+				SecretScanningValidityChecks:          new("disabled"),
+				SecretScanningNonProviderPatterns:     new("disabled"),
+				SecretScanningGenericSecrets:          new("disabled"),
+				SecretScanningDelegatedAlertDismissal: new("disabled"),
+				PrivateVulnerabilityReporting:         new("disabled"),
+				Enforcement:                           new("enforced"),
+			}
+		}
+		desired := func() *github.CodeSecurityConfiguration {
+			return &github.CodeSecurityConfiguration{
+				Name:                                  "disabled-config",
+				Description:                           "Disables secret scanning",
+				SecretProtection:                      new("disabled"),
+				SecretScanning:                        new("disabled"),
+				SecretScanningDelegatedAlertDismissal: new("disabled"),
+				SecretScanningGenericSecrets:          new("disabled"),
+				SecretScanningNonProviderPatterns:     new("disabled"),
+				SecretScanningPushProtection:          new("disabled"),
+				SecretScanningValidityChecks:          new("disabled"),
+				DependencyGraph:                       new("enabled"),
+				DependabotAlerts:                      new("enabled"),
+				Enforcement:                           new("enforced"),
+			}
+		}
+
+		It("should return false if all set fields match", func() {
+			Expect(CodeSecurityConfigurationsDiffer(desired(), current())).To(BeFalse())
+		})
+
+		It("should return true if a set field differs", func() {
+			d := desired()
+			d.SecretScanning = new("enabled")
+			Expect(CodeSecurityConfigurationsDiffer(d, current())).To(BeTrue())
+		})
+
+		It("should return true if a set field is enabled but omitted by GitHub", func() {
+			d := desired()
+			d.SecretProtection = new("enabled")
+			Expect(CodeSecurityConfigurationsDiffer(d, current())).To(BeTrue())
+		})
+
+		It("should return true if set options are missing on GitHub", func() {
+			d := desired()
+			d.CodeScanningDefaultSetup = new("enabled")
+			d.CodeScanningOptions = &github.CodeScanningOptions{AllowAdvanced: new(true)}
+			Expect(CodeSecurityConfigurationsDiffer(d, current())).To(BeTrue())
+		})
+	})
+
+	// GitHub never returns code_security and secret_protection but reports both combined in advanced_security,
+	// see the API behaviour verified against GitHub (API version 2026-03-10).
+	DescribeTable("when comparing code security and secret protection with advanced security",
+		func(advancedSecurity, codeSecurity, secretProtection *string, currentAdvancedSecurity string, expected bool) {
+			desired := &github.CodeSecurityConfiguration{
+				Name:             "test-config",
+				AdvancedSecurity: advancedSecurity,
+				CodeSecurity:     codeSecurity,
+				SecretProtection: secretProtection,
+			}
+			current := &github.CodeSecurityConfiguration{
+				Name:             "test-config",
+				AdvancedSecurity: new(currentAdvancedSecurity),
+			}
+			Expect(CodeSecurityConfigurationsDiffer(desired, current)).To(Equal(expected))
+		},
+		Entry("both enabled", nil, new("enabled"), new("enabled"), "enabled", false),
+		Entry("only code security enabled", nil, new("enabled"), new("disabled"), "code_security", false),
+		Entry("only code security enabled, secret protection not set", nil, new("enabled"), new("not_set"), "code_security", false),
+		Entry("only secret protection enabled", nil, new("disabled"), new("enabled"), "secret_protection", false),
+		Entry("only secret protection enabled, code security not set", nil, new("not_set"), new("enabled"), "secret_protection", false),
+		Entry("both disabled", nil, new("disabled"), new("disabled"), "disabled", false),
+		Entry("both not set", nil, new("not_set"), new("not_set"), "disabled", false),
+		Entry("code security enabled on GitHub only", nil, new("disabled"), new("enabled"), "enabled", true),
+		Entry("secret protection disabled on GitHub", nil, new("enabled"), new("enabled"), "code_security", true),
+		Entry("only code security managed, matching", nil, new("enabled"), nil, "enabled", false),
+		Entry("only code security managed, differing", nil, new("disabled"), nil, "code_security", true),
+		Entry("only secret protection managed, matching", nil, nil, new("disabled"), "code_security", false),
+		Entry("advanced security enabled", new("enabled"), nil, nil, "enabled", false),
+		Entry("advanced security enabled, differing", new("enabled"), nil, nil, "secret_protection", true),
+		Entry("deprecated advanced security value", new("code_security"), nil, nil, "code_security", false),
+		Entry("nothing managed", nil, nil, nil, "enabled", false),
+	)
+
+	Context("when configurations are nil", func() {
+		It("should return false if both are nil", func() {
+			Expect(CodeSecurityConfigurationsDiffer(nil, nil)).To(BeFalse())
+		})
+
+		It("should return true if only one is nil", func() {
+			Expect(CodeSecurityConfigurationsDiffer(&github.CodeSecurityConfiguration{}, nil)).To(BeTrue())
+			Expect(CodeSecurityConfigurationsDiffer(nil, &github.CodeSecurityConfiguration{})).To(BeTrue())
 		})
 	})
 })

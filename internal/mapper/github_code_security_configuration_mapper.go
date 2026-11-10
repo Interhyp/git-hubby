@@ -82,68 +82,137 @@ func toCodeScanningOptions(spec *v1alpha1.CodeScanningOptions) *github.CodeScann
 	}
 }
 
-// dependencyGraphAutosubmitActionOptionsEqual checks if two DependencyGraphAutosubmitActionOptions are equal
-func dependencyGraphAutosubmitActionOptionsEqual(first, second *github.DependencyGraphAutosubmitActionOptions) bool {
-	if first == nil && second == nil {
-		return true
+// featureStateDisabled is assumed for feature states that GitHub omits in its response.
+const featureStateDisabled = "disabled"
+
+const featureStateEnabled = "enabled"
+
+// advancedSecurity values returned by GitHub. The code_security and secret_protection values are deprecated for
+// requests, but GitHub still uses them in responses to report that only one of the features is enabled.
+const (
+	advancedSecurityCodeSecurity     = "code_security"
+	advancedSecuritySecretProtection = "secret_protection"
+)
+
+// advancedSecurityComponents splits an advanced_security value into the states of Code Security and Secret Protection.
+func advancedSecurityComponents(advancedSecurity string) (codeSecurity, secretProtection bool) {
+	switch advancedSecurity {
+	case featureStateEnabled:
+		return true, true
+	case advancedSecurityCodeSecurity:
+		return true, false
+	case advancedSecuritySecretProtection:
+		return false, true
+	default:
+		return false, false
 	}
-	if first == nil || second == nil {
-		return false
-	}
-	return first.GetLabeledRunners() == second.GetLabeledRunners()
 }
 
-// codeScanningDefaultSetupOptionsEqual checks if two CodeScanningDefaultSetupOptions are equal
-func codeScanningDefaultSetupOptionsEqual(first, second *github.CodeScanningDefaultSetupOptions) bool {
-	if first == nil && second == nil {
-		return true
+// advancedSecurityDiffers reports whether the desired Code Security and Secret Protection states differ from the
+// current ones. GitHub never returns the code_security and secret_protection fields; it reports both features
+// combined in advanced_security instead (enabled, code_security, secret_protection or disabled). not_set is reported
+// as disabled. advanced_security must not be set together with the individual fields (rejected by GitHub and the CRD
+// validation); features which are set by neither are not managed and never differ.
+func advancedSecurityDiffers(desired, current *github.CodeSecurityConfiguration) bool {
+	currentCS, currentSP := advancedSecurityComponents(current.GetAdvancedSecurity())
+	var desiredCS, desiredSP *bool
+	if desired.AdvancedSecurity != nil {
+		cs, sp := advancedSecurityComponents(*desired.AdvancedSecurity)
+		desiredCS, desiredSP = &cs, &sp
 	}
-	if first == nil || second == nil {
-		return false
+	if desired.CodeSecurity != nil {
+		cs := *desired.CodeSecurity == featureStateEnabled
+		desiredCS = &cs
 	}
-	return first.RunnerType == second.RunnerType && first.GetRunnerLabel() == second.GetRunnerLabel()
+	if desired.SecretProtection != nil {
+		sp := *desired.SecretProtection == featureStateEnabled
+		desiredSP = &sp
+	}
+	return (desiredCS != nil && *desiredCS != currentCS) || (desiredSP != nil && *desiredSP != currentSP)
 }
 
-// codeScanningOptionsEqual checks if two CodeScanningOptions are equal
-func codeScanningOptionsEqual(first, second *github.CodeScanningOptions) bool {
-	if first == nil && second == nil {
-		return true
-	}
-	if first == nil || second == nil {
+// stateDiffers reports whether a desired feature state differs from the current one. Unset desired states are not
+// managed and never differ; states missing on GitHub are treated as disabled.
+func stateDiffers(desired, current *string) bool {
+	if desired == nil {
 		return false
 	}
-	return first.GetAllowAdvanced() == second.GetAllowAdvanced()
+	cur := featureStateDisabled
+	if current != nil {
+		cur = *current
+	}
+	return *desired != cur
 }
 
-// CodeSecurityConfigurationsDiffer returns true if the configurations differ, false if they are identical
-// Compares all fields in organization_types.go#CodeSecurityConfiguration except DefaultForNewRepos (handled by different API endpoint)
-func CodeSecurityConfigurationsDiffer(first, second *github.CodeSecurityConfiguration) bool {
-	if first == nil && second == nil {
-		return true
-	}
-	if first == nil || second == nil {
+// dependencyGraphAutosubmitActionOptionsDiffer reports whether the desired options differ from the current ones.
+// Unset desired options are not managed and never differ.
+func dependencyGraphAutosubmitActionOptionsDiffer(desired, current *github.DependencyGraphAutosubmitActionOptions) bool {
+	if desired == nil {
 		return false
 	}
-	return first.Name != second.Name ||
-		first.Description != second.Description ||
-		first.GetAdvancedSecurity() != second.GetAdvancedSecurity() ||
-		first.GetDependencyGraph() != second.GetDependencyGraph() ||
-		first.GetDependencyGraphAutosubmitAction() != second.GetDependencyGraphAutosubmitAction() ||
-		!dependencyGraphAutosubmitActionOptionsEqual(first.GetDependencyGraphAutosubmitActionOptions(), second.GetDependencyGraphAutosubmitActionOptions()) ||
-		first.GetDependabotAlerts() != second.GetDependabotAlerts() ||
-		first.GetDependabotSecurityUpdates() != second.GetDependabotSecurityUpdates() ||
-		first.GetCodeScanningDefaultSetup() != second.GetCodeScanningDefaultSetup() ||
-		!codeScanningDefaultSetupOptionsEqual(first.GetCodeScanningDefaultSetupOptions(), second.GetCodeScanningDefaultSetupOptions()) ||
-		first.GetCodeScanningDelegatedAlertDismissal() != second.GetCodeScanningDelegatedAlertDismissal() ||
-		!codeScanningOptionsEqual(first.GetCodeScanningOptions(), second.GetCodeScanningOptions()) ||
-		first.GetCodeSecurity() != second.GetCodeSecurity() ||
-		first.GetSecretScanning() != second.GetSecretScanning() ||
-		first.GetSecretScanningPushProtection() != second.GetSecretScanningPushProtection() ||
-		first.GetSecretScanningValidityChecks() != second.GetSecretScanningValidityChecks() ||
-		first.GetSecretScanningNonProviderPatterns() != second.GetSecretScanningNonProviderPatterns() ||
-		first.GetSecretScanningGenericSecrets() != second.GetSecretScanningGenericSecrets() ||
-		first.GetSecretScanningDelegatedAlertDismissal() != second.GetSecretScanningDelegatedAlertDismissal() ||
-		first.GetSecretProtection() != second.GetSecretProtection() ||
-		first.GetPrivateVulnerabilityReporting() != second.GetPrivateVulnerabilityReporting() ||
-		first.GetEnforcement() != second.GetEnforcement()
+	return desired.GetLabeledRunners() != current.GetLabeledRunners()
+}
+
+// codeScanningDefaultSetupOptionsDiffer reports whether the desired options differ from the current ones.
+// Unset desired options are not managed and never differ.
+func codeScanningDefaultSetupOptionsDiffer(desired, current *github.CodeScanningDefaultSetupOptions) bool {
+	if desired == nil {
+		return false
+	}
+	if current == nil {
+		return true
+	}
+	return desired.RunnerType != current.RunnerType || desired.GetRunnerLabel() != current.GetRunnerLabel()
+}
+
+// codeScanningOptionsDiffer reports whether the desired options differ from the current ones.
+// Unset desired options are not managed and never differ. The options are a variant of code scanning default setup
+// ("Enabled with advanced setup allowed" in the GitHub UI) and are not returned by GitHub unless default setup is
+// enabled, so they are only compared if the effective default setup state is enabled.
+func codeScanningOptionsDiffer(desired, current *github.CodeSecurityConfiguration) bool {
+	if desired.CodeScanningOptions == nil {
+		return false
+	}
+	defaultSetup := current.GetCodeScanningDefaultSetup()
+	if desired.CodeScanningDefaultSetup != nil {
+		defaultSetup = *desired.CodeScanningDefaultSetup
+	}
+	if defaultSetup != featureStateEnabled {
+		return false
+	}
+	return desired.CodeScanningOptions.GetAllowAdvanced() != current.GetCodeScanningOptions().GetAllowAdvanced()
+}
+
+// CodeSecurityConfigurationsDiffer returns true if the desired configuration differs from the current one on GitHub.
+// Compares all fields in organization_types.go#CodeSecurityConfiguration except DefaultForNewRepos (handled by different API endpoint).
+// Only fields set in desired are compared: GitHub returns values for all fields (e.g. "disabled" for unset features),
+// which would otherwise cause an update on every reconciliation. Every update of an attached configuration starts
+// an enablement on all attached repositories, blocking further updates with 409 until it is finished.
+func CodeSecurityConfigurationsDiffer(desired, current *github.CodeSecurityConfiguration) bool {
+	if desired == nil && current == nil {
+		return false
+	}
+	if desired == nil || current == nil {
+		return true
+	}
+	return desired.Name != current.Name ||
+		desired.Description != current.Description ||
+		advancedSecurityDiffers(desired, current) ||
+		stateDiffers(desired.DependencyGraph, current.DependencyGraph) ||
+		stateDiffers(desired.DependencyGraphAutosubmitAction, current.DependencyGraphAutosubmitAction) ||
+		dependencyGraphAutosubmitActionOptionsDiffer(desired.DependencyGraphAutosubmitActionOptions, current.DependencyGraphAutosubmitActionOptions) ||
+		stateDiffers(desired.DependabotAlerts, current.DependabotAlerts) ||
+		stateDiffers(desired.DependabotSecurityUpdates, current.DependabotSecurityUpdates) ||
+		stateDiffers(desired.CodeScanningDefaultSetup, current.CodeScanningDefaultSetup) ||
+		codeScanningDefaultSetupOptionsDiffer(desired.CodeScanningDefaultSetupOptions, current.CodeScanningDefaultSetupOptions) ||
+		stateDiffers(desired.CodeScanningDelegatedAlertDismissal, current.CodeScanningDelegatedAlertDismissal) ||
+		codeScanningOptionsDiffer(desired, current) ||
+		stateDiffers(desired.SecretScanning, current.SecretScanning) ||
+		stateDiffers(desired.SecretScanningPushProtection, current.SecretScanningPushProtection) ||
+		stateDiffers(desired.SecretScanningValidityChecks, current.SecretScanningValidityChecks) ||
+		stateDiffers(desired.SecretScanningNonProviderPatterns, current.SecretScanningNonProviderPatterns) ||
+		stateDiffers(desired.SecretScanningGenericSecrets, current.SecretScanningGenericSecrets) ||
+		stateDiffers(desired.SecretScanningDelegatedAlertDismissal, current.SecretScanningDelegatedAlertDismissal) ||
+		stateDiffers(desired.PrivateVulnerabilityReporting, current.PrivateVulnerabilityReporting) ||
+		stateDiffers(desired.Enforcement, current.Enforcement)
 }
