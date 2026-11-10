@@ -20,7 +20,7 @@ require (
 	go.elastic.co/ecszap v1.0.3
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/exp v0.0.0-20261106192419-47ce03d25ef0
+	golang.org/x/exp v0.0.0-20261109185158-a52e3aef5920
 	golang.org/x/text v0.44.0
 	k8s.io/api v0.37.0
 	k8s.io/apimachinery v0.37.0
