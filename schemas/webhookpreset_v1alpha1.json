@@ -29,9 +29,10 @@
           "type": "string"
         },
         "events": {
-          "description": "Events is a list of GitHub event types that trigger this webhook.\nIf empty, the webhook subscribes to all events (\"*\").\nCommon events include \"push\", \"pull_request\", \"issues\", \"release\".\nSee: https://docs.github.com/en/webhooks/webhook-events-and-payloads",
+          "description": "Events is a list of GitHub event types that trigger this webhook.\nIf omitted or empty, the webhook subscribes to \"push\".\nSet events to [\"*\"] to subscribe to all events.\nCommon events include \"push\", \"pull_request\", \"issues\", \"release\".\nSee: https://docs.github.com/en/webhooks/webhook-events-and-payloads",
           "items": {
             "enum": [
+              "*",
               "branch_protection_rule",
               "check_run",
               "check_suite",
