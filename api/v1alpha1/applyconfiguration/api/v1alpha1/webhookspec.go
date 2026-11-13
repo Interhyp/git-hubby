@@ -50,7 +50,8 @@ type WebhookSpecApplyConfiguration struct {
 	// Set to false to temporarily disable the webhook without deleting it.
 	Active *bool `json:"active,omitempty"`
 	// Events is a list of GitHub event types that trigger this webhook.
-	// If empty, the webhook subscribes to all events ("*").
+	// If omitted or empty, the webhook subscribes to "push".
+	// Set events to ["*"] to subscribe to all events.
 	// Common events include "push", "pull_request", "issues", "release".
 	// See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
 	Events []string `json:"events,omitempty"`

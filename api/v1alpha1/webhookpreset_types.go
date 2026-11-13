@@ -56,14 +56,15 @@ type WebhookSpec struct {
 	Active *bool `json:"active,omitempty"`
 
 	// Events is a list of GitHub event types that trigger this webhook.
-	// If empty, the webhook subscribes to all events ("*").
+	// If omitted or empty, the webhook subscribes to "push".
+	// Set events to ["*"] to subscribe to all events.
 	// Common events include "push", "pull_request", "issues", "release".
 	// See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
 	// +kubebuilder:validation:Type=array
 	// +kubebuilder:validation:MinItems=0
 	// +kubebuilder:validation:MaxItems=100
 	// +kubebuilder:validation:Items=string
-	// +kubebuilder:validation:items:Enum=branch_protection_rule;check_run;check_suite;code_scanning_alert;commit_comment;create;delete;dependabot_alert;deploy_key;deployment;deployment_status;discussion;discussion_comment;fork;github_app_authorization;gollum;installation;installation_repositories;issue_comment;issues;label;marketplace_purchase;member;membership;merge_group;meta;milestone;organization;org_block;package;page_build;ping;project;project_card;project_column;public;pull_request;pull_request_review;pull_request_review_comment;pull_request_review_thread;push;registry_package;release;repository;repository_dispatch;repository_import;repository_vulnerability_alert;secret_scanning_alert;security_advisory;sponsorship;star;status;team;team_add;watch;workflow_dispatch;workflow_job;workflow_run
+	// +kubebuilder:validation:items:Enum="*";branch_protection_rule;check_run;check_suite;code_scanning_alert;commit_comment;create;delete;dependabot_alert;deploy_key;deployment;deployment_status;discussion;discussion_comment;fork;github_app_authorization;gollum;installation;installation_repositories;issue_comment;issues;label;marketplace_purchase;member;membership;merge_group;meta;milestone;organization;org_block;package;page_build;ping;project;project_card;project_column;public;pull_request;pull_request_review;pull_request_review_comment;pull_request_review_thread;push;registry_package;release;repository;repository_dispatch;repository_import;repository_vulnerability_alert;secret_scanning_alert;security_advisory;sponsorship;star;status;team;team_add;watch;workflow_dispatch;workflow_job;workflow_run
 	Events []string `json:"events,omitempty"`
 
 	// SSLVerify enables SSL certificate verification for the webhook endpoint.
