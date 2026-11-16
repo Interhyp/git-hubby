@@ -1,5 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "constraints": {
+    "npm": "11.20.0"
+  },
   "extends": [":semanticCommitTypeAll(fix)"],
   "customManagers": [
     {
