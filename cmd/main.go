@@ -398,7 +398,7 @@ func main() {
 	if err := (&controller.OrganizationCtl{
 		Scheme:             mgr.GetScheme(),
 		ReconcilerFactory:  reconcilerFactory,
-		Requeue:            requeuePolicy,
+		Requeue:            requeuePolicy.ForController("organization"),
 		RulesetPresetIndex: rulesetPresetIndex,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
@@ -407,7 +407,7 @@ func main() {
 	if err := (&controller.RepositoryCtl{
 		Scheme:             mgr.GetScheme(),
 		ReconcilerFactory:  reconcilerFactory,
-		Requeue:            requeuePolicy,
+		Requeue:            requeuePolicy.ForController("repository"),
 		RulesetPresetIndex: rulesetPresetIndex,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Repository")
@@ -416,7 +416,7 @@ func main() {
 	if err := (&controller.TeamCtl{
 		Scheme:            mgr.GetScheme(),
 		ReconcilerFactory: reconcilerFactory,
-		Requeue:           requeuePolicy,
+		Requeue:           requeuePolicy.ForController("team"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Team")
 		os.Exit(1)

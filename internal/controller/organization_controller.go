@@ -55,7 +55,7 @@ func (r *OrganizationCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	if err = rec.Reconcile(ctx); err != nil {
 		if errors.Is(err, orgrec.OrganizationStillHasReposError()) || errors.Is(err, orgrec.OrganizationStillHasTeamsError()) {
-			return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+			return r.Requeue.RequeueAfter(RequeueReasonDependentsExist, 30*time.Second), nil
 		}
 		return r.Requeue.OnReconcileError(ctx, err)
 	}
