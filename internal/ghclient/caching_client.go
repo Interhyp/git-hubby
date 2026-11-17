@@ -42,11 +42,13 @@ type responseCache[T any] struct {
 	mu    sync.Mutex
 	entry *cachedValue[T]
 	ttl   time.Duration
+	// name labels the cache metrics
+	name string
 }
 
-// newResponseCache creates a new response cache with the given TTL.
-func newResponseCache[T any](ttl time.Duration) *responseCache[T] {
-	return &responseCache[T]{ttl: ttl}
+// newResponseCache creates a new response cache with the given name (used in metrics) and TTL.
+func newResponseCache[T any](name string, ttl time.Duration) *responseCache[T] {
+	return &responseCache[T]{name: name, ttl: ttl}
 }
 
 // GetOrFetch returns cached data if still valid, otherwise calls fetch and caches the result.
@@ -58,9 +60,11 @@ func (c *responseCache[T]) GetOrFetch(fetch func() (T, error)) (T, error) {
 	if c.entry != nil && time.Now().Before(c.entry.expiresAt) {
 		data := c.entry.data
 		c.mu.Unlock()
+		responseCacheLookups.WithLabelValues(c.name, "hit").Inc()
 		return data, nil
 	}
 	c.mu.Unlock()
+	responseCacheLookups.WithLabelValues(c.name, "miss").Inc()
 
 	data, err := fetch()
 	if err != nil {
@@ -79,6 +83,7 @@ func (c *responseCache[T]) Invalidate() {
 	c.mu.Lock()
 	c.entry = nil
 	c.mu.Unlock()
+	responseCacheInvalidations.WithLabelValues(c.name).Inc()
 }
 
 // CachingClient wraps a GitHubClient and caches expensive list operations when the
@@ -103,9 +108,9 @@ type CachingClient struct {
 func NewCachingClient(inner GitHubClient, ttl time.Duration) *CachingClient {
 	return &CachingClient{
 		GitHubClient: inner,
-		teams:        newResponseCache[[]*github.Team](ttl),
-		apps:         newResponseCache[[]*github.Installation](ttl),
-		roles:        newResponseCache[[]*github.CustomOrgRole](ttl),
+		teams:        newResponseCache[[]*github.Team]("teams", ttl),
+		apps:         newResponseCache[[]*github.Installation]("apps", ttl),
+		roles:        newResponseCache[[]*github.CustomOrgRole]("roles", ttl),
 	}
 }
 
