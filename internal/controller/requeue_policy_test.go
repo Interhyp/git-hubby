@@ -21,6 +21,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
+	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 var _ = Describe("RequeuePolicy", func() {
@@ -362,4 +363,86 @@ var _ = Describe("RequeuePolicy", func() {
 			Expect(result.RequeueAfter).To(BeNumerically("~", time.Until(resetTime), time.Second))
 		})
 	})
+
+	Describe("requeue metrics", func() {
+		count := func(controllerName string, reason RequeueReason) float64 {
+			return gatheredValue("git_hubby_requeues_total", map[string]string{"controller": controllerName, "reason": string(reason)})
+		}
+
+		DescribeTable("counts the decision per controller and reason",
+			func(controllerName string, reason RequeueReason, decide func(p *RequeuePolicy)) {
+				p := policy.ForController(controllerName)
+				before := count(controllerName, reason)
+
+				decide(p)
+
+				Expect(count(controllerName, reason)).To(Equal(before + 1))
+			},
+			Entry("success", "metrics-success", RequeueReasonSuccess, func(p *RequeuePolicy) { p.OnSuccess() }),
+			Entry("rate limit", "metrics-rate-limit", RequeueReasonRateLimit, func(p *RequeuePolicy) {
+				_, _ = p.OnFactoryError(ctx, &ghclient.RateLimitedError{ResetTime: time.Now().Add(time.Minute)})
+			}),
+			Entry("startup spreading", "metrics-spread", RequeueReasonStartupSpread, func(p *RequeuePolicy) {
+				_, _ = p.OnFactoryError(ctx, &spreading.RequiresSpreadError{RequeueAfter: time.Minute})
+			}),
+			Entry("error", "metrics-error", RequeueReasonError, func(p *RequeuePolicy) {
+				_, _ = p.OnReconcileError(ctx, errors.New("boom"))
+			}),
+			Entry("shutdown", "metrics-shutdown", RequeueReasonShutdown, func(p *RequeuePolicy) {
+				cancelCtx, cancel := context.WithCancel(ctx)
+				cancel()
+				_, _ = p.OnFactoryError(cancelCtx, errors.New("context canceled"))
+			}),
+			Entry("user action", "metrics-user-action", RequeueReasonUserAction, func(p *RequeuePolicy) {
+				_, _ = p.OnReconcileError(ctx, &rulesets.ConflictError{Name: "a"})
+			}),
+			Entry("awaits GitHub", "metrics-awaits-github", RequeueReasonAwaitsGitHub, func(p *RequeuePolicy) {
+				_, _ = p.OnReconcileError(ctx, &reporec.DefaultBranchNotFoundError{Branch: "develop"})
+			}),
+			Entry("retry later", "metrics-retry-later", RequeueReasonRetryLater, func(p *RequeuePolicy) {
+				_, _ = p.OnReconcileError(ctx, &reconciler.RetryLaterError{Reason: "in progress", RequeueAfter: time.Minute})
+			}),
+			Entry("controller specific", "metrics-new-repo", RequeueReasonNewRepository, func(p *RequeuePolicy) {
+				Expect(p.RequeueAfter(RequeueReasonNewRepository, 10*time.Second)).To(Equal(ctrl.Result{RequeueAfter: 10 * time.Second}))
+			}),
+		)
+
+		It("does not count nil errors", func() {
+			p := policy.ForController("metrics-nil")
+
+			_, _ = p.OnFactoryError(ctx, nil)
+
+			Expect(count("metrics-nil", RequeueReasonError)).To(BeZero())
+		})
+
+		It("does not change the shared policy", func() {
+			Expect(policy.ForController("x").controllerName).To(Equal("x"))
+			Expect(policy.controllerName).To(BeEmpty())
+		})
+	})
 })
+
+// gatheredValue returns the value of the counter with exactly the given labels from the controller-runtime registry,
+// or 0 if it was not incremented yet.
+func gatheredValue(name string, labels map[string]string) float64 {
+	families, err := ctrlmetrics.Registry.Gather()
+	Expect(err).NotTo(HaveOccurred())
+	for _, family := range families {
+		if family.GetName() != name {
+			continue
+		}
+	metrics:
+		for _, metric := range family.GetMetric() {
+			if len(metric.GetLabel()) != len(labels) {
+				continue
+			}
+			for _, label := range metric.GetLabel() {
+				if labels[label.GetName()] != label.GetValue() {
+					continue metrics
+				}
+			}
+			return metric.GetCounter().GetValue()
+		}
+	}
+	return 0
+}

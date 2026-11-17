@@ -26,6 +26,7 @@ import (
 
 	"github.com/Interhyp/git-hubby/internal/ghclient"
 	"github.com/Interhyp/git-hubby/internal/ratelimit"
+	"github.com/Interhyp/git-hubby/internal/telemetry"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -36,6 +37,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -349,6 +351,12 @@ func main() {
 	)
 	clientConfig := ghclient.DefaultClientConfig()
 	clientConfig.ResilientAuth = cfg.Features.EnableResilientGitHubAuth
+	meterProvider, err := telemetry.NewMeterProvider(ctrlmetrics.Registry)
+	if err != nil {
+		setupLog.Error(err, "unable to set up OpenTelemetry metrics")
+		os.Exit(1)
+	}
+	clientConfig.MeterProvider = meterProvider
 	setupLog.Info("GitHub client configured", "resilientAuth", clientConfig.ResilientAuth)
 	clientManager, err := ghclient.NewGitHubCachingClientFactory(
 		clientConfig,
@@ -390,7 +398,7 @@ func main() {
 	if err := (&controller.OrganizationCtl{
 		Scheme:             mgr.GetScheme(),
 		ReconcilerFactory:  reconcilerFactory,
-		Requeue:            requeuePolicy,
+		Requeue:            requeuePolicy.ForController("organization"),
 		RulesetPresetIndex: rulesetPresetIndex,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
@@ -399,7 +407,7 @@ func main() {
 	if err := (&controller.RepositoryCtl{
 		Scheme:             mgr.GetScheme(),
 		ReconcilerFactory:  reconcilerFactory,
-		Requeue:            requeuePolicy,
+		Requeue:            requeuePolicy.ForController("repository"),
 		RulesetPresetIndex: rulesetPresetIndex,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Repository")
@@ -408,7 +416,7 @@ func main() {
 	if err := (&controller.TeamCtl{
 		Scheme:            mgr.GetScheme(),
 		ReconcilerFactory: reconcilerFactory,
-		Requeue:           requeuePolicy,
+		Requeue:           requeuePolicy.ForController("team"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Team")
 		os.Exit(1)

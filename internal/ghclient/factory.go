@@ -19,6 +19,8 @@ import (
 	"github.com/gofri/go-github-ratelimit/v2/github_ratelimit/github_primary_ratelimit"
 	"github.com/google/go-github/v93/github"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/noop"
 	v1 "k8s.io/api/core/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -29,8 +31,10 @@ type ClientConfig struct {
 	Timeout time.Duration
 	// Whether to enable retry middleware
 	EnableRetry bool
-	// Whether to enable metrics collection
+	// Whether to enable metrics collection. Metrics are only recorded if MeterProvider is set as well.
 	EnableMetrics bool
+	// MeterProvider receives the HTTP client metrics of the GitHub clients (see buildMiddlewareStack).
+	MeterProvider metric.MeterProvider
 	// Whether to enable request logging
 	EnableLogging bool
 	// Maximum number of retries for failed requests
@@ -287,11 +291,9 @@ func (m *CachingGitHubClientFactory) createClient(ctx context.Context, installat
 
 // buildClientWithMiddleware creates a GitHub client with the full middleware stack
 func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID int64, creds *AppCredentials, orgLogin string) (*github.Client, error) {
-	clientName := fmt.Sprintf("github-%d", appInstallationID)
-
 	return github.NewClient(
 		github.WithHTTPClient(&http.Client{
-			Transport: m.buildMiddlewareStack(clientName, creds, appInstallationID, orgLogin),
+			Transport: m.buildMiddlewareStack(creds, appInstallationID, orgLogin),
 			Timeout:   m.config.Timeout,
 		}),
 		github.WithDisableRateLimitCheck(),
@@ -301,7 +303,7 @@ func (m *CachingGitHubClientFactory) buildClientWithMiddleware(appInstallationID
 // buildMiddlewareStack constructs the HTTP transport middleware stack.
 // Rate limit state is shared per GitHub App ID so installations of the same App share a quota bucket.
 // If the factory has an OrgRateLimitRegistry, a tracker transport is inserted to record response headers.
-func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, creds *AppCredentials, appInstallationID int64, orgLogin string) http.RoundTripper {
+func (m *CachingGitHubClientFactory) buildMiddlewareStack(creds *AppCredentials, appInstallationID int64, orgLogin string) http.RoundTripper {
 	// Start with the base transport
 	rt := http.DefaultTransport
 
@@ -322,6 +324,10 @@ func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, cre
 		rt = newRateLimitTrackerTransport(rt, orgLogin, creds.AppID, m.orgRegistry)
 	}
 
+	// OpenTelemetry instrumentation below retry and pagination, so that every request attempt and page is measured
+	// individually. The duration includes waiting in the secondary rate limiter below.
+	rt = otelhttp.NewTransport(rt, otelhttp.WithMeterProvider(m.meterProvider()))
+
 	// retry
 	retryFn := rehttp.RetryAll(
 		rehttp.RetryStatusInterval(500, 600), // 5xx server errors
@@ -332,10 +338,16 @@ func (m *CachingGitHubClientFactory) buildMiddlewareStack(clientName string, cre
 
 	// Pagination handling
 	rt = githubpagination.New(rt, githubpagination.WithPerPage(30))
-	// OpenTelemetry instrumentation (top layer)
-	rt = otelhttp.NewTransport(rt, otelhttp.WithServerName(clientName))
 
 	return rt
+}
+
+// meterProvider returns the provider for the HTTP client metrics, or a no-op provider if metrics are disabled.
+func (m *CachingGitHubClientFactory) meterProvider() metric.MeterProvider {
+	if !m.config.EnableMetrics || m.config.MeterProvider == nil {
+		return noop.NewMeterProvider()
+	}
+	return m.config.MeterProvider
 }
 
 // parseCredentials sets the GitHub App credentials for the manager after parsing them from a Kubernetes secret containing them.

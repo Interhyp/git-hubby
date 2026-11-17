@@ -68,13 +68,13 @@ func (r *RepositoryCtl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			// Safety net for races: the repository was archived on GitHub while later reconciliation groups ran.
 			// The next run detects the archived repository and stops the reconciliation regularly.
 			log.Info("Repository was archived during reconciliation, requeuing")
-			return ctrl.Result{RequeueAfter: archivedRepoRequeueDelay}, nil
+			return r.Requeue.RequeueAfter(RequeueReasonArchivedRepository, archivedRepoRequeueDelay), nil
 		}
 		if _, ok := errors.AsType[*reporec.NewRepositoryUpdateError](err); ok {
 			// Expected right after creation while GitHub initializes the repository (already logged by the
 			// reconciler). Requeue without returning the error to avoid error logs of controller-runtime.
 			log.Info("New repository is not ready yet, requeuing", "requeueAfter", newRepoRequeueDelay)
-			return ctrl.Result{RequeueAfter: newRepoRequeueDelay}, nil
+			return r.Requeue.RequeueAfter(RequeueReasonNewRepository, newRepoRequeueDelay), nil
 		}
 		return r.Requeue.OnReconcileError(ctx, err)
 	}

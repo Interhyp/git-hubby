@@ -35,6 +35,8 @@ type RequeuePolicy struct {
 	successJitter time.Duration
 	// randN returns a random duration in [0, n); replaceable in tests. Defaults to rand.N.
 	randN func(n time.Duration) time.Duration
+	// controllerName labels the requeue metrics, see ForController.
+	controllerName string
 }
 
 // NewRequeuePolicy creates the requeue policy from the operator configuration.
@@ -46,11 +48,25 @@ func NewRequeuePolicy(cfg config.Config) *RequeuePolicy {
 	}
 }
 
+// ForController returns a copy of the policy whose requeue decisions are counted for the given controller.
+func (p *RequeuePolicy) ForController(name string) *RequeuePolicy {
+	c := *p
+	c.controllerName = name
+	return &c
+}
+
+// RequeueAfter returns a result that requeues after the given delay and counts the decision with the given reason. It
+// is used by the controllers for requeues outside of the policy.
+func (p *RequeuePolicy) RequeueAfter(reason RequeueReason, delay time.Duration) ctrl.Result {
+	countRequeue(p.controllerName, reason)
+	return ctrl.Result{RequeueAfter: delay}
+}
+
 // OnSuccess returns the result after a successful reconciliation: the resource is reconciled again after the success
 // interval plus a random offset in [0, successJitter) to detect drift on GitHub. The offset keeps resources that were
 // reconciled at the same time from being requeued together on every cycle.
 func (p *RequeuePolicy) OnSuccess() ctrl.Result {
-	return ctrl.Result{RequeueAfter: p.successInterval + p.randomJitter()}
+	return p.RequeueAfter(RequeueReasonSuccess, p.successInterval+p.randomJitter())
 }
 
 func (p *RequeuePolicy) randomJitter() time.Duration {
@@ -75,6 +91,7 @@ func (p *RequeuePolicy) OnFactoryError(ctx context.Context, err error) (ctrl.Res
 	// legitimate error and should still be requeued, so we only check for context.Canceled.
 	if errors.Is(ctx.Err(), context.Canceled) {
 		logPkg.FromContext(ctx).Info("Reconciliation canceled due to shutdown")
+		countRequeue(p.controllerName, RequeueReasonShutdown)
 		return ctrl.Result{}, nil
 	}
 
@@ -88,13 +105,16 @@ func (p *RequeuePolicy) OnFactoryError(ctx context.Context, err error) (ctrl.Res
 	if resetTime != nil {
 		delay := max(time.Until(*resetTime), minRateLimitRequeueDelay)
 		logPkg.FromContext(ctx).Info("GitHub API rate limit reached, requeuing after reset time", "resetTime", *resetTime, "requeueAfter", delay)
-		return ctrl.Result{RequeueAfter: delay}, nil
+		return p.RequeueAfter(RequeueReasonRateLimit, delay), nil
 	}
 
 	if requiresSpreadError, ok := errors.AsType[*spreading.RequiresSpreadError](err); ok {
-		return ctrl.Result{RequeueAfter: requiresSpreadError.RequeueAfter}, nil
+		return p.RequeueAfter(RequeueReasonStartupSpread, requiresSpreadError.RequeueAfter), nil
 	}
 
+	if err != nil {
+		countRequeue(p.controllerName, RequeueReasonError)
+	}
 	return ctrl.Result{}, err // normal error requeue with exponential backoff
 }
 
@@ -120,12 +140,12 @@ func (p *RequeuePolicy) OnReconcileError(ctx context.Context, err error) (ctrl.R
 	log := logPkg.FromContext(ctx)
 	if requeueAfter, ok := reconciler.RetryLater(err); ok {
 		log.Info("Reconciliation blocked by a transient state on GitHub, retrying later", "reason", err.Error(), "requeueAfter", requeueAfter)
-		return ctrl.Result{RequeueAfter: requeueAfter}, nil
+		return p.RequeueAfter(RequeueReasonRetryLater, requeueAfter), nil
 	}
 	if reconciler.RequiresUserAction(err) {
-		requeueAfter := p.userActionRequeueInterval(err)
+		reason, requeueAfter := p.userActionRequeue(err)
 		log.Info("Reconciliation requires user action, waiting for a change", "reason", err.Error(), "requeueAfter", requeueAfter)
-		return ctrl.Result{RequeueAfter: requeueAfter}, nil
+		return p.RequeueAfter(reason, requeueAfter), nil
 	}
 	if !errors.Is(ctx.Err(), context.Canceled) { // only log if not a shutdown cancellation
 		log.Error(err, "Reconciliation failed")
@@ -133,10 +153,13 @@ func (p *RequeuePolicy) OnReconcileError(ctx context.Context, err error) (ctrl.R
 	return p.OnFactoryError(ctx, err)
 }
 
-// userActionRequeueInterval returns the requeue interval for errors requiring user action, see OnReconcileError.
-func (p *RequeuePolicy) userActionRequeueInterval(err error) time.Duration {
-	if (reconciler.AwaitsGitHubChange(err) || apierrors.IsNotFound(err)) && p.gitHubStateInterval > 0 {
-		return min(p.successInterval, p.gitHubStateInterval)
+// userActionRequeue returns the requeue reason and interval for errors requiring user action, see OnReconcileError.
+func (p *RequeuePolicy) userActionRequeue(err error) (RequeueReason, time.Duration) {
+	if reconciler.AwaitsGitHubChange(err) || apierrors.IsNotFound(err) {
+		if p.gitHubStateInterval > 0 {
+			return RequeueReasonAwaitsGitHub, min(p.successInterval, p.gitHubStateInterval)
+		}
+		return RequeueReasonAwaitsGitHub, p.successInterval
 	}
-	return p.successInterval
+	return RequeueReasonUserAction, p.successInterval
 }

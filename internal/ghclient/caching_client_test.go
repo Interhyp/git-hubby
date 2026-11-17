@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 // fakeClient implements GitHubClient (via embedding a nil) with only the methods
@@ -200,4 +201,63 @@ var _ = Describe("CachingClient", func() {
 			})
 		})
 	})
+
+	Describe("metrics", func() {
+		lookups := func(result string) float64 {
+			return gatheredValue("git_hubby_github_response_cache_lookups_total", map[string]string{"cache": "teams", "result": result})
+		}
+
+		invalidationCount := func() float64 {
+			return gatheredValue("git_hubby_github_response_cache_invalidations_total", map[string]string{"cache": "teams"})
+		}
+
+		It("counts hits, misses and invalidations per cache", func() {
+			hits, misses := lookups("hit"), lookups("miss")
+			invalidations := invalidationCount()
+			ctx := WithCache(context.Background())
+
+			_, _ = cached.GetAllTeamsForOrg(ctx, "my-org")
+			_, _ = cached.GetAllTeamsForOrg(ctx, "my-org")
+			cached.InvalidateAll()
+			_, _ = cached.GetAllTeamsForOrg(ctx, "my-org")
+
+			Expect(lookups("hit")).To(Equal(hits + 1))
+			Expect(lookups("miss")).To(Equal(misses + 2))
+			Expect(invalidationCount()).To(Equal(invalidations + 1))
+		})
+
+		It("does not count calls bypassing the cache", func() {
+			hits, misses := lookups("hit"), lookups("miss")
+
+			_, _ = cached.GetAllTeamsForOrg(context.Background(), "my-org")
+
+			Expect(lookups("hit")).To(Equal(hits))
+			Expect(lookups("miss")).To(Equal(misses))
+		})
+	})
 })
+
+// gatheredValue returns the value of the counter with exactly the given labels from the controller-runtime registry,
+// or 0 if it was not incremented yet.
+func gatheredValue(name string, labels map[string]string) float64 {
+	families, err := ctrlmetrics.Registry.Gather()
+	Expect(err).NotTo(HaveOccurred())
+	for _, family := range families {
+		if family.GetName() != name {
+			continue
+		}
+	metrics:
+		for _, metric := range family.GetMetric() {
+			if len(metric.GetLabel()) != len(labels) {
+				continue
+			}
+			for _, label := range metric.GetLabel() {
+				if labels[label.GetName()] != label.GetValue() {
+					continue metrics
+				}
+			}
+			return metric.GetCounter().GetValue()
+		}
+	}
+	return 0
+}

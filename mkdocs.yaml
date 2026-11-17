@@ -38,6 +38,7 @@ nav:
       - Organization: configuration/organization.md
       - Repository: configuration/repository.md
   - Architecture: architecture.md
+  - Monitoring: monitoring.md
   - API Reference: crds.md
 
 markdown_extensions:

@@ -165,7 +165,9 @@ func (x *ReconciliationExecutor[T]) runReconciliations(ctx context.Context) ([]r
 		}
 		if stop != nil {
 			log.Info("Reconciliation stopped, skipping remaining reconciliations", "reason", stop.Message)
-			results = append(results, skippedResults(groups[groupIdx+1:], stop)...)
+			skipped := skippedResults(groups[groupIdx+1:], stop)
+			countSkippedComponents(x.Reconciler.K8s().Resource.GetTypeRepresentation(), skipped)
+			results = append(results, skipped...)
 			break
 		}
 	}
@@ -181,6 +183,7 @@ func (x *ReconciliationExecutor[T]) runReconciliations(ctx context.Context) ([]r
 func (x *ReconciliationExecutor[T]) runReconciliationGroup(ctx context.Context, group ParallelReconciliationGroup) []reconciliationResult {
 	var wg sync.WaitGroup
 	results := make([]reconciliationResult, len(group))
+	kind := x.Reconciler.K8s().Resource.GetTypeRepresentation()
 
 	for i, reconciliation := range group {
 		wg.Add(1)
@@ -191,7 +194,9 @@ func (x *ReconciliationExecutor[T]) runReconciliationGroup(ctx context.Context, 
 			recCtx = logPkg.IntoContext(recCtx, logPkg.FromContext(ctx).WithValues(
 				"reconciliation", rec.Condition,
 			))
+			start := time.Now()
 			err := rec.Function(recCtx)
+			observeComponent(kind, rec.Condition, err, time.Since(start))
 			results[idx] = reconciliationResult{
 				Condition:  rec.Condition,
 				Error:      err,
