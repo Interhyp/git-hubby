@@ -43,7 +43,7 @@ spec:
         name: [metadata, name]
       metrics:
         - name: condition
-          help: "Status of each condition in status.conditions (1 = True, 0 = False)"
+          help: "Status of each condition in status.conditions (1 = True, 0 = False or Unknown)"
           each:
             type: Gauge
             gauge:
@@ -85,6 +85,10 @@ Notes:
 
 - The condition message is not used as a label because it contains timestamps and would create a new series on
   every reconciliation.
+- kube-state-metrics exports both `False` and `Unknown` as `0`. Conditions are `Unknown` in two harmless cases: `Ready`
+  while a resource is reconciled (reason `ReconcileStarted`), and the components of archived repositories (reason
+  `Skipped`). Select failures by reason: `ReconcileFailed` or `UserActionRequired` for `Ready`, `SyncFailed` or
+  `UserActionRequired` for the components. The dashboard does so.
 - The `namespace` label is the namespace of the resource. If kube-state-metrics is scraped without `honorLabels: true`,
   Prometheus renames it to `exported_namespace`.
 - Each resource creates about two series per condition (a Repository has nine conditions) plus one for the
@@ -110,4 +114,4 @@ Interpretation:
   detection. "Requeues by reason" shows why resources are reconciled again.
 - `workqueue_retries_total` is not shown: with the priority queue of controller-runtime it also counts delayed requeues
   and does not indicate errors.
-- The Ready condition is `Unknown` while a resource is reconciled, so alert on sustained states only.
+- Failed reconciliations are retried, so alert on sustained failures only.
