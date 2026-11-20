@@ -178,7 +178,7 @@
     {
       "type": "stat",
       "title": "Not-ready resources",
-      "description": "Managed resources whose Ready condition is False.",
+      "description": "Managed resources whose Ready condition is False (ReconcileFailed or UserActionRequired).",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -191,7 +191,7 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "count(${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition=\"Ready\"} == 0) or sum(${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition=\"Ready\"}) * 0",
+          "expr": "count(${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition=\"Ready\", reason=~\"ReconcileFailed|UserActionRequired\"} == 0) or sum(${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition=\"Ready\"}) * 0",
           "legendFormat": "",
           "range": false,
           "instant": true
@@ -482,7 +482,7 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "count by (customresource_kind, reason) (${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition=\"Ready\"} == 0)",
+          "expr": "count by (customresource_kind, reason) (${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition=\"Ready\", reason=~\"ReconcileFailed|UserActionRequired\"} == 0)",
           "legendFormat": "{{customresource_kind}} {{reason}}",
           "range": true,
           "instant": false
@@ -568,7 +568,7 @@
     {
       "type": "timeseries",
       "title": "Failing components",
-      "description": "Component conditions (e.g. RulesetsSynced, WebhooksSynced, TeamMembersSynced) that are False, per kind and reason.",
+      "description": "Component conditions (e.g. RulesetsSynced, WebhooksSynced, TeamMembersSynced) that are False, per kind and reason (SyncFailed or UserActionRequired). Skipped components (e.g. of archived repositories) are not included.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -581,7 +581,7 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "count by (customresource_kind, condition, reason) (${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition!=\"Ready\"} == 0)",
+          "expr": "count by (customresource_kind, condition, reason) (${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition!=\"Ready\", reason=~\"SyncFailed|UserActionRequired\"} == 0)",
           "legendFormat": "{{customresource_kind}} {{condition}} {{reason}}",
           "range": true,
           "instant": false
@@ -680,7 +680,7 @@
           },
           "refId": "A",
           "editorMode": "code",
-          "expr": "${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition=\"Ready\"} == 0",
+          "expr": "${ksm_prefix}_condition{customresource_group=\"github.interhyp.de\", condition=\"Ready\", reason=~\"ReconcileFailed|UserActionRequired\"} == 0",
           "legendFormat": "",
           "range": false,
           "instant": true,
