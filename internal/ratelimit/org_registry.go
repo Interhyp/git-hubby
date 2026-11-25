@@ -133,12 +133,12 @@ func (r *OrgRateLimitRegistry) Update(orgLogin string, category Category, remain
 	r.warnIfUncovered(orgLogin, category)
 
 	state := r.getOrCreateOrgState(orgLogin, appID)
-	state.Categories[category] = &CategoryState{
+	r.setCategoryState(state, category, &CategoryState{
 		Remaining:   remaining,
 		Limit:       limit,
 		ResetTime:   resetTime,
 		LastUpdated: time.Now(),
-	}
+	})
 }
 
 // UpdateFromRateLimitResponse bulk-updates all monitored categories from a GET /rate_limit response.
@@ -155,37 +155,43 @@ func (r *OrgRateLimitRegistry) UpdateFromRateLimitResponse(orgLogin string, rate
 	now := time.Now()
 
 	if rateLimits.Core != nil {
-		state.Categories[CategoryCore] = &CategoryState{
+		r.setCategoryState(state, CategoryCore, &CategoryState{
 			Remaining:   rateLimits.Core.Remaining,
 			Limit:       rateLimits.Core.Limit,
 			ResetTime:   rateLimits.Core.Reset.Time,
 			LastUpdated: now,
-		}
+		})
 	}
 	if rateLimits.GraphQL != nil {
-		state.Categories[CategoryGraphQL] = &CategoryState{
+		r.setCategoryState(state, CategoryGraphQL, &CategoryState{
 			Remaining:   rateLimits.GraphQL.Remaining,
 			Limit:       rateLimits.GraphQL.Limit,
 			ResetTime:   rateLimits.GraphQL.Reset.Time,
 			LastUpdated: now,
-		}
+		})
 	}
 	if rateLimits.Search != nil {
-		state.Categories[CategorySearch] = &CategoryState{
+		r.setCategoryState(state, CategorySearch, &CategoryState{
 			Remaining:   rateLimits.Search.Remaining,
 			Limit:       rateLimits.Search.Limit,
 			ResetTime:   rateLimits.Search.Reset.Time,
 			LastUpdated: now,
-		}
+		})
 	}
 	if rateLimits.CodeSearch != nil {
-		state.Categories[CategoryCodeSearch] = &CategoryState{
+		r.setCategoryState(state, CategoryCodeSearch, &CategoryState{
 			Remaining:   rateLimits.CodeSearch.Remaining,
 			Limit:       rateLimits.CodeSearch.Limit,
 			ResetTime:   rateLimits.CodeSearch.Reset.Time,
 			LastUpdated: now,
-		}
+		})
 	}
+}
+
+// setCategoryState records an organization's category state and updates its metrics.
+func (r *OrgRateLimitRegistry) setCategoryState(org *OrgState, category Category, state *CategoryState) {
+	org.Categories[category] = state
+	r.observeRateLimit(org.OrgLogin, category, state)
 }
 
 // ShouldStall reports whether reconciliation for the given org should be paused because
@@ -220,14 +226,7 @@ func (r *OrgRateLimitRegistry) ShouldStall(orgLogin string, categories ...Catego
 		if !ok {
 			continue
 		}
-		if catState.Remaining < threshold {
-			// If the reset time (plus grace period) has already passed, the rate limit window
-			// has renewed and the cached Remaining value is stale. Do NOT stall — let the
-			// request through so the rateLimitTrackerTransport can record fresh headers.
-			delay := time.Until(catState.ResetTime.Add(r.config.ResetGracePeriod))
-			if delay <= 0 {
-				continue
-			}
+		if delay := r.stallDelay(catState, threshold, time.Now()); delay > 0 {
 			stalled = true
 			if delay > maxDelay {
 				maxDelay = delay
@@ -236,6 +235,18 @@ func (r *OrgRateLimitRegistry) ShouldStall(orgLogin string, categories ...Catego
 	}
 
 	return stalled, maxDelay
+}
+
+// stallDelay returns the remaining time until a category's rate limit resets,
+// including the registry's configured grace period, or zero when it is not stalled.
+func (r *OrgRateLimitRegistry) stallDelay(state *CategoryState, threshold int, now time.Time) time.Duration {
+	if state.Remaining >= threshold {
+		return 0
+	}
+	// If the reset time plus grace period has passed, the rate limit window has renewed
+	// and the cached Remaining value is stale. Do not stall; let the request through so
+	// the rateLimitTrackerTransport can record fresh headers.
+	return max(state.ResetTime.Add(r.config.ResetGracePeriod).Sub(now), 0)
 }
 
 // IsStale returns true if the registry has no data for the org or if the most recent

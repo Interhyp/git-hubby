@@ -18,8 +18,16 @@ work queues, process), git-hubby exposes:
 | `git_hubby_component_reconcile_skipped_total` | `kind`, `component` | Components skipped because an earlier component stopped the run on purpose (e.g. archived repositories). |
 | `git_hubby_github_response_cache_lookups_total` | `cache`, `result` | Hits and misses of the response cache for teams, apps and roles. Calls that bypass the cache are not counted. |
 | `git_hubby_github_response_cache_invalidations_total` | `cache` | Invalidations of the response cache. |
+| `git_hubby_github_rate_limit_remaining` | `organization`, `category` | Last observed remaining primary rate-limit budget. |
+| `git_hubby_github_rate_limit_budget` | `organization`, `category` | Last observed primary rate-limit budget. |
+| `git_hubby_github_rate_limit_reset_timestamp_seconds` | `organization`, `category` | Last observed reset time as a Unix timestamp. |
+| `git_hubby_github_rate_limit_observed_timestamp_seconds` | `organization`, `category` | Time of the last observation as a Unix timestamp. |
+| `git_hubby_github_rate_limit_stall_threshold` | `organization`, `category` | Configured stall threshold; zero means stalling is disabled. |
+| `git_hubby_github_rate_limit_stall_until_timestamp_seconds` | `organization`, `category` | Reset time plus grace period as a Unix timestamp when the last observed budget is below the stall threshold; otherwise `0`. |
 
-All labels have a small, fixed set of values. No resource names, organizations or URLs are used as labels.
+Rate-limit gauges appear after the first observation and cover primary rate limits only. Their values may be stale;
+use the observation timestamp to check their age. Organizations can share a quota, so their budgets should not be
+summed.
 
 ## Resource state via kube-state-metrics
 
