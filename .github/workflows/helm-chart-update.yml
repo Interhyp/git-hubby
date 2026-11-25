@@ -1,4 +1,4 @@
-name: Update Helm Chart
+name: Update Helm Chart Releases and Snapshots
 
 on:
   workflow_run:
@@ -6,6 +6,23 @@ on:
     types:
       - completed
   workflow_dispatch:
+    inputs:
+      source:
+        description: Chart update source
+        type: choice
+        options:
+          - branch
+          - external-snapshot
+        default: branch
+        required: true
+      build_run_id:
+        description: External snapshot build run ID from the publisher summary
+        type: string
+        required: false
+      publication_artifact_id:
+        description: Publication artifact ID from the publisher summary
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -20,7 +37,7 @@ jobs:
   update-helm-chart:
     name: Update Helm Chart CRDs and appVersion
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.source == 'branch') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     steps:
       - name: Determine source branch
         id: source
@@ -189,3 +206,140 @@ jobs:
               --body "$PR_BODY" \
               --label "automatic-update"
           fi
+
+  external-snapshot:
+    name: Create chart branch for external snapshot
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.source == 'external-snapshot' && github.repository == 'Interhyp/git-hubby' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+      pull-requests: read
+    steps:
+      - name: Validate requested run and artifact
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.build_run_id }}
+          ARTIFACT_ID: ${{ inputs.publication_artifact_id }}
+        run: |
+          set -euo pipefail
+          [[ "$RUN_ID" =~ ^[1-9][0-9]{0,18}$ && "$ARTIFACT_ID" =~ ^[1-9][0-9]{0,18}$ ]] || {
+            echo 'Enter the run and publisher artifact IDs from the build summary' >&2; exit 1;
+          }
+          artifact="$(gh api "repos/Interhyp/git-hubby/actions/artifacts/$ARTIFACT_ID")"
+          jq -e --arg run "$RUN_ID" '
+            (.workflow_run.id | tostring) == $run and .expired == false and
+            (.name | test("^pr-snapshot-publication-[1-9][0-9]*$"))
+          ' <<< "$artifact" >/dev/null || { echo 'Artifact does not belong to the requested run' >&2; exit 1; }
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=$ARTIFACT_ID" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$(jq -r .name <<< "$artifact")" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout trusted workflow scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Download publisher artifact by ID
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/publication
+
+      - name: Validate published record, build attempt and PR
+        id: publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.source.outputs.run_id }}
+          ARTIFACT_NAME: ${{ steps.source.outputs.artifact_name }}
+        run: |
+          set -euo pipefail
+          # The trusted parser validates every field before emitting step outputs.
+          record="$(python3 trusted/.github/scripts/pr_snapshot.py validate-publication "$RUNNER_TEMP/publication" "$RUN_ID")"
+          attempt="$(sed -n 's/^attempt=//p' <<< "$record")"
+          pr="$(sed -n 's/^pr=//p' <<< "$record")"
+          sha="$(sed -n 's/^sha=//p' <<< "$record")"
+          [[ "$ARTIFACT_NAME" == "pr-snapshot-publication-$attempt" ]] || exit 1
+          workflow_id="$(gh api repos/Interhyp/git-hubby/actions/workflows/pr-snapshot.yml --jq .id)"
+          gh api "repos/Interhyp/git-hubby/actions/runs/$RUN_ID/attempts/$attempt" | jq -e --arg id "$workflow_id" '
+            (.workflow_id | tostring) == $id and .event == "workflow_dispatch" and
+            .head_branch == "main" and .status == "completed" and .conclusion == "success"
+          ' >/dev/null || { echo 'Not a successful trusted external snapshot build' >&2; exit 1; }
+          gh api "repos/Interhyp/git-hubby/pulls/$pr" | jq -e --arg sha "$sha" '
+            .state == "open" and .head.repo != null and .head.repo.fork == true and .head.sha == $sha
+          ' >/dev/null || { echo 'PR changed or closed; build and approve a new snapshot' >&2; exit 1; }
+          printf '%s\n' "$record" >> "$GITHUB_OUTPUT"
+
+      - name: Install image inspection tool
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+
+      - name: Verify published image digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_TAG: ${{ steps.publication.outputs.image_tag }}
+          EXPECTED_DIGEST: ${{ steps.publication.outputs.image_digest }}
+        run: |
+          set -euo pipefail
+          authfile="$RUNNER_TEMP/registry-auth.json"
+          printf '%s' "$GH_TOKEN" | skopeo login --authfile "$authfile" --username "$GITHUB_ACTOR" --password-stdin ghcr.io
+          actual="$(skopeo inspect --authfile "$authfile" --format '{{.Digest}}' "docker://ghcr.io/interhyp/git-hubby:$IMAGE_TAG")"
+          [[ "$actual" == "$EXPECTED_DIGEST" ]] || { echo 'Image tag no longer matches the approved digest' >&2; exit 1; }
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          app-id: ${{ secrets.HELM_APP_ID }}
+          private-key: ${{ secrets.HELM_APP_PRIVATE_KEY }}
+          owner: Interhyp
+          repositories: git-hubby-helm
+
+      - name: Checkout trusted Helm chart main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Interhyp/git-hubby-helm
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+          path: helm-chart
+
+      - name: Create and push snapshot branch
+        env:
+          PR: ${{ steps.publication.outputs.pr }}
+          SHA: ${{ steps.publication.outputs.sha }}
+          IMAGE_TAG: ${{ steps.publication.outputs.image_tag }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/Interhyp/git-hubby/pulls/$PR" | jq -e --arg sha "$SHA" '
+            .state == "open" and .head.repo != null and .head.repo.fork == true and .head.sha == $sha
+          ' >/dev/null || { echo 'PR changed or closed; build and approve a new snapshot' >&2; exit 1; }
+          branch="auto-update/external-pr-${PR}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git -C helm-chart switch -c "$branch"
+          python3 trusted/.github/scripts/pr_snapshot.py update-chart "$RUNNER_TEMP/publication" helm-chart "$SOURCE_RUN_ID"
+          git -C helm-chart config user.name 'github-actions[bot]'
+          git -C helm-chart config user.email 'github-actions[bot]@users.noreply.github.com'
+          git -C helm-chart add -A -- Chart.yaml crds/
+          git -C helm-chart diff --cached --quiet && { echo 'No chart changes to publish' >&2; exit 1; }
+          git -C helm-chart commit -m "chore: update chart for external PR $PR snapshot" \
+            -m "https://github.com/Interhyp/git-hubby/pull/$PR/commits/$SHA"
+          git -C helm-chart push origin "$branch"
+          {
+            echo '## Chart snapshot branch created'
+            echo "PR: https://github.com/Interhyp/git-hubby/pull/$PR"
+            echo "Source commit: \`$SHA\`"
+            echo "Image tag: \`$IMAGE_TAG\`"
+            echo "Chart branch: https://github.com/Interhyp/git-hubby-helm/tree/$branch"
+            echo 'The git-hubby-helm Release workflow will publish the snapshot chart.'
+          } >> "$GITHUB_STEP_SUMMARY"

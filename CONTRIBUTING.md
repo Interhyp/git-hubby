@@ -290,21 +290,77 @@ make codegen
 
 ### Helm Chart Update
 
-The **Update Helm Chart** workflow manages CRD updates in [Interhyp/git-hubby-helm](https://github.com/Interhyp/git-hubby-helm):
+The **Update Helm Chart Releases and Snapshots** workflow manages CRD updates in [Interhyp/git-hubby-helm](https://github.com/Interhyp/git-hubby-helm):
 
-- **Automatic (after release)**: After a successful "Build & Release" workflow, CRDs are copied to the helm chart repo with an updated `appVersion`, and a draft PR is created (main only) labeled `automatic-update`.
-- **Manual (any branch)**: You can trigger the workflow manually via `workflow_dispatch` to test CRD updates from your feature branch. The result is pushed to a `snapshot/<branch>` branch in `git-hubby-helm` (no PR is created).
+- **Automatic (after build)**: After a successful "Build & Release" workflow, CRDs are copied to the Helm chart repo with an updated `appVersion`. For `main`, an update PR is created with the `automatic-update` label.
+- **Manual (repository branch)**: Trigger the workflow on a feature branch to push an `auto-update/<branch>` chart branch (no PR is created).
+- **Manual (external PR snapshot)**: Run the workflow from trusted `main` with the published build's run and artifact IDs, as described below.
 
 To manually trigger from your branch:
 
 ```bash
-gh workflow run "Update Helm Chart" --ref <your-branch-name>
+gh workflow run helm-chart-update.yml --ref <your-branch-name> -f source=branch
 ```
 
 > **Note**: Only CRDs are updated automatically. The Helm chart's other templates (deployment, RBAC, webhooks) are maintained manually. The CI workflow will comment on your PR if it detects changes that require a matching Helm chart update:
 > - `+kubebuilder:rbac` markers → RBAC template
 > - `+kubebuilder:webhook` markers → webhook configuration template
 > - `config/manager/manager.yaml` → deployment template (env vars, args, ports, volumes)
+
+### Testing an external PR snapshot (maintainers)
+
+The **External PR Snapshot** workflow builds an open fork PR without running its code in a job with
+publishing credentials. It does not update the PR, create branches, or trigger the normal release/Helm-update chain.
+
+Before first use, a repository administrator must:
+
+1. Create the `pr-snapshot-publish` Actions environment with required reviewers who can review this repository.
+   Restrict deployments to `main`, disable administrator bypass, and enable prevent-self-review if a second
+   maintainer must approve. The workflow checks for a required-reviewer rule and fails if it is absent; GitHub
+   otherwise silently creates an unprotected environment.
+2. Ensure the git-hubby repository's Actions token can publish to `ghcr.io/interhyp/git-hubby` and the existing
+   `HELM_APP_ID` and `HELM_APP_PRIVATE_KEY` secrets can create branches in `Interhyp/git-hubby-helm`. The chart
+   repository's existing release workflow publishes the chart. Do not grant the untrusted build job extra credentials.
+
+Review the complete PR diff, especially Dockerfile, Makefile, dependencies and generated CRDs. From the
+**trusted `main` branch**, a maintainer with repository write access can then run:
+
+```bash
+gh workflow run pr-snapshot.yml --repo Interhyp/git-hubby --ref main \
+  -f pr=<PR-number> -f sha=<full-reviewed-head-SHA>
+```
+
+The workflow verifies that the PR is open, from a fork and still at that SHA. It builds a multi-platform OCI
+image and CRDs in an isolated GitHub-hosted job with a read-only token, no repository secrets and no shared
+build cache. After that job succeeds, a configured environment reviewer approves the separate publisher.
+The publisher rechecks the head, validates the transferred files, and publishes a unique image snapshot. It
+uploads a publication record and CRDs as a separate artifact retained for 14 days. The image build does not
+trigger a chart update. If rerunning a failed build, rerun **all** jobs, not just failed jobs.
+
+From the **publish job's** summary, copy the build run ID and publication artifact ID and run the chart updater
+from trusted `main`:
+
+```bash
+gh workflow run helm-chart-update.yml --repo Interhyp/git-hubby --ref main \
+  -f source=external-snapshot -f build_run_id=<run-ID> -f publication_artifact_id=<artifact-ID>
+```
+
+The updater verifies the artifact and successful build attempt, PR head, CRD hashes, and published image digest.
+It treats CRDs as data and never executes PR scripts. It creates a new chart branch from the trusted chart's
+`main`, updating only CRDs and `appVersion`. Its summary links the branch; the chart repository's existing
+Release workflow publishes and signs the snapshot chart. Use the chart workflow summary to find its version,
+then import both chart and image into the dev registry. The chart uses the normal image-repository default.
+
+A changed PR head requires a new image build and approval; an expired artifact requires rebuilding. Always use
+the publication artifact ID from the trusted **publish job's** summary, not an artifact or summary supplied by
+the PR build job. Do not dispatch from a contributor-controlled branch: its workflow file itself could be
+changed. Snapshot tags include the run ID and attempt and are not releases. A failed run can leave a partially
+published image; clean up snapshots according to registry policy.
+
+**Treat both artifacts as untrusted.** Run the operator only in an isolated test environment with a dedicated,
+minimally privileged GitHub App and test organization, no production secrets, restricted egress, and no competing
+operator managing the same resources. Kubernetes CRDs are cluster-scoped: a namespace alone does not isolate CRD
+changes. A signature identifies the publishing workflow; it does not certify that the PR is safe.
 
 ### Commit Message Format
 

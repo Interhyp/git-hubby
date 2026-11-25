@@ -1,0 +1,210 @@
+name: External PR Snapshot
+
+# Run only from the trusted default branch. The maintainer explicitly authorizes
+# the exact fork commit; no fork workflow, PR approval, or label triggers this.
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Open external pull request number
+        required: true
+        type: string
+      sha:
+        description: Full, reviewed pull request head SHA
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  validate:
+    name: Validate reviewed commit
+    if: github.repository == 'Interhyp/git-hubby' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pr: ${{ steps.validate.outputs.pr }}
+      sha: ${{ steps.validate.outputs.sha }}
+    steps:
+      - name: Validate PR and publishing environment
+        id: validate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ inputs.pr }}
+          SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$PR" =~ ^[1-9][0-9]{0,8}$ ]] || { echo 'Invalid PR number' >&2; exit 1; }
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo 'Enter a full lowercase commit SHA' >&2; exit 1; }
+          gh api "repos/Interhyp/git-hubby/pulls/$PR" | jq -e --arg sha "$SHA" '
+            .state == "open" and .base.repo.full_name == "Interhyp/git-hubby" and
+            .head.repo != null and .head.repo.fork == true and .head.sha == $sha
+          ' >/dev/null || { echo 'PR must be open, from a fork, and at the reviewed SHA' >&2; exit 1; }
+          # GitHub silently creates an unprotected environment if it is missing.
+          # Fail closed instead of publishing without a required reviewer.
+          gh api repos/Interhyp/git-hubby/environments/pr-snapshot-publish | jq -e '
+            any(.protection_rules[]?; .type == "required_reviewers" and (.reviewers | length) > 0)
+          ' >/dev/null || { echo 'Configure required reviewers on pr-snapshot-publish first' >&2; exit 1; }
+          echo "pr=$PR" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          {
+            echo '## External PR snapshot requested'
+            echo "PR: https://github.com/Interhyp/git-hubby/pull/$PR"
+            echo "Reviewed head: \`$SHA\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Build untrusted source
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout PR head without credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/pull/${{ needs.validate.outputs.pr }}/head
+          persist-credentials: false
+
+      - name: Verify the checked-out commit
+        env:
+          REVIEWED_SHA: ${{ needs.validate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$REVIEWED_SHA"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          cache-image: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Set up Go
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      # No registry login, repository secrets, shared build cache, or privileged
+      # tokens in this job. Everything it uploads is untrusted data.
+      - name: Build image and generate CRDs
+        env:
+          BUNDLE: ${{ runner.temp }}/pr-snapshot
+        run: |
+          set -euo pipefail
+          mkdir -p "$BUNDLE/crds"
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --output "type=oci,dest=$BUNDLE/image.tar" .
+          make manifests
+          cp config/crd/bases/*.yaml "$BUNDLE/crds/"
+
+      - name: Upload untrusted snapshot data
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pr-snapshot-data-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/pr-snapshot/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish snapshot
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Configure required reviewers on this environment before using the workflow.
+    environment: pr-snapshot-publish
+    permissions:
+      contents: read
+      pull-requests: read
+      packages: write
+    env:
+      PR: ${{ needs.validate.outputs.pr }}
+      SHA: ${{ needs.validate.outputs.sha }}
+      IMAGE_REPO: ghcr.io/interhyp/git-hubby
+    steps:
+      - name: Recheck PR head after approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/Interhyp/git-hubby/pulls/$PR" | jq -e --arg sha "$SHA" '
+            .state == "open" and .head.repo != null and .head.repo.fork == true and .head.sha == $sha
+          ' >/dev/null || { echo 'PR changed or closed; start a new snapshot run' >&2; exit 1; }
+          gh api repos/Interhyp/git-hubby/environments/pr-snapshot-publish | jq -e '
+            any(.protection_rules[]?; .type == "required_reviewers" and (.reviewers | length) > 0)
+          ' >/dev/null || { echo 'Required reviewers were removed from pr-snapshot-publish' >&2; exit 1; }
+
+      - name: Checkout trusted workflow scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Download untrusted snapshot data
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: pr-snapshot-data-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/pr-snapshot
+
+      - name: Validate image archive
+        run: |
+          set -euo pipefail
+          python3 trusted/.github/scripts/pr_snapshot.py validate-image "$RUNNER_TEMP/pr-snapshot/image.tar"
+          python3 trusted/.github/scripts/pr_snapshot.py validate-crds "$RUNNER_TEMP/pr-snapshot/crds"
+          echo "IMAGE_TAG=snapshot-pr-${PR}-${SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
+          echo "DOCKER_CONFIG=$RUNNER_TEMP/pr-snapshot-docker" >> "$GITHUB_ENV"
+
+      - name: Install image copy tool
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+
+      # Only trusted commands run here; the image and CRDs remain untrusted data.
+      - name: Publish image and prepare chart inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$DOCKER_CONFIG"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          skopeo copy --all --dest-authfile "$DOCKER_CONFIG/config.json" \
+            --digestfile "$RUNNER_TEMP/image-digest" \
+            "oci-archive:$RUNNER_TEMP/pr-snapshot/image.tar" "docker://$IMAGE_REPO:$IMAGE_TAG"
+          python3 trusted/.github/scripts/pr_snapshot.py create-publication \
+            "$RUNNER_TEMP/pr-snapshot/crds" "$RUNNER_TEMP/publication" \
+            "$PR" "$SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$(cat "$RUNNER_TEMP/image-digest")"
+
+      - name: Upload chart inputs from trusted publisher
+        id: publication
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pr-snapshot-publication-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/publication/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summarize manual chart update inputs
+        env:
+          ARTIFACT_ID: ${{ steps.publication.outputs.artifact-id }}
+        run: |
+          set -euo pipefail
+          image_digest="$(cat "$RUNNER_TEMP/image-digest")"
+          {
+            echo '## External PR image published'
+            echo "PR: https://github.com/Interhyp/git-hubby/pull/$PR"
+            echo "Source commit: \`$SHA\`"
+            echo "Image: \`$IMAGE_REPO:$IMAGE_TAG\`"
+            echo "Image digest: \`$IMAGE_REPO@$image_digest\`"
+            echo "Build run ID: \`$GITHUB_RUN_ID\`"
+            echo "Build attempt: \`$GITHUB_RUN_ATTEMPT\`"
+            echo "Publication artifact ID: \`$ARTIFACT_ID\`"
+            echo 'Run the chart updater on main with these two IDs to publish the chart snapshot.'
+            echo 'These artifacts contain untrusted PR code; use isolated test credentials and resources.'
+          } >> "$GITHUB_STEP_SUMMARY"
