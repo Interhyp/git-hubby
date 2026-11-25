@@ -12,6 +12,16 @@ permissions:
 
 
 jobs:
+  snapshot-workflow-tests:
+    name: Snapshot Workflow Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Test snapshot artifact validation
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
