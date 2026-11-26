@@ -2411,12 +2411,379 @@
     },
     {
       "type": "row",
+      "title": "GitHub API rate limits",
+      "id": 39,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 84,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Primary quota remaining",
+      "description": "Last observed remaining share of the primary rate limit per organization, category and pod. Values are not live queries; check observation age. Organizations can share a quota, so do not sum them.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "git_hubby_github_rate_limit_remaining{job=\"$job\", namespace=\"$namespace\"} / (git_hubby_github_rate_limit_budget{job=\"$job\", namespace=\"$namespace\"} > 0)",
+          "legendFormat": "{{organization}} {{category}} {{pod}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "id": 40,
+      "gridPos": {
+        "x": 0,
+        "y": 85,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Primary quota and stall threshold",
+      "description": "Last observed remaining and total budget, plus nonzero stall thresholds, per organization, category and pod. A zero threshold disables stalling and is omitted. Categories have different budgets; use the legend and remaining-share panel for smaller quotas.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "git_hubby_github_rate_limit_remaining{job=\"$job\", namespace=\"$namespace\"}",
+          "legendFormat": "remaining {{organization}} {{category}} {{pod}}",
+          "range": true,
+          "instant": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "git_hubby_github_rate_limit_budget{job=\"$job\", namespace=\"$namespace\"}",
+          "legendFormat": "budget {{organization}} {{category}} {{pod}}",
+          "range": true,
+          "instant": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "editorMode": "code",
+          "expr": "git_hubby_github_rate_limit_stall_threshold{job=\"$job\", namespace=\"$namespace\"} > 0",
+          "legendFormat": "threshold {{organization}} {{category}} {{pod}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "id": 41,
+      "gridPos": {
+        "x": 8,
+        "y": 85,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Rate-limit observation age",
+      "description": "Time since the last observation per organization, category and pod. Values grow while there is no new observation; standby or formerly leading pods can retain stale values. Compare with the quota panels before interpreting them.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "time() - git_hubby_github_rate_limit_observed_timestamp_seconds{job=\"$job\", namespace=\"$namespace\"}",
+          "legendFormat": "{{organization}} {{category}} {{pod}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "id": 42,
+      "gridPos": {
+        "x": 16,
+        "y": 85,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Time until observed quota reset",
+      "description": "Time until the last observed primary quota reset per organization, category and pod. Zero means that observed reset has passed, not that the quota has been refreshed; check observation age.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "clamp_min(git_hubby_github_rate_limit_reset_timestamp_seconds{job=\"$job\", namespace=\"$namespace\"} - time(), 0)",
+          "legendFormat": "{{organization}} {{category}} {{pod}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "id": 43,
+      "gridPos": {
+        "x": 0,
+        "y": 93,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Time until observed stall deadline",
+      "description": "Time until the last observed primary rate-limit stall deadline, including the reset grace period. Zero means no future deadline in that observation; it does not cover secondary rate limits or other reconciliation delays. Check observation age.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "clamp_min(git_hubby_github_rate_limit_stall_until_timestamp_seconds{job=\"$job\", namespace=\"$namespace\"} - time(), 0)",
+          "legendFormat": "{{organization}} {{category}} {{pod}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "id": 44,
+      "gridPos": {
+        "x": 12,
+        "y": 93,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "row",
       "title": "Work queue",
       "id": 31,
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 84,
+        "y": 101,
         "w": 24,
         "h": 1
       },
@@ -2516,7 +2883,7 @@
       "id": 32,
       "gridPos": {
         "x": 0,
-        "y": 85,
+        "y": 102,
         "w": 8,
         "h": 8
       }
@@ -2626,7 +2993,7 @@
       "id": 33,
       "gridPos": {
         "x": 8,
-        "y": 85,
+        "y": 102,
         "w": 8,
         "h": 8
       }
@@ -2724,7 +3091,7 @@
       "id": 34,
       "gridPos": {
         "x": 16,
-        "y": 85,
+        "y": 102,
         "w": 8,
         "h": 8
       }
@@ -2834,7 +3201,7 @@
       "id": 35,
       "gridPos": {
         "x": 0,
-        "y": 93,
+        "y": 110,
         "w": 24,
         "h": 8
       }
@@ -2846,7 +3213,7 @@
       "collapsed": true,
       "gridPos": {
         "x": 0,
-        "y": 101,
+        "y": 118,
         "w": 24,
         "h": 1
       },
@@ -2944,7 +3311,7 @@
           "id": 37,
           "gridPos": {
             "x": 0,
-            "y": 102,
+            "y": 119,
             "w": 12,
             "h": 8
           }
@@ -3042,7 +3409,7 @@
           "id": 38,
           "gridPos": {
             "x": 12,
-            "y": 102,
+            "y": 119,
             "w": 12,
             "h": 8
           }

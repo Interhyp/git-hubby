@@ -115,8 +115,18 @@ and select the Prometheus data source. Variables:
 | `filters` | Additional label filters, e.g. `cluster` or `environment` if several clusters write to the same Prometheus. They apply to all queries. |
 
 Without the kube-state-metrics configuration, the "Managed resources" panels show a hint instead of data.
+The "GitHub API rate limits" panels require the rate-limit metrics introduced in git-hubby 0.13.0; they have no
+series for an organization and category until the operator observes them.
 
 Interpretation:
+
+- The primary quota panels show the last observation per organization, category and pod, not a live GitHub query.
+  Check "Rate-limit observation age": inactive categories and former leaders may retain old values. An observed
+  reset countdown of zero does not mean the cached quota has refreshed. Do not sum budgets across organizations,
+  which can share a quota.
+- The stall threshold panel omits zero thresholds, which mean stalling is disabled for that category. A stall
+  countdown of zero means the last observed primary-rate-limit stall deadline is absent or has passed; it does not
+  rule out secondary rate limits or other reconciliation delays.
 
 - `requeue_after` is the regular result of a reconciliation: successful reconciliations are requeued for drift
   detection. "Requeues by reason" shows why resources are reconciled again.
