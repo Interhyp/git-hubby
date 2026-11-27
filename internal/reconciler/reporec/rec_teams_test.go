@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
 var _ = Describe("ReconcileTeams", func() {
@@ -34,6 +35,7 @@ var _ = Describe("ReconcileTeams", func() {
 		listRepoErr error
 		addErr      error
 		removeErr   error
+		teamGetErr  error
 
 		err error
 	)
@@ -65,6 +67,7 @@ var _ = Describe("ReconcileTeams", func() {
 		listRepoErr = nil
 		addErr = nil
 		removeErr = nil
+		teamGetErr = nil
 
 		mockClient.GetAllRepositoryTeamsFunc = func(ctx context.Context, owner, repo string) ([]*github.Team, error) {
 			return repositoryTeams, listRepoErr
@@ -101,6 +104,14 @@ var _ = Describe("ReconcileTeams", func() {
 			WithScheme(scheme).
 			WithObjects(objs...).
 			WithStatusSubresource(repo).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+					if key.Name == "missing-team-cr" && teamGetErr != nil {
+						return teamGetErr
+					}
+					return c.Get(ctx, key, obj, opts...)
+				},
+			}).
 			Build()
 
 		rec = &GitHubRepoReconciler{
@@ -291,13 +302,24 @@ var _ = Describe("ReconcileTeams", func() {
 			}
 		})
 
-		It("should still reconcile the remaining teams and prune stale ones", func() {
+		It("should reconcile the remaining teams without pruning existing assignments", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(addCalls).To(HaveLen(1))
 			Expect(addCalls[0].Slug).To(Equal("platform-team"))
 			Expect(addCalls[0].Permission).To(Equal("push"))
-			Expect(removeCalls).To(HaveLen(1))
-			Expect(removeCalls[0].Slug).To(Equal("security-team"))
+			Expect(removeCalls).To(BeEmpty())
+		})
+
+		Context("when fetching the Team fails temporarily", func() {
+			BeforeEach(func() {
+				teamGetErr = errors.New("temporary API failure")
+			})
+
+			It("should report the failure and preserve existing assignments", func() {
+				Expect(err).To(MatchError(ContainSubstring("temporary API failure")))
+				Expect(addCalls).To(HaveLen(1))
+				Expect(removeCalls).To(BeEmpty())
+			})
 		})
 	})
 

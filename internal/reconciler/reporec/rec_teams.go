@@ -76,15 +76,16 @@ func (r *GitHubRepoReconciler) reconcileTeams(ctx context.Context) error {
 		delete(teamsToDelete, slug)
 	}
 
+	// Preserve existing access until every referenced Team is resolved; an unresolved Team could match any existing slug.
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
 	for _, slug := range teamsToDelete {
 		if err := r.GitHub.Client.RemoveRepositoryTeam(ctx, r.GitHub.Resource.Owner, slug, r.GitHub.Resource.Owner, r.GitHub.Resource.Name); err != nil {
 			log.Error(err, "failed to remove team from repository", "teamSlug", slug)
 			return err
 		}
-	}
-
-	if len(errs) > 0 {
-		return errors.Join(errs...)
 	}
 
 	log.V(1).Info("Successfully reconciled repository teams on GitHub")

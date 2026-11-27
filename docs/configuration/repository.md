@@ -183,6 +183,8 @@ Assign GitHub teams with specific access levels:
 | `maintain` | + Manage settings (except sensitive) |
 | `admin` | Full access including settings and secrets |
 
+If a referenced Team cannot be fetched, existing team assignments are not removed during that reconciliation. Other referenced teams can still have their permissions applied.
+
 ### Webhooks
 
 **Using Presets** (recommended for consistency):
