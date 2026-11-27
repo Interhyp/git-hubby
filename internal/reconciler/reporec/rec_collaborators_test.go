@@ -141,6 +141,25 @@ var _ = Describe("ReconcileCollaborators", func() {
 		})
 	})
 
+	Context("when the desired username differs from GitHub login casing", func() {
+		BeforeEach(func() {
+			desiredCollaborators = []v1alpha1.RepositoryCollaboratorPermission{{
+				Username:   "Alice",
+				Permission: "push",
+			}}
+			existingCollaborators = []*github.User{{
+				Login:    new("alice"),
+				RoleName: new("push"),
+			}}
+		})
+
+		It("should match the existing collaborator without adding or removing access", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addCalls).To(BeEmpty())
+			Expect(removeCalls).To(BeEmpty())
+		})
+	})
+
 	Context("when collaborator is missing", func() {
 		BeforeEach(func() {
 			desiredCollaborators = []v1alpha1.RepositoryCollaboratorPermission{{
@@ -180,7 +199,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 		It("should append the organization suffix before reconciling the collaborator", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(addCalls).To(HaveLen(1))
-			Expect(addCalls[0].Username).To(Equal("alice_memberSuffix"))
+			Expect(addCalls[0].Username).To(Equal("alice_membersuffix"))
 			Expect(addCalls[0].Permission).To(Equal("push"))
 		})
 	})
@@ -213,7 +232,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 		It("should prefer the global member suffix", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(addCalls).To(HaveLen(1))
-			Expect(addCalls[0].Username).To(Equal("alice_globalMemberSuffix"))
+			Expect(addCalls[0].Username).To(Equal("alice_globalmembersuffix"))
 		})
 	})
 
@@ -256,6 +275,29 @@ var _ = Describe("ReconcileCollaborators", func() {
 			Expect(addCalls).To(HaveLen(1))
 			Expect(addCalls[0].Username).To(Equal("alice"))
 			Expect(addCalls[0].Permission).To(Equal("maintain"))
+		})
+	})
+
+	Context("when an organization member's login casing differs from the desired username", func() {
+		BeforeEach(func() {
+			org = &v1alpha1.Organization{
+				Name:      "acme-corp",
+				Namespace: "default",
+				Spec:      v1alpha1.OrganizationSpec{Name: "acme-corp"},
+			}
+			desiredCollaborators = []v1alpha1.RepositoryCollaboratorPermission{{
+				Username:   "Alice",
+				Permission: "maintain",
+			}}
+			orgMembers = []*github.User{{Login: new("alice")}}
+		})
+
+		It("should reconcile the organization member using a normalized login", func() {
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addCalls).To(HaveLen(1))
+			Expect(addCalls[0].Username).To(Equal("alice"))
+			Expect(addCalls[0].Permission).To(Equal("maintain"))
+			Expect(removeCalls).To(BeEmpty())
 		})
 	})
 
@@ -320,7 +362,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 			}}
 			existingCollaborators = []*github.User{
 				{Login: new("alice"), RoleName: new("push")},
-				{Login: new("bob"), RoleName: new("pull")},
+				{Login: new("Bob"), RoleName: new("pull")},
 			}
 		})
 
@@ -328,7 +370,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(addCalls).To(BeEmpty())
 			Expect(removeCalls).To(HaveLen(1))
-			Expect(removeCalls[0].Username).To(Equal("bob"))
+			Expect(removeCalls[0].Username).To(Equal("Bob"))
 		})
 	})
 

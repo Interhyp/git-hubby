@@ -3,6 +3,7 @@ package reporec
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Interhyp/git-hubby/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,8 +48,10 @@ func (r *GitHubRepoReconciler) reconcileCollaborators(ctx context.Context) error
 		if collaborator == nil || collaborator.Login == nil {
 			continue
 		}
-		existingCollaboratorsByName[*collaborator.Login] = collaborator.GetRoleName()
-		collaboratorsToDelete[*collaborator.Login] = *collaborator.Login
+		login := *collaborator.Login
+		key := strings.ToLower(login)
+		existingCollaboratorsByName[key] = collaborator.GetRoleName()
+		collaboratorsToDelete[key] = login
 	}
 
 	orgMembersByName := make(map[string]struct{})
@@ -60,13 +63,14 @@ func (r *GitHubRepoReconciler) reconcileCollaborators(ctx context.Context) error
 		}
 		for _, ghMember := range ghMembers {
 			if ghMember != nil && ghMember.Login != nil {
-				orgMembersByName[*ghMember.Login] = struct{}{}
+				orgMembersByName[strings.ToLower(*ghMember.Login)] = struct{}{}
 			}
 		}
 	}
 
 	for _, collaboratorRef := range r.Kubernetes.Resource.Spec.Collaborators {
 		collaboratorRef.Username += memberSuffix
+		collaboratorRef.Username = strings.ToLower(collaboratorRef.Username)
 		log := log.WithValues("collaborator", collaboratorRef.Username)
 		log.V(1).Info("Processing collaborator", "permission", collaboratorRef.Permission)
 
