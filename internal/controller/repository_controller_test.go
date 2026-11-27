@@ -13,7 +13,13 @@ import (
 	"github.com/google/go-github/v93/github"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // Simplified Repository Controller Integration Tests
@@ -232,5 +238,79 @@ var _ = Describe("isArchivedRepoError", func() {
 			Response: &http.Response{StatusCode: http.StatusForbidden},
 			Message:  "Resource not accessible by integration",
 		})).To(BeFalse())
+	})
+})
+
+var _ = Describe("Repository team watch", func() {
+	It("enqueues only repositories in the team's namespace that reference it", func() {
+		scheme := runtime.NewScheme()
+		Expect(githubv1alpha1.AddToScheme(scheme)).To(Succeed())
+
+		referencingRepo := &githubv1alpha1.Repository{
+			Name: "repo-one", Namespace: "team-namespace",
+			Spec: githubv1alpha1.RepositorySpec{
+				Teams: []githubv1alpha1.RepositoryTeamPermission{{TeamRef: githubv1alpha1.TeamRef{Name: "platform"}}},
+			},
+		}
+		otherReferencingRepo := &githubv1alpha1.Repository{
+			Name: "repo-two", Namespace: "team-namespace",
+			Spec: githubv1alpha1.RepositorySpec{
+				Teams: []githubv1alpha1.RepositoryTeamPermission{{TeamRef: githubv1alpha1.TeamRef{Name: "platform"}}},
+			},
+		}
+		sameNameDifferentNamespace := &githubv1alpha1.Repository{
+			Name: "repo-three", Namespace: "other-namespace",
+			Spec: githubv1alpha1.RepositorySpec{
+				Teams: []githubv1alpha1.RepositoryTeamPermission{{TeamRef: githubv1alpha1.TeamRef{Name: "platform"}}},
+			},
+		}
+		unrelatedRepo := &githubv1alpha1.Repository{
+			Name: "repo-four", Namespace: "team-namespace",
+			Spec: githubv1alpha1.RepositorySpec{
+				Teams: []githubv1alpha1.RepositoryTeamPermission{{TeamRef: githubv1alpha1.TeamRef{Name: "backend"}}},
+			},
+		}
+		k8sClient := fake.NewClientBuilder().
+			WithScheme(scheme).
+			WithIndex(&githubv1alpha1.Repository{}, "spec.teams.teamRef.name", func(rawObj client.Object) []string {
+				repo := rawObj.(*githubv1alpha1.Repository)
+				teamNames := make([]string, 0, len(repo.Spec.Teams))
+				for _, team := range repo.Spec.Teams {
+					teamNames = append(teamNames, team.TeamRef.Name)
+				}
+				return teamNames
+			}).
+			WithObjects(referencingRepo, otherReferencingRepo, sameNameDifferentNamespace, unrelatedRepo).
+			Build()
+		reconcilerFactory := &reconcilerfactory.Factory{K8sClient: k8sClient}
+		repositoryController := &RepositoryCtl{ReconcilerFactory: reconcilerFactory}
+		team := &githubv1alpha1.Team{Name: "platform", Namespace: "team-namespace"}
+
+		requests := repositoryController.findRepositoriesForTeam(context.Background(), team)
+
+		Expect(requests).To(ConsistOf(
+			reconcile.Request{Name: "repo-one", Namespace: "team-namespace"},
+			reconcile.Request{Name: "repo-two", Namespace: "team-namespace"},
+		))
+	})
+
+	It("accepts team slug updates and rejects unrelated status updates", func() {
+		predicate := teamStatusSlugChangedPredicate()
+		oldTeam := &githubv1alpha1.Team{Generation: 1}
+		newTeam := oldTeam.DeepCopy()
+		newTeam.Status.Slug = new("platform")
+
+		Expect(predicate.Update(event.UpdateEvent{ObjectOld: oldTeam, ObjectNew: newTeam})).To(BeTrue())
+
+		oldTeam = newTeam.DeepCopy()
+		newTeam = oldTeam.DeepCopy()
+		newTeam.Status.Conditions = []metav1.Condition{{Type: "Ready", Status: metav1.ConditionTrue}}
+		Expect(predicate.Update(event.UpdateEvent{ObjectOld: oldTeam, ObjectNew: newTeam})).To(BeFalse())
+
+		newTeam.Status.Slug = nil
+		Expect(predicate.Update(event.UpdateEvent{ObjectOld: oldTeam, ObjectNew: newTeam})).To(BeFalse())
+
+		newTeam.Status.Slug = new("platform-renamed")
+		Expect(predicate.Update(event.UpdateEvent{ObjectOld: oldTeam, ObjectNew: newTeam})).To(BeTrue())
 	})
 })
