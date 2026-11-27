@@ -446,6 +446,10 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: actionsSettings
       type:
         namedType: com.github.Interhyp.git-hubby.api.v1alpha1.ActionsSettings
+    - name: allowExternalCollaborators
+      type:
+        scalar: boolean
+      default: false
     - name: codeSecurityConfigurations
       type:
         list:
@@ -499,10 +503,6 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             namedType: com.github.Interhyp.git-hubby.api.v1alpha1.RulesetSpec
           elementRelationship: atomic
-    - name: usesEnterpriseManagedUsers
-      type:
-        scalar: boolean
-      default: false
     - name: website
       type:
         scalar: string

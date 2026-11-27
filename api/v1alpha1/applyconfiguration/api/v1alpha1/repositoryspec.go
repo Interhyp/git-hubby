@@ -113,8 +113,8 @@ type RepositorySpecApplyConfiguration struct {
 	// Each entry assigns a GitHub user a specific permission level.
 	// Collaborators not present in this list will have their explicit repository access removed.
 	// Organization members are always reconciled. External collaborators are reconciled only when the
-	// referenced Organization has spec.usesEnterpriseManagedUsers set to true; otherwise they are skipped
-	// to avoid triggering an invitation workflow.
+	// referenced Organization has spec.allowExternalCollaborators set to true; otherwise additions and
+	// permission changes are skipped to avoid triggering an invitation workflow.
 	// See: https://docs.github.com/en/rest/collaborators/collaborators#add-a-repository-collaborator
 	Collaborators []RepositoryCollaboratorPermissionApplyConfiguration `json:"collaborators,omitempty"`
 	// RulesetPresetList references RulesetPreset CRDs to apply to this repository.

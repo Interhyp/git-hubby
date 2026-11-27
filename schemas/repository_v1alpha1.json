@@ -177,7 +177,7 @@
           "type": "array"
         },
         "collaborators": {
-          "description": "Collaborators defines direct repository member (collaborator) permissions.\nEach entry assigns a GitHub user a specific permission level.\nCollaborators not present in this list will have their explicit repository access removed.\nOrganization members are always reconciled. External collaborators are reconciled only when the\nreferenced Organization has spec.usesEnterpriseManagedUsers set to true; otherwise they are skipped\nto avoid triggering an invitation workflow.\nSee: https://docs.github.com/en/rest/collaborators/collaborators#add-a-repository-collaborator",
+          "description": "Collaborators defines direct repository member (collaborator) permissions.\nEach entry assigns a GitHub user a specific permission level.\nCollaborators not present in this list will have their explicit repository access removed.\nOrganization members are always reconciled. External collaborators are reconciled only when the\nreferenced Organization has spec.allowExternalCollaborators set to true; otherwise additions and\npermission changes are skipped to avoid triggering an invitation workflow.\nSee: https://docs.github.com/en/rest/collaborators/collaborators#add-a-repository-collaborator",
           "items": {
             "description": "RepositoryCollaboratorPermission defines repository-level access for a GitHub user.",
             "properties": {

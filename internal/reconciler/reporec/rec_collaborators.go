@@ -52,7 +52,7 @@ func (r *GitHubRepoReconciler) reconcileCollaborators(ctx context.Context) error
 	}
 
 	orgMembersByName := make(map[string]struct{})
-	if !org.UsesEnterpriseManagedUsers() {
+	if !org.AllowsExternalCollaborators() {
 		ghMembers, err := r.GitHub.Client.ListMembers(ctx, r.GitHub.Resource.Owner)
 		if err != nil {
 			log.Error(err, "failed to get members from GitHub")
@@ -74,7 +74,7 @@ func (r *GitHubRepoReconciler) reconcileCollaborators(ctx context.Context) error
 		currentPermission := existingCollaboratorsByName[collaboratorRef.Username]
 		if currentPermission != desiredPermission {
 			_, isOrgMember := orgMembersByName[collaboratorRef.Username]
-			if !org.UsesEnterpriseManagedUsers() && !isOrgMember {
+			if !org.AllowsExternalCollaborators() && !isOrgMember {
 				log.Info("WARNING: Skipping external collaborator because adding them would trigger an invitation workflow", "username", collaboratorRef.Username)
 				delete(collaboratorsToDelete, collaboratorRef.Username)
 				continue

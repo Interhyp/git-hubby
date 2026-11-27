@@ -80,9 +80,9 @@ func (o *Organization) HasEnterpriseFeatures() bool {
 	return o.GetPlan() != PlanFree
 }
 
-// UsesEnterpriseManagedUsers reports whether the organization uses Enterprise Managed Users.
-func (o *Organization) UsesEnterpriseManagedUsers() bool {
-	return o != nil && o.Spec.UsesEnterpriseManagedUsers
+// AllowsExternalCollaborators reports whether external repository collaborators should be reconciled.
+func (o *Organization) AllowsExternalCollaborators() bool {
+	return o != nil && o.Spec.AllowExternalCollaborators
 }
 
 // IsActionsDisabled returns true if GitHub Actions are disabled for all repositories of the organization,

@@ -26,7 +26,7 @@ spec:
     installationId: 12345678            # From GitHub App installation settings
     credentialsSecretName: acme-corp-app-credentials  # Secret in credentials namespace
   plan: enterprise                          # enterprise | team | free
-  usesEnterpriseManagedUsers: true          # Enable features that require Enterprise Managed Users
+  allowExternalCollaborators: true          # Allow adding or updating collaborators outside the organization
 
   # --- Team Members ---
   memberSuffix: "@acme-corp.com"            # Appended to usernames in Team.spec.members and Repository.spec.collaborators; overridden by GITHUB_MEMBER_SUFFIX env var
@@ -233,14 +233,11 @@ Some features require specific GitHub plans:
 | Internal repository visibility | `enterprise` |
 | Runner groups | `team` or `enterprise` |
 
-## Enterprise Managed Users
+## External Collaborators
 
-`spec.usesEnterpriseManagedUsers` defaults to `false` and indicates that the Organization uses GitHub Enterprise Managed Users (EMU). Reconciliation uses this setting as a guard for operations involving users outside the Organization that could trigger GitHub invitation workflows. When the setting is `false`, invitation-triggering operations are skipped.
+`spec.allowExternalCollaborators` defaults to `false` and indicates whether external repository collaborators should be reconciled. When it is `false`, adding or changing external collaborators is skipped with an info-level `WARNING` log to avoid triggering GitHub's invitation workflow. Collaborators omitted from an explicitly specified Repository `collaborators` list are still removed as part of normal reconciliation.
 
-Currently, this guard applies to repository collaborators:
-
-- Organization members are always added or updated according to the Repository spec.
-- External collaborators are only added or updated when this is `true`; otherwise, the requested change is skipped.
+Organization members are always added or updated according to the Repository spec, regardless of this setting. External collaborators are added or updated only when this is `true`; otherwise, the requested change is skipped with an info-level `WARNING` log. Repository team permissions are not affected by this setting.
 
 ## Member Suffix
 

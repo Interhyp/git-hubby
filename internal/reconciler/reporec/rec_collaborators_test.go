@@ -93,7 +93,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 				Namespace: "default",
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                       "acme-corp",
-					UsesEnterpriseManagedUsers: true,
+					AllowExternalCollaborators: true,
 				},
 			}
 		}
@@ -167,7 +167,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                       "acme-corp",
 					MemberSuffix:               "_memberSuffix",
-					UsesEnterpriseManagedUsers: true,
+					AllowExternalCollaborators: true,
 				},
 			}
 			desiredCollaborators = []v1alpha1.RepositoryCollaboratorPermission{{
@@ -199,7 +199,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 				Spec: v1alpha1.OrganizationSpec{
 					Name:                       "acme-corp",
 					MemberSuffix:               "_memberSuffix",
-					UsesEnterpriseManagedUsers: true,
+					AllowExternalCollaborators: true,
 				},
 			}
 			memberSuffix = parsedConfig.GitHubMemberSuffix
@@ -217,7 +217,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 		})
 	})
 
-	Context("when the organization does not use Enterprise Managed Users", func() {
+	Context("when the organization does not allow external collaborators", func() {
 		BeforeEach(func() {
 			org = &v1alpha1.Organization{
 				Name:      "acme-corp",
@@ -237,7 +237,7 @@ var _ = Describe("ReconcileCollaborators", func() {
 		})
 	})
 
-	Context("when a collaborator belongs to the organization but EMU is disabled", func() {
+	Context("when a collaborator belongs to the organization but external collaborators are disabled", func() {
 		BeforeEach(func() {
 			org = &v1alpha1.Organization{
 				Name:      "acme-corp",

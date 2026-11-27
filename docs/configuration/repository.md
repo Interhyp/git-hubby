@@ -165,9 +165,11 @@ Assign GitHub collaborators with specific access levels:
 | `admin` | Full access including settings and secrets |
 
 Collaborators who belong to the Organization are always reconciled.
-External collaborators however, are subject to the `Organization.spec.usesEnterpriseManagedUsers` setting:
+External collaborators are reconciled according to the `Organization.spec.allowExternalCollaborators` setting:
   * If set to `true`, external collaborators will also be reconciled.
-  * If set to `false`, external collaborators are skipped, to avoid triggering GitHub's invitation workflow.
+  * If set to `false`, requested adds or permission changes are skipped with an info-level `WARNING` log to avoid triggering GitHub's invitation workflow. An existing external collaborator who remains in the `collaborators` list is not removed just because this setting is `false`.
+
+When `collaborators` is explicitly specified, any existing collaborator omitted from that list—including external collaborators—is removed as normal. If `collaborators` is omitted (`nil`), collaborator reconciliation is skipped and existing assignments are left unchanged.
 
 ### Team Permissions
 
