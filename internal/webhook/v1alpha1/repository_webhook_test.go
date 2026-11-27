@@ -346,6 +346,19 @@ var _ = Describe("Repository Webhook", func() {
 	})
 
 	Context("When validating inline webhooks and webhook ignores", func() {
+		It("Should reject duplicate team references", func() {
+			obj.Spec.Teams = []githubv1alpha1.RepositoryTeamPermission{
+				{TeamRef: githubv1alpha1.TeamRef{Name: "platform-engineers"}},
+				{TeamRef: githubv1alpha1.TeamRef{Name: "platform-engineers"}},
+			}
+
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(apierrors.IsInvalid(err)).To(BeTrue())
+			Expect(err.Error()).To(ContainSubstring("spec.teams[1].teamRef.name"))
+			Expect(err.Error()).To(ContainSubstring("Duplicate value"))
+		})
+
 		It("Should allow valid inline webhooks and ignore rules", func() {
 			obj.Spec.Webhooks = []githubv1alpha1.WebhookSpec{{
 				PayloadURL: "https://example.com/{{ .Name }}",

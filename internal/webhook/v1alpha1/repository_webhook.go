@@ -133,6 +133,15 @@ func validateInlinePresets(repo *githubv1alpha1.Repository) field.ErrorList {
 	var errs field.ErrorList
 	specPath := field.NewPath("spec")
 
+	seenTeamRefs := make(map[string]struct{}, len(repo.Spec.Teams))
+	for i, team := range repo.Spec.Teams {
+		if _, exists := seenTeamRefs[team.TeamRef.Name]; exists {
+			errs = append(errs, field.Duplicate(specPath.Child("teams").Index(i).Child("teamRef", "name"), team.TeamRef.Name))
+			continue
+		}
+		seenTeamRefs[team.TeamRef.Name] = struct{}{}
+	}
+
 	for i, ignore := range repo.Spec.WebhookIgnores {
 		fldPath := specPath.Child("webhookIgnores").Index(i).Child("ignoreURLRegex")
 		if ignore.IgnoreURLRegex == nil || *ignore.IgnoreURLRegex == "" {
