@@ -4,7 +4,7 @@
   "devDependencies": {
     "semantic-release": "26.0.1",
     "conventional-changelog-conventionalcommits": "9.3.1",
-    "@commitlint/cli": "21.2.4",
+    "@commitlint/cli": "21.3.0",
     "@commitlint/config-conventional": "21.2.4"
   }
 }
