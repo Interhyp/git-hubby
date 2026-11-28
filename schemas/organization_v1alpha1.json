@@ -130,6 +130,11 @@
           "type": "object",
           "additionalProperties": false
         },
+        "allowExternalCollaborators": {
+          "default": false,
+          "description": "AllowExternalCollaborators indicates whether external repository collaborators should be reconciled.\nWhen false, adding or changing external collaborators is skipped to avoid triggering invitation workflows.",
+          "type": "boolean"
+        },
         "codeSecurityConfigurations": {
           "description": "CodeSecurityConfigurations lists code security configurations to create and optionally attach to repositories.\nEach configuration defines security features like dependency scanning, secret scanning, and code scanning.\nSee: https://docs.github.com/en/rest/code-security/configurations",
           "items": {

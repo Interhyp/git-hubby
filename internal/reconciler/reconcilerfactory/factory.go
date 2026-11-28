@@ -155,6 +155,7 @@ func (f *Factory) CreateForRepo(ctx context.Context, repoName types.NamespacedNa
 			FinalizeMode: reconciler.RepositoryFinalizerMode(f.Config.RepositoryFinalizerMode),
 			Features:     f.Config.Features,
 			NameResolver: nameResolverRepo,
+			MemberSuffix: f.Config.GitHubMemberSuffix,
 		},
 	}, nil
 }

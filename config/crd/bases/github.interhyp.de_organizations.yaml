@@ -170,6 +170,12 @@ spec:
                       When true, improves security by preventing tag manipulation attacks.
                     type: boolean
                 type: object
+              allowExternalCollaborators:
+                default: false
+                description: |-
+                  AllowExternalCollaborators indicates whether external repository collaborators should be reconciled.
+                  When false, adding or changing external collaborators is skipped to avoid triggering invitation workflows.
+                type: boolean
               codeSecurityConfigurations:
                 description: |-
                   CodeSecurityConfigurations lists code security configurations to create and optionally attach to repositories.

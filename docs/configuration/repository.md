@@ -63,11 +63,23 @@ spec:
 
   # --- Team Permissions ---
   teams:
-    - name: checkout-team
+    - teamRef:
+        name: checkout-team
       permission: push
-    - name: platform-team
+    - teamRef:
+        name: platform-team
       permission: admin
-    - name: security-team
+    - teamRef:
+        name: security-team
+      permission: triage
+
+  # --- Collaborator Permissions ---
+  collaborators:
+    - username: alice
+      permission: push
+    - username: bob
+      permission: admin
+    - username: charlie
       permission: triage
 
   # --- Webhooks ---
@@ -140,6 +152,25 @@ customProperties:
       - gdpr
 ```
 
+### Collaborator Permissions
+
+Assign GitHub collaborators with specific access levels:
+
+| Permission | Capabilities |
+|------------|-------------|
+| `pull` | Clone, view code and issues |
+| `triage` | + Manage issues and PRs (no code changes) |
+| `push` | + Push code, create branches |
+| `maintain` | + Manage settings (except sensitive) |
+| `admin` | Full access including settings and secrets |
+
+Collaborators who belong to the Organization are always reconciled.
+External collaborators are reconciled according to the `Organization.spec.allowExternalCollaborators` setting:
+  * If set to `true`, external collaborators will also be reconciled.
+  * If set to `false`, requested adds or permission changes are skipped with an info-level `WARNING` log to avoid triggering GitHub's invitation workflow. An existing external collaborator who remains in the `collaborators` list is not removed just because this setting is `false`.
+
+When `collaborators` is explicitly specified, any existing collaborator omitted from that list—including external collaborators—is removed as normal. If `collaborators` is omitted (`nil`), collaborator reconciliation is skipped and existing assignments are left unchanged.
+
 ### Team Permissions
 
 Assign GitHub teams with specific access levels:
@@ -151,6 +182,8 @@ Assign GitHub teams with specific access levels:
 | `push` | + Push code, create branches |
 | `maintain` | + Manage settings (except sensitive) |
 | `admin` | Full access including settings and secrets |
+
+If a referenced Team cannot be fetched, existing team assignments are not removed during that reconciliation. Other referenced teams can still have their permissions applied.
 
 ### Webhooks
 

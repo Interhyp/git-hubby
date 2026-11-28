@@ -26,9 +26,10 @@ spec:
     installationId: 12345678            # From GitHub App installation settings
     credentialsSecretName: acme-corp-app-credentials  # Secret in credentials namespace
   plan: enterprise                          # enterprise | team | free
+  allowExternalCollaborators: true          # Allow adding or updating collaborators outside the organization
 
   # --- Team Members ---
-  memberSuffix: "@acme-corp.com"            # Appended to usernames in Team.spec.members; overridden by GITHUB_MEMBER_SUFFIX env var
+  memberSuffix: "@acme-corp.com"            # Appended to usernames in Team.spec.members and Repository.spec.collaborators; overridden by GITHUB_MEMBER_SUFFIX env var
 
   # --- Custom Properties ---
   # Define metadata fields that repositories must/can set
@@ -232,18 +233,24 @@ Some features require specific GitHub plans:
 | Internal repository visibility | `enterprise` |
 | Runner groups | `team` or `enterprise` |
 
-## Team Member Suffix
+## External Collaborators
 
-When GitHub usernames in your enterprise follow a naming convention (e.g. `john.doe@acme-corp.com`), set `spec.memberSuffix` so you can write plain usernames in `Team.spec.members` without repeating the suffix everywhere:
+`spec.allowExternalCollaborators` defaults to `false` and indicates whether external repository collaborators should be reconciled. When it is `false`, adding or changing external collaborators is skipped with an info-level `WARNING` log to avoid triggering GitHub's invitation workflow. Collaborators omitted from an explicitly specified Repository `collaborators` list are still removed as part of normal reconciliation.
+
+Organization members are always added or updated according to the Repository spec, regardless of this setting. External collaborators are added or updated only when this is `true`; otherwise, the requested change is skipped with an info-level `WARNING` log. Repository team permissions are not affected by this setting.
+
+## Member Suffix
+
+When GitHub usernames in your enterprise follow a naming convention (e.g. `john.doe@acme-corp.com`), set `spec.memberSuffix` so you can write plain usernames in `Team.spec.members` and `Repository.spec.collaborators` without repeating the suffix everywhere:
 
 ```yaml
 spec:
   memberSuffix: "@acme-corp.com"
 ```
 
-With this set, a team member listed as `john.doe` in `Team.spec.members` will be looked up and added on GitHub as `john.doe@acme-corp.com`.
+With this set, a user listed as `john.doe` in either `Team.spec.members` or `Repository.spec.collaborators` will be matched on GitHub as `john.doe@acme-corp.com`.
 
-The global `GITHUB_MEMBER_SUFFIX` environment variable takes precedence over this field if set. For multi-organization setups where different orgs use different naming conventions, `spec.memberSuffix` is the preferred approach since the env var applies uniformly to all organizations.
+The global `GITHUB_MEMBER_SUFFIX` environment variable takes precedence over this field for both team members and repository collaborators. When it is unset, each reconciler uses the suffix configured on the referenced Organization.
 
 ## Related Resources
 

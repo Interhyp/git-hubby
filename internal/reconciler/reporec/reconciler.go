@@ -41,6 +41,8 @@ type GitHubRepoReconciler struct {
 	FinalizeMode reconciler.RepositoryFinalizerMode
 	Features     config.Features
 	NameResolver RepoResourceNameResolver
+	// MemberSuffix is the global suffix, superseded by the Organization suffix when unset.
+	MemberSuffix string
 }
 
 func (r *GitHubRepoReconciler) K8s() reconciler.Kubernetes[*v1alpha1.Repository] {
@@ -73,6 +75,14 @@ func (r *GitHubRepoReconciler) RequiredReconciliations() []reconciler.ParallelRe
 			},
 		},
 		{
+			{
+				Function:  r.reconcileTeams,
+				Condition: conditions.TypeTeamsSynced,
+			},
+			{
+				Function:  r.reconcileCollaborators,
+				Condition: conditions.TypeCollaboratorsSynced,
+			},
 			{
 				Function:  r.reconcileCustomProperties,
 				Condition: conditions.TypeCustomPropertiesValuesSynced,

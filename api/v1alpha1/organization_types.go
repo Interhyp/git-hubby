@@ -434,6 +434,12 @@ type OrganizationSpec struct {
 	// +optional
 	Plan string `json:"plan,omitempty"`
 
+	// AllowExternalCollaborators indicates whether external repository collaborators should be reconciled.
+	// When false, adding or changing external collaborators is skipped to avoid triggering invitation workflows.
+	// +kubebuilder:default=false
+	// +optional
+	AllowExternalCollaborators bool `json:"allowExternalCollaborators,omitempty"`
+
 	// MemberPrivileges configures the privileges and default permissions for members of this organization.
 	// Configurability may be restricted by Enterprise policies.
 	// +optional

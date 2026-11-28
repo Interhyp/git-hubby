@@ -80,6 +80,11 @@ func (o *Organization) HasEnterpriseFeatures() bool {
 	return o.GetPlan() != PlanFree
 }
 
+// AllowsExternalCollaborators reports whether external repository collaborators should be reconciled.
+func (o *Organization) AllowsExternalCollaborators() bool {
+	return o != nil && o.Spec.AllowExternalCollaborators
+}
+
 // IsActionsDisabled returns true if GitHub Actions are disabled for all repositories of the organization,
 // i.e. spec.actionsSettings.enabledRepositories is unset or "none".
 func (o *Organization) IsActionsDisabled() bool {

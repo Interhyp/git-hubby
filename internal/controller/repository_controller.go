@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-github/v93/github"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -40,6 +41,7 @@ type RepositoryCtl struct {
 // +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=webhookignorepresets,verbs=get;list;watch
 // +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=rulesetpresets,verbs=get;list;watch
 // +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=autolinkspresets,verbs=get;list;watch
+// +kubebuilder:rbac:groups=github.interhyp.de,namespace=github-configuration,resources=teams,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -111,6 +113,16 @@ func (r *RepositoryCtl) SetupWithManager(mgr ctrl.Manager) error {
 	}); err != nil {
 		return err
 	}
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &githubv1alpha1.Repository{}, "spec.teams.teamRef.name", func(rawObj client.Object) []string {
+		repo := rawObj.(*githubv1alpha1.Repository)
+		teamNames := make([]string, 0, len(repo.Spec.Teams))
+		for _, team := range repo.Spec.Teams {
+			teamNames = append(teamNames, team.TeamRef.Name)
+		}
+		return teamNames
+	}); err != nil {
+		return err
+	}
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &githubv1alpha1.Repository{}, "spec.attachedCodeSecurityConfiguration.name", func(rawObj client.Object) []string {
 		repo := rawObj.(*githubv1alpha1.Repository)
 		result := make([]string, 0)
@@ -169,7 +181,15 @@ func (r *RepositoryCtl) SetupWithManager(mgr ctrl.Manager) error {
 			&githubv1alpha1.AutolinksPreset{},
 			handler.EnqueueRequestsFromMapFunc(r.findRepositoriesForAutolinksPreset),
 		).
-		WithEventFilter(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.AnnotationChangedPredicate{})).
+		Watches( // changes to a team's slug should retry repositories that reference the team
+			&githubv1alpha1.Team{},
+			handler.EnqueueRequestsFromMapFunc(r.findRepositoriesForTeam),
+		).
+		WithEventFilter(predicate.Or(
+			predicate.GenerationChangedPredicate{},
+			predicate.AnnotationChangedPredicate{},
+			teamStatusSlugChangedPredicate(),
+		)).
 		WithOptions(controller.Options{
 			UsePriorityQueue:        new(true),
 			MaxConcurrentReconciles: 20,
@@ -180,6 +200,49 @@ func (r *RepositoryCtl) SetupWithManager(mgr ctrl.Manager) error {
 		}).
 		Named("repository").
 		Complete(r)
+}
+
+// teamStatusSlugChangedPredicate lets Team updates that change status.slug trigger Repository reconciliation.
+func teamStatusSlugChangedPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldTeam, oldOK := e.ObjectOld.(*githubv1alpha1.Team)
+			newTeam, newOK := e.ObjectNew.(*githubv1alpha1.Team)
+			if !oldOK || !newOK {
+				return false
+			}
+			// Ignore slug removal, but retry repositories when the slug is first set or when it changes.
+			if newTeam.Status.Slug == nil {
+				return false
+			}
+			return oldTeam.Status.Slug == nil || *oldTeam.Status.Slug != *newTeam.Status.Slug
+		},
+	}
+}
+
+// findRepositoriesForTeam returns reconcile requests for Repositories that reference the Team.
+func (r *RepositoryCtl) findRepositoriesForTeam(ctx context.Context, obj client.Object) []reconcile.Request {
+	team := obj.(*githubv1alpha1.Team)
+
+	var repoList githubv1alpha1.RepositoryList
+	if err := r.ReconcilerFactory.K8sClient.List(
+		ctx,
+		&repoList,
+		client.InNamespace(team.Namespace),
+		client.MatchingFields{"spec.teams.teamRef.name": team.Name},
+	); err != nil {
+		logf.FromContext(ctx).Error(err, "failed to list repositories for team", "team", team.Name)
+		return nil
+	}
+
+	requests := make([]reconcile.Request, 0, len(repoList.Items))
+	for _, repo := range repoList.Items {
+		requests = append(requests, reconcile.Request{
+			Name:      repo.Name,
+			Namespace: repo.Namespace,
+		})
+	}
+	return requests
 }
 
 func (r *RepositoryCtl) findRepositoriesForWebhookPreset(ctx context.Context, obj client.Object) []reconcile.Request {
